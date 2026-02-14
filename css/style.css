@@ -18,48 +18,121 @@ body {
     color: var(--secondary);
 }
 
-/* --- HEADER & NAVIGATION --- */
+/* --- HEADER ORCHESTRÉ (Logo à gauche, Nav à droite) --- */
 header {
     background: var(--white);
-    padding: 15px 20px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 10px 5%;
     position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-header h1 {
-    margin: 5px 0 0;
-    font-size: 1.5rem;
-    letter-spacing: 2px;
+.header-container {
+    display: flex;
+    justify-content: space-between; /* C'est ici que la magie opère */
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Zone Logo */
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.logo-img {
+    height: 50px;
+    width: auto;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.logo-text {
     font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
 }
 
-header span { color: var(--primary); }
+.logo-text span { color: var(--primary); }
 
-/* --- BARRE DE RECHERCHE --- */
-.search-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 0 20px;
+/* Zone de Navigation (Recherche + Icones) */
+.nav-elements {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+/* Barre de recherche compacte */
+.search-wrapper {
+    position: relative;
+    width: 250px;
 }
 
 #search {
     width: 100%;
-    padding: 15px 25px;
+    padding: 10px 15px 10px 40px;
     border-radius: 50px;
-    border: 2px solid transparent;
-    background: var(--white);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    background: #f9f9f9;
     outline: none;
-    font-size: 1rem;
-    transition: var(--transition);
+    transition: 0.3s;
 }
 
 #search:focus {
+    background: white;
     border-color: var(--primary);
-    box-shadow: 0 4px 20px rgba(255, 204, 0, 0.2);
+    width: 300px; /* S'agrandit légèrement au clic */
+}
+
+.search-icon-inside {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+/* Icones de Navigation */
+.header-icons {
+    display: flex;
+    gap: 20px;
+}
+
+.icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transition: 0.3s;
+}
+
+.icon-item:hover { color: var(--primary); }
+
+.icon-item i { font-size: 1.2rem; }
+
+.icon-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: 2px;
+    background: var(--secondary);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 50px;
 }
 
 /* --- GRILLE DE PRODUITS --- */
@@ -67,7 +140,7 @@ header span { color: var(--primary); }
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 30px;
-    padding: 20px;
+    padding: 40px 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -81,7 +154,6 @@ header span { color: var(--primary); }
     position: relative;
     transition: var(--transition);
     box-shadow: 0 10px 20px rgba(0,0,0,0.03);
-    border: 1px solid rgba(0,0,0,0.02);
 }
 
 .carte-produit:hover {
@@ -91,13 +163,12 @@ header span { color: var(--primary); }
 
 .carte-produit img {
     width: 100%;
-    height: 220px;
-    object-fit: contain; /* Garde les proportions des produits */
+    height: 200px;
+    object-fit: contain;
     border-radius: 20px;
     background: #f9f9f9;
 }
 
-/* Badge de prix stylé */
 .prix-badge {
     position: absolute;
     top: 20px;
@@ -107,9 +178,6 @@ header span { color: var(--primary); }
     padding: 6px 14px;
     border-radius: 12px;
     font-weight: 700;
-    font-size: 1rem;
-    z-index: 10;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* --- BOUTON AJOUTER --- */
@@ -127,30 +195,22 @@ button {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: 0.3s ease;
     text-transform: uppercase;
     font-size: 0.85rem;
 }
 
-button i { font-size: 1.1rem; }
-
 button:hover {
     background: var(--secondary);
     color: var(--primary);
-    transform: scale(1.02);
 }
 
-button:active { transform: scale(0.98); }
-
 /* --- RESPONSIVE --- */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .logo-text, .icon-label, .search-wrapper { display: none; } /* Cache pour mobile */
+    .header-container { justify-content: space-between; }
+    
     .container {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 15px;
-        padding: 10px;
     }
-    
-    .carte-produit img { height: 160px; }
-    
-    header h1 { font-size: 1.2rem; }
 }
