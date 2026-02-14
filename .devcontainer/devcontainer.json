@@ -1,0 +1,17 @@
+{
+    "name": "Ubuntu 24.04 Dev Environment",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:1": {
+            "configureZshAsDefaultShell": true
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ritwickdey.LiveServer",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+}
