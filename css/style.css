@@ -1,63 +1,156 @@
+/* Importation d'une police moderne */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
 :root {
-    --primary: #27ae60;    /* Vert confiance */
-    --secondary: #2c3e50;  /* Bleu sombre pro */
-    --accent: #f39c12;     /* Orange action */
+    --primary: #ffcc00;    /* Jaune de ton logo */
+    --secondary: #1a1a1a;  /* Noir profond */
+    --accent: #ff9900;     /* Orange pour l'action */
+    --bg-color: #f4f7f6;   /* Gris très clair pour le fond */
+    --white: #ffffff;
+    --text-muted: #7f8c8d;
+    --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 body {
-    background: #f8f9fa;
+    background-color: var(--bg-color);
     font-family: 'Poppins', sans-serif;
     margin: 0;
+    color: var(--secondary);
 }
 
-/* Header stylé */
+/* --- HEADER & NAVIGATION --- */
 header {
-    background: var(--secondary);
-    color: white;
-    padding: 20px;
+    background: var(--white);
+    padding: 15px 20px;
     text-align: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-header h1 { margin: 0; letter-spacing: 3px; font-size: 2rem; }
-header span { color: var(--accent); }
+header h1 {
+    margin: 5px 0 0;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
 
-/* Animation des cartes */
+header span { color: var(--primary); }
+
+/* --- BARRE DE RECHERCHE --- */
+.search-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+#search {
+    width: 100%;
+    padding: 15px 25px;
+    border-radius: 50px;
+    border: 2px solid transparent;
+    background: var(--white);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    outline: none;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+#search:focus {
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(255, 204, 0, 0.2);
+}
+
+/* --- GRILLE DE PRODUITS --- */
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- CARTE PRODUIT --- */
 .carte-produit {
-    background: white;
-    border: none;
-    border-radius: 20px;
+    background: var(--white);
+    border-radius: 25px;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 10px;
     position: relative;
+    transition: var(--transition);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.02);
 }
 
 .carte-produit:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    transform: translateY(-12px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
 }
 
-/* Badge de prix flottant */
+.carte-produit img {
+    width: 100%;
+    height: 220px;
+    object-fit: contain; /* Garde les proportions des produits */
+    border-radius: 20px;
+    background: #f9f9f9;
+}
+
+/* Badge de prix stylé */
 .prix-badge {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: var(--accent);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-weight: bold;
+    top: 20px;
+    right: 20px;
+    background: var(--secondary);
+    color: var(--primary);
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-/* Bouton stylé */
+/* --- BOUTON AJOUTER --- */
 button {
-    background: linear-gradient(to right, var(--primary), #2ecc71);
-    color: white;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: var(--secondary);
     border: none;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 15px;
+    border-radius: 15px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     width: 100%;
-    margin-top: 10px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+button i { font-size: 1.1rem; }
+
+button:hover {
+    background: var(--secondary);
+    color: var(--primary);
+    transform: scale(1.02);
+}
+
+button:active { transform: scale(0.98); }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 600px) {
+    .container {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+        padding: 10px;
+    }
+    
+    .carte-produit img { height: 160px; }
+    
+    header h1 { font-size: 1.2rem; }
 }
