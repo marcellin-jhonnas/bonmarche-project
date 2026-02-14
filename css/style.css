@@ -1,0 +1,63 @@
+:root {
+    --primary: #27ae60;    /* Vert confiance */
+    --secondary: #2c3e50;  /* Bleu sombre pro */
+    --accent: #f39c12;     /* Orange action */
+}
+
+body {
+    background: #f8f9fa;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+}
+
+/* Header stylé */
+header {
+    background: var(--secondary);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+header h1 { margin: 0; letter-spacing: 3px; font-size: 2rem; }
+header span { color: var(--accent); }
+
+/* Animation des cartes */
+.carte-produit {
+    background: white;
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.carte-produit:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+/* Badge de prix flottant */
+.prix-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+/* Bouton stylé */
+button {
+    background: linear-gradient(to right, var(--primary), #2ecc71);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 10px;
+}
