@@ -7,62 +7,108 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Styles rapides en attendant ton fichier CSS */
-        .search-bar { max-width: 600px; margin: 20px auto; display: flex; gap: 10px; padding: 0 20px; }
-        .search-bar input { flex: 1; padding: 12px 20px; border-radius: 30px; border: 1px solid #ddd; outline: none; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; padding: 20px; font-family: 'Segoe UI', sans-serif; }
-        .promo-banner { background: linear-gradient(90deg, #ffcc00, #ff9900); color: black; padding: 20px; text-align: center; margin: 10px; border-radius: 15px; }
-        .badge-livraison { background: #2ecc71; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px; display: inline-block; }
-        footer { background: #333; color: white; padding: 40px 20px; margin-top: 50px; text-align: center; }
-        .payment-icons img { filter: grayscale(1); transition: 0.3s; margin: 10px; cursor: pointer; }
-        .payment-icons img:hover { filter: grayscale(0); }
+        /* Styles pour rendre le logo et le header attrayants */
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        .main-logo {
+            max-width: 180px; /* Taille du logo */
+            height: auto;
+            border-radius: 15px; /* Coins arrondis */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Ombre douce */
+            transition: transform 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .main-logo:hover {
+            transform: scale(1.05); /* Petit effet de zoom au survol */
+        }
+
+        .search-bar { 
+            max-width: 600px; 
+            margin: 20px auto; 
+            display: flex; 
+            gap: 10px; 
+            padding: 0 20px; 
+        }
+
+        .search-bar input { 
+            flex: 1; 
+            padding: 12px 20px; 
+            border-radius: 30px; 
+            border: 2px solid #ffcc00; /* Bordure aux couleurs de ton logo */
+            outline: none; 
+        }
+
+        .promo-banner { 
+            background: linear-gradient(90deg, #ffcc00, #ff9900); 
+            color: black; 
+            padding: 20px; 
+            text-align: center; 
+            margin: 15px; 
+            border-radius: 15px;
+            font-family: sans-serif;
+        }
+
+        .container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            justify-content: center; 
+            padding: 20px; 
+            font-family: 'Segoe UI', sans-serif; 
+        }
+
+        footer { background: #222; color: white; padding: 40px 20px; margin-top: 50px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <header style="text-align: center; padding: 20px; background: white; border-bottom: 2px solid #ffcc00;">
-        <h1 style="margin:0; font-size: 2.5em;">SAFE<span style="color: #ffcc00;">RUN</span> MARKET</h1>
-        <p style="color: #666; margin-top: 5px;">La qualité, en toute sécurité.</p>
+    <header class="logo-container">
+        <a href="/">
+            <img src="https://i.imgur.com/QnYl5Qt.jpeg" alt="SafeRunMarket Logo" class="main-logo">
+        </a>
+        <h1 style="margin:0; font-size: 1.8em; color: #333;">SAFE<span style="color: #ffcc00;">RUN</span> MARKET</h1>
+        <p style="color: #777; font-style: italic;">La qualité, en toute sécurité.</p>
     </header>
 
     <div class="promo-banner">
-        <span class="badge-livraison">PROMO DU JOUR</span>
-        <h2>Pack Famille PPN : 20.000 Ar</h2>
-        <p>Riz 5kg + Huile 1L + Savon - Livraison gratuite à Antananarivo !</p>
+        <h2 style="margin: 0;">🚚 Livraison Rapide sur Analamanga</h2>
+        <p>Vos PPN livrés chez vous avec le sourire !</p>
     </div>
 
     <div class="search-bar">
-        <input type="text" id="search" placeholder="Rechercher riz, savon, huile...">
-        <button style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer;">
+        <input type="text" id="search" placeholder="Que recherchez-vous aujourd'hui ?">
+        <button style="background: #ffcc00; border: none; padding: 10px 25px; border-radius: 30px; cursor: pointer; font-weight: bold;">
             <i class="fas fa-search"></i>
         </button>
     </div>
 
-    <div class="container">
-        <h2 style="width: 100%; text-align: center;">Nos Produits Phares</h2>
+    <div id="boutique-section" style="padding: 20px;">
+        <h2 style="text-align: center; border-bottom: 3px solid #ffcc00; display: inline-block; width: auto; margin-left: auto; margin-right: auto;">Nos Produits</h2>
         <div id="boutique" class="container">
-            <p>Chargement des stocks SafeRun...</p>
+            <p>Chargement des produits en cours...</p>
         </div>
     </div>
 
     <footer>
         <div style="display: flex; flex-wrap: wrap; justify-content: space-around; max-width: 1000px; margin: 0 auto;">
             <div>
-                <h3>Contact</h3>
-                <p>📍 Analamanga, Antananarivo</p>
-                <p>📞 +261 34 XX XXX XX</p>
+                <h3>📞 Contact</h3>
+                <p>Analamanga, Antananarivo</p>
+                <p>WhatsApp: +261 34 XX XXX XX</p>
             </div>
             <div>
-                <h3>Paiement Mobile</h3>
-                <div class="payment-icons">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Orange_Money_logo.svg/512px-Orange_Money_logo.svg.png" width="40" alt="Orange Money">
-                    <img src="https://www.mbola.mg/wp-content/uploads/2020/06/logo-mbola.png" width="60" alt="MVola">
-                </div>
-                <p style="font-size: 0.8em;">Paiement sécurisé à la livraison</p>
+                <h3>💳 Paiement</h3>
+                <p>Orange Money / MVola / Espèces</p>
             </div>
         </div>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #555;">
-        <p>© 2026 SafeRunMarket - Qualité & Rapidité</p>
+        <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.7;">© 2026 SafeRunMarket</p>
     </footer>
 
     <script src="js/main.js"></script>
