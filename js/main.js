@@ -1,60 +1,79 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 
-async function afficherBoutique() {
+// Variable pour stocker les produits en mémoire (évite de recharger la base à chaque recherche)
+let tousLesProduits = [];
+
+/**
+ * Charge les produits depuis Google Sheets
+ */
+async function chargerBoutique() {
     const container = document.getElementById('boutique');
     try {
         const reponse = await fetch(API_URL);
-        const produits = await reponse.json();
+        tousLesProduits = await reponse.json();
         
-        container.innerHTML = ""; // On vide le message de chargement
+        if (tousLesProduits.length === 0) {
+            container.innerHTML = "<p>Aucun produit disponible pour le moment.</p>";
+            return;
+        }
 
-        produits.forEach(p => {
-            container.innerHTML += `
-                <div class="carte-produit">
-                    <img src="${p.Image_URL}" width="100">
-                    <h3>${p.Nom}</h3>
-                    <p>${p.Description}</p>
-                    <p class="prix">${p.Prix} Ar</p>
-                    <button onclick="commander('${p.Nom}')">Commander</button>
-                </div>
-            `;
-        });
+        rendreProduits(tousLesProduits);
     } catch (e) {
-        container.innerHTML = "Erreur de connexion à la base de données.";
+        container.innerHTML = "<div style='padding:20px; color:red;'>⚠️ Erreur de connexion à SafeRun Database. Vérifiez votre connexion internet.</div>";
+        console.error("Erreur de chargement:", e);
     }
 }
 
-afficherBoutique();
-// Variable globale pour stocker les produits une fois chargés
-let tousLesProduits = [];
-
-async function afficherBoutique() {
-    const response = await fetch(API_URL);
-    tousLesProduits = await response.json();
-    rendreProduits(tousLesProduits);
-}
-
+/**
+ * Affiche les produits dans l'interface avec le design attrayant
+ * @param {Array} liste - Liste des produits à afficher
+ */
 function rendreProduits(liste) {
     const container = document.getElementById('boutique');
+    
     container.innerHTML = liste.map(p => `
         <div class="carte-produit">
-            <div class="prix-badge">${p.Prix} Ar</div>
-            <img src="${p.Image_URL}" style="width:100%; height:200px; object-fit:cover;">
+            <div class="prix-badge">${p.Prix.toLocaleString()} Ar</div>
+            
+            <img src="${p.Image_URL || 'https://via.placeholder.com/200'}" alt="${p.Nom}">
+            
             <div style="padding:15px;">
-                <h3>${p.Nom}</h3>
-                <p style="color:#7f8c8d; font-size:0.9rem;">${p.Description}</p>
-                <button onclick="ajouterAuPanier('${p.Nom}', ${p.Prix})">AJOUTER AU PANIER</button>
+                <h3 style="margin: 0 0 10px 0; font-size: 1.1rem;">${p.Nom}</h3>
+                <p style="color:#7f8c8d; font-size:0.85rem; height: 40px; overflow: hidden;">
+                    ${p.Description || 'Qualité garantie par SafeRunMarket'}
+                </p>
+                
+                <button onclick="ajouterAuPanier('${p.Nom.replace(/'/g, "\\'")}', ${p.Prix})">
+                    <i class="fas fa-cart-plus"></i> AJOUTER AU PANIER
+                </button>
             </div>
         </div>
     `).join('');
 }
 
-// Écouteur pour la recherche
-document.getElementById('search').addEventListener('input', (e) => {
-    const recherche = e.target.value.toLowerCase();
-    const filtres = tousLesProduits.filter(p => 
-        p.Nom.toLowerCase().includes(recherche) || 
-        p.Description.toLowerCase().includes(recherche)
-    );
-    rendreProduits(filtres);
-});
+/**
+ * Gère la recherche en temps réel
+ */
+const inputRecherche = document.getElementById('search');
+if (inputRecherche) {
+    inputRecherche.addEventListener('input', (e) => {
+        const recherche = e.target.value.toLowerCase();
+        const filtres = tousLesProduits.filter(p => 
+            p.Nom.toLowerCase().includes(recherche) || 
+            (p.Description && p.Description.toLowerCase().includes(recherche))
+        );
+        rendreProduits(filtres);
+    });
+}
+
+/**
+ * Fonction Panier (À améliorer plus tard vers WhatsApp)
+ */
+function ajouterAuPanier(nom, prix) {
+    // Petit effet visuel simple
+    alert("✅ " + nom + " a été ajouté au panier !");
+    console.log("Panier:", nom, prix);
+}
+
+// Lancement du chargement au démarrage
+chargerBoutique();
