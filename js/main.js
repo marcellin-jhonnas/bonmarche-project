@@ -28,27 +28,41 @@ function rendreProduits(liste) {
     `).join('');
 }
 
-// 2. LOGIQUE DU PANIER
+// 2. LOGIQUE DU PANIER AVEC QUANTITÉS
 function ajouterAuPanier(nom, prix) {
-    panier.push({ nom, prix });
+    // On cherche si le produit est déjà dans le panier
+    const produitExistant = panier.find(item => item.nom === nom);
+
+    if (produitExistant) {
+        // Si oui, on augmente juste la quantité
+        produitExistant.quantite += 1;
+    } else {
+        // Si non, on l'ajoute avec une quantité de 1
+        panier.push({ nom, prix, quantite: 1 });
+    }
+    
     mettreAJourBadge();
     
-    // Petite notification discrète au lieu d'une alerte bloquante
-    console.log(`${nom} ajouté au panier`);
+    // Animation visuelle optionnelle : faire bouger le panier
+    const badge = document.getElementById('cart-count');
+    badge.style.transform = "scale(1.3)";
+    setTimeout(() => badge.style.transform = "scale(1)", 200);
 }
 
 function mettreAJourBadge() {
     const badge = document.getElementById('cart-count');
     if(badge) {
-        badge.innerText = panier.length;
-        badge.style.display = panier.length > 0 ? "block" : "none";
+        // On calcule le nombre total d'articles (3 huiles + 5 eaux = 8 articles)
+        const totalArticles = panier.reduce((sum, item) => sum + item.quantite, 0);
+        badge.innerText = totalArticles;
+        badge.style.display = totalArticles > 0 ? "block" : "none";
     }
 }
 
-// 3. ENVOI DE LA COMMANDE GROUPÉE
+// 3. ENVOI DE LA COMMANDE GROUPÉE (Version Quantités)
 function envoyerCommande() {
     if (panier.length === 0) {
-        alert("Votre panier est vide ! Choisissez des produits d'abord.");
+        alert("Votre panier est vide ! Choisissez vos produits d'abord.");
         return;
     }
 
@@ -56,26 +70,27 @@ function envoyerCommande() {
     const clientNom = localStorage.getItem('saferun_nom') || "[À COMPLÉTER]";
     const clientQuartier = localStorage.getItem('saferun_quartier') || "[À COMPLÉTER]";
 
-    // Construire la liste des produits pour le message
     let listeProduits = "";
-    let total = 0;
+    let totalGeneral = 0;
     
-    panier.forEach((item, index) => {
-        listeProduits += `${index + 1}. *${item.nom}* (${item.prix.toLocaleString()} Ar)\n`;
-        total += item.prix;
+    panier.forEach((item) => {
+        const sousTotal = item.prix * item.quantite;
+        totalGeneral += sousTotal;
+        // On affiche : "3 x Huile (15.000 Ar) = 45.000 Ar"
+        listeProduits += `✅ ${item.quantite} x *${item.nom}* : ${sousTotal.toLocaleString()} Ar\n`;
     });
 
     const message = `Bonjour SafeRun Market ! 🛒\n\n` +
-                    `Je souhaite commander ces produits :\n` +
+                    `Nouvelle commande de :\n` +
                     `---------------------------\n` +
                     `${listeProduits}` +
                     `---------------------------\n` +
-                    `💰 *TOTAL : ${total.toLocaleString()} Ar*\n\n` +
+                    `💰 *TOTAL À PAYER : ${totalGeneral.toLocaleString()} Ar*\n\n` +
                     `--- INFOS LIVRAISON ---\n` +
                     `👤 NOM : ${clientNom}\n` +
                     `📍 QUARTIER : ${clientQuartier}\n` +
                     `---------------------------\n` +
-                    `Merci de confirmer ma commande !`;
+                    `Je confirme ma commande !`;
 
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
