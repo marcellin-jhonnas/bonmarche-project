@@ -94,6 +94,21 @@ function envoyerCommande() {
 
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
+// Fonction pour filtrer les produits
+function filtrerParCategorie(categorie) {
+    // 1. Gérer l'apparence des boutons
+    const boutons = document.querySelectorAll('.cat-btn');
+    boutons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // 2. Filtrer la liste
+    if (categorie === 'Tous') {
+        rendreProduits(tousLesProduits);
+    } else {
+        const produitsFiltrés = tousLesProduits.filter(p => p.Categorie === categorie);
+        rendreProduits(produitsFiltrés);
+    }
+}
 
 // Lier le clic sur l'icône du panier à l'envoi de la commande
 document.querySelector('.cart-trigger').onclick = envoyerCommande;

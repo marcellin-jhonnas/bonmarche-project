@@ -291,3 +291,42 @@ button {
     color: #666;
     font-size: 0.8rem;
 }
+/* Barre de filtres */
+.category-filter-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    overflow-x: auto; /* Permet de défiler sur mobile */
+    white-space: nowrap;
+}
+
+.cat-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 2px solid var(--primary);
+    background: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.cat-btn:hover, .cat-btn.active {
+    background: var(--primary);
+    color: var(--secondary);
+    box-shadow: 0 4px 10px rgba(255, 204, 0, 0.4);
+}
+
+/* Badge sur la carte produit */
+.cat-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    background: #eee;
+    padding: 3px 10px;
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+}
