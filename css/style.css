@@ -291,42 +291,63 @@ button {
     color: #666;
     font-size: 0.8rem;
 }
-/* Barre de filtres */
+/* --- BARRE DE FILTRES PAR CATÉGORIES --- */
 .category-filter-container {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: flex-start; /* Aligné à gauche pour faciliter le défilement */
+    gap: 12px;
     padding: 20px;
-    overflow-x: auto; /* Permet de défiler sur mobile */
+    overflow-x: auto; /* Permet le défilement horizontal sur mobile */
     white-space: nowrap;
+    scrollbar-width: none; /* Cache la barre sur Firefox */
+    -ms-overflow-style: none; /* Cache la barre sur IE/Edge */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Défilement fluide sur iPhone */
+}
+
+/* Cache la barre de défilement sur Chrome et Safari */
+.category-filter-container::-webkit-scrollbar {
+    display: none;
 }
 
 .cat-btn {
-    padding: 10px 20px;
-    border-radius: 25px;
+    padding: 10px 22px;
+    border-radius: 30px;
     border: 2px solid var(--primary);
     background: white;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
+    flex-shrink: 0; /* Empêche le bouton de s'écraser */
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.cat-btn:hover, .cat-btn.active {
+.cat-btn:hover {
+    background: #fff9e6; /* Un léger jaune au survol */
+    transform: translateY(-2px);
+}
+
+.cat-btn.active {
     background: var(--primary);
     color: var(--secondary);
-    box-shadow: 0 4px 10px rgba(255, 204, 0, 0.4);
+    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
+    border-color: var(--primary);
 }
 
-/* Badge sur la carte produit */
+/* Badge de catégorie sur chaque carte produit */
 .cat-tag {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    background: #eee;
-    padding: 3px 10px;
-    border-radius: 10px;
-    color: var(--text-muted);
-    font-weight: bold;
+    background: #f0f0f0;
+    padding: 4px 12px;
+    border-radius: 50px;
+    color: #666;
+    font-weight: 700;
     display: inline-block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
 }
