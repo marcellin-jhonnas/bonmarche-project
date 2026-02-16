@@ -238,3 +238,56 @@ button {
     .container { grid-template-columns: repeat(2, 1fr); gap: 15px; }
     .promo-slider { height: 180px; }
 }
+/* --- FOOTER PREMIUM --- */
+.footer-premium {
+    background: #1a1a1a;
+    color: white;
+    padding: 60px 0 20px 0;
+    margin-top: 50px;
+    position: relative;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    padding: 0 20px;
+}
+
+.footer-logo { height: 60px; border-radius: 10px; margin-bottom: 15px; }
+.footer-brand h3 { color: white; margin-bottom: 10px; }
+.footer-brand h3 span { color: var(--primary); }
+.footer-brand p { color: #aaa; font-size: 0.9rem; line-height: 1.6; }
+
+.footer-links h4, .footer-contact h4 {
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.footer-links ul { list-style: none; padding: 0; }
+.footer-links ul li { margin-bottom: 10px; }
+.footer-links ul li a { color: #aaa; text-decoration: none; transition: 0.3s; }
+.footer-links ul li a:hover { color: var(--primary); padding-left: 5px; }
+
+.footer-contact p { color: #aaa; margin-bottom: 15px; font-size: 0.9rem; }
+.footer-contact i { color: var(--primary); margin-right: 10px; }
+
+.social-icons { display: flex; gap: 15px; margin-top: 20px; }
+.social-icons a { 
+    color: white; background: #333; width: 40px; height: 40px; 
+    display: flex; align-items: center; justify-content: center; 
+    border-radius: 50%; transition: 0.3s; 
+}
+.social-icons a:hover { background: var(--primary); color: #1a1a1a; transform: translateY(-5px); }
+
+.footer-copyright {
+    text-align: center;
+    border-top: 1px solid #333;
+    margin-top: 40px;
+    padding-top: 20px;
+    color: #666;
+    font-size: 0.8rem;
+}

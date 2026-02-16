@@ -69,10 +69,15 @@ if (inputRecherche) {
 /**
  * Fonction Panier (À améliorer plus tard vers WhatsApp)
  */
-function ajouterAuPanier(nom, prix) {
-    // Petit effet visuel simple
-    alert("✅ " + nom + " a été ajouté au panier !");
-    console.log("Panier:", nom, prix);
+function ajouterAuPanier(nom) {
+    const numeroWhatsApp = "261382453610"; // Ton numéro sans le +
+    const message = `Bonjour SafeRun Market ! 🛒\nJe souhaite commander le produit suivant :\n- *${nom}*\n\nPourriez-vous me confirmer la disponibilité et le délai de livraison ? Merci !`;
+    
+    // Encode le message pour l'URL
+    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(message)}`;
+    
+    // Ouvre WhatsApp dans un nouvel onglet
+    window.open(urlWhatsApp, '_blank');
 }
 
 // Lancement du chargement au démarrage
