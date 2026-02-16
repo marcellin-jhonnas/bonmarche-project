@@ -3,136 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeRunMarket - Qualité & Prix Bas</title>
+    <title>SafeRun Market - Votre Marché à Antananarivo</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Styles pour rendre le logo et le header attrayants */
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: #ffffff;
-        }
-
-        .main-logo {
-            max-width: 180px; /* Taille du logo */
-            height: auto;
-            border-radius: 15px; /* Coins arrondis */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Ombre douce */
-            transition: transform 0.3s ease;
-            margin-bottom: 10px;
-        }
-
-        .main-logo:hover {
-            transform: scale(1.05); /* Petit effet de zoom au survol */
-        }
-
-        .search-bar { 
-            max-width: 600px; 
-            margin: 20px auto; 
-            display: flex; 
-            gap: 10px; 
-            padding: 0 20px; 
-        }
-
-        .search-bar input { 
-            flex: 1; 
-            padding: 12px 20px; 
-            border-radius: 30px; 
-            border: 2px solid #ffcc00; /* Bordure aux couleurs de ton logo */
-            outline: none; 
-        }
-
-        .promo-banner { 
-            background: linear-gradient(90deg, #ffcc00, #ff9900); 
-            color: black; 
-            padding: 20px; 
-            text-align: center; 
-            margin: 15px; 
-            border-radius: 15px;
-            font-family: sans-serif;
-        }
-
-        .container { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 20px; 
-            justify-content: center; 
-            padding: 20px; 
-            font-family: 'Segoe UI', sans-serif; 
-        }
-
-        footer { background: #222; color: white; padding: 40px 20px; margin-top: 50px; text-align: center; }
-    </style>
 </head>
 <body>
 
+    <div class="top-announcement">
+        <div class="scrolling-text">
+            ⚡ Livraison rapide sur tout Antananarivo — 🛍️ Qualité PPN garantie — 📞 Service client : +261 38 24 536 10 — 📦 Paiement sécurisé à la livraison 
+        </div>
+    </div>
+
     <header>
-    <div class="header-container">
-        <div class="logo-area">
-            <img src="https://i.imgur.com/QnYl5Qt.jpeg" alt="Logo SafeRunMarket" class="logo-img">
-            <div class="logo-text">
-                SAFERUN <span>MARKET</span>
-            </div>
-        </div>
-
-        <div class="nav-elements">
-            <div class="search-wrapper">
-                <input type="text" id="search" placeholder="Rechercher...">
-                <i class="fas fa-search search-icon"></i>
-            </div>
-            
-            <div class="header-icons">
-                <div class="icon-item">
-                    <i class="fas fa-user"></i>
-                    <span class="icon-label">Compte</span>
-                </div>
-                <div class="icon-item cart-trigger">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-badge">0</span>
-                    <span class="icon-label">Panier</span>
+        <div class="header-container">
+            <div class="logo-area">
+                <img src="https://i.imgur.com/QnYl5Qt.jpeg" alt="Logo SafeRunMarket" class="logo-img">
+                <div class="logo-text">
+                    SAFERUN <span>MARKET</span>
                 </div>
             </div>
+
+            <div class="nav-elements">
+                <div class="search-wrapper">
+                    <i class="fas fa-search search-icon-inside"></i>
+                    <input type="text" id="search" placeholder="Rechercher un produit...">
+                </div>
+                
+                <div class="header-icons">
+                    <div class="icon-item">
+                        <i class="fas fa-user"></i>
+                        <span class="icon-label">Compte</span>
+                    </div>
+                    <div class="icon-item cart-trigger">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" id="cart-count">0</span>
+                        <span class="icon-label">Panier</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
-    <div class="promo-banner">
-        <h2 style="margin: 0;">🚚 Livraison Rapide sur Analamanga</h2>
-        <p>Vos PPN livrés chez vous avec le sourire !</p>
-    </div>
-
-    <div class="search-bar">
-        <input type="text" id="search" placeholder="Que recherchez-vous aujourd'hui ?">
-        <button style="background: #ffcc00; border: none; padding: 10px 25px; border-radius: 30px; cursor: pointer; font-weight: bold;">
-            <i class="fas fa-search"></i>
-        </button>
-    </div>
-
-    <div id="boutique-section" style="padding: 20px;">
-        <h2 style="text-align: center; border-bottom: 3px solid #ffcc00; display: inline-block; width: auto; margin-left: auto; margin-right: auto;">Nos Produits</h2>
-        <div id="boutique" class="container">
-            <p>Chargement des produits en cours...</p>
+    <section class="promo-slider">
+        <div class="slide active">
+            <div class="slide-content">
+                <h2>LE MARCHÉ SANS SE DÉPLACER 🏠</h2>
+                <p>Vos PPN livrés chez vous avec le sourire en moins de 2h.</p>
+                <button class="btn-promo" onclick="document.getElementById('search').focus()">Voir les produits</button>
+            </div>
         </div>
+        <div class="slide">
+            <div class="slide-content">
+                <h2>RIZ GASY & HUILE DE QUALITÉ 🍚</h2>
+                <p>Le meilleur prix sur les produits essentiels à Antananarivo.</p>
+                <button class="btn-promo">Profiter des offres</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="trust-badges">
+        <div class="badge-item">
+            <i class="fas fa-truck-fast"></i>
+            <span>Livraison Express</span>
+        </div>
+        <div class="badge-item">
+            <i class="fas fa-shield-halved"></i>
+            <span>Qualité Contrôlée</span>
+        </div>
+        <div class="badge-item">
+            <i class="fas fa-hand-holding-dollar"></i>
+            <span>Payez à la livraison</span>
+        </div>
+    </section>
+
+    <div id="boutique-section">
+        <div class="section-title">
+            <h2>🛒 Nos Produits</h2>
+            <div class="underline"></div>
+        </div>
+        <main id="boutique" class="container">
+            <p>Chargement de votre marché en cours...</p>
+        </main>
     </div>
 
     <footer>
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-around; max-width: 1000px; margin: 0 auto;">
-            <div>
+        <div class="footer-content">
+            <div class="footer-section">
                 <h3>📞 Contact</h3>
-                <p>Analamanga, Antananarivo</p>
-                <p>WhatsApp: +261 34 XX XXX XX</p>
+                <p><i class="fas fa-map-marker-alt"></i> Analamanga, Antananarivo</p>
+                <p><i class="fab fa-whatsapp"></i> +261 38 24 536 10</p>
             </div>
-            <div>
+            <div class="footer-section">
                 <h3>💳 Paiement</h3>
-                <p>Orange Money / MVola / Espèces</p>
+                <p>Orange Money / MVola / Airtel / Espèces</p>
             </div>
         </div>
-        <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.7;">© 2026 SafeRunMarket</p>
+        <div class="footer-bottom">
+            <p>© 2026 SafeRunMarket — La qualité, en toute sécurité.</p>
+        </div>
     </footer>
 
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        setInterval(nextSlide, 5000); // Change toutes les 5 secondes
+    </script>
     <script src="js/main.js"></script>
 </body>
 </html>
