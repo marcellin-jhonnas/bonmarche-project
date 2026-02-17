@@ -139,20 +139,38 @@ document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
 });
 // Afficher le popup après 3 secondes
-window.onload = function() {
+wwindow.onload = function() {
     // On ne l'affiche que si l'utilisateur n'est pas déjà enregistré
     if (!localStorage.getItem('saferun_nom')) {
         setTimeout(() => {
-            document.getElementById('welcome-popup').classList.add('show');
+            const popup = document.getElementById('welcome-popup');
+            if (popup) popup.classList.add('show');
         }, 3000); 
     }
 };
 
 function fermerPopup() {
-    document.getElementById('welcome-popup').classList.remove('show');
+    const popup = document.getElementById('welcome-popup');
+    if (popup) popup.classList.remove('show');
 }
 
 function ouvrirInscription() {
+    // 1. On ferme le popup d'abord
     fermerPopup();
-    gererCompte(); // Appelle ta fonction qui demande le Nom et le Quartier
+
+    // 2. On attend 300ms (le temps que le popup disparaisse) pour lancer l'inscription
+    setTimeout(() => {
+        // On vérifie si gererCompte existe, sinon on met le code en direct ici
+        const nomExistant = localStorage.getItem('saferun_nom') || "";
+        const quartierExistant = localStorage.getItem('saferun_quartier') || "";
+
+        const n = prompt("Bienvenue ! Quel est votre Nom complet ?", nomExistant);
+        const q = prompt("Dans quel Quartier habitez-vous ?", quartierExistant);
+
+        if (n && q && n.trim() !== "" && q.trim() !== "") {
+            localStorage.setItem('saferun_nom', n.trim());
+            localStorage.setItem('saferun_quartier', q.trim());
+            alert("✅ Merci " + n + ", vos informations sont enregistrées !");
+        }
+    }, 300);
 }
