@@ -41,7 +41,7 @@ body {
     100% { transform: translateX(-100%); }
 }
 
-/* --- 3. HEADER ORCHESTRÉ --- */
+/* --- 3. HEADER --- */
 header {
     background: var(--white);
     padding: 10px 5%;
@@ -59,35 +59,13 @@ header {
     margin: 0 auto;
 }
 
-.logo-area {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.logo-img {
-    height: 50px;
-    border-radius: 10px;
-}
-
-.logo-text {
-    font-weight: 700;
-    font-size: 1.3rem;
-}
-
+.logo-area { display: flex; align-items: center; gap: 15px; }
+.logo-img { height: 50px; border-radius: 10px; }
+.logo-text { font-weight: 700; font-size: 1.3rem; }
 .logo-text span { color: var(--primary); }
 
-.nav-elements {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.search-wrapper {
-    position: relative;
-    width: 250px;
-}
-
+.nav-elements { display: flex; align-items: center; gap: 20px; }
+.search-wrapper { position: relative; width: 250px; }
 #search {
     width: 100%;
     padding: 10px 15px 10px 40px;
@@ -105,75 +83,56 @@ header {
     color: #999;
 }
 
-.header-icons {
+.header-icons { display: flex; gap: 15px; }
+.icon-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; }
+.cart-badge { background: var(--primary); color: var(--secondary); padding: 2px 6px; border-radius: 50px; font-weight: bold; }
+
+/* --- 4. BARRE DE FILTRES (CORRIGÉE) --- */
+.category-filter-container {
     display: flex;
-    gap: 15px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
-.icon-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 0.7rem;
+.category-filter-container::-webkit-scrollbar { display: none; }
+
+/* Correction du conflit : On cible spécifiquement les boutons de catégorie */
+.category-filter-container .cat-btn {
+    width: auto; /* Annule le width 100% global */
+    margin-top: 0; /* Aligne correctement */
+    padding: 10px 22px;
+    border-radius: 30px;
+    border: 2px solid var(--primary);
+    background: var(--white);
+    font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
-.cart-badge {
+.category-filter-container .cat-btn:hover {
+    background: #fff9e6;
+    transform: translateY(-2px);
+}
+
+.category-filter-container .cat-btn.active {
     background: var(--primary);
     color: var(--secondary);
-    padding: 2px 6px;
-    border-radius: 50px;
-    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
 }
 
-/* --- 4. SLIDER PUBLICITAIRE --- */
-.promo-slider {
-    margin: 20px;
-    height: 250px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.slide {
-    display: none;
-    padding: 20px;
-    animation: fadeIn 0.8s ease;
-}
-
-.slide.active { display: block; }
-
-.btn-promo {
-    background: var(--secondary);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 30px;
-    margin-top: 15px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* --- 5. BADGES DE CONFIANCE --- */
-.trust-badges {
-    display: flex;
-    justify-content: space-around;
-    padding: 20px;
-    background: white;
-    margin: 0 20px 20px 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.badge-item { text-align: center; font-weight: bold; font-size: 0.8rem; }
-.badge-item i { display: block; color: #27ae60; font-size: 1.5rem; margin-bottom: 5px; }
-
-/* --- 6. GRILLE DE PRODUITS --- */
+/* --- 5. GRILLE DE PRODUITS --- */
 .container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -187,10 +146,12 @@ header {
     background: var(--white);
     border-radius: 25px;
     overflow: hidden;
-    padding: 10px;
+    padding: 15px;
     position: relative;
     transition: var(--transition);
     box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
 }
 
 .carte-produit:hover {
@@ -200,24 +161,25 @@ header {
 
 .carte-produit img {
     width: 100%;
-    height: 200px;
+    height: 180px;
     object-fit: contain;
-    border-radius: 20px;
+    border-radius: 15px;
     background: #f9f9f9;
 }
 
 .prix-badge {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 25px;
+    right: 25px;
     background: var(--secondary);
     color: var(--primary);
     padding: 6px 14px;
     border-radius: 12px;
     font-weight: 700;
+    z-index: 10;
 }
 
-/* --- 7. BOUTONS --- */
+/* --- 6. BOUTONS GLOBAUX (PRODUITS) --- */
 button {
     background: linear-gradient(135deg, var(--primary), var(--accent));
     color: var(--secondary);
@@ -226,119 +188,15 @@ button {
     border-radius: 15px;
     cursor: pointer;
     font-weight: 700;
-    width: 100%;
+    width: 100%; /* Important pour les cartes produits */
     margin-top: 15px;
-}
-
-/* --- ANIMATIONS ET RESPONSIVE --- */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-@media (max-width: 768px) {
-    .logo-text, .icon-label, .search-wrapper { display: none; }
-    .container { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-    .promo-slider { height: 180px; }
-}
-/* --- FOOTER PREMIUM --- */
-.footer-premium {
-    background: #1a1a1a;
-    color: white;
-    padding: 60px 0 20px 0;
-    margin-top: 50px;
-    position: relative;
-}
-
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    padding: 0 20px;
-}
-
-.footer-logo { height: 60px; border-radius: 10px; margin-bottom: 15px; }
-.footer-brand h3 { color: white; margin-bottom: 10px; }
-.footer-brand h3 span { color: var(--primary); }
-.footer-brand p { color: #aaa; font-size: 0.9rem; line-height: 1.6; }
-
-.footer-links h4, .footer-contact h4 {
-    color: var(--primary);
-    margin-bottom: 20px;
-    font-weight: 600;
-}
-
-.footer-links ul { list-style: none; padding: 0; }
-.footer-links ul li { margin-bottom: 10px; }
-.footer-links ul li a { color: #aaa; text-decoration: none; transition: 0.3s; }
-.footer-links ul li a:hover { color: var(--primary); padding-left: 5px; }
-
-.footer-contact p { color: #aaa; margin-bottom: 15px; font-size: 0.9rem; }
-.footer-contact i { color: var(--primary); margin-right: 10px; }
-
-.social-icons { display: flex; gap: 15px; margin-top: 20px; }
-.social-icons a { 
-    color: white; background: #333; width: 40px; height: 40px; 
-    display: flex; align-items: center; justify-content: center; 
-    border-radius: 50%; transition: 0.3s; 
-}
-.social-icons a:hover { background: var(--primary); color: #1a1a1a; transform: translateY(-5px); }
-
-.footer-copyright {
-    text-align: center;
-    border-top: 1px solid #333;
-    margin-top: 40px;
-    padding-top: 20px;
-    color: #666;
-    font-size: 0.8rem;
-}
-/* --- BARRE DE FILTRES PAR CATÉGORIES --- */
-.category-filter-container {
-    display: flex;
-    justify-content: flex-start; /* Aligné à gauche pour faciliter le défilement */
-    gap: 12px;
-    padding: 20px;
-    overflow-x: auto; /* Permet le défilement horizontal sur mobile */
-    white-space: nowrap;
-    scrollbar-width: none; /* Cache la barre sur Firefox */
-    -ms-overflow-style: none; /* Cache la barre sur IE/Edge */
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Défilement fluide sur iPhone */
-}
-
-/* Cache la barre de défilement sur Chrome et Safari */
-.category-filter-container::-webkit-scrollbar {
-    display: none;
-}
-
-.cat-btn {
-    padding: 10px 22px;
-    border-radius: 30px;
-    border: 2px solid var(--primary);
-    background: white;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
-    flex-shrink: 0; /* Empêche le bouton de s'écraser */
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    transition: 0.3s;
 }
 
-.cat-btn:hover {
-    background: #fff9e6; /* Un léger jaune au survol */
-    transform: translateY(-2px);
-}
+button:active { transform: scale(0.95); }
 
-.cat-btn.active {
-    background: var(--primary);
-    color: var(--secondary);
-    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
-    border-color: var(--primary);
-}
-
-/* Badge de catégorie sur chaque carte produit */
+/* Badge catégorie dans la carte */
 .cat-tag {
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -347,7 +205,12 @@ button {
     border-radius: 50px;
     color: #666;
     font-weight: 700;
+    margin: 10px 0 5px 0;
     display: inline-block;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .logo-text, .icon-label, .search-wrapper { display: none; }
+    .container { grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px; }
 }
