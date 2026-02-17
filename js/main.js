@@ -138,3 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chargerBoutique();
 });
+// Afficher le popup après 3 secondes
+window.onload = function() {
+    // On ne l'affiche que si l'utilisateur n'est pas déjà enregistré
+    if (!localStorage.getItem('saferun_nom')) {
+        setTimeout(() => {
+            document.getElementById('welcome-popup').classList.add('show');
+        }, 3000); 
+    }
+};
+
+function fermerPopup() {
+    document.getElementById('welcome-popup').classList.remove('show');
+}
+
+function ouvrirInscription() {
+    fermerPopup();
+    gererCompte(); // Appelle ta fonction qui demande le Nom et le Quartier
+}
