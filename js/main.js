@@ -42,7 +42,7 @@ function ajouterAuPanier(nom, prix) {
     if (produitExistant) {
         produitExistant.quantite += 1;
     } else {
-        panier.push({ nom, prix, quantite: 1 });
+        panier.push({ nom, prix, parseInt(quantite): 1 });
     }
     mettreAJourBadge();
 }
@@ -73,16 +73,55 @@ function filtrerParCategorie(categorieCible) {
     }
 }
 
-// 4. WHATSAPP (Version amplifiée avec Téléphone)
-function envoyerCommande() {
+// 4. LOGIQUE DE COMMANDE HYBRIDE (AUTO / WHATSAPP)
+async function envoyerCommande() {
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
-    const numeroWA = "261382453610";
-    const clientNom = localStorage.getItem('saferun_nom') || "[À COMPLÉTER]";
-    const clientTel = localStorage.getItem('saferun_tel') || "[À COMPLÉTER]";
-    const clientQuartier = localStorage.getItem('saferun_quartier') || "[À COMPLÉTER]";
+    const estInscrit = localStorage.getItem('saferun_nom');
 
+    if (!estInscrit) {
+        alert("Pour un suivi automatique, inscrivez-vous ! Redirection vers WhatsApp...");
+        finaliserVersWhatsApp(); 
+    } else {
+        ouvrirTicketAutomatique();
+    }
+}
+
+function ouvrirTicketAutomatique() {
+    const modal = document.getElementById('modal-panier');
+    const detail = document.getElementById('detail-panier');
+    const totalLabel = document.getElementById('total-modal');
+    
+    if(!modal) return;
+
+    let resume = "";
+    let total = 0;
+    panier.forEach(item => {
+        const st = item.prix * item.quantite;
+        total += st;
+        resume += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${item.quantite}x ${item.nom}</span>
+                    <span>${st.toLocaleString()} Ar</span>
+                   </div>`;
+    });
+
+    detail.innerHTML = `<strong>Ticket Client Privilégié</strong><hr>${resume}`;
+    totalLabel.innerText = total.toLocaleString() + " Ar";
+    
+    const btnEnvoi = modal.querySelector('.btn-inscription');
+    btnEnvoi.innerHTML = "🚀 VALIDER MA COMMANDE (AUTO)";
+    btnEnvoi.onclick = envoyerDonneesAuSheet;
+
+    modal.style.display = "flex";
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// FONCTION POUR LES NON-INSCRITS (WHATSAPP DIRECT)
+function finaliserVersWhatsApp() {
+    const numeroWA = "261382453610";
+    const nom = localStorage.getItem('saferun_nom') || "Nouveau Client";
     let listeProduits = "";
     let totalGeneral = 0;
+    
     panier.forEach((item) => {
         const sousTotal = item.prix * item.quantite;
         totalGeneral += sousTotal;
@@ -90,18 +129,58 @@ function envoyerCommande() {
     });
 
     const message = `Bonjour SafeRun Market ! 🛒\n\n` +
-                    `Nouvelle commande de :\n---------------------------\n${listeProduits}---------------------------\n` +
-                    `💰 *TOTAL À PAYER : ${totalGeneral.toLocaleString()} Ar*\n\n` +
-                    `--- INFOS CLIENT ---\n👤 NOM : ${clientNom}\n📞 TEL : ${clientTel}\n📍 QUARTIER : ${clientQuartier}\n---------------------------\nJe confirme ma commande !`;
+                    `Je souhaite commander :\n---------------------------\n${listeProduits}---------------------------\n` +
+                    `💰 *TOTAL : ${totalGeneral.toLocaleString()} Ar*\n\n` +
+                    `Merci de me recontacter pour finaliser !`;
+
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-// 5. GESTION DU VOLET GAUCHE (SIDEBAR)
+async function envoyerDonneesAuSheet() {
+    const btn = event.target;
+    btn.innerText = "Traitement en cours...";
+    btn.disabled = true;
+
+    const commandeData = {
+        nom: localStorage.getItem('saferun_nom'),
+        tel: localStorage.getItem('saferun_tel'),
+        quartier: localStorage.getItem('saferun_quartier'),
+        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
+        date: new Date().toLocaleString(),
+        type: "AUTOMATIQUE"
+    };
+
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(commandeData)
+        });
+
+        alert("✅ Commande validée ! Votre ticket admin a été créé.");
+        panier = [];
+        mettreAJourBadge();
+        fermerModal();
+    } catch (error) {
+        alert("Erreur réseau. Basculement sur WhatsApp...");
+        finaliserVersWhatsApp();
+    }
+}
+
+function fermerModal() {
+    const modal = document.getElementById('modal-panier');
+    if(modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = "none", 300);
+    }
+}
+
+// 5. GESTION SIDEBAR
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
-    if (sidebar) {
-        sidebar.classList.toggle('open');
-    }
+    if (sidebar) sidebar.classList.toggle('open');
 }
 
 function rafraichirSidebar() {
@@ -117,13 +196,10 @@ function rafraichirSidebar() {
     if (nom && sideNom) sideNom.innerText = nom;
     if (tel && sideTel) sideTel.innerHTML = `<i class="fas fa-phone"></i> ${tel}`;
     if (quartier && sideQuartier) sideQuartier.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${quartier}`;
-    
-    if (nom && initialsDiv) {
-        initialsDiv.innerText = nom.charAt(0).toUpperCase();
-    }
+    if (nom && initialsDiv) initialsDiv.innerText = nom.charAt(0).toUpperCase();
 }
 
-// 6. POPUP & INSCRIPTION (Version Amplifiée)
+// 6. POPUP & INSCRIPTION
 function fermerPopup() {
     const popup = document.getElementById('welcome-popup');
     if (popup) popup.classList.remove('show');
@@ -133,17 +209,16 @@ function ouvrirInscription() {
     fermerPopup();
     setTimeout(() => {
         let n = prompt("Votre Nom complet :", localStorage.getItem('saferun_nom') || "");
-        let t = prompt("Votre Numéro de téléphone (WhatsApp) :", localStorage.getItem('saferun_tel') || "");
-        let q = prompt("Votre Quartier et précisions (ex: Lot, repère) :", localStorage.getItem('saferun_quartier') || "");
+        let t = prompt("Votre Numéro de téléphone :", localStorage.getItem('saferun_tel') || "");
+        let q = prompt("Votre Quartier :", localStorage.getItem('saferun_quartier') || "");
 
         if (n && t && q) {
             localStorage.setItem('saferun_nom', n.trim());
             localStorage.setItem('saferun_tel', t.trim());
             localStorage.setItem('saferun_quartier', q.trim());
-            
             rafraichirSidebar();
-            toggleSidebar(); // Ouvre le volet pour montrer le résultat
-            alert("✨ Profil mis à jour ! Bienvenue chez SafeRun Market.");
+            toggleSidebar();
+            alert("✨ Profil mis à jour !");
         }
     }, 400);
 }
@@ -153,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
 
-    // Ouvrir la sidebar au clic sur "Compte"
     const compteBtn = document.querySelector('.fa-user').parentElement;
     if (compteBtn) compteBtn.onclick = toggleSidebar;
 
