@@ -58,10 +58,10 @@
                         <i class="fas fa-user"></i>
                         <span class="icon-label">Compte</span>
                     </div>
-                    <div class="icon-item cart-trigger">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge" id="cart-count">0</span>
-                        <span class="icon-label">Panier</span>
+                    <div class="icon-item cart-trigger" onclick="envoyerCommande()" style="cursor:pointer;">
+                     <i class="fas fa-shopping-cart"></i>
+                     <span class="cart-badge" id="cart-count" style="display:none;">0</span>
+                     <span class="icon-label">Panier</span>
                     </div>
                 </div>
             </div>
@@ -172,6 +172,20 @@
         <h4>Besoin d'aide ?</h4>
         <p>Devenez notre client privilégié pour commander plus rapidement !</p>
         <button class="btn-inscription" onclick="ouvrirInscription()">S'INSCRIRE MAINTENANT</button>
+    </div>
+    </div>
+
+    <div id="modal-panier" class="welcome-popup" style="display:none; z-index: 1000;">
+    <div class="popup-content" style="max-width: 400px;">
+        <button class="close-popup" onclick="fermerModal()">×</button>
+        <div id="detail-panier" style="text-align: left; margin-top: 20px;">
+            </div>
+        <hr>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin: 15px 0;">
+            <span>TOTAL :</span>
+            <span id="total-modal">0 Ar</span>
+        </div>
+        <button class="btn-inscription" onclick="envoyerDonneesAuSheet()">🚀 VALIDER MA COMMANDE</button>
     </div>
     </div>
 </body>
