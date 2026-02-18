@@ -2,7 +2,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775
 let tousLesProduits = [];
 let panier = [];
 
-// 1. CHARGEMENT DES PRODUITS
+// 1. CHARGEMENT
 async function chargerBoutique() {
     try {
         const response = await fetch(API_URL);
@@ -36,13 +36,14 @@ function rendreProduits(liste) {
     `).join('');
 }
 
-// 2. LOGIQUE DU PANIER
+// 2. PANIER
 function ajouterAuPanier(nom, prix) {
     const produitExistant = panier.find(item => item.nom === nom);
     if (produitExistant) {
         produitExistant.quantite += 1;
     } else {
-        panier.push({ nom, prix, parseInt(quantite): 1 });
+        // CORRECTION ICI : quantite: 1
+        panier.push({ nom, prix, quantite: 1 });
     }
     mettreAJourBadge();
 }
@@ -73,7 +74,7 @@ function filtrerParCategorie(categorieCible) {
     }
 }
 
-// 4. LOGIQUE DE COMMANDE HYBRIDE (AUTO / WHATSAPP)
+// 4. COMMANDE HYBRIDE
 async function envoyerCommande() {
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
     const estInscrit = localStorage.getItem('saferun_nom');
@@ -115,10 +116,8 @@ function ouvrirTicketAutomatique() {
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
-// FONCTION POUR LES NON-INSCRITS (WHATSAPP DIRECT)
 function finaliserVersWhatsApp() {
     const numeroWA = "261382453610";
-    const nom = localStorage.getItem('saferun_nom') || "Nouveau Client";
     let listeProduits = "";
     let totalGeneral = 0;
     
@@ -131,7 +130,7 @@ function finaliserVersWhatsApp() {
     const message = `Bonjour SafeRun Market ! 🛒\n\n` +
                     `Je souhaite commander :\n---------------------------\n${listeProduits}---------------------------\n` +
                     `💰 *TOTAL : ${totalGeneral.toLocaleString()} Ar*\n\n` +
-                    `Merci de me recontacter pour finaliser !`;
+                    `Merci de me recontacter !`;
 
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
@@ -159,12 +158,14 @@ async function envoyerDonneesAuSheet() {
             body: JSON.stringify(commandeData)
         });
 
-        alert("✅ Commande validée ! Votre ticket admin a été créé.");
+        // Avec no-cors, on simule le succès car on ne peut pas lire la réponse
+        alert("✅ Commande envoyée ! Votre ticket a été créé dans notre système.");
         panier = [];
         mettreAJourBadge();
         fermerModal();
     } catch (error) {
-        alert("Erreur réseau. Basculement sur WhatsApp...");
+        console.error("Erreur:", error);
+        alert("Erreur de connexion. Basculement sur WhatsApp...");
         finaliserVersWhatsApp();
     }
 }
@@ -177,7 +178,7 @@ function fermerModal() {
     }
 }
 
-// 5. GESTION SIDEBAR
+// 5. SIDEBAR
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
     if (sidebar) sidebar.classList.toggle('open');
@@ -199,7 +200,7 @@ function rafraichirSidebar() {
     if (nom && initialsDiv) initialsDiv.innerText = nom.charAt(0).toUpperCase();
 }
 
-// 6. POPUP & INSCRIPTION
+// 6. POPUP
 function fermerPopup() {
     const popup = document.getElementById('welcome-popup');
     if (popup) popup.classList.remove('show');
@@ -223,7 +224,7 @@ function ouvrirInscription() {
     }, 400);
 }
 
-// 7. INITIALISATION
+// 7. INIT
 document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
