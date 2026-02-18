@@ -224,17 +224,34 @@ function ouvrirInscription() {
     }, 400);
 }
 
-// 7. INIT
+// 7. INIT (VERSION BLINDÉE)
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Système SafeRun Initialisé");
     chargerBoutique();
     rafraichirSidebar();
 
-    const compteBtn = document.querySelector('.fa-user').parentElement;
-    if (compteBtn) compteBtn.onclick = toggleSidebar;
+    // Gestion du bouton Compte/Sidebar
+    const compteBtn = document.querySelector('.fa-user');
+    if (compteBtn) {
+        compteBtn.parentElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSidebar();
+        });
+    }
 
+    // GESTION DU PANIER (Correction du blocage)
     const cartTrigger = document.querySelector('.cart-trigger');
-    if(cartTrigger) cartTrigger.onclick = envoyerCommande;
+    if (cartTrigger) {
+        cartTrigger.addEventListener('click', (e) => {
+            e.preventDefault(); // Empêche tout comportement par défaut
+            console.log("Clic panier détecté !");
+            envoyerCommande();
+        });
+    } else {
+        console.error("ERREUR : Bouton .cart-trigger introuvable dans le HTML");
+    }
 
+    // Gestion Recherche
     const searchBar = document.getElementById('search');
     if(searchBar) {
         searchBar.addEventListener('input', (e) => {
@@ -244,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Popup de bienvenue
     if (!localStorage.getItem('saferun_nom')) {
         setTimeout(() => {
             const popup = document.getElementById('welcome-popup');
