@@ -3,131 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeRun - Panel Admin Privé</title>
+    <title>SafeRun - Gestion des Commandes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; }
+        :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* LOGIN SCREEN */
         #login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
-        .logo-icon { font-size: 3rem; color: var(--orange); margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-login:hover { background: #e66000; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* DASHBOARD (Caché au début) */
-        #admin-panel { display: none; width: 95%; max-width: 850px; align-self: flex-start; margin-top: 30px; margin-bottom: 30px; }
+        #admin-panel { display: none; width: 95%; max-width: 850px; align-self: flex-start; margin: 30px 0; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* CARTES DE COMMANDES */
-        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 6px solid #f1c40f; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; }
-        .order-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-        .status-OK { border-left-color: var(--success); }
+        /* SYSTÈME DE FILTRAGE PAR COULEUR */
+        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; border-left: 8px solid var(--warning); }
         
-        .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
-        .badge-attente { background: #fff9db; color: #f08c00; }
-        .badge-valide { background: #ebfbee; color: var(--success); }
-
+        .status-serieux { border-left-color: var(--success) !important; background: #f0fff4; }
+        .status-danger { border-left-color: var(--danger) !important; opacity: 0.5; filter: grayscale(1); }
+        
+        .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-weight: bold; color: white; }
         .btn-refresh { background: var(--dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        
+        .instruction-box { background: #e8f4fd; padding: 10px; border-radius: 8px; font-size: 0.8rem; color: #2980b9; margin-bottom: 15px; border-left: 4px solid #2980b9; }
     </style>
 </head>
 <body>
 
     <div id="login-box">
-        <div class="logo-icon"><i class="fas fa-user-shield"></i></div>
-        <h2 style="margin-top:0; color:var(--dark);">SafeRun Admin</h2>
+        <div style="font-size: 3rem; color: var(--orange);"><i class="fas fa-user-shield"></i></div>
+        <h2 style="color:var(--dark);">SafeRun Admin</h2>
         <input type="text" id="user" placeholder="Utilisateur">
         <input type="password" id="pass" placeholder="Mot de passe">
-        <button class="btn-login" onclick="verifierConnexion()">SE CONNECTER</button>
-        <p id="err-msg" style="color:red; display:none; margin-top:15px; font-weight:bold;">Identifiants incorrects !</p>
+        <button class="btn-login" onclick="verifierConnexion()">OUVRIR LE PANEL</button>
+        <p id="err-msg" style="color:red; display:none; margin-top:15px;">Identifiants incorrects !</p>
     </div>
 
     <div id="admin-panel">
         <div class="header">
-            <h2 style="margin:0; color:var(--dark);"><i class="fas fa-clipboard-list"></i> Tickets Reçus</h2>
+            <h2 style="margin:0;"><i class="fas fa-filter"></i> Triage Clients</h2>
             <div>
-                <button onclick="charger()" class="btn-refresh"><i class="fas fa-sync-alt"></i> Actualiser</button>
-                <button onclick="location.reload()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:6px; margin-left:5px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
+                <button onclick="charger()" class="btn-refresh"><i class="fas fa-sync"></i></button>
+                <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
-        <div id="commandes-liste">
-            </div>
+
+        <div class="instruction-box">
+            <i class="fas fa-info-circle"></i> <b>Astuce :</b> Pour valider un client, écrivez <b>SÉRIEUX</b> dans la colonne "Type" de votre Google Sheets. Écrivez <b>PAS SÉRIEUX</b> pour le bloquer visuellement.
+        </div>
+
+        <div id="commandes-liste"></div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const USER_ADMIN = "admin";
         const PASS_ADMIN = "SafeRun2026"; 
-        const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // 👈 Remplace par ton lien /exec
+        const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
         function verifierConnexion() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-
-            if(u === USER_ADMIN && p === PASS_ADMIN) {
+            if(document.getElementById('user').value === USER_ADMIN && document.getElementById('pass').value === PASS_ADMIN) {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
                 document.body.style.alignItems = 'flex-start';
                 charger();
-            } else {
-                document.getElementById('err-msg').style.display = 'block';
-            }
+            } else { document.getElementById('err-msg').style.display = 'block'; }
         }
 
         async function charger() {
             const list = document.getElementById('commandes-liste');
-            list.innerHTML = "<p style='text-align:center; color:#666;'>Connexion au serveur Google Sheets...</p>";
+            list.innerHTML = "<p style='text-align:center;'>Chargement du Sheets...</p>";
             
             try {
-                // On ajoute l'action getCommandes pour être sûr de charger l'onglet Commandes
                 const res = await fetch(API_URL + "?action=getCommandes");
                 const data = await res.json();
                 list.innerHTML = "";
 
-                if (!data || data.length === 0) {
-                    list.innerHTML = "<p style='text-align:center; background:white; padding:20px; border-radius:10px;'>Aucune commande trouvée pour le moment.</p>";
-                    return;
-                }
-
-                // Inverser pour voir la plus récente en haut
                 data.reverse().forEach(cmd => {
-                    // Sécurité contre les "undefined" : on vérifie plusieurs noms possibles pour les colonnes
-                    const nom = cmd["Nom Client"] || cmd["Nom"] || "Client Inconnu";
-                    const tel = cmd["Téléphone"] || cmd["Tel"] || cmd["Telephone"] || "N/A";
-                    const quartier = cmd["Quartier"] || cmd["Adresse"] || "Non précisé";
-                    const produits = cmd["Liste Produits"] || cmd["Produits"] || "Panier vide";
-                    const total = cmd["Total (Ar)"] || cmd["Total"] || "0";
-                    const type = (cmd["Type"] || "EN ATTENTE").toUpperCase();
-                    const date = cmd["Date"] ? new Date(cmd["Date"]).toLocaleString('fr-FR') : "Date inconnue";
-
-                    const isOk = type.includes("VALIDÉ") || type.includes("AUTO");
+                    const typeRaw = (cmd["Type"] || "NOUVEAU").toUpperCase();
+                    
+                    // Logique de filtrage visuel
+                    let classeSpeciale = "";
+                    let couleurBadge = "var(--warning)";
+                    
+                    if(typeRaw.includes("SÉRIEUX")) {
+                        classeSpeciale = "status-serieux";
+                        couleurBadge = "var(--success)";
+                    } else if(typeRaw.includes("PAS SÉRIEUX")) {
+                        classeSpeciale = "status-danger";
+                        couleurBadge = "var(--danger)";
+                    }
 
                     list.innerHTML += `
-                        <div class="order-card ${isOk ? 'status-OK' : ''}">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div class="order-card ${classeSpeciale}">
+                            <div style="display:flex; justify-content:space-between;">
                                 <div>
-                                    <span class="badge ${isOk ? 'badge-valide' : 'badge-attente'}">${type}</span><br>
-                                    <b style="font-size:1.2rem; color:var(--dark);">${nom}</b>
+                                    <span class="badge" style="background:${couleurBadge}">${typeRaw}</span><br>
+                                    <b style="font-size:1.2rem;">${cmd["Nom Client"] || "Client Inconnu"}</b>
                                 </div>
                                 <div style="text-align:right;">
-                                    <div style="font-weight:bold; font-size:1.3rem; color:var(--dark);">${Number(total).toLocaleString()} Ar</div>
-                                    <small style="color:#999;">${date}</small>
+                                    <b style="font-size:1.2rem;">${Number(cmd["Total (Ar)"] || 0).toLocaleString()} Ar</b><br>
+                                    <small style="color:#888;">${cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString() : ''}</small>
                                 </div>
                             </div>
-                            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-                            <div style="margin-bottom:10px;">
-                                <small style="color:#666;"><i class="fas fa-phone"></i> ${tel} | <i class="fas fa-map-marker-alt"></i> ${quartier}</small>
-                            </div>
-                            <div style="background:#fff5eb; padding:10px; border-radius:8px; color:var(--orange); font-weight:500;">
-                                <i class="fas fa-shopping-basket"></i> ${produits}
+                            <p style="margin:10px 0;"><i class="fas fa-phone"></i> <b>${cmd["Téléphone"] || 'N/A'}</b> | 📍 ${cmd["Quartier"] || 'N/A'}</p>
+                            <div style="background:rgba(255,107,0,0.1); padding:10px; border-radius:8px; color:var(--orange);">
+                                <i class="fas fa-shopping-cart"></i> ${cmd["Liste Produits"] || 'Vide'}
                             </div>
                         </div>`;
                 });
-            } catch (e) { 
-                list.innerHTML = "<p style='text-align:center; color:red; font-weight:bold;'>⚠️ Erreur : Impossible de contacter le serveur Google.<br>Vérifiez que l'URL de votre API est correcte.</p>"; 
-                console.error(e);
-            }
+            } catch (e) { list.innerHTML = "Erreur de connexion API."; }
         }
     </script>
 </body>
