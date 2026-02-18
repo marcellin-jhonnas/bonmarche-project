@@ -11,11 +11,18 @@
 
     <div id="user-sidebar" class="sidebar">
     <button class="close-sidebar" onclick="toggleSidebar()">×</button>
-    <div class="user-profile">
-        <div class="user-avatar"><i class="fas fa-user-circle"></i></div>
-        <h3 id="side-user-nom">Utilisateur</h3>
-        <p id="side-user-quartier"><i class="fas fa-map-marker-alt"></i> Quartier, Antananarivo</p>
-    </div>
+   <div class="user-profile">
+    <div class="user-avatar" id="user-initials">S</div> 
+    <h3 id="side-user-nom">Utilisateur</h3>
+    <p id="side-user-tel" style="font-size: 0.9rem; color: #ffcc00; margin-bottom: 5px;">
+        <i class="fas fa-phone"></i> Numéro non renseigné
+    </p>
+    <p id="side-user-quartier"><i class="fas fa-map-marker-alt"></i> Quartier, Antananarivo</p>
+    
+    <button onclick="ouvrirInscription()" style="background: none; border: 1px solid #555; color: #ccc; font-size: 0.7rem; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+        Modifier mon profil
+    </button>
+</div>
     
     <nav class="sidebar-nav">
         <a href="#" class="nav-item active"><i class="fas fa-bolt"></i> <div><span>Livraison Express</span><small>Moins de 24h</small></div></a>

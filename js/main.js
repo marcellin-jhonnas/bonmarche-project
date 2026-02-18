@@ -73,12 +73,14 @@ function filtrerParCategorie(categorieCible) {
     }
 }
 
-// 4. WHATSAPP
+// 4. WHATSAPP (Version amplifiée avec Téléphone)
 function envoyerCommande() {
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
     const numeroWA = "261382453610";
     const clientNom = localStorage.getItem('saferun_nom') || "[À COMPLÉTER]";
+    const clientTel = localStorage.getItem('saferun_tel') || "[À COMPLÉTER]";
     const clientQuartier = localStorage.getItem('saferun_quartier') || "[À COMPLÉTER]";
+
     let listeProduits = "";
     let totalGeneral = 0;
     panier.forEach((item) => {
@@ -86,10 +88,11 @@ function envoyerCommande() {
         totalGeneral += sousTotal;
         listeProduits += `✅ ${item.quantite} x *${item.nom}* : ${sousTotal.toLocaleString()} Ar\n`;
     });
+
     const message = `Bonjour SafeRun Market ! 🛒\n\n` +
                     `Nouvelle commande de :\n---------------------------\n${listeProduits}---------------------------\n` +
                     `💰 *TOTAL À PAYER : ${totalGeneral.toLocaleString()} Ar*\n\n` +
-                    `--- INFOS LIVRAISON ---\n👤 NOM : ${clientNom}\n📍 QUARTIER : ${clientQuartier}\n---------------------------\nJe confirme ma commande !`;
+                    `--- INFOS CLIENT ---\n👤 NOM : ${clientNom}\n📞 TEL : ${clientTel}\n📍 QUARTIER : ${clientQuartier}\n---------------------------\nJe confirme ma commande !`;
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
@@ -98,20 +101,29 @@ function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
     if (sidebar) {
         sidebar.classList.toggle('open');
-        rafraichirSidebar();
     }
 }
 
 function rafraichirSidebar() {
     const nom = localStorage.getItem('saferun_nom');
+    const tel = localStorage.getItem('saferun_tel');
     const quartier = localStorage.getItem('saferun_quartier');
+
     const sideNom = document.getElementById('side-user-nom');
+    const sideTel = document.getElementById('side-user-tel');
     const sideQuartier = document.getElementById('side-user-quartier');
+    const initialsDiv = document.getElementById('user-initials');
+
     if (nom && sideNom) sideNom.innerText = nom;
+    if (tel && sideTel) sideTel.innerHTML = `<i class="fas fa-phone"></i> ${tel}`;
     if (quartier && sideQuartier) sideQuartier.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${quartier}`;
+    
+    if (nom && initialsDiv) {
+        initialsDiv.innerText = nom.charAt(0).toUpperCase();
+    }
 }
 
-// 6. POPUP & INSCRIPTION
+// 6. POPUP & INSCRIPTION (Version Amplifiée)
 function fermerPopup() {
     const popup = document.getElementById('welcome-popup');
     if (popup) popup.classList.remove('show');
@@ -120,14 +132,18 @@ function fermerPopup() {
 function ouvrirInscription() {
     fermerPopup();
     setTimeout(() => {
-        const n = prompt("Bienvenue ! Quel est votre Nom complet ?");
-        const q = prompt("Dans quel Quartier habitez-vous ?");
-        if (n && q && n.trim() !== "" && q.trim() !== "") {
+        let n = prompt("Votre Nom complet :", localStorage.getItem('saferun_nom') || "");
+        let t = prompt("Votre Numéro de téléphone (WhatsApp) :", localStorage.getItem('saferun_tel') || "");
+        let q = prompt("Votre Quartier et précisions (ex: Lot, repère) :", localStorage.getItem('saferun_quartier') || "");
+
+        if (n && t && q) {
             localStorage.setItem('saferun_nom', n.trim());
+            localStorage.setItem('saferun_tel', t.trim());
             localStorage.setItem('saferun_quartier', q.trim());
+            
             rafraichirSidebar();
-            toggleSidebar(); 
-            alert("✅ Heureux de vous revoir " + n + " !");
+            toggleSidebar(); // Ouvre le volet pour montrer le résultat
+            alert("✨ Profil mis à jour ! Bienvenue chez SafeRun Market.");
         }
     }, 400);
 }
@@ -136,6 +152,10 @@ function ouvrirInscription() {
 document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
+
+    // Ouvrir la sidebar au clic sur "Compte"
+    const compteBtn = document.querySelector('.fa-user').parentElement;
+    if (compteBtn) compteBtn.onclick = toggleSidebar;
 
     const cartTrigger = document.querySelector('.cart-trigger');
     if(cartTrigger) cartTrigger.onclick = envoyerCommande;
