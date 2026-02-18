@@ -3,53 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeRun - Gestion des Commandes</title>
+    <title>SafeRun - Console de Gestion</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
+        /* LOGIN */
         #login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
+        /* PANEL */
         #admin-panel { display: none; width: 95%; max-width: 850px; align-self: flex-start; margin: 30px 0; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* SYSTÈME DE FILTRAGE PAR COULEUR */
-        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; border-left: 8px solid var(--warning); }
-        
+        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-left: 8px solid var(--warning); }
         .status-serieux { border-left-color: var(--success) !important; background: #f0fff4; }
-        .status-danger { border-left-color: var(--danger) !important; opacity: 0.5; filter: grayscale(1); }
+        .status-danger { border-left-color: var(--danger) !important; opacity: 0.6; }
         
         .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-weight: bold; color: white; }
+        
+        /* BOUTONS D'ACTION */
+        .actions { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-ok { background: #ebfbee; color: var(--success); border: 1px solid var(--success); }
+        .btn-ok:hover { background: var(--success); color: white; }
+        .btn-ban { background: #fff5f5; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-ban:hover { background: var(--danger); color: white; }
+
         .btn-refresh { background: var(--dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         
-        .instruction-box { background: #e8f4fd; padding: 10px; border-radius: 8px; font-size: 0.8rem; color: #2980b9; margin-bottom: 15px; border-left: 4px solid #2980b9; }
+        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; color: var(--orange); }
     </style>
 </head>
 <body>
 
+    <div id="loading" class="loading-overlay">Traitement en cours...</div>
+
     <div id="login-box">
         <div style="font-size: 3rem; color: var(--orange);"><i class="fas fa-user-shield"></i></div>
-        <h2 style="color:var(--dark);">SafeRun Admin</h2>
+        <h2>SafeRun Manager</h2>
         <input type="text" id="user" placeholder="Utilisateur">
         <input type="password" id="pass" placeholder="Mot de passe">
-        <button class="btn-login" onclick="verifierConnexion()">OUVRIR LE PANEL</button>
-        <p id="err-msg" style="color:red; display:none; margin-top:15px;">Identifiants incorrects !</p>
+        <button class="btn-login" onclick="verifierConnexion()">SE CONNECTER</button>
+        <p id="err-msg" style="color:red; display:none; margin-top:15px;">Accès refusé.</p>
     </div>
 
     <div id="admin-panel">
         <div class="header">
-            <h2 style="margin:0;"><i class="fas fa-filter"></i> Triage Clients</h2>
+            <h2 style="margin:0;"><i class="fas fa-users-cog"></i> Gestion Clients</h2>
             <div>
-                <button onclick="charger()" class="btn-refresh"><i class="fas fa-sync"></i></button>
+                <button onclick="charger()" class="btn-refresh"><i class="fas fa-sync-alt"></i></button>
                 <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
             </div>
-        </div>
-
-        <div class="instruction-box">
-            <i class="fas fa-info-circle"></i> <b>Astuce :</b> Pour valider un client, écrivez <b>SÉRIEUX</b> dans la colonne "Type" de votre Google Sheets. Écrivez <b>PAS SÉRIEUX</b> pour le bloquer visuellement.
         </div>
 
         <div id="commandes-liste"></div>
@@ -71,7 +78,7 @@
 
         async function charger() {
             const list = document.getElementById('commandes-liste');
-            list.innerHTML = "<p style='text-align:center;'>Chargement du Sheets...</p>";
+            list.innerHTML = "<p style='text-align:center;'>Récupération des données...</p>";
             
             try {
                 const res = await fetch(API_URL + "?action=getCommandes");
@@ -80,21 +87,19 @@
 
                 data.reverse().forEach(cmd => {
                     const typeRaw = (cmd["Type"] || "NOUVEAU").toUpperCase();
-                    
-                    // Logique de filtrage visuel
-                    let classeSpeciale = "";
+                    let classeCard = "";
                     let couleurBadge = "var(--warning)";
                     
-                    if(typeRaw.includes("SÉRIEUX")) {
-                        classeSpeciale = "status-serieux";
+                    if(typeRaw.includes("SÉRIEUX") && !typeRaw.includes("PAS")) {
+                        classeCard = "status-serieux";
                         couleurBadge = "var(--success)";
                     } else if(typeRaw.includes("PAS SÉRIEUX")) {
-                        classeSpeciale = "status-danger";
+                        classeCard = "status-danger";
                         couleurBadge = "var(--danger)";
                     }
 
                     list.innerHTML += `
-                        <div class="order-card ${classeSpeciale}">
+                        <div class="order-card ${classeCard}">
                             <div style="display:flex; justify-content:space-between;">
                                 <div>
                                     <span class="badge" style="background:${couleurBadge}">${typeRaw}</span><br>
@@ -106,12 +111,51 @@
                                 </div>
                             </div>
                             <p style="margin:10px 0;"><i class="fas fa-phone"></i> <b>${cmd["Téléphone"] || 'N/A'}</b> | 📍 ${cmd["Quartier"] || 'N/A'}</p>
-                            <div style="background:rgba(255,107,0,0.1); padding:10px; border-radius:8px; color:var(--orange);">
+                            <div style="background:rgba(255,107,0,0.1); padding:10px; border-radius:8px; color:var(--orange); font-size:0.9rem;">
                                 <i class="fas fa-shopping-cart"></i> ${cmd["Liste Produits"] || 'Vide'}
+                            </div>
+
+                            <div class="actions">
+                                <button class="btn-action btn-ok" onclick="modifierStatut('${cmd["Téléphone"]}', 'SÉRIEUX')">
+                                    <i class="fas fa-check"></i> FIDÉLISER
+                                </button>
+                                <button class="btn-action btn-ban" onclick="modifierStatut('${cmd["Téléphone"]}', 'PAS SÉRIEUX')">
+                                    <i class="fas fa-ban"></i> BLOQUER
+                                </button>
                             </div>
                         </div>`;
                 });
-            } catch (e) { list.innerHTML = "Erreur de connexion API."; }
+            } catch (e) { list.innerHTML = "Erreur de connexion."; }
+        }
+
+        async function modifierStatut(tel, nouveauStatut) {
+            if(!confirm(`Passer ce client en statut : ${nouveauStatut} ?`)) return;
+            
+            const loader = document.getElementById('loading');
+            loader.style.display = "flex";
+
+            try {
+                // On utilise POST pour envoyer l'ordre de modification
+                await fetch(API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
+                        action: "updateStatut",
+                        tel: tel,
+                        nouveauStatut: nouveauStatut
+                    })
+                });
+
+                // Petit délai pour laisser le temps au script Google d'écrire
+                setTimeout(() => {
+                    loader.style.display = "none";
+                    charger(); // Actualise la liste
+                }, 2000);
+
+            } catch (e) {
+                alert("Erreur lors de la mise à jour.");
+                loader.style.display = "none";
+            }
         }
     </script>
 </body>
