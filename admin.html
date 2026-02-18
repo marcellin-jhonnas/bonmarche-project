@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRun Admin - Accès Privé</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --orange: #ff6b00; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        /* LOGIN */
+        #login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* DASHBOARD */
+        #admin-panel { display: none; width: 95%; max-width: 800px; align-self: flex-start; margin-top: 20px; }
+        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 6px solid #f1c40f; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .status-OK { border-left-color: #27ae60; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-box">
+        <i class="fas fa-lock" style="font-size: 3rem; color: var(--orange);"></i>
+        <h2>Admin SafeRun</h2>
+        <input type="text" id="user" placeholder="Utilisateur">
+        <input type="password" id="pass" placeholder="Mot de passe">
+        <button class="btn-login" onclick="verifier()">CONNEXION</button>
+        <p id="err" style="color:red; display:none; margin-top:10px;">Identifiants faux !</p>
+    </div>
+
+    <div id="admin-panel">
+        <div class="header">
+            <h3>📦 Commandes Clients</h3>
+            <button onclick="charger()" class="btn-login" style="width: auto; padding: 8px 15px;">Actualiser</button>
+        </div>
+        <div id="commandes-liste"></div>
+    </div>
+
+    <script>
+        const USER_ADMIN = "admin"; 
+        const PASS_ADMIN = "SafeRun2026"; // 👈 Ton mot de passe
+        const API_URL = "TA_MACRO_URL_ICI"; // 👈 Ton URL Google Script
+
+        function verifier() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if(u === USER_ADMIN && p === PASS_ADMIN) {
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                document.body.style.alignItems = 'flex-start';
+                charger();
+            } else {
+                document.getElementById('err').style.display = 'block';
+            }
+        }
+
+        async function charger() {
+            const list = document.getElementById('commandes-liste');
+            list.innerHTML = "Chargement...";
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                list.innerHTML = "";
+                data.reverse().forEach(cmd => {
+                    const isOk = cmd["Type"] && cmd["Type"].includes("VALIDÉ");
+                    list.innerHTML += `
+                        <div class="order-card ${isOk ? 'status-OK' : ''}">
+                            <b>${cmd["Nom Client"]}</b> - ${cmd["Téléphone"]}<br>
+                            <small>📍 ${cmd["Quartier"]}</small><br>
+                            <p style="color:var(--orange)">🛒 ${cmd["Liste Produits"]}</p>
+                            <div style="text-align:right; font-weight:bold;">${cmd["Total (Ar)"]} Ar</div>
+                        </div>`;
+                });
+            } catch (e) { list.innerHTML = "Erreur API."; }
+        }
+    </script>
+</body>
+</html>
