@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 let tousLesProduits = [];
 let panier = [];
-let datePlanifiee = null; // Variable globale pour la date choisie
+let datePlanifiee = null; // Variable globale pour stocker la date choisie
 
 // 1. CHARGEMENT DE LA BOUTIQUE
 async function chargerBoutique() {
@@ -64,7 +64,7 @@ function mettreAJourBadge() {
     }
 }
 
-// 3. FILTRAGE ET RECHERCHE
+// 3. FILTRAGE
 function filtrerParCategorie(categorieCible) {
     const boutons = document.querySelectorAll('.cat-btn');
     boutons.forEach(btn => btn.classList.remove('active'));
@@ -81,13 +81,15 @@ function filtrerParCategorie(categorieCible) {
     }
 }
 
-// 4. PLANIFICATION (RENDEZ-VOUS / ACHAT PLANIFIÉ)
+// 4. PLANIFICATION ET RENDEZ-VOUS
 function ouvrirPlanification(titre) {
     const modal = document.getElementById('modal-planification');
     if (modal) {
         document.getElementById('planif-titre').innerText = titre;
         modal.style.display = "flex";
-        toggleSidebar(); // On ferme la sidebar
+        // On ferme la sidebar
+        const sidebar = document.getElementById('user-sidebar');
+        if (sidebar) sidebar.classList.remove('open');
     }
 }
 
@@ -101,7 +103,6 @@ function sauvegarderPlanif() {
     
     datePlanifiee = dateInput; 
     
-    // Affichage du bandeau de confirmation en haut de la boutique
     const statusDiv = document.getElementById('status-planif');
     const dateSpan = document.getElementById('date-affichage');
     
@@ -120,11 +121,11 @@ function annulerPlanif() {
     if(statusDiv) statusDiv.style.display = "none";
 }
 
-// 5. ENVOI DE LA COMMANDE
+// 5. COMMANDE ET ENVOI
 async function envoyerCommande() {
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
     if (!localStorage.getItem('saferun_nom')) {
-        alert("Merci de compléter votre profil avant de commander !");
+        alert("Pour commander, merci de compléter votre profil !");
         ouvrirInscription(); 
     } else {
         ouvrirTicketAutomatique();
@@ -136,6 +137,8 @@ function ouvrirTicketAutomatique() {
     const detail = document.getElementById('detail-panier');
     const totalLabel = document.getElementById('total-modal');
     
+    if(!modal) return;
+
     let resume = "";
     let total = 0;
     panier.forEach(item => {
@@ -147,63 +150,70 @@ function ouvrirTicketAutomatique() {
                    </div>`;
     });
 
-    // On ajoute l'info de planification dans le résumé si elle existe
-    if(datePlanifiee) {
-        resume += `<div style="color:var(--orange); font-weight:bold; margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
-                    📅 LIVRAISON PLANIFIÉE : ${new Date(datePlanifiee).toLocaleString('fr-FR')}
-                   </div>`;
-    }
-
-    detail.innerHTML = `<strong>Récapitulatif</strong><hr>${resume}`;
+    detail.innerHTML = `<strong>Récapitulatif de votre commande</strong><hr>${resume}`;
     totalLabel.innerText = total.toLocaleString() + " Ar";
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     btnEnvoi.onclick = envoyerDonneesAuSheet;
+
     modal.style.display = "flex";
 }
 
 async function envoyerDonneesAuSheet() {
     const btn = window.event.target;
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi...";
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi en cours...";
     btn.disabled = true;
 
-    const data = {
+    const commandeData = {
         nom: localStorage.getItem('saferun_nom'),
         tel: localStorage.getItem('saferun_tel'),
         quartier: localStorage.getItem('saferun_quartier'),
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
         date: new Date().toLocaleString(),
-        type: datePlanifiee ? "PLANIFIÉ" : "SITE_WEB",
-        planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "ASAP"
+        type: datePlanifiee ? "PLANIFIÉ" : "DIRECT",
+        planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "Dès que possible (ASAP)"
     };
 
     try {
         await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify(data)
+            body: JSON.stringify(commandeData)
         });
 
         document.querySelector('#modal-panier .popup-content').innerHTML = `
             <div style="text-align:center; padding:20px;">
-                <i class="fas fa-check-circle" style="font-size:50px; color:var(--success);"></i>
-                <h2>Commande reçue !</h2>
-                <p>Merci ${data.nom}. Notre équipe prépare votre livraison.</p>
-                <button onclick="location.reload();" class="btn-inscription" style="width:100%;">RETOUR</button>
+                <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
+                <h2>Merci ${commandeData.nom} !</h2>
+                <p>Votre commande <b>${commandeData.type}</b> est enregistrée.</p>
+                <button onclick="location.reload();" class="btn-inscription" style="width:100%; background:var(--orange); margin-top:15px;">RETOUR</button>
             </div>`;
-        
+
         panier = [];
         datePlanifiee = null;
-    } catch (e) { alert("Erreur. Essayez via WhatsApp."); finaliserVersWhatsApp(); }
+        mettreAJourBadge();
+
+    } catch (error) {
+        console.error("Erreur:", error);
+        finaliserVersWhatsApp();
+    }
 }
 
 function finaliserVersWhatsApp() {
-    const message = `Commande SafeRun :\n${panier.map(i => `- ${i.quantite}x ${i.nom}`).join('\n')}\nTotal: ${panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0)} Ar`;
-    window.open(`https://wa.me/261382453610?text=${encodeURIComponent(message)}`, '_blank');
+    const numeroWA = "261382453610";
+    let message = `Bonjour SafeRun Market ! 🛒\nJe souhaite commander :\n` + 
+                  panier.map(i => `- ${i.quantite}x ${i.nom}`).join('\n') + 
+                  `\nTotal : ${panier.reduce((s, i) => s + (i.prix*i.quantite), 0).toLocaleString()} Ar`;
+    window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-// 6. PROFILS ET SIDEBAR
+function fermerModal() {
+    const modal = document.getElementById('modal-panier');
+    if(modal) modal.style.display = "none";
+}
+
+// 6. SIDEBAR ET PROFIL
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
     if (sidebar) sidebar.classList.toggle('open');
@@ -213,6 +223,7 @@ function rafraichirSidebar() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');
     const quartier = localStorage.getItem('saferun_quartier');
+
     if (nom) document.getElementById('side-user-nom').innerText = nom;
     if (tel) document.getElementById('side-user-tel').innerHTML = `<i class="fas fa-phone"></i> ${tel}`;
     if (quartier) document.getElementById('side-user-quartier').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${quartier}`;
@@ -223,26 +234,40 @@ function ouvrirInscription() {
     let n = prompt("Nom complet :", localStorage.getItem('saferun_nom') || "");
     let t = prompt("Téléphone :", localStorage.getItem('saferun_tel') || "");
     let q = prompt("Quartier :", localStorage.getItem('saferun_quartier') || "");
+
     if (n && t && q) {
-        localStorage.setItem('saferun_nom', n);
-        localStorage.setItem('saferun_tel', t);
-        localStorage.setItem('saferun_quartier', q);
+        localStorage.setItem('saferun_nom', n.trim());
+        localStorage.setItem('saferun_tel', t.trim());
+        localStorage.setItem('saferun_quartier', q.trim());
         rafraichirSidebar();
+        alert("Profil mis à jour !");
     }
+}
+
+function fermerPopup() {
+    const p = document.getElementById('welcome-popup');
+    if(p) p.classList.remove('show');
 }
 
 // 7. INITIALISATION
 document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
-    
+
     // Recherche
-    document.getElementById('search').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        rendreProduits(tousLesProduits.filter(p => p.Nom.toLowerCase().includes(val)));
-    });
+    const searchBar = document.getElementById('search');
+    if(searchBar) {
+        searchBar.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtrés = tousLesProduits.filter(p => p.Nom.toLowerCase().includes(val));
+            rendreProduits(filtrés);
+        });
+    }
 
     if (!localStorage.getItem('saferun_nom')) {
-        setTimeout(() => document.getElementById('welcome-popup').classList.add('show'), 3000);
+        setTimeout(() => {
+            const p = document.getElementById('welcome-popup');
+            if (p) p.classList.add('show');
+        }, 3000); 
     }
 });
