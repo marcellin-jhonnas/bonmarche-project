@@ -305,9 +305,24 @@ function sauvegarderPlanif() {
     const dateInput = document.getElementById('date-planif').value;
     if(!dateInput) { alert("Veuillez choisir une date !"); return; }
     
-    datePlanifiee = dateInput;
-    alert("🚀 Date enregistrée ! Ajoutez maintenant vos produits et validez votre panier.");
+    datePlanifiee = dateInput; // On stocke la date
+    
+    // On affiche le badge bleu en haut
+    const statusDiv = document.getElementById('status-planif');
+    const dateSpan = document.getElementById('date-affichage');
+    
+    if(statusDiv && dateSpan) {
+        dateSpan.innerText = new Date(datePlanifiee).toLocaleString('fr-FR');
+        statusDiv.style.display = "block"; // On montre le badge
+    }
+    
     fermerPlanif();
+}
+
+// Fonction pour annuler la planification si le client change d'avis
+function annulerPlanif() {
+    datePlanifiee = null;
+    document.getElementById('status-planif').style.display = "none";
 }
 
 // MODIFIER LA FONCTION envoyerDonneesAuSheet pour inclure la date
