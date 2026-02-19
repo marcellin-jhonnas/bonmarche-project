@@ -129,6 +129,7 @@ async function envoyerDonneesAuSheet() {
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi au serveur...";
     btn.disabled = true;
 
+    // On prépare les données avec la date de planification si elle existe
     const commandeData = {
         nom: localStorage.getItem('saferun_nom'),
         tel: localStorage.getItem('saferun_tel'),
@@ -136,7 +137,9 @@ async function envoyerDonneesAuSheet() {
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
         date: new Date().toLocaleString(),
-        type: "SITE_WEB"
+        // On utilise la variable globale datePlanifiee
+        type: datePlanifiee ? "PLANIFIÉ" : "DIRECT",
+        planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "Dès que possible (ASAP)"
     };
 
     try {
@@ -147,30 +150,25 @@ async function envoyerDonneesAuSheet() {
             body: JSON.stringify(commandeData)
         });
 
-        // --- AFFICHAGE DU SUCCÈS ---
         const modalContent = document.querySelector('#modal-panier .popup-content');
-        const clientNom = localStorage.getItem('saferun_nom');
-        
         modalContent.innerHTML = `
             <div style="text-align:center; padding:20px;">
                 <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
-                <h2 style="color:#2c3e50;">Merci ${clientNom} !</h2>
-                <p style="color:#7f8c8d;">Votre commande a été transmise avec succès.</p>
-                <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:20px 0; text-align:left;">
-                    <small>📌 <b>Note :</b> Nos administrateurs vérifient votre ticket. Un livreur vous contactera prochainement.</small>
-                </div>
-                <button onclick="fermerModal(); location.reload();" class="btn-inscription" style="width:100%; background:var(--orange);">
+                <h2 style="color:#2c3e50;">Merci !</h2>
+                <p>Votre commande <strong>${commandeData.type}</strong> a été transmise.</p>
+                ${datePlanifiee ? `<p style="background:#e8f4fd; padding:10px; border-radius:8px;">📅 Prévue pour : <b>${commandeData.planif}</b></p>` : ''}
+                <button onclick="location.reload();" class="btn-inscription" style="width:100%; background:var(--orange); margin-top:15px;">
                     RETOUR À LA BOUTIQUE
                 </button>
             </div>
         `;
 
         panier = [];
+        datePlanifiee = null; // On réinitialise pour la prochaine fois
         mettreAJourBadge();
 
     } catch (error) {
         console.error("Erreur:", error);
-        alert("Erreur de connexion. Redirection WhatsApp...");
         finaliserVersWhatsApp();
     }
 }
@@ -288,8 +286,15 @@ document.addEventListener('DOMContentLoaded', () => {
 let datePlanifiee = null;
 
 function ouvrirPlanification(titre) {
-    document.getElementById('planif-titre').innerText = titre;
-    document.getElementById('modal-planification').style.display = "flex";
+    const modal = document.getElementById('modal-planification');
+    if (modal) {
+        document.getElementById('planif-titre').innerText = titre;
+        modal.style.display = "flex"; // On utilise flex pour le centrage
+        
+        // On ferme la sidebar automatiquement pour voir le modal
+        const sidebar = document.getElementById('user-sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+    }
 }
 
 function fermerPlanif() {
