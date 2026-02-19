@@ -188,5 +188,17 @@
         <button class="btn-inscription" onclick="envoyerDonneesAuSheet()">🚀 VALIDER MA COMMANDE</button>
     </div>
     </div>
+
+    <div id="modal-planification" class="welcome-popup" style="display:none; z-index: 1100;">
+    <div class="popup-content">
+        <button class="close-popup" onclick="fermerPlanif()">×</button>
+        <h3 id="planif-titre">📅 Planifier</h3>
+        <p style="font-size: 0.9rem; color: #666;">Choisissez la date et l'heure de passage souhaitées.</p>
+        
+        <input type="datetime-local" id="date-planif" style="margin: 20px 0;">
+        
+        <button class="btn-inscription" onclick="sauvegarderPlanif()">ENREGISTRER CE CRÉNEAU</button>
+    </div>
+</div>
 </body>
 </html>

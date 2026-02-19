@@ -284,3 +284,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000); 
     }
 });
+
+let datePlanifiee = null;
+
+function ouvrirPlanification(titre) {
+    document.getElementById('planif-titre').innerText = titre;
+    document.getElementById('modal-planification').style.display = "flex";
+}
+
+function fermerPlanif() {
+    document.getElementById('modal-planification').style.display = "none";
+}
+
+function sauvegarderPlanif() {
+    const dateInput = document.getElementById('date-planif').value;
+    if(!dateInput) { alert("Veuillez choisir une date !"); return; }
+    
+    datePlanifiee = dateInput;
+    alert("🚀 Date enregistrée ! Ajoutez maintenant vos produits et validez votre panier.");
+    fermerPlanif();
+}
+
+// MODIFIER LA FONCTION envoyerDonneesAuSheet pour inclure la date
+// Dans le bloc 'commandeData' de ton main.js, modifie comme ceci :
+const commandeData = {
+    // ... tes autres données ...
+    planif: datePlanifiee || "ASAP (Dès que possible)", // Ajoute cette ligne
+    type: datePlanifiee ? "PLANIFIÉ" : "DIRECT"
+};
