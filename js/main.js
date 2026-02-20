@@ -184,14 +184,31 @@ function rafraichirSidebar() {
 }
 
 function ouvrirInscription() {
-    let n = prompt("Nom complet :");
-    let t = prompt("Téléphone :");
-    let q = prompt("Quartier :");
-    if (n && t && q) {
+    // ÉTAPE IMPORTANTE : On ferme le pop-up immédiatement
+    const popup = document.getElementById('welcome-popup');
+    if (popup) popup.classList.remove('show');
+
+    const prevNom = localStorage.getItem('saferun_nom') || "";
+    const prevTel = localStorage.getItem('saferun_tel') || "";
+    const prevQuartier = localStorage.getItem('saferun_quartier') || "";
+
+    let n = prompt("Nom complet :", prevNom);
+    if (n === null) return; // Annuler si l'utilisateur clique sur "Annuler"
+    
+    let t = prompt("Téléphone :", prevTel);
+    if (t === null) return;
+
+    let q = prompt("Quartier :", prevQuartier);
+    if (q === null) return;
+
+    if (n.trim() && t.trim() && q.trim()) {
         localStorage.setItem('saferun_nom', n.trim());
         localStorage.setItem('saferun_tel', t.trim());
         localStorage.setItem('saferun_quartier', q.trim());
         rafraichirSidebar();
+        alert("✨ Profil mis à jour !");
+    } else {
+        alert("Tous les champs sont obligatoires.");
     }
 }
 
@@ -258,4 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
             rendreProduits(tousLesProduits.filter(p => p.Nom.toLowerCase().includes(val)));
         });
     }
+
+    // Boucle de vérification d'inscription toutes les 10 secondes
+    setInterval(() => {
+        const estInscrit = localStorage.getItem('saferun_nom');
+        const popup = document.getElementById('welcome-popup');
+        
+        // On n'affiche le popup que si le client n'est PAS inscrit
+        if (!estInscrit && popup && !popup.classList.contains('show')) {
+            popup.classList.add('show');
+        }
+    }, 10000); 
 });
