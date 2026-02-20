@@ -131,15 +131,13 @@ async function envoyerDonneesAuSheet() {
 
     // On prépare les données avec la date de planification si elle existe
     const commandeData = {
-        nom: localStorage.getItem('saferun_nom'),
-        tel: localStorage.getItem('saferun_tel'),
-        quartier: localStorage.getItem('saferun_quartier'),
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-        total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
-        date: new Date().toLocaleString(),
-        // On utilise la variable globale datePlanifiee
-        type: datePlanifiee ? "PLANIFIÉ" : "DIRECT",
-        planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "Dès que possible (ASAP)"
+    nom: localStorage.getItem('saferun_nom'),
+    tel: localStorage.getItem('saferun_tel'),
+    quartier: localStorage.getItem('saferun_quartier'),
+    produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+    total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
+    type: datePlanifiee ? "PLANIFIÉ" : "DIRECT", // Type selon si planifié ou non
+    planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "Dès que possible (ASAP)" // Colonne H
     };
 
     try {
