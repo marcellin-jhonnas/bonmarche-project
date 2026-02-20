@@ -285,6 +285,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let datePlanifiee = null;
 
+function ouvrirRdv() {
+    const modal = document.getElementById('modal-rdv');
+    if (!modal) return;
+    modal.style.display = "flex";
+    const sidebar = document.getElementById('user-sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+}
+
+function fermerRdv() {
+    const modal = document.getElementById('modal-rdv');
+    if(modal) modal.style.display = "none";
+}
+
+function envoyerRdv() {
+    const nom = document.getElementById('rdv-nom').value.trim();
+    const tel = document.getElementById('rdv-tel').value.trim();
+    const date = document.getElementById('rdv-date').value;
+    const commentaire = document.getElementById('rdv-commentaire').value.trim();
+
+    if(!nom || !tel || !date){
+        alert("Veuillez remplir au moins le nom, téléphone et la date.");
+        return;
+    }
+
+    const rdvData = {
+        nom,
+        tel,
+        date: new Date(date).toLocaleString('fr-FR'),
+        commentaire: commentaire || "Aucun commentaire",
+        type: "RENDEZ-VOUS"
+    };
+
+    // Envoi au serveur (Google Sheet ou WhatsApp)
+    try {
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rdvData)
+        });
+        alert("✅ Rendez-vous enregistré !");
+        fermerRdv();
+    } catch(e){
+        console.error(e);
+        alert("Erreur lors de l'envoi, veuillez réessayer.");
+    }
+}
+
 function ouvrirPlanification(titre) {
     const modal = document.getElementById('modal-planification');
     if (!modal) {
