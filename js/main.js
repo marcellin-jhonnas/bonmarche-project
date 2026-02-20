@@ -1,4 +1,6 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+let datePlanifiee = null; // pour la planification des livraisons
+let rdvData = null;       // pour stocker les infos du formulaire RDV
 let tousLesProduits = [];
 let panier = [];
 
@@ -130,15 +132,17 @@ async function envoyerDonneesAuSheet() {
     btn.disabled = true;
 
     // On prépare les données avec la date de planification si elle existe
-    const commandeData = {
-    nom: localStorage.getItem('saferun_nom'),
-    tel: localStorage.getItem('saferun_tel'),
-    quartier: localStorage.getItem('saferun_quartier'),
+   const commandeData = {
+    nom: localStorage.getItem('saferun_nom') || (rdvData ? rdvData.nom : ""),
+    tel: localStorage.getItem('saferun_tel') || (rdvData ? rdvData.tel : ""),
+    quartier: localStorage.getItem('saferun_quartier') || "",
     produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
     total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
-    type: datePlanifiee ? "PLANIFIÉ" : "DIRECT", // Type selon si planifié ou non
-    planif: datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "Dès que possible (ASAP)" // Colonne H
-    };
+    type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
+    planif: rdvData 
+             ? `RDV le ${rdvData.date} ${rdvData.heure}` 
+             : (datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "ASAP (Dès que possible)")
+};
 
     try {
         await fetch(API_URL, {
@@ -302,6 +306,7 @@ function envoyerRdv() {
     const nom = document.getElementById('rdv-nom').value.trim();
     const tel = document.getElementById('rdv-tel').value.trim();
     const date = document.getElementById('rdv-date').value;
+    const heure = document.getElementById('rdv-heure').value || "00:00";
     const commentaire = document.getElementById('rdv-commentaire').value.trim();
 
     if(!nom || !tel || !date){
@@ -309,28 +314,18 @@ function envoyerRdv() {
         return;
     }
 
-    const rdvData = {
+    // On stocke les infos RDV dans la variable globale rdvData
+    rdvData = {
         nom,
         tel,
-        date: new Date(date).toLocaleString('fr-FR'),
+        date: date,
+        heure: heure,
         commentaire: commentaire || "Aucun commentaire",
         type: "RENDEZ-VOUS"
     };
 
-    // Envoi au serveur (Google Sheet ou WhatsApp)
-    try {
-        fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(rdvData)
-        });
-        alert("✅ Rendez-vous enregistré !");
-        fermerRdv();
-    } catch(e){
-        console.error(e);
-        alert("Erreur lors de l'envoi, veuillez réessayer.");
-    }
+    fermerRdv(); // on ferme le modal RDV
+    alert("✅ Rendez-vous enregistré ! Il sera inclus avec votre prochaine commande.");
 }
 
 function ouvrirPlanification(titre) {
