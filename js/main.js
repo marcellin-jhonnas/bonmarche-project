@@ -1,6 +1,6 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
-let datePlanifiee = null; // pour la planification des livraisons
-let rdvData = null;       // pour stocker les infos du formulaire RDV
+let datePlanifiee = null; 
+let rdvData = null;       
 let tousLesProduits = [];
 let panier = [];
 
@@ -47,14 +47,6 @@ function ajouterAuPanier(nom, prix) {
     } else {
         panier.push({ nom, prix, quantite: 1 });
     }
-    
-    // Animation du badge
-    const badge = document.getElementById('cart-count');
-    if(badge) {
-        badge.style.transform = "scale(1.3)";
-        setTimeout(() => badge.style.transform = "scale(1)", 200);
-    }
-    
     mettreAJourBadge();
 }
 
@@ -127,93 +119,54 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    // 1. Sécurisation du bouton (évite le plantage si l'événement est perdu)
     const btn = (window.event && window.event.target) ? window.event.target : null;
-    
     if (btn && btn.tagName === 'BUTTON') {
-        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi au serveur...";
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi...";
         btn.disabled = true;
     }
 
-    // 2. Préparation sécurisée des données
-    const nomClient = localStorage.getItem('saferun_nom') || (typeof rdvData !== 'undefined' && rdvData ? rdvData.nom : "");
-    const telClient = localStorage.getItem('saferun_tel') || (typeof rdvData !== 'undefined' && rdvData ? rdvData.tel : "");
-    
     const commandeData = {
-        nom: nomClient,
-        tel: telClient,
+        nom: localStorage.getItem('saferun_nom') || (rdvData ? rdvData.nom : ""),
+        tel: localStorage.getItem('saferun_tel') || (rdvData ? rdvData.tel : ""),
         quartier: localStorage.getItem('saferun_quartier') || "",
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
         date: new Date().toLocaleString('fr-FR'),
-        type: (typeof rdvData !== 'undefined' && rdvData) ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
-        planif: (typeof rdvData !== 'undefined' && rdvData) 
+        type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
+        planif: rdvData 
                  ? `RDV le ${rdvData.date} ${rdvData.heure}` 
                  : (datePlanifiee ? datePlanifiee : "ASAP (Dès que possible)")
     };
 
     try {
-        // 3. Envoi au Google Sheet
         await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(commandeData)
         });
 
-        // 4. Interface de succès
         const modalContent = document.querySelector('#modal-panier .popup-content');
         if (modalContent) {
             modalContent.innerHTML = `
                 <div style="text-align:center; padding:20px;">
                     <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
-                    <h2 style="color:#2c3e50;">Merci !</h2>
-                    <p>Votre commande <strong>${commandeData.type}</strong> a été transmise.</p>
-                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; background:#ff6b00; margin-top:15px; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">
-                        RETOUR À LA BOUTIQUE
-                    </button>
-                </div>
-            `;
+                    <h2>Merci !</h2>
+                    <p>Commande transmise avec succès.</p>
+                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:15px;">RETOUR</button>
+                </div>`;
         }
-
-        // Nettoyage
         panier = [];
         datePlanifiee = null;
-        if (typeof rdvData !== 'undefined') rdvData = null;
-        if (typeof mettreAJourBadge === 'function') mettreAJourBadge();
-
+        rdvData = null;
     } catch (error) {
-        console.error("Erreur critique lors de l'envoi:", error);
-        // Si l'envoi échoue, on bascule sur WhatsApp pour ne pas perdre la vente
-        if (typeof finaliserVersWhatsApp === 'function') finaliserVersWhatsApp();
+        console.error("Erreur:", error);
+        finaliserVersWhatsApp();
     }
 }
 
 function finaliserVersWhatsApp() {
-    const numeroWA = "261382453610";
-    let listeProduits = "";
-    let totalGeneral = 0;
-    
-    panier.forEach((item) => {
-        const sousTotal = item.prix * item.quantite;
-        totalGeneral += sousTotal;
-        listeProduits += `✅ ${item.quantite} x *${item.nom}* : ${sousTotal.toLocaleString()} Ar\n`;
-    });
-
-    const message = `Bonjour SafeRun Market ! 🛒\n\n` +
-                    `Je souhaite commander :\n---------------------------\n${listeProduits}---------------------------\n` +
-                    `💰 *TOTAL : ${totalGeneral.toLocaleString()} Ar*\n\n` +
-                    `Merci de me recontacter !`;
-
-    window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
-}
-
-function fermerModal() {
-    const modal = document.getElementById('modal-panier');
-    if(modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.style.display = "none", 300);
-    }
+    const message = `Commande SafeRun :\n${panier.map(i => `- ${i.quantite}x ${i.nom}`).join('\n')}`;
+    window.open(`https://wa.me/261382453610?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 // 5. SIDEBAR ET POPUP
@@ -226,87 +179,26 @@ function rafraichirSidebar() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');
     const quartier = localStorage.getItem('saferun_quartier');
-
-    const sideNom = document.getElementById('side-user-nom');
-    const sideTel = document.getElementById('side-user-tel');
-    const sideQuartier = document.getElementById('side-user-quartier');
-    const initialsDiv = document.getElementById('user-initials');
-
-    if (nom && sideNom) sideNom.innerText = nom;
-    if (tel && sideTel) sideTel.innerHTML = `<i class="fas fa-phone"></i> ${tel}`;
-    if (quartier && sideQuartier) sideQuartier.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${quartier}`;
-    if (nom && initialsDiv) initialsDiv.innerText = nom.charAt(0).toUpperCase();
+    if (nom) document.getElementById('side-user-nom').innerText = nom;
+    if (nom) document.getElementById('user-initials').innerText = nom.charAt(0).toUpperCase();
 }
 
 function ouvrirInscription() {
-    const popup = document.getElementById('welcome-popup');
-    if (popup) popup.classList.remove('show');
-    
-    setTimeout(() => {
-        let n = prompt("Votre Nom complet :", localStorage.getItem('saferun_nom') || "");
-        let t = prompt("Votre Numéro de téléphone :", localStorage.getItem('saferun_tel') || "");
-        let q = prompt("Votre Quartier :", localStorage.getItem('saferun_quartier') || "");
-
-        if (n && t && q) {
-            localStorage.setItem('saferun_nom', n.trim());
-            localStorage.setItem('saferun_tel', t.trim());
-            localStorage.setItem('saferun_quartier', q.trim());
-            rafraichirSidebar();
-            alert("✨ Profil mis à jour !");
-        }
-    }, 400);
+    let n = prompt("Nom complet :");
+    let t = prompt("Téléphone :");
+    let q = prompt("Quartier :");
+    if (n && t && q) {
+        localStorage.setItem('saferun_nom', n.trim());
+        localStorage.setItem('saferun_tel', t.trim());
+        localStorage.setItem('saferun_quartier', q.trim());
+        rafraichirSidebar();
+    }
 }
 
-// 6. INIT
-document.addEventListener('DOMContentLoaded', () => {
-    chargerBoutique();
-    rafraichirSidebar();
-
-    // Bouton Compte
-    const compteBtn = document.querySelector('.fa-user');
-    if (compteBtn) {
-        compteBtn.parentElement.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleSidebar();
-        });
-    }
-
-    // Bouton Panier (Cart Trigger)
-    const cartTrigger = document.querySelector('.cart-trigger');
-    if (cartTrigger) {
-        cartTrigger.addEventListener('click', (e) => {
-            e.preventDefault();
-            envoyerCommande();
-        });
-    }
-
-    // Barre de recherche
-    const searchBar = document.getElementById('search');
-    if(searchBar) {
-        searchBar.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            const filtrés = tousLesProduits.filter(p => p.Nom.toLowerCase().includes(val));
-            rendreProduits(filtrés);
-        });
-    }
-
-    // Popup initiale
-    if (!localStorage.getItem('saferun_nom')) {
-        setTimeout(() => {
-            const popup = document.getElementById('welcome-popup');
-            if (popup) popup.classList.add('show');
-        }, 3000); 
-    }
-});
-
-let datePlanifiee = null;
-
+// 6. RDV ET PLANIF
 function ouvrirRdv() {
     const modal = document.getElementById('modal-rdv');
-    if (!modal) return;
-
-    modal.classList.add('show');
-
+    if (modal) modal.classList.add('show');
     const sidebar = document.getElementById('user-sidebar');
     if (sidebar) sidebar.classList.remove('open');
 }
@@ -317,52 +209,23 @@ function fermerRdv() {
 }
 
 function envoyerRdv() {
-    const nom = document.getElementById('rdv-nom').value.trim();
-    const tel = document.getElementById('rdv-tel').value.trim();
+    const nom = document.getElementById('rdv-nom').value;
+    const tel = document.getElementById('rdv-tel').value;
     const date = document.getElementById('rdv-date').value;
-    const heure = document.getElementById('rdv-heure').value || "00:00";
-    const commentaire = document.getElementById('rdv-commentaire').value.trim();
-
-    if(!nom || !tel || !date){
-        alert("Veuillez remplir au moins le nom, téléphone et la date.");
-        return;
-    }
-
-    // On stocke les infos RDV dans la variable globale rdvData
-    rdvData = {
-        nom,
-        tel,
-        date: date,
-        heure: heure,
-        commentaire: commentaire || "Aucun commentaire",
-        type: "RENDEZ-VOUS"
-    };
-
-    fermerRdv(); // on ferme le modal RDV
-    alert("✅ Rendez-vous enregistré ! Il sera inclus avec votre prochaine commande.");
+    if(!nom || !tel || !date){ alert("Champs obligatoires manquants"); return; }
+    rdvData = { nom, tel, date, heure: document.getElementById('rdv-heure').value, type: "RENDEZ-VOUS" };
+    fermerRdv();
+    alert("✅ Rendez-vous enregistré !");
 }
 
 function ouvrirPlanification(titre) {
     const modal = document.getElementById('modal-planification');
-    if (!modal) {
-        console.error("Modal introuvable : vérifie l'id 'modal-planification'");
-        return;
+    if (modal) {
+        document.getElementById('planif-titre').innerText = titre;
+        modal.style.display = "flex";
+        const sidebar = document.getElementById('user-sidebar');
+        if (sidebar) sidebar.classList.remove('open');
     }
-
-    // Mettre le titre dans le modal
-    const titreElem = document.getElementById('planif-titre');
-    if (titreElem) {
-        titreElem.innerText = titre;
-    }
-
-    // Affiche le modal correctement
-    modal.style.display = "flex";       // Assure que le display est flex
-    modal.style.opacity = "1";           // Si tu utilises fade-in CSS
-    modal.style.transform = "translateY(0)"; // Pour animation si nécessaire
-
-    // Fermer la sidebar pour que le modal soit visible
-    const sidebar = document.getElementById('user-sidebar');
-    if (sidebar) sidebar.classList.remove('open');
 }
 
 function fermerPlanif() {
@@ -372,31 +235,27 @@ function fermerPlanif() {
 function sauvegarderPlanif() {
     const dateInput = document.getElementById('date-planif').value;
     if(!dateInput) { alert("Veuillez choisir une date !"); return; }
-    
-    datePlanifiee = dateInput; // On stocke la date
-    
-    // On affiche le badge bleu en haut
-    const statusDiv = document.getElementById('status-planif');
-    const dateSpan = document.getElementById('date-affichage');
-    
-    if(statusDiv && dateSpan) {
-        dateSpan.innerText = new Date(datePlanifiee).toLocaleString('fr-FR');
-        statusDiv.style.display = "block"; // On montre le badge
-    }
-    
+    datePlanifiee = dateInput;
+    document.getElementById('date-affichage').innerText = new Date(datePlanifiee).toLocaleString('fr-FR');
+    document.getElementById('status-planif').style.display = "block";
     fermerPlanif();
 }
 
-// Fonction pour annuler la planification si le client change d'avis
 function annulerPlanif() {
     datePlanifiee = null;
     document.getElementById('status-planif').style.display = "none";
 }
 
-// MODIFIER LA FONCTION envoyerDonneesAuSheet pour inclure la date
-// Dans le bloc 'commandeData' de ton main.js, modifie comme ceci :
-const commandeData = {
-    // ... tes autres données ...
-    planif: datePlanifiee || "ASAP (Dès que possible)", // Ajoute cette ligne
-    type: datePlanifiee ? "PLANIFIÉ" : "DIRECT"
-};
+// 7. INIT
+document.addEventListener('DOMContentLoaded', () => {
+    chargerBoutique();
+    rafraichirSidebar();
+    
+    const searchBar = document.getElementById('search');
+    if(searchBar) {
+        searchBar.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            rendreProduits(tousLesProduits.filter(p => p.Nom.toLowerCase().includes(val)));
+        });
+    }
+});
