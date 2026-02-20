@@ -446,3 +446,30 @@ button {
 
 .notif-badge { background: #ff3b30; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
 .close-sidebar { background: none; border: none; color: white; font-size: 30px; cursor: pointer; position: absolute; right: 15px; top: 10px; width: auto; }
+
+#modal-planification {
+    display: none; /* caché par défaut */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* fond semi-transparent */
+    justify-content: center; /* centrage horizontal */
+    align-items: center;     /* centrage vertical */
+    z-index: 2000;           /* au-dessus de tout */
+}
+
+#modal-planification .modal-content {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+#modal-planification.show {
+    display: flex !important;
+}
