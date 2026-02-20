@@ -287,14 +287,25 @@ let datePlanifiee = null;
 
 function ouvrirPlanification(titre) {
     const modal = document.getElementById('modal-planification');
-    if (modal) {
-        document.getElementById('planif-titre').innerText = titre;
-        modal.style.display = "flex"; // On utilise flex pour le centrage
-        
-        // On ferme la sidebar automatiquement pour voir le modal
-        const sidebar = document.getElementById('user-sidebar');
-        if (sidebar) sidebar.classList.remove('open');
+    if (!modal) {
+        console.error("Modal introuvable : vérifie l'id 'modal-planification'");
+        return;
     }
+
+    // Mettre le titre dans le modal
+    const titreElem = document.getElementById('planif-titre');
+    if (titreElem) {
+        titreElem.innerText = titre;
+    }
+
+    // Affiche le modal correctement
+    modal.style.display = "flex";       // Assure que le display est flex
+    modal.style.opacity = "1";           // Si tu utilises fade-in CSS
+    modal.style.transform = "translateY(0)"; // Pour animation si nécessaire
+
+    // Fermer la sidebar pour que le modal soit visible
+    const sidebar = document.getElementById('user-sidebar');
+    if (sidebar) sidebar.classList.remove('open');
 }
 
 function fermerPlanif() {
