@@ -473,3 +473,21 @@ button {
 #modal-planification.show {
     display: flex !important;
 }
+
+/* Correction affichage des modals RDV et Planification */
+#modal-rdv,
+#modal-planification {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: none !important;   /* Annule le déplacement de welcome-popup */
+    justify-content: center;
+    align-items: center;
+    z-index: 3000; /* au-dessus de la sidebar */
+}
+
+#modal-rdv.show,
+#modal-planification.show {
+    display: flex !important;
+}

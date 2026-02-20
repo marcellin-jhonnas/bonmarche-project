@@ -287,24 +287,17 @@ let datePlanifiee = null;
 
 function ouvrirRdv() {
     const modal = document.getElementById('modal-rdv');
-    if (!modal) {
-        console.error("Modal RDV introuvable");
-        return;
-    }
+    if (!modal) return;
 
-    // Afficher le modal
-    modal.style.display = "flex";
+    modal.classList.add('show');
 
-    // Fermer la sidebar pour éviter qu'elle masque le modal
     const sidebar = document.getElementById('user-sidebar');
-    if (sidebar) {
-        sidebar.classList.remove('open');
-    }
+    if (sidebar) sidebar.classList.remove('open');
 }
 
 function fermerRdv() {
     const modal = document.getElementById('modal-rdv');
-    if(modal) modal.style.display = "none";
+    if (modal) modal.classList.remove('show');
 }
 
 function envoyerRdv() {
