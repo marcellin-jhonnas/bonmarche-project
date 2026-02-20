@@ -127,24 +127,33 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    const btn = window.event.target;
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi au serveur...";
-    btn.disabled = true;
+    // 1. Sécurisation du bouton (évite le plantage si l'événement est perdu)
+    const btn = (window.event && window.event.target) ? window.event.target : null;
+    
+    if (btn && btn.tagName === 'BUTTON') {
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi au serveur...";
+        btn.disabled = true;
+    }
 
-    // On prépare les données avec la date de planification si elle existe
-   const commandeData = {
-    nom: localStorage.getItem('saferun_nom') || (rdvData ? rdvData.nom : ""),
-    tel: localStorage.getItem('saferun_tel') || (rdvData ? rdvData.tel : ""),
-    quartier: localStorage.getItem('saferun_quartier') || "",
-    produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-    total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
-    type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
-    planif: rdvData 
-             ? `RDV le ${rdvData.date} ${rdvData.heure}` 
-             : (datePlanifiee ? new Date(datePlanifiee).toLocaleString('fr-FR') : "ASAP (Dès que possible)")
-};
+    // 2. Préparation sécurisée des données
+    const nomClient = localStorage.getItem('saferun_nom') || (typeof rdvData !== 'undefined' && rdvData ? rdvData.nom : "");
+    const telClient = localStorage.getItem('saferun_tel') || (typeof rdvData !== 'undefined' && rdvData ? rdvData.tel : "");
+    
+    const commandeData = {
+        nom: nomClient,
+        tel: telClient,
+        quartier: localStorage.getItem('saferun_quartier') || "",
+        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
+        date: new Date().toLocaleString('fr-FR'),
+        type: (typeof rdvData !== 'undefined' && rdvData) ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
+        planif: (typeof rdvData !== 'undefined' && rdvData) 
+                 ? `RDV le ${rdvData.date} ${rdvData.heure}` 
+                 : (datePlanifiee ? datePlanifiee : "ASAP (Dès que possible)")
+    };
 
     try {
+        // 3. Envoi au Google Sheet
         await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -152,26 +161,31 @@ async function envoyerDonneesAuSheet() {
             body: JSON.stringify(commandeData)
         });
 
+        // 4. Interface de succès
         const modalContent = document.querySelector('#modal-panier .popup-content');
-        modalContent.innerHTML = `
-            <div style="text-align:center; padding:20px;">
-                <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
-                <h2 style="color:#2c3e50;">Merci !</h2>
-                <p>Votre commande <strong>${commandeData.type}</strong> a été transmise.</p>
-                ${datePlanifiee ? `<p style="background:#e8f4fd; padding:10px; border-radius:8px;">📅 Prévue pour : <b>${commandeData.planif}</b></p>` : ''}
-                <button onclick="location.reload();" class="btn-inscription" style="width:100%; background:var(--orange); margin-top:15px;">
-                    RETOUR À LA BOUTIQUE
-                </button>
-            </div>
-        `;
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
+                    <h2 style="color:#2c3e50;">Merci !</h2>
+                    <p>Votre commande <strong>${commandeData.type}</strong> a été transmise.</p>
+                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; background:#ff6b00; margin-top:15px; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">
+                        RETOUR À LA BOUTIQUE
+                    </button>
+                </div>
+            `;
+        }
 
+        // Nettoyage
         panier = [];
-        datePlanifiee = null; // On réinitialise pour la prochaine fois
-        mettreAJourBadge();
+        datePlanifiee = null;
+        if (typeof rdvData !== 'undefined') rdvData = null;
+        if (typeof mettreAJourBadge === 'function') mettreAJourBadge();
 
     } catch (error) {
-        console.error("Erreur:", error);
-        finaliserVersWhatsApp();
+        console.error("Erreur critique lors de l'envoi:", error);
+        // Si l'envoi échoue, on bascule sur WhatsApp pour ne pas perdre la vente
+        if (typeof finaliserVersWhatsApp === 'function') finaliserVersWhatsApp();
     }
 }
 
