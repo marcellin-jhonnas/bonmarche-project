@@ -287,10 +287,19 @@ let datePlanifiee = null;
 
 function ouvrirRdv() {
     const modal = document.getElementById('modal-rdv');
-    if (!modal) return;
+    if (!modal) {
+        console.error("Modal RDV introuvable");
+        return;
+    }
+
+    // Afficher le modal
     modal.style.display = "flex";
+
+    // Fermer la sidebar pour éviter qu'elle masque le modal
     const sidebar = document.getElementById('user-sidebar');
-    if (sidebar) sidebar.classList.remove('open');
+    if (sidebar) {
+        sidebar.classList.remove('open');
+    }
 }
 
 function fermerRdv() {
