@@ -287,3 +287,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 10000); 
 });
+
+function contacterAssistance() {
+    const numeroWA = "261382453610";
+    const nom = localStorage.getItem('saferun_nom') || "Client";
+    const quartier = localStorage.getItem('saferun_quartier') || "non précisé";
+    
+    // On prépare un message poli et contextuel
+    const message = `Bonjour SafeRun ! 👋\n\n` +
+                    `Je suis *${nom}* du quartier de *${quartier}*.\n` +
+                    `J'aurais besoin d'une assistance concernant le marché en ligne.`;
+
+    // On ferme la sidebar avant de rediriger
+    if(typeof toggleSidebar === 'function') toggleSidebar();
+
+    // Ouverture de WhatsApp
+    window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
+}
