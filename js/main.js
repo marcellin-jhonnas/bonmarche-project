@@ -155,6 +155,7 @@ async function envoyerDonneesAuSheet() {
             statut: "En préparation"
         });
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+        localStorage.setItem('livraison_vue', 'false');
         mettreAJourBadgeLivraison();
         setTimeout(() => {
             const sidebar = document.getElementById('user-sidebar');
@@ -349,6 +350,7 @@ function contacterAssistance() {
 }
 
 function ouvrirLivraisons() {
+    localStorage.setItem('livraison_vue', 'true');
     const modal = document.getElementById('modal-livraisons');
     const container = document.getElementById('liste-livraisons');
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
@@ -400,11 +402,22 @@ function mettreAJourBadgeLivraison() {
     if (!badge) return;
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    const dejaVu = localStorage.getItem('livraison_vue') === 'true';
     
     if (historique.length > 0) {
         badge.innerText = historique.length;
-        badge.style.display = "inline-block"; // Affiche si > 0
+        badge.style.display = "inline-block";
+
+        if (dejaVu) {
+            // Si l'utilisateur a déjà cliqué, on enlève l'alerte rouge
+            badge.style.animation = "none"; 
+            badge.style.background = "#bdc3c7"; // Gris (déjà vu)
+        } else {
+            // Sinon, on laisse le clignotement rouge (alerte)
+            badge.style.animation = "pulse-red 1.5s infinite linear";
+            badge.style.background = "#ff3b30"; // Rouge
+        }
     } else {
-        badge.style.display = "none"; // Cache si 0
+        badge.style.display = "none";
     }
 }
