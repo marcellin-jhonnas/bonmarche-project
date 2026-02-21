@@ -126,9 +126,9 @@ async function envoyerDonneesAuSheet() {
     }
 
     const commandeData = {
-        nom: localStorage.getItem('saferun_nom') || (rdvData ? rdvData.nom : ""),
-        tel: localStorage.getItem('saferun_tel') || (rdvData ? rdvData.tel : ""),
-        quartier: localStorage.getItem('saferun_quartier') || "",
+        nom: localStorage.getItem('saferun_nom'),
+        tel: localStorage.getItem('saferun_tel'),
+        quartier: localStorage.getItem('saferun_quartier'),
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
         date: new Date().toLocaleString('fr-FR'),
@@ -179,12 +179,25 @@ function rafraichirSidebar() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');
     const quartier = localStorage.getItem('saferun_quartier');
-    if (nom) document.getElementById('side-user-nom').innerText = nom;
-    if (nom) document.getElementById('user-initials').innerText = nom.charAt(0).toUpperCase();
+
+    if (nom) {
+        document.getElementById('side-user-nom').innerText = nom;
+        document.getElementById('user-initials').innerText = nom.charAt(0).toUpperCase();
+    }
+    
+    // Correction de l'affichage du téléphone et quartier
+    const elTel = document.getElementById('side-user-tel');
+    if (elTel) {
+        elTel.innerHTML = tel ? `<i class="fas fa-phone"></i> ${tel}` : `<i class="fas fa-phone"></i> Non renseigné`;
+    }
+    
+    const elQuartier = document.getElementById('side-user-quartier');
+    if (elQuartier) {
+        elQuartier.innerHTML = quartier ? `<i class="fas fa-map-marker-alt"></i> ${quartier}` : `<i class="fas fa-map-marker-alt"></i> Quartier non renseigné`;
+    }
 }
 
 function ouvrirInscription() {
-    // ÉTAPE IMPORTANTE : On ferme le pop-up immédiatement
     const popup = document.getElementById('welcome-popup');
     if (popup) popup.classList.remove('show');
 
@@ -193,7 +206,7 @@ function ouvrirInscription() {
     const prevQuartier = localStorage.getItem('saferun_quartier') || "";
 
     let n = prompt("Nom complet :", prevNom);
-    if (n === null) return; // Annuler si l'utilisateur clique sur "Annuler"
+    if (n === null) return;
     
     let t = prompt("Téléphone :", prevTel);
     if (t === null) return;
@@ -215,14 +228,20 @@ function ouvrirInscription() {
 // 6. RDV ET PLANIF
 function ouvrirRdv() {
     const modal = document.getElementById('modal-rdv');
-    if (modal) modal.classList.add('show');
+    if (modal) {
+        modal.style.display = "flex";
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
     const sidebar = document.getElementById('user-sidebar');
     if (sidebar) sidebar.classList.remove('open');
 }
 
 function fermerRdv() {
     const modal = document.getElementById('modal-rdv');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = "none", 300);
+    }
 }
 
 function envoyerRdv() {
@@ -240,13 +259,18 @@ function ouvrirPlanification(titre) {
     if (modal) {
         document.getElementById('planif-titre').innerText = titre;
         modal.style.display = "flex";
-        const sidebar = document.getElementById('user-sidebar');
-        if (sidebar) sidebar.classList.remove('open');
+        setTimeout(() => modal.classList.add('show'), 10);
     }
+    const sidebar = document.getElementById('user-sidebar');
+    if (sidebar) sidebar.classList.remove('open');
 }
 
 function fermerPlanif() {
-    document.getElementById('modal-planification').style.display = "none";
+    const modal = document.getElementById('modal-planification');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = "none", 300);
+    }
 }
 
 function sauvegarderPlanif() {
@@ -276,12 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Boucle de vérification d'inscription toutes les 10 secondes
     setInterval(() => {
         const estInscrit = localStorage.getItem('saferun_nom');
         const popup = document.getElementById('welcome-popup');
-        
-        // On n'affiche le popup que si le client n'est PAS inscrit
         if (!estInscrit && popup && !popup.classList.contains('show')) {
             popup.classList.add('show');
         }
@@ -292,15 +313,7 @@ function contacterAssistance() {
     const numeroWA = "261382453610";
     const nom = localStorage.getItem('saferun_nom') || "Client";
     const quartier = localStorage.getItem('saferun_quartier') || "non précisé";
-    
-    // On prépare un message poli et contextuel
-    const message = `Bonjour SafeRun ! 👋\n\n` +
-                    `Je suis *${nom}* du quartier de *${quartier}*.\n` +
-                    `J'aurais besoin d'une assistance concernant le marché en ligne.`;
-
-    // On ferme la sidebar avant de rediriger
+    const message = `Bonjour SafeRun ! 👋\n\nJe suis *${nom}* du quartier de *${quartier}*.\nJ'aurais besoin d'une assistance concernant le marché en ligne.`;
     if(typeof toggleSidebar === 'function') toggleSidebar();
-
-    // Ouverture de WhatsApp
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
 }
