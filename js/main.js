@@ -145,6 +145,18 @@ async function envoyerDonneesAuSheet() {
             body: JSON.stringify(commandeData)
         });
 
+        // SAUVEGARDE DANS L'HISTORIQUE LOCAL
+        const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+        historique.push({
+            id: Date.now(),
+            date: new Date().toLocaleString('fr-FR'),
+            produits: commandeData.produits,
+            total: commandeData.total,
+            statut: "En préparation"
+        });
+        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+
+        // AFFICHAGE DU SUCCÈS
         const modalContent = document.querySelector('#modal-panier .popup-content');
         if (modalContent) {
             modalContent.innerHTML = `
@@ -155,9 +167,13 @@ async function envoyerDonneesAuSheet() {
                     <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:15px;">RETOUR</button>
                 </div>`;
         }
+        
+        // RÉINITIALISATION
         panier = [];
         datePlanifiee = null;
         rdvData = null;
+        mettreAJourBadge();
+
     } catch (error) {
         console.error("Erreur:", error);
         finaliserVersWhatsApp();
@@ -316,4 +332,51 @@ function contacterAssistance() {
     const message = `Bonjour SafeRun ! 👋\n\nJe suis *${nom}* du quartier de *${quartier}*.\nJ'aurais besoin d'une assistance concernant le marché en ligne.`;
     if(typeof toggleSidebar === 'function') toggleSidebar();
     window.open(`https://wa.me/${numeroWA}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+function ouvrirLivraisons() {
+    const modal = document.getElementById('modal-livraisons');
+    const container = document.getElementById('liste-livraisons');
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+
+    if (modal) {
+        modal.style.display = "flex";
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    if (historique.length === 0) {
+        container.innerHTML = "<p style='color: #666;'>Aucune commande en cours.</p>";
+    } else {
+        container.innerHTML = historique.reverse().map(cmd => `
+            <div style="background: #f9f9f9; border-left: 4px solid var(--orange); padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>📦 Commande #${cmd.id.toString().slice(-4)}</span>
+                    <span style="color: var(--orange);">${cmd.statut}</span>
+                </div>
+                <div style="margin-top: 5px; color: #555;">${cmd.produits}</div>
+                <div style="margin-top: 5px; font-weight: bold;">Total: ${cmd.total.toLocaleString()} Ar</div>
+                <div style="font-size: 0.7rem; color: #999; margin-top: 5px;">Passée le : ${cmd.date}</div>
+            </div>
+        `).join('');
+    }
+    
+    if(typeof toggleSidebar === 'function') {
+        const sidebar = document.getElementById('user-sidebar');
+        if(sidebar && sidebar.classList.contains('open')) toggleSidebar();
+    }
+}
+
+function fermerLivraisons() {
+    const modal = document.getElementById('modal-livraisons');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = "none", 300);
+    }
+}
+
+function viderHistorique() {
+    if(confirm("Voulez-vous effacer l'historique de vos livraisons ?")) {
+        localStorage.removeItem('saferun_commandes');
+        ouvrirLivraisons(); // Rafraîchit l'affichage
+    }
 }

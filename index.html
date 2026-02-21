@@ -27,7 +27,10 @@
     <nav class="sidebar-nav">
         <a href="#" class="nav-item active"><i class="fas fa-bolt"></i> <div><span>Livraison Express</span><small>Moins de 24h</small></div></a>
         <a href="javascript:void(0)" class="nav-item" onclick="ouvrirPlanification('Achat Planifié')">
-        <i class="fas fa-clock"></i> <span>Achat Planifié</span> </a>       <a href="#" class="nav-item"><i class="fas fa-truck-loading"></i> <span>Livraison en cours</span></a>
+        <i class="fas fa-clock"></i> <span>Achat Planifié</span> </a>       
+        <a href="javascript:void(0)" class="nav-item" onclick="ouvrirLivraisons()">
+        <i class="fas fa-truck-loading"></i> 
+        <span>Livraison en cours</span></a>
         <a href="#" class="nav-item"><i class="fas fa-check-circle"></i> <span>Achats validés</span><span class="notif-badge">0</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="contacterAssistance()">
     <i class="fab fa-whatsapp"></i> 
@@ -221,5 +224,28 @@
             <button class="btn-inscription" onclick="sauvegarderPlanif()" style="width: 100%;">ENREGISTRER CE CRÉNEAU</button>
         </div>
     </div>
+    <div id="modal-livraisons" class="welcome-popup" style="display:none; z-index: 1200;">
+    <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <button class="close-popup" onclick="fermerLivraisons()">×</button>
+        <h3>🚚 Mes Livraisons</h3>
+        <div id="liste-livraisons" style="text-align: left; margin-top: 15px;">
+            </div>
+    </div>
+</div>
+<div id="modal-livraisons" class="welcome-popup" style="display:none; z-index: 1200;">
+        <div class="popup-content" style="max-width: 400px; max-height: 80vh; display: flex; flex-direction: column;">
+            <button class="close-popup" onclick="fermerLivraisons()">×</button>
+            <h3>🚚 Mes Livraisons</h3>
+            
+            <div id="liste-livraisons" style="text-align: left; margin-top: 15px; flex-grow: 1; overflow-y: auto; padding-right: 5px;">
+                </div>
+
+            <button onclick="viderHistorique()" style="margin-top: 15px; background: none; border: 1px solid #ccc; color: #888; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                <i class="fas fa-trash"></i> Effacer l'historique
+            </button>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
 </body>
 </html>
