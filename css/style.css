@@ -493,15 +493,21 @@ button {
 }
 /* Le badge rond et rouge */
 /* Remplace ton bloc .badge-notif et @keyframes par celui-ci */
-.badge-notif {
+/* Le badge dans la sidebar */
+#badge-livraison {
     background-color: #ff3b30;
     color: white;
     font-size: 0.75rem;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 20px;
-    margin-left: auto; /* Aligne le badge à droite dans la sidebar */
+    margin-left: auto;
     font-weight: bold;
-    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    display: none; /* Caché par défaut, géré par JS */
+    transition: background 0.3s ease;
+}
+
+/* L'animation de clignotement (seulement quand c'est rouge) */
+.pulse-alerte {
     animation: pulse-red 1.5s infinite linear;
 }
 
@@ -534,4 +540,11 @@ button {
 #modal-livraisons.show,
 #modal-panier.show {
     display: flex !important;
+}
+/* État du badge quand la notification est consultée */
+/* État du badge quand la notification est consultée */
+#badge-livraison.lu {
+    background-color: #bdc3c7 !important; /* Gris */
+    animation: none !important;           /* Arrête le clignotement */
+    box-shadow: none !important;
 }

@@ -351,6 +351,7 @@ function contacterAssistance() {
 
 function ouvrirLivraisons() {
     localStorage.setItem('livraison_vue', 'true');
+    mettreAJourBadgeLivraison();
     const modal = document.getElementById('modal-livraisons');
     const container = document.getElementById('liste-livraisons');
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
@@ -409,13 +410,11 @@ function mettreAJourBadgeLivraison() {
         badge.style.display = "inline-block";
 
         if (dejaVu) {
-            // Si l'utilisateur a déjà cliqué, on enlève l'alerte rouge
-            badge.style.animation = "none"; 
-            badge.style.background = "#bdc3c7"; // Gris (déjà vu)
+            badge.classList.add('lu');             // Devient gris via CSS
+            badge.classList.remove('pulse-alerte'); // Arrête l'animation
         } else {
-            // Sinon, on laisse le clignotement rouge (alerte)
-            badge.style.animation = "pulse-red 1.5s infinite linear";
-            badge.style.background = "#ff3b30"; // Rouge
+            badge.classList.remove('lu');          // Reste rouge
+            badge.classList.add('pulse-alerte');    // Active le clignotement
         }
     } else {
         badge.style.display = "none";
