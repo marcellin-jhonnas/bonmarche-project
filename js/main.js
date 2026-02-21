@@ -156,6 +156,12 @@ async function envoyerDonneesAuSheet() {
         });
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
         mettreAJourBadgeLivraison();
+        setTimeout(() => {
+            const sidebar = document.getElementById('user-sidebar');
+            if (sidebar && !sidebar.classList.contains('open')) {
+                toggleSidebar();
+            }
+        }, 500);
         // AFFICHAGE DU SUCCÈS
         const modalContent = document.querySelector('#modal-panier .popup-content');
         if (modalContent) {
@@ -308,7 +314,14 @@ document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
     mettreAJourBadgeLivraison();
-    
+    // --- À INSERER VERS LA LIGNE 251 ---
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    if (historique.length > 0) {
+        setTimeout(() => {
+            const sidebar = document.getElementById('user-sidebar');
+            if (sidebar && !sidebar.classList.contains('open')) toggleSidebar();
+        }, 1500); 
+    }
     const searchBar = document.getElementById('search');
     if(searchBar) {
         searchBar.addEventListener('input', (e) => {

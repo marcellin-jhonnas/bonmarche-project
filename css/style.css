@@ -492,21 +492,46 @@ button {
     display: flex !important;
 }
 /* Le badge rond et rouge */
+/* Remplace ton bloc .badge-notif et @keyframes par celui-ci */
 .badge-notif {
-    background-color: #ff0000;
+    background-color: #ff3b30;
     color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 50%;
-    margin-left: 10px;
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: auto; /* Aligne le badge à droite dans la sidebar */
     font-weight: bold;
-    box-shadow: 0 0 5px rgba(255,0,0,0.5);
-    /* Animation de clignotement */
-    animation: clignoter 1.5s infinite;
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    animation: pulse-red 1.5s infinite linear;
 }
 
-@keyframes clignoter {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.1); }
-    100% { opacity: 1; transform: scale(1); }
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Ajoute #modal-livraisons à ta liste de correction à la fin du CSS */
+#modal-rdv,
+#modal-planification,
+#modal-livraisons,
+#modal-panier {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; /* Important pour couvrir tout l'écran */
+    height: 100%; /* Important pour couvrir tout l'écran */
+    background: rgba(0, 0, 0, 0.6); /* Fond sombre derrière la fenêtre */
+    transform: none !important;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+#modal-rdv.show,
+#modal-planification.show,
+#modal-livraisons.show,
+#modal-panier.show {
+    display: flex !important;
 }
