@@ -155,7 +155,7 @@ async function envoyerDonneesAuSheet() {
             statut: "En préparation"
         });
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-
+        mettreAJourBadgeLivraison();
         // AFFICHAGE DU SUCCÈS
         const modalContent = document.querySelector('#modal-panier .popup-content');
         if (modalContent) {
@@ -307,6 +307,7 @@ function annulerPlanif() {
 document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
+    mettreAJourBadgeLivraison();
     
     const searchBar = document.getElementById('search');
     if(searchBar) {
@@ -377,6 +378,20 @@ function fermerLivraisons() {
 function viderHistorique() {
     if(confirm("Voulez-vous effacer l'historique de vos livraisons ?")) {
         localStorage.removeItem('saferun_commandes');
+        mettreAJourBadgeLivraison();
         ouvrirLivraisons(); // Rafraîchit l'affichage
+    }
+}
+function mettreAJourBadgeLivraison() {
+    const badge = document.getElementById('badge-livraison');
+    if (!badge) return;
+
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    
+    if (historique.length > 0) {
+        badge.innerText = historique.length;
+        badge.style.display = "inline-block"; // Affiche si > 0
+    } else {
+        badge.style.display = "none"; // Cache si 0
     }
 }
