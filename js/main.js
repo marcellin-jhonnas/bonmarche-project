@@ -64,7 +64,7 @@ function filtrerParCategorie(categorieCible) {
     const boutons = document.querySelectorAll('.cat-btn');
     boutons.forEach(btn => btn.classList.remove('active'));
     if (window.event) window.event.currentTarget.classList.add('active');
-
+    
     if (categorieCible === 'Tous') {
         rendreProduits(tousLesProduits);
     } else {
@@ -167,14 +167,23 @@ async function envoyerDonneesAuSheet() {
         }
 
         // 4. AFFICHAGE DU SUCCÈS (Forcé au milieu via ton nouveau CSS)
-        const modalContent = document.querySelector('#modal-panier .popup-content');
+        // ... à l'intérieur de envoyerDonneesAuSheet() après le fetch ...
+
+        // 4. AFFICHAGE DU SUCCÈS
+        const modalContent = document.querySelector('#modal-panier .popup-content') || document.querySelector('#modal-panier .modal-box');
+        const closeBtn = document.querySelector('#modal-panier .close-popup');
+        if (closeBtn) closeBtn.style.display = 'none'; // Cache la croix pour forcer la lecture du succès
         if (modalContent) {
             modalContent.innerHTML = `
                 <div style="text-align:center; padding:20px;">
-                    <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
-                    <h2 style="margin-bottom:10px;">Merci ${localStorage.getItem('saferun_nom')} !</h2>
-                    <p>Votre commande est enregistrée.</p>
-                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:20px;">RETOUR À LA BOUTIQUE</button>
+                    <div style="font-size:60px; color:#27ae60; margin-bottom:15px;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 style="margin-bottom:10px; color:#1a1a1a;">Merci ${localStorage.getItem('saferun_nom')} !</h2>
+                    <p style="color:#666;">Votre commande est enregistrée avec succès.</p>
+                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:20px; background:#1a1a1a; color:#ffcc00;">
+                        RETOUR À LA BOUTIQUE
+                    </button>
                 </div>`;
         }
         
