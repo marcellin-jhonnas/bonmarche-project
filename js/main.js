@@ -155,30 +155,31 @@ async function envoyerDonneesAuSheet() {
             statut: "En préparation"
         });
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+        
+        // 2. RÉINITIALISATION DU BADGE (REDEVIENT ROUGE)
         localStorage.setItem('livraison_vue', 'false');
         mettreAJourBadgeLivraison();
-        setTimeout(() => {
-            const sidebar = document.getElementById('user-sidebar');
-            if (sidebar && !sidebar.classList.contains('open')) {
-                toggleSidebar();
-            }
-        }, 500);
-        // AFFICHAGE DU SUCCÈS
+
+        // 3. FERMER LA SIDEBAR (Pour libérer l'écran et voir le succès)
+        const sidebar = document.getElementById('user-sidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+
+        // 4. AFFICHAGE DU SUCCÈS (Forcé au milieu via ton nouveau CSS)
         const modalContent = document.querySelector('#modal-panier .popup-content');
         if (modalContent) {
             modalContent.innerHTML = `
                 <div style="text-align:center; padding:20px;">
                     <div style="font-size:60px; color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i></div>
-                    <h2>Merci !</h2>
-                    <p>Commande transmise avec succès.</p>
-                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:15px;">RETOUR</button>
+                    <h2 style="margin-bottom:10px;">Merci ${localStorage.getItem('saferun_nom')} !</h2>
+                    <p>Votre commande est enregistrée.</p>
+                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:20px;">RETOUR À LA BOUTIQUE</button>
                 </div>`;
         }
         
-        // RÉINITIALISATION
+        // RÉINITIALISATION DU PANIER
         panier = [];
-        datePlanifiee = null;
-        rdvData = null;
         mettreAJourBadge();
 
     } catch (error) {
@@ -410,11 +411,13 @@ function mettreAJourBadgeLivraison() {
         badge.style.display = "inline-block";
 
         if (dejaVu) {
-            badge.classList.add('lu');             // Devient gris via CSS
-            badge.classList.remove('pulse-alerte'); // Arrête l'animation
+            badge.classList.add('lu');
+            badge.classList.remove('pulse-alerte');
+            badge.style.backgroundColor = "#bdc3c7"; // Gris
         } else {
-            badge.classList.remove('lu');          // Reste rouge
-            badge.classList.add('pulse-alerte');    // Active le clignotement
+            badge.classList.remove('lu');
+            badge.classList.add('pulse-alerte');
+            badge.style.backgroundColor = "#ff3b30"; // Rouge
         }
     } else {
         badge.style.display = "none";

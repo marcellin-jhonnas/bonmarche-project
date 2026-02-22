@@ -518,33 +518,43 @@ button {
 }
 
 /* Ajoute #modal-livraisons à ta liste de correction à la fin du CSS */
+/* 1. FORCE LE CENTRAGE DES MODALS (PANIER, LIVRAISON, RDV) */
 #modal-rdv,
 #modal-planification,
 #modal-livraisons,
 #modal-panier {
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%; /* Important pour couvrir tout l'écran */
-    height: 100%; /* Important pour couvrir tout l'écran */
-    background: rgba(0, 0, 0, 0.6); /* Fond sombre derrière la fenêtre */
-    transform: none !important;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    z-index: 10000 !important; /* Au dessus de tout */
+    
+    /* On force le centrage parfait */
+    justify-content: center !important;
+    align-items: center !important;
+    
+    /* IMPORTANT : Annule tout héritage du popup de bienvenue */
+    transform: none !important; 
+    bottom: auto !important;
 }
 
-#modal-rdv.show,
-#modal-planification.show,
-#modal-livraisons.show,
-#modal-panier.show {
-    display: flex !important;
+/* 2. LE CONTENU À L'INTÉRIEUR DES MODALS */
+#modal-panier .popup-content, 
+#modal-livraisons .modal-content {
+    background: white !important;
+    margin: 0 !important; /* Annule les marges auto */
+    transform: none !important;
+    position: relative !important;
+    bottom: auto !important;
 }
-/* État du badge quand la notification est consultée */
-/* État du badge quand la notification est consultée */
+
+/* 3. FORCE LE GRIS POUR LE BADGE LU */
 #badge-livraison.lu {
     background-color: #bdc3c7 !important; /* Gris */
-    animation: none !important;           /* Arrête le clignotement */
+    background: #bdc3c7 !important;      /* Double sécurité */
+    animation: none !important;
     box-shadow: none !important;
 }
