@@ -93,9 +93,9 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     const detail = document.getElementById('detail-panier');
     const totalLabel = document.getElementById('total-modal');
-    
     if(!modal) return;
-
+    
+    
     let resume = "";
     let total = 0;
     panier.forEach(item => {
@@ -421,5 +421,12 @@ function mettreAJourBadgeLivraison() {
         }
     } else {
         badge.style.display = "none";
+    }
+}
+function fermerModal() {
+    const modal = document.getElementById('modal-panier');
+    if(modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = "none", 300);
     }
 }

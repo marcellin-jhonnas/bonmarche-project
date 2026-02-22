@@ -546,38 +546,84 @@ button {
 }
 
 /* 2. DÉCLENCHEMENT DE L'AFFICHAGE */
+/* --- RECTIFICATION FORCEE DU CENTRAGE --- */
+
+#modal-rdv,
+#modal-planification,
+#modal-livraisons,
+#modal-panier {
+    display: none; 
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    z-index: 10000 !important;
+}
+
+/* Quand on ajoute la classe .show */
 #modal-rdv.show,
 #modal-planification.show,
 #modal-livraisons.show,
 #modal-panier.show {
-    display: flex !important; /* Active le centrage Flexbox */
+    display: block !important; /* On passe en block pour gérer le centrage manuel */
 }
 
-/* 3. LE CONTENU BLANC (LA BOITE) */
+/* LE CONTENU BLANC : Centrage absolu forcé */
 #modal-panier .popup-content, 
 #modal-livraisons .modal-content,
 #modal-rdv .modal-content,
 #modal-planification .modal-content {
+    position: absolute !important;
+    /* On place le coin en haut à gauche de la boîte au centre de l'écran */
+    top: 50% !important;
+    left: 50% !important;
+    /* On décale la boîte de la moitié de sa propre taille vers la gauche et le haut */
+    transform: translate(-50%, -50%) !important;
+    
+    background: white !important;
+    padding: 25px !important;
+    border-radius: 20px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+    margin: 0 !important; /* On annule les marges qui pourraient pousser à gauche */
+}
+
+/* --- NOUVEAU SYSTÈME DE MODAL CENTRÉ --- */
+.modal-system {
+    display: none; /* Masqué par défaut */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.8) !important; /* Fond noir transparent */
+    z-index: 10000 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    transform: none !important; /* Annule tout décalage gauche */
+}
+
+/* Quand le JS ajoute la classe .show */
+.modal-system.show {
+    display: flex !important;
+}
+
+/* La boîte blanche à l'intérieur */
+.modal-box {
     background: white !important;
     padding: 25px !important;
     border-radius: 20px !important;
     width: 90% !important;
     max-width: 400px !important;
     position: relative !important;
-    
-    /* Annulation de tout héritage du welcome-popup */
-    margin: auto !important; 
-    transform: none !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    top: auto !important;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+    animation: popIn 0.3s ease-out; /* Petite animation d'entrée */
 }
 
-/* 4. CAS PARTICULIER DU BADGE GRIS */
-#badge-livraison.lu {
-    background-color: #bdc3c7 !important;
-    animation: none !important;
-    box-shadow: none !important;
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }

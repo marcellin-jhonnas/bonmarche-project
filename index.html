@@ -190,11 +190,10 @@
     </div>
     </div>
 
-    <div id="modal-panier" class="welcome-popup" style="display:none; z-index: 1000;">
-    <div class="popup-content" style="max-width: 400px;">
+    <div id="modal-panier" class="modal-system">
+    <div class="modal-box">
         <button class="close-popup" onclick="fermerModal()">×</button>
-        <div id="detail-panier" style="text-align: left; margin-top: 20px;">
-            </div>
+        <div id="detail-panier" style="text-align: left; margin-top: 20px;"></div>
         <hr>
         <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin: 15px 0;">
             <span>TOTAL :</span>
@@ -202,7 +201,7 @@
         </div>
         <button class="btn-inscription" onclick="envoyerDonneesAuSheet()">🚀 VALIDER MA COMMANDE</button>
     </div>
-    </div>
+</div>
 
     <div id="modal-rdv" class="welcome-popup" style="display:none; z-index:1100; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
   <div class="popup-content" style="max-width:350px;">
@@ -226,27 +225,16 @@
             <button class="btn-inscription" onclick="sauvegarderPlanif()" style="width: 100%;">ENREGISTRER CE CRÉNEAU</button>
         </div>
     </div>
-    <div id="modal-livraisons" class="welcome-popup" style="display:none; z-index: 1200;">
-    <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+    <div id="modal-livraisons" class="modal-system">
+    <div class="modal-box" style="max-height: 80vh; display: flex; flex-direction: column;">
         <button class="close-popup" onclick="fermerLivraisons()">×</button>
         <h3>🚚 Mes Livraisons</h3>
-        <div id="liste-livraisons" style="text-align: left; margin-top: 15px;">
-            </div>
+        <div id="liste-livraisons" style="text-align: left; margin-top: 15px; flex-grow: 1; overflow-y: auto;"></div>
+        <button onclick="viderHistorique()" style="margin-top: 15px; background: none; border: 1px solid #ccc; color: #888; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+            <i class="fas fa-trash"></i> Effacer l'historique
+        </button>
     </div>
 </div>
-<div id="modal-livraisons" class="welcome-popup" style="display:none; z-index: 1200;">
-        <div class="popup-content" style="max-width: 400px; max-height: 80vh; display: flex; flex-direction: column;">
-            <button class="close-popup" onclick="fermerLivraisons()">×</button>
-            <h3>🚚 Mes Livraisons</h3>
-            
-            <div id="liste-livraisons" style="text-align: left; margin-top: 15px; flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-                </div>
-
-            <button onclick="viderHistorique()" style="margin-top: 15px; background: none; border: 1px solid #ccc; color: #888; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
-                <i class="fas fa-trash"></i> Effacer l'historique
-            </button>
-        </div>
-    </div>
 
     <script src="js/main.js"></script>
 </body>
