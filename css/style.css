@@ -592,35 +592,43 @@ button {
 }
 
 /* --- NOUVEAU SYSTÈME DE MODAL CENTRÉ --- */
+/* --- LE CORRECTIF DE POSITION : CENTRAGE TOTAL --- */
 .modal-system {
-    display: none; /* Masqué par défaut */
+    display: none; 
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.8) !important; /* Fond noir transparent */
+    width: 100vw !important; /* Force la largeur de l'écran */
+    height: 100vh !important; /* Force la hauteur de l'écran */
+    background: rgba(0, 0, 0, 0.8) !important;
     z-index: 10000 !important;
-    justify-content: center !important;
-    align-items: center !important;
-    transform: none !important; /* Annule tout décalage gauche */
+
+    /* CES 3 LIGNES VONT DÉPLACER TON POPUP DU COIN GAUCHE VERS LE CENTRE */
+    display: none; /* Sera remplacé par flex */
+    justify-content: center !important; /* Centre horizontalement */
+    align-items: center !important;     /* Centre verticalement */
+    
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* Quand le JS ajoute la classe .show */
 .modal-system.show {
-    display: flex !important;
+    display: flex !important; /* Active le mode centrage */
 }
 
-/* La boîte blanche à l'intérieur */
+/* LA BOITE BLANCHE (L'enfant) */
 .modal-box {
     background: white !important;
     padding: 25px !important;
     border-radius: 20px !important;
     width: 90% !important;
     max-width: 400px !important;
+    
+    /* On s'assure qu'elle ne bouge pas toute seule */
     position: relative !important;
+    margin: auto !important; /* Sécurité supplémentaire pour le centrage */
+    
     box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-    animation: popIn 0.3s ease-out; /* Petite animation d'entrée */
 }
 
 @keyframes popIn {
