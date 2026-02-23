@@ -496,12 +496,29 @@ async function obtenirToken() {
 
 // 2. LANCER LE PAIEMENT
 async function traiterPaiement(montant, telClient) {
-    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
+    // 1. Nettoyage strict : on garde uniquement les 10 chiffres (ex: 0340000000)
+    const telNettoye = telClient.replace(/\D/g, '').replace(/^261/, '0');
+    const marchand = "0382453610"; // Ton numéro
 
     try {
         const token = await obtenirToken();
         const correlationId = "SR" + Date.now();
         document.getElementById('mvola-modal').style.display = 'block';
+
+        // 2. Construction du corps du message avec les champs obligatoires exacts
+        const bodyData = {
+            "amount": String(montant), // Doit être un String
+            "currency": "Ar",
+            "descriptionText": "Commande SafeRun",
+            "requestDate": new Date().toISOString(),
+            "debitParty": [{ "key": "msisdn", "value": telNettoye }],
+            "creditParty": [{ "key": "msisdn", "value": marchand }],
+            "metadata": [
+                { "key": "partnerReference", "value": correlationId },
+                { "key": "originatingCountry", "value": "MG" } // Souvent requis par MVola
+            ],
+            "originalTransactionReference": correlationId // Parfois requis pour éviter l'erreur 4001
+        };
 
         const initResp = await fetch(PROXY + "https://devapi.mvola.mg/mvola/mm/transactions/type/merchantpay/1.0.0/", {
             method: "POST",
@@ -510,37 +527,27 @@ async function traiterPaiement(montant, telClient) {
                 "Version": "1.0",
                 "X-CorrelationID": correlationId,
                 "UserLanguage": "FR",
-                "UserAccountIdentifier": "msisdn;0382453610", // Ton numéro marchand
-                "partnerName": "SafeRun",
+                "UserAccountIdentifier": "msisdn;" + marchand,
+                "partnerName": "SafeRun", // Doit correspondre au nom sur le portail
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest"
             },
-            // Remplace le bloc body: JSON.stringify({...}) par celui-ci :
-body: JSON.stringify({
-    "amount": montant.toString(), // Converti en texte
-    "currency": "Ar",
-    "descriptionText": "Commande SafeRun",
-    "requestDate": new Date().toISOString(),
-    "debitParty": [{ "key": "msisdn", "value": telNettoye }],
-    "creditParty": [{ "key": "msisdn", "value": "0382453610" }], // Ton numéro marchand
-    "metadata": [
-        { "key": "partnerReference", "value": correlationId },
-        { "key": "customerMSISDN", "value": telNettoye } // On l'ajoute par sécurité
-    ]
-})
+            body: JSON.stringify(bodyData)
         });
 
-        if (!initResp.ok) {
-            const errorMsg = await initResp.text();
-            throw new Error("Erreur Paiement: " + errorMsg);
+        const initData = await initResp.json();
+
+        // Si l'initiation échoue encore, on affiche le détail pour débugger
+        if (initData.errorCode || initData.errorCategory) {
+            throw new Error(JSON.stringify(initData, null, 2));
         }
 
-        const initData = await initResp.json();
         return await verifierStatut(token, initData.serverCorrelationId);
 
     } catch (error) {
         console.error("Détail Technique:", error);
-        alert("🔒 Sécurité : " + error.message);
+        // On affiche l'erreur proprement pour voir quel champ manque encore
+        alert("⚠️ Erreur de validation :\n" + error.message);
         document.getElementById('mvola-modal').style.display = 'none';
         return false;
     }
