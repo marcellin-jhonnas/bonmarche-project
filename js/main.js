@@ -522,9 +522,9 @@ async function traiterPaiement(montant, telClient) {
         return await verifierStatut(token, serverId);
 
     } catch (error) {
-        alert("Erreur de connexion MVola");
-        document.getElementById('mvola-modal').style.display = 'none';
-    }
+    console.error("ERREUR COMPLETE :", error); // Regarde dans la console F12
+    alert("Problème technique : " + error.name);
+    document.getElementById('mvola-modal').style.display = 'none';
 }
 
 // 3. LA FONCTION QUI ATTEND LE "OUI" DU CLIENT
