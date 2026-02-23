@@ -120,79 +120,97 @@ function ouvrirTicketAutomatique() {
 
 async function envoyerDonneesAuSheet() {
     const btn = (window.event && window.event.target) ? window.event.target : null;
+    
+    // 1. Calcul du total pour le paiement
+    const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
+    const telClient = localStorage.getItem('saferun_tel');
+
     if (btn && btn.tagName === 'BUTTON') {
-        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Envoi...";
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
         btn.disabled = true;
     }
 
-    const commandeData = {
-        nom: localStorage.getItem('saferun_nom'),
-        tel: localStorage.getItem('saferun_tel'),
-        quartier: localStorage.getItem('saferun_quartier'),
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-        total: panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0),
-        date: new Date().toLocaleString('fr-FR'),
-        type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
-        planif: rdvData 
-                 ? `RDV le ${rdvData.date} ${rdvData.heure}` 
-                 : (datePlanifiee ? datePlanifiee : "ASAP (Dès que possible)")
-    };
-
     try {
+        // --- ÉTAPE MVOLA : On lance le paiement avant tout ---
+        // Cette fonction (qu'on a définie avant) va afficher le modal d'attente
+        const paiementReussi = await traiterPaiement(montantTotal, telClient);
+
+        if (!paiementReussi) {
+            // Si le client annule ou que ça échoue
+            if (btn) {
+                btn.innerHTML = "Réessayer le paiement";
+                btn.disabled = false;
+            }
+            return; // On arrête tout ici, rien n'est envoyé au Sheet
+        }
+
+        // --- ÉTAPE GOOGLE SHEETS : On arrive ici SEULEMENT si payé ---
+        if (btn) btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Enregistrement...";
+
+        const commandeData = {
+            nom: localStorage.getItem('saferun_nom'),
+            tel: telClient,
+            quartier: localStorage.getItem('saferun_quartier'),
+            produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+            total: montantTotal,
+            date: new Date().toLocaleString('fr-FR'),
+            type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
+            planif: rdvData 
+                     ? `RDV le ${rdvData.date} ${rdvData.heure}` 
+                     : (datePlanifiee ? datePlanifiee : "ASAP (Dès que possible)"),
+            statut_paiement: "PAYÉ PAR MVOLA" // On ajoute cette info pour ton Sheets
+        };
+
         await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify(commandeData)
         });
 
-        // SAUVEGARDE DANS L'HISTORIQUE LOCAL
+        // --- LA SUITE DE TON CODE (HISTORIQUE ET SUCCÈS) ---
+        
         const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
         historique.push({
             id: Date.now(),
             date: new Date().toLocaleString('fr-FR'),
             produits: commandeData.produits,
             total: commandeData.total,
-            statut: "En préparation"
+            statut: "En préparation (Payé)"
         });
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
         
-        // 2. RÉINITIALISATION DU BADGE (REDEVIENT ROUGE)
         localStorage.setItem('livraison_vue', 'false');
         mettreAJourBadgeLivraison();
 
-        // 3. FERMER LA SIDEBAR (Pour libérer l'écran et voir le succès)
         const sidebar = document.getElementById('user-sidebar');
         if (sidebar && sidebar.classList.contains('open')) {
             sidebar.classList.remove('open');
         }
 
-        // 4. AFFICHAGE DU SUCCÈS (Forcé au milieu via ton nouveau CSS)
-        // ... à l'intérieur de envoyerDonneesAuSheet() après le fetch ...
-
-        // 4. AFFICHAGE DU SUCCÈS
+        // AFFICHAGE DU SUCCÈS
         const modalContent = document.querySelector('#modal-panier .popup-content') || document.querySelector('#modal-panier .modal-box');
         const closeBtn = document.querySelector('#modal-panier .close-popup');
-        if (closeBtn) closeBtn.style.display = 'none'; // Cache la croix pour forcer la lecture du succès
+        if (closeBtn) closeBtn.style.display = 'none'; 
         if (modalContent) {
             modalContent.innerHTML = `
                 <div style="text-align:center; padding:20px;">
                     <div style="font-size:60px; color:#27ae60; margin-bottom:15px;">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <h2 style="margin-bottom:10px; color:#1a1a1a;">Merci ${localStorage.getItem('saferun_nom')} !</h2>
-                    <p style="color:#666;">Votre commande est enregistrée avec succès.</p>
+                    <h2 style="margin-bottom:10px; color:#1a1a1a;">Paiement Reçu !</h2>
+                    <p style="color:#666;">Merci ${localStorage.getItem('saferun_nom')}, votre commande est payée et enregistrée.</p>
                     <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:20px; background:#1a1a1a; color:#ffcc00;">
                         RETOUR À LA BOUTIQUE
                     </button>
                 </div>`;
         }
         
-        // RÉINITIALISATION DU PANIER
         panier = [];
         mettreAJourBadge();
 
     } catch (error) {
         console.error("Erreur:", error);
+        // En cas d'erreur réseau, on bascule sur WhatsApp comme tu l'avais prévu
         finaliserVersWhatsApp();
     }
 }
@@ -437,5 +455,103 @@ function fermerModal() {
     if(modal) {
         modal.classList.remove('show');
         setTimeout(() => modal.style.display = "none", 300);
+    }
+}
+
+// CONFIGURATION (À REMPLIR) IRETO LE CLE ROA 
+const CONFIG = {
+    key: "aPy1BYVo_ZLQHwiAWw9vsFROg28a",
+    secret: "AL64vrTnkuU6D91ngWWUvfomyt0a",
+    marchand: "0382453610",
+    nomEntreprise: "SafeRun"
+};
+
+// 1. OBTENIR LE TOKEN
+async function obtenirToken() {
+    const credentials = btoa(CONFIG.key + ":" + CONFIG.secret);
+    const resp = await fetch("https://devapi.mvola.mg/token", {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic " + credentials,
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "grant_type=client_credentials&scope=EXT_INT_MVOLA_SCOPE"
+    });
+    const data = await resp.json();
+    return data.access_token;
+}
+
+// 2. LANCER LE PAIEMENT ET VÉRIFIER LE STATUT
+async function traiterPaiement(montant, telClient) {
+    try {
+        const token = await obtenirToken();
+        const correlationId = "SR" + Date.now();
+
+        // Afficher la fenêtre d'attente
+        document.getElementById('mvola-modal').style.display = 'block';
+
+        // Initiation (POST)
+        const initResp = await fetch("https://devapi.mvola.mg/mvola/mm/transactions/type/merchantpay/1.0.0/", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Version": "1.0",
+                "X-CorrelationID": correlationId,
+                "UserLanguage": "FR",
+                "UserAccountIdentifier": "msisdn;" + CONFIG.marchand,
+                "partnerName": CONFIG.nomEntreprise,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "amount": montant,
+                "currency": "Ar",
+                "descriptionText": "Commande SafeRun",
+                "requestDate": new Date().toISOString(),
+                "debitParty": [{ "key": "msisdn", "value": telClient }],
+                "creditParty": [{ "key": "msisdn", "value": CONFIG.marchand }],
+                "metadata": [{ "key": "partnerReference", "value": correlationId }]
+            })
+        });
+
+        const initData = await initResp.json();
+        const serverId = initData.serverCorrelationId;
+
+        // POLLING : Vérifier toutes les 3 secondes si c'est payé
+        return await verifierStatut(token, serverId);
+
+    } catch (error) {
+        alert("Erreur de connexion MVola");
+        document.getElementById('mvola-modal').style.display = 'none';
+    }
+}
+
+// 3. LA FONCTION QUI ATTEND LE "OUI" DU CLIENT
+async function verifierStatut(token, serverId) {
+    while (true) {
+        const resp = await fetch(`https://devapi.mvola.mg/mvola/mm/transactions/type/merchantpay/1.0.0/status/${serverId}`, {
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Version": "1.0",
+                "X-CorrelationID": "CHECK" + Date.now(),
+                "UserAccountIdentifier": "msisdn;" + CONFIG.marchand,
+                "UserLanguage": "FR"
+            }
+        });
+        const data = await resp.json();
+
+        if (data.status === "completed") {
+            document.getElementById('status-title').innerText = "✅ Payé !";
+            document.getElementById('status-text').innerText = "Votre commande est validée.";
+            setTimeout(() => { document.getElementById('mvola-modal').style.display = 'none'; }, 2000);
+            return true; // Succès
+        } 
+        
+        if (data.status === "failed") {
+            alert("Paiement échoué ou annulé.");
+            document.getElementById('mvola-modal').style.display = 'none';
+            return false;
+        }
+
+        await new Promise(r => setTimeout(r, 3000)); // Attendre 3 sec avant de redemander
     }
 }
