@@ -462,7 +462,7 @@ function fermerModal() {
 
 // CONFIGURATION (À REMPLIR) IRETO LE CLE ROA 
 
-const PROXY = "https://cors-anywhere.com/"; // La nouvelle URL que tu as trouvée
+const PROXY = "https://cors-anywhere.com/"; // On enlève "herokuapp"
 const MVOLA_BASE_URL = "https://devapi.mvola.mg/";
 const CONFIG = {
     key: "aPy1BYVo_ZLQHwiAWw9vsFROg28a",
@@ -471,25 +471,31 @@ const CONFIG = {
     nomEntreprise: "SafeRun"
 };
 
-// 1. OBTENIR LE TOKEN
+// 1. OBTENIR LE TOKEN (Version stable pour GitHub)
 async function obtenirToken() {
     const credentials = btoa(CONFIG.key + ":" + CONFIG.secret);
-    const resp = await fetch(PROXY + MVOLA_BASE_URL + "token", {
+    
+    const resp = await fetch(PROXY + "https://devapi.mvola.mg/token", {
         method: "POST",
         headers: {
             "Authorization": "Basic " + credentials,
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-Requested-With": "XMLHttpRequest" // OBLIGATOIRE pour ce proxy
+            "X-Requested-With": "XMLHttpRequest" // Indispensable pour ce proxy
         },
         body: "grant_type=client_credentials&scope=EXT_INT_MVOLA_SCOPE"
     });
+
+    if (!resp.ok) {
+        const errorText = await resp.text();
+        throw new Error("Erreur Token: " + errorText);
+    }
+
     const data = await resp.json();
     return data.access_token;
 }
 
 // 2. LANCER LE PAIEMENT
 async function traiterPaiement(montant, telClient) {
-    // Nettoyage automatique du numéro (au cas où il y a des espaces)
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
 
     try {
@@ -497,15 +503,15 @@ async function traiterPaiement(montant, telClient) {
         const correlationId = "SR" + Date.now();
         document.getElementById('mvola-modal').style.display = 'block';
 
-        const initResp = await fetch(PROXY + MVOLA_BASE_URL + "mvola/mm/transactions/type/merchantpay/1.0.0/", {
+        const initResp = await fetch(PROXY + "https://devapi.mvola.mg/mvola/mm/transactions/type/merchantpay/1.0.0/", {
             method: "POST",
             headers: {
                 "Authorization": "Bearer " + token,
                 "Version": "1.0",
                 "X-CorrelationID": correlationId,
                 "UserLanguage": "FR",
-                "UserAccountIdentifier": "msisdn;" + CONFIG.marchand,
-                "partnerName": CONFIG.nomEntreprise,
+                "UserAccountIdentifier": "msisdn;0382453610", // Ton numéro marchand
+                "partnerName": "SafeRun",
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest"
             },
@@ -515,17 +521,22 @@ async function traiterPaiement(montant, telClient) {
                 "descriptionText": "Commande SafeRun",
                 "requestDate": new Date().toISOString(),
                 "debitParty": [{ "key": "msisdn", "value": telNettoye }],
-                "creditParty": [{ "key": "msisdn", "value": CONFIG.marchand }],
+                "creditParty": [{ "key": "msisdn", "value": "0382453610" }],
                 "metadata": [{ "key": "partnerReference", "value": correlationId }]
             })
         });
+
+        if (!initResp.ok) {
+            const errorMsg = await initResp.text();
+            throw new Error("Erreur Paiement: " + errorMsg);
+        }
 
         const initData = await initResp.json();
         return await verifierStatut(token, initData.serverCorrelationId);
 
     } catch (error) {
-        console.error("Erreur Mvola:", error);
-        alert("Désolé, la connexion au service de paiement a échoué.");
+        console.error("Détail Technique:", error);
+        alert("🔒 Sécurité : " + error.message);
         document.getElementById('mvola-modal').style.display = 'none';
         return false;
     }
