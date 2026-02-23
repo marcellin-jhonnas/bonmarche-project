@@ -515,15 +515,19 @@ async function traiterPaiement(montant, telClient) {
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest"
             },
-            body: JSON.stringify({
-                "amount": montant,
-                "currency": "Ar",
-                "descriptionText": "Commande SafeRun",
-                "requestDate": new Date().toISOString(),
-                "debitParty": [{ "key": "msisdn", "value": telNettoye }],
-                "creditParty": [{ "key": "msisdn", "value": "0382453610" }],
-                "metadata": [{ "key": "partnerReference", "value": correlationId }]
-            })
+            // Remplace le bloc body: JSON.stringify({...}) par celui-ci :
+body: JSON.stringify({
+    "amount": montant.toString(), // Converti en texte
+    "currency": "Ar",
+    "descriptionText": "Commande SafeRun",
+    "requestDate": new Date().toISOString(),
+    "debitParty": [{ "key": "msisdn", "value": telNettoye }],
+    "creditParty": [{ "key": "msisdn", "value": "0382453610" }], // Ton numéro marchand
+    "metadata": [
+        { "key": "partnerReference", "value": correlationId },
+        { "key": "customerMSISDN", "value": telNettoye } // On l'ajoute par sécurité
+    ]
+})
         });
 
         if (!initResp.ok) {
