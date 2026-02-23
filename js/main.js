@@ -507,30 +507,30 @@ async function traiterPaiement(montant, telClient) {
 
         // 2. Construction du corps du message avec les champs obligatoires exacts
         const bodyData = {
-            "amount": String(montant), // Doit être un String
+            "amount": String(montant),
             "currency": "Ar",
             "descriptionText": "Commande SafeRun",
             "requestDate": new Date().toISOString(),
             "debitParty": [{ "key": "msisdn", "value": telNettoye }],
-            "creditParty": [{ "key": "msisdn", "value": marchand }],
+            "creditParty": [{ "key": "msisdn", "value": "0382453610" }],
             "metadata": [
-                { "key": "partnerReference", "value": correlationId },
-                { "key": "originatingCountry", "value": "MG" } // Souvent requis par MVola
-            ],
-            "originalTransactionReference": correlationId // Parfois requis pour éviter l'erreur 4001
+                { "key": "partnerReference", "value": correlationId }
+            ]
+            // Suppression des champs optionnels qui pourraient causer des conflits
         };
 
         const initResp = await fetch(PROXY + "https://devapi.mvola.mg/mvola/mm/transactions/type/merchantpay/1.0.0/", {
             method: "POST",
             headers: {
                 "Authorization": "Bearer " + token,
-                "Version": "1.0",
+                "Version": "1.0", // Parfois "1.1" est requis, reste sur "1.0" pour l'instant
                 "X-CorrelationID": correlationId,
                 "UserLanguage": "FR",
-                "UserAccountIdentifier": "msisdn;" + marchand,
-                "partnerName": "SafeRun", // Doit correspondre au nom sur le portail
+                "UserAccountIdentifier": "msisdn;0382453610", 
+                "partnerName": "SafeRun", 
                 "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest"
+                "X-Requested-With": "XMLHttpRequest",
+                "Cache-Control": "no-cache" // Ajouté pour éviter les erreurs de cache proxy
             },
             body: JSON.stringify(bodyData)
         });
