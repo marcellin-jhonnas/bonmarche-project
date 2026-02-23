@@ -124,6 +124,8 @@ async function envoyerDonneesAuSheet() {
     // 1. Calcul du total pour le paiement
     const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
     const telClient = localStorage.getItem('saferun_tel');
+    // Cette ligne transforme "+261 38 24..." en "0382453610" automatiquement
+    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
 
     if (btn && btn.tagName === 'BUTTON') {
         btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
@@ -133,7 +135,7 @@ async function envoyerDonneesAuSheet() {
     try {
         // --- ÉTAPE MVOLA : On lance le paiement avant tout ---
         // Cette fonction (qu'on a définie avant) va afficher le modal d'attente
-        const paiementReussi = await traiterPaiement(montantTotal, telClient);
+        const paiementReussi = await traiterPaiement(montantTotal, telNettoye);
 
         if (!paiementReussi) {
             // Si le client annule ou que ça échoue
