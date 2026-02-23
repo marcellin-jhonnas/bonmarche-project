@@ -557,3 +557,4 @@ async function verifierStatut(token, serverId) {
         await new Promise(r => setTimeout(r, 3000)); // Attendre 3 sec avant de redemander
     }
 }
+}
