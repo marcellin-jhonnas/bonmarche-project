@@ -163,11 +163,18 @@ async function envoyerDonneesAuSheet() {
             statut_paiement: "PAYÉ PAR MVOLA" // On ajoute cette info pour ton Sheets
         };
 
-        await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(commandeData)
-        });
+        const API_URL = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
+
+const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(commandeData)
+});
+
+const result = await response.json();
+console.log("Réponse GAS :", result);
 
         // --- LA SUITE DE TON CODE (HISTORIQUE ET SUCCÈS) ---
         
