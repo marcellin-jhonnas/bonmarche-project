@@ -496,39 +496,36 @@ async function obtenirToken() {
 const API_BRIDGE = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
 
 async function traiterPaiement(montant, telClient) {
-    // Nettoyage du numéro : transforme +261 38... en 038...
     const telNettoye = telClient.replace(/\D/g, '').replace(/^261/, '0');
-    
     try {
-        // Affiche le modal de chargement MVola
         document.getElementById('mvola-modal').style.display = 'block';
-        document.getElementById('status-title').innerText = "Initialisation...";
 
-        // ON APPELLE LE BRIDGE (GAS) QUI FAIT TOUT (TOKEN + INIT)
-        const response = await fetch(API_BRIDGE, {
+        const response = await fetch(API_URL, {
             method: "POST",
+            mode: 'cors', // On remet CORS
+            redirect: 'follow', // INDISPENSABLE pour Google Apps Script
             body: JSON.stringify({
-                typePaiement: "INIT_ET_TOKEN", // On dit au script de gérer le token lui-même
+                typePaiement: "INIT_ET_TOKEN", 
                 montant: String(montant),
                 telClient: telNettoye,
                 correlationId: "SR" + Date.now()
             })
         });
 
-        const result = await response.json();
-
+        // Testons si la réponse est bien du JSON
+        const text = await response.text();
+        console.log("Réponse brute de Google:", text);
+        
+        const result = JSON.parse(text);
+        
         if (result.serverCorrelationId) {
-            document.getElementById('status-title').innerText = "Attente de validation";
-            document.getElementById('status-text').innerText = "Tapez votre code secret MVola sur votre téléphone.";
-            // On lance la vérification du statut (Polling)
             return await verifierStatut(result.serverCorrelationId);
         } else {
-            throw new Error("Erreur lors de l'initialisation MVola");
+            throw new Error("Pas d'ID reçu de MVola");
         }
-
     } catch (error) {
-        console.error("Erreur Paiement:", error);
-        alert("⚠️ Le service MVola est indisponible ou saturé. Réessayez.");
+        console.error("Erreur détaillée:", error);
+        alert("⚠️ Erreur de communication avec Google. Vérifiez la console.");
         document.getElementById('mvola-modal').style.display = 'none';
         return false;
     }
