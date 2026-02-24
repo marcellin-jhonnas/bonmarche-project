@@ -492,69 +492,56 @@ async function obtenirToken() {
 }
 
 // 2. LANCER LE PAIEMENT
+// Remplace par ton URL de déploiement Google Script (se terminant par /exec)
+const API_BRIDGE = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
+
 async function traiterPaiement(montant, telClient) {
+    // Nettoyage du numéro : transforme +261 38... en 038...
     const telNettoye = telClient.replace(/\D/g, '').replace(/^261/, '0');
-    const marchand = "0382453610";
     
-    // On utilise TON Google Script comme Proxy au lieu de AllOrigins
-    const MON_BRIDGE_GOOGLE = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
-
     try {
-        const token = await obtenirToken();
-        const correlationId = "SR" + Date.now();
+        // Affiche le modal de chargement MVola
         document.getElementById('mvola-modal').style.display = 'block';
+        document.getElementById('status-title').innerText = "Initialisation...";
 
-        // On prépare le paquet pour Google
-        const paquetPaiement = {
-            typePaiement: "MVOLA_INIT",
-            token: "Bearer " + token,
-            correlationId: correlationId,
-            bodyMvola: {
-                "amount": String(montant),
-                "currency": "Ar",
-                "descriptionText": "Commande SafeRun",
-                "requestDate": new Date().toISOString(),
-                "debitParty": [{ "key": "msisdn", "value": telNettoye }],
-                "creditParty": [{ "key": "msisdn", "value": marchand }],
-                "metadata": [{ "key": "partnerReference", "value": correlationId }]
-            }
-        };
-
-        // On appelle Google
-        const initResp = await fetch(MON_BRIDGE_GOOGLE, {
+        // ON APPELLE LE BRIDGE (GAS) QUI FAIT TOUT (TOKEN + INIT)
+        const response = await fetch(API_BRIDGE, {
             method: "POST",
-            body: JSON.stringify(paquetPaiement)
+            body: JSON.stringify({
+                typePaiement: "INIT_ET_TOKEN", // On dit au script de gérer le token lui-même
+                montant: String(montant),
+                telClient: telNettoye,
+                correlationId: "SR" + Date.now()
+            })
         });
 
-        const initData = await initResp.json();
+        const result = await response.json();
 
-        if (initData.errorCode || initData.errorCategory) {
-            throw new Error(JSON.stringify(initData));
+        if (result.serverCorrelationId) {
+            document.getElementById('status-title').innerText = "Attente de validation";
+            document.getElementById('status-text').innerText = "Tapez votre code secret MVola sur votre téléphone.";
+            // On lance la vérification du statut (Polling)
+            return await verifierStatut(result.serverCorrelationId);
+        } else {
+            throw new Error("Erreur lors de l'initialisation MVola");
         }
 
-        // On continue avec la vérification du statut
-        return await verifierStatut(token, initData.serverCorrelationId);
-
     } catch (error) {
-        console.error("Erreur Bridge:", error);
-        alert("⚠️ Problème de connexion paiement. Veuillez réessayer.");
+        console.error("Erreur Paiement:", error);
+        alert("⚠️ Le service MVola est indisponible ou saturé. Réessayez.");
         document.getElementById('mvola-modal').style.display = 'none';
         return false;
     }
 }
 
-// 3. LA FONCTION QUI ATTEND LE "OUI" DU CLIENT
-async function verifierStatut(token, serverId) {
-    const MON_BRIDGE_GOOGLE = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
-    
-    // On boucle pour vérifier toutes les 3 secondes si le client a validé
-    while (true) {
+async function verifierStatut(serverId) {
+    let tentatives = 0;
+    while (tentatives < 20) { // Vérifie pendant environ 1 minute
         try {
-            const resp = await fetch(MON_BRIDGE_GOOGLE, {
+            const resp = await fetch(API_BRIDGE, {
                 method: "POST",
                 body: JSON.stringify({
                     typePaiement: "MVOLA_STATUS",
-                    token: "Bearer " + token,
                     serverId: serverId
                 })
             });
@@ -562,26 +549,23 @@ async function verifierStatut(token, serverId) {
             const data = await resp.json();
 
             if (data.status === "completed") {
-                document.getElementById('status-title').innerText = "✅ Payé !";
-                document.getElementById('status-text').innerText = "Votre commande est validée.";
+                document.getElementById('status-title').innerText = "✅ Succès !";
                 await new Promise(r => setTimeout(r, 2000));
                 document.getElementById('mvola-modal').style.display = 'none';
-                return true; 
+                return true;
             } 
             
-            if (data.status === "failed" || data.status === "expired") {
-                alert("❌ Paiement échoué, expiré ou annulé.");
+            if (data.status === "failed") {
+                alert("❌ Paiement annulé ou solde insuffisant.");
                 document.getElementById('mvola-modal').style.display = 'none';
                 return false;
             }
-
-            // Si toujours en attente (pending), on patiente
-            await new Promise(r => setTimeout(r, 3000));
-
-        } catch (e) {
-            console.error("Erreur vérification statut:", e);
-            // On ne coupe pas la boucle en cas d'erreur réseau passagère
-            await new Promise(r => setTimeout(r, 3000));
-        }
+        } catch (e) { console.log("Attente..."); }
+        
+        await new Promise(r => setTimeout(r, 3000)); // Attend 3 secondes
+        tentatives++;
     }
+    alert("⌛ Délai dépassé. Si vous avez été débité, contactez l'assistance.");
+    document.getElementById('mvola-modal').style.display = 'none';
+    return false;
 }
