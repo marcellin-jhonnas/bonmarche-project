@@ -493,39 +493,47 @@ async function obtenirToken() {
 
 // 2. LANCER LE PAIEMENT
 // Remplace par ton URL de déploiement Google Script (se terminant par /exec)
-const API_BRIDGE = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
-
 async function traiterPaiement(montant, telClient) {
     const telNettoye = telClient.replace(/\D/g, '').replace(/^261/, '0');
+    // REMPLACE BIEN PAR TON URL EXEC
+    const API_URL = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
+
     try {
         document.getElementById('mvola-modal').style.display = 'block';
+        document.getElementById('status-title').innerText = "Connexion MVola...";
 
         const response = await fetch(API_URL, {
             method: "POST",
-            mode: 'cors', // On remet CORS
-            redirect: 'follow', // INDISPENSABLE pour Google Apps Script
+            mode: "cors", // Autorise le passage entre GitHub et Google
+            cache: "no-cache",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8", // Astuce : utiliser text/plain évite certains blocages CORS complexes
+            },
+            redirect: "follow", // OBLIGATOIRE : Suit la redirection de Google vers ses serveurs de contenu
             body: JSON.stringify({
-                typePaiement: "INIT_ET_TOKEN", 
+                typePaiement: "INIT_ET_TOKEN",
                 montant: String(montant),
                 telClient: telNettoye,
                 correlationId: "SR" + Date.now()
             })
         });
 
-        // Testons si la réponse est bien du JSON
-        const text = await response.text();
-        console.log("Réponse brute de Google:", text);
-        
-        const result = JSON.parse(text);
-        
+        if (!response.ok) throw new Error("Réserveur Google ne répond pas");
+
+        const result = await response.json();
+        console.log("Résultat reçu :", result);
+
         if (result.serverCorrelationId) {
+            document.getElementById('status-title').innerText = "Attente validation";
+            document.getElementById('status-text').innerText = "Consultez votre téléphone pour valider le paiement.";
             return await verifierStatut(result.serverCorrelationId);
         } else {
-            throw new Error("Pas d'ID reçu de MVola");
+            throw new Error(result.error || "Erreur MVola");
         }
+
     } catch (error) {
-        console.error("Erreur détaillée:", error);
-        alert("⚠️ Erreur de communication avec Google. Vérifiez la console.");
+        console.error("Erreur détaillée :", error);
+        alert("⚠️ Problème de connexion. Vérifiez votre connexion internet ou réessayez.");
         document.getElementById('mvola-modal').style.display = 'none';
         return false;
     }
