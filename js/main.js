@@ -503,20 +503,19 @@ async function traiterPaiement(montant, telClient) {
         document.getElementById('status-title').innerText = "Connexion MVola...";
 
         const response = await fetch(API_URL, {
-            method: "POST",
-            mode: "cors", // Autorise le passage entre GitHub et Google
-            cache: "no-cache",
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8", // Astuce : utiliser text/plain évite certains blocages CORS complexes
-            },
-            redirect: "follow", // OBLIGATOIRE : Suit la redirection de Google vers ses serveurs de contenu
-            body: JSON.stringify({
-                typePaiement: "INIT_ET_TOKEN",
-                montant: String(montant),
-                telClient: telNettoye,
-                correlationId: "SR" + Date.now()
-            })
-        });
+    method: "POST",
+    mode: "cors", // Obligatoire pour GitHub -> Google
+    headers: {
+        "Content-Type": "text/plain;charset=utf-8" // Évite les blocages de sécurité inutiles
+    },
+    redirect: "follow", // OBLIGATOIRE pour Google Apps Script
+    body: JSON.stringify({
+        typePaiement: "INIT_ET_TOKEN",
+        montant: String(montant),
+        telClient: telNettoye,
+        correlationId: "SR" + Date.now()
+    })
+});
 
         if (!response.ok) throw new Error("Réserveur Google ne répond pas");
 
