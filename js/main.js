@@ -1,4 +1,9 @@
+// --- CONFIGURATION DES PONTS GOOGLE ---
+// Ce lien sert à LIRE tes produits
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+
+// Ce lien sert à ENVOYER la commande et PAYER (Ton dernier déploiement)
+const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
 let datePlanifiee = null; 
 let rdvData = null;       
 let tousLesProduits = [];
@@ -120,7 +125,6 @@ function ouvrirTicketAutomatique() {
 
 async function envoyerDonneesAuSheet() {
     const btn = (window.event && window.event.target) ? window.event.target : null;
-    
     const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
     const telClient = localStorage.getItem('saferun_tel');
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
@@ -131,86 +135,36 @@ async function envoyerDonneesAuSheet() {
     }
 
     try {
-        // --- ÉTAPE 1 : MVOLA ---
-        const paiementReussi = await traiterPaiement(montantTotal, telNettoye);
+        // --- ÉTAPE UNIQUE : MVOLA + ENREGISTREMENT ---
+        // On appelle traiterPaiement qui s'occupe de tout envoyer au script Google
+        const paiementLance = await traiterPaiement(montantTotal, telNettoye);
 
-        if (!paiementReussi) {
+        if (paiementLance) {
+            // Sauvegarde dans l'historique local pour le client
+            const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+            historique.push({
+                id: Date.now(),
+                date: new Date().toLocaleString('fr-FR'),
+                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+                total: montantTotal,
+                statut: "En attente de paiement"
+            });
+            localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+            
+            // Message de succès et reset
+            alert("Commande enregistrée ! Vérifiez votre téléphone.");
+            panier = [];
+            mettreAJourBadge();
+            location.reload(); 
+        } else {
             if (btn) {
-                btn.innerHTML = "Réessayer le paiement";
+                btn.innerHTML = "Réessayer";
                 btn.disabled = false;
             }
-            return; 
         }
-
-        // --- ÉTAPE 2 : PRÉPARATION DONNÉES ---
-        if (btn) btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Enregistrement...";
-
-        const commandeData = {
-            nom: localStorage.getItem('saferun_nom'),
-            tel: telClient,
-            quartier: localStorage.getItem('saferun_quartier'),
-            produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-            total: montantTotal,
-            date: new Date().toLocaleString('fr-FR'),
-            type: rdvData ? "RENDEZ-VOUS" : (datePlanifiee ? "PLANIFIÉ" : "DIRECT"),
-            planif: rdvData 
-                     ? `RDV le ${rdvData.date} ${rdvData.heure}` 
-                     : (datePlanifiee ? datePlanifiee : "ASAP (Dès que possible)"),
-            statut_paiement: "PAYÉ PAR MVOLA"
-        };
-
-        // --- ÉTAPE 3 : ENVOI AU SHEET (SÉCURISÉ) ---
-        // Utilise bien API_URL défini en haut de ton fichier
-        await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors', // INDISPENSABLE pour éviter l'erreur CORS sur GitHub Pages
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(commandeData)
-        });
-
-        // Avec 'no-cors', on ne lit pas la réponse JSON, on passe directement à la suite
-        console.log("Commande envoyée au Sheet");
-
-        // --- ÉTAPE 4 : HISTORIQUE ET SUCCÈS ---
-        const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-        historique.push({
-            id: Date.now(),
-            date: new Date().toLocaleString('fr-FR'),
-            produits: commandeData.produits,
-            total: commandeData.total,
-            statut: "En préparation (Payé)"
-        });
-        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-        
-        localStorage.setItem('livraison_vue', 'false');
-        mettreAJourBadgeLivraison();
-
-        // Fermeture sidebar si ouverte
-        const sidebar = document.getElementById('user-sidebar');
-        if (sidebar) sidebar.classList.remove('open');
-
-        // Affichage du message de succès dans le modal
-        const modalContent = document.querySelector('#modal-panier .popup-content') || document.querySelector('#modal-panier .modal-box');
-        if (modalContent) {
-            modalContent.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <div style="font-size:60px; color:#27ae60; margin-bottom:15px;">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h2 style="margin-bottom:10px; color:#1a1a1a;">Paiement Reçu !</h2>
-                    <p style="color:#666;">Merci ${localStorage.getItem('saferun_nom')}, votre commande est enregistrée.</p>
-                    <button onclick="location.reload();" class="btn-inscription" style="width:100%; margin-top:20px; background:#1a1a1a; color:#ffcc00;">
-                        RETOUR À LA BOUTIQUE
-                    </button>
-                </div>`;
-        }
-        
-        panier = [];
-        mettreAJourBadge();
-
     } catch (error) {
         console.error("Erreur critique:", error);
-        finaliserVersWhatsApp(); // Sécurité : si le code plante, on finit sur WhatsApp
+        finaliserVersWhatsApp();
     }
 }
 
@@ -459,105 +413,41 @@ function fermerModal() {
 
 // CONFIGURATION (À REMPLIR) IRETO LE CLE ROA 
 
-const PROXY = "https://cors-anywhere.com/"; // On enlève "herokuapp"
-const MVOLA_BASE_URL = "https://devapi.mvola.mg/";
-const CONFIG = {
-    key: "aPy1BYVo_ZLQHwiAWw9vsFROg28a",
-    secret: "AL64vrTnkuU6D91ngWWUvfomyt0a",
-    marchand: "0382453610",
-    nomEntreprise: "SafeRun"
-};
+// --- 7. GESTION MVOLA (SÉCURISÉE VIA GOOGLE SCRIPT) ---
 
-// 1. OBTENIR LE TOKEN (Version stable pour GitHub)
-async function obtenirToken() {
-    const credentials = btoa(CONFIG.key + ":" + CONFIG.secret);
-    
-    const resp = await fetch(PROXY + "https://devapi.mvola.mg/token", {
-        method: "POST",
-        headers: {
-            "Authorization": "Basic " + credentials,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-Requested-With": "XMLHttpRequest" // Indispensable pour ce proxy
-        },
-        body: "grant_type=client_credentials&scope=EXT_INT_MVOLA_SCOPE"
-    });
-
-    if (!resp.ok) {
-        const errorText = await resp.text();
-        throw new Error("Erreur Token: " + errorText);
-    }
-
-    const data = await resp.json();
-    return data.access_token;
-}
-
-// 2. LANCER LE PAIEMENT
-// Remplace par ton URL de déploiement Google Script (se terminant par /exec)
 async function traiterPaiement(montant, telClient) {
-    const telNettoye = telClient.replace(/\D/g, '').replace(/^261/, '0');
-    // REMPLACE BIEN PAR TON URL /exec
-    const API_URL = "https://script.google.com/macros/s/AKfycbzV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec"; 
+    // Ton URL de script Google (le pont vers MVola)
+    const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec"; 
 
     try {
-        document.getElementById('mvola-modal').style.display = 'block';
+        console.log("Initialisation MVola pour:", telClient);
 
-        // NOTE : On n'utilise PAS d'en-têtes compliqués ici pour éviter le blocage CORS
-        const response = await fetch(API_URL, {
+        // On envoie tout en un seul bloc au script Google
+        await fetch(SCRIPT_PAYS_URL, {
             method: "POST",
-            mode: "no-cors", // On utilise no-cors pour forcer le passage
+            mode: "no-cors", // Pour GitHub Pages
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                typePaiement: "INIT_ET_TOKEN",
+                typePaiement: "MVOLA_INIT",
+                nom: localStorage.getItem('saferun_nom') || "Client",
+                telClient: telClient,
                 montant: String(montant),
-                telClient: telNettoye,
+                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
                 correlationId: "SR" + Date.now()
             })
         });
 
-        // ATTENTION : Avec 'no-cors', on ne peut pas lire la réponse JSON.
-        // On va donc attendre 5 secondes et vérifier si le paiement a été initié
-        // ou simplement dire à l'utilisateur de vérifier son téléphone.
-        
-        alert("Veuillez vérifier votre téléphone pour valider le paiement MVola.");
-        
+        // Comme on est en "no-cors", on ne peut pas lire la réponse,
+        // donc on affiche directement l'instruction au client.
+        alert("📲 Demande envoyée !\n\nVeuillez saisir votre code secret MVola sur votre téléphone pour valider le paiement de " + montant + " Ar.");
+        return true; 
+
     } catch (error) {
-        console.error("Erreur:", error);
-        alert("⚠️ Problème de connexion au serveur de paiement.");
-        document.getElementById('mvola-modal').style.display = 'none';
+        console.error("Erreur de liaison script:", error);
+        alert("⚠️ Erreur de connexion au service de paiement.");
+        return false;
     }
 }
 
-async function verifierStatut(serverId) {
-    let tentatives = 0;
-    while (tentatives < 20) { // Vérifie pendant environ 1 minute
-        try {
-            const resp = await fetch(API_BRIDGE, {
-                method: "POST",
-                body: JSON.stringify({
-                    typePaiement: "MVOLA_STATUS",
-                    serverId: serverId
-                })
-            });
-
-            const data = await resp.json();
-
-            if (data.status === "completed") {
-                document.getElementById('status-title').innerText = "✅ Succès !";
-                await new Promise(r => setTimeout(r, 2000));
-                document.getElementById('mvola-modal').style.display = 'none';
-                return true;
-            } 
-            
-            if (data.status === "failed") {
-                alert("❌ Paiement annulé ou solde insuffisant.");
-                document.getElementById('mvola-modal').style.display = 'none';
-                return false;
-            }
-        } catch (e) { console.log("Attente..."); }
-        
-        await new Promise(r => setTimeout(r, 3000)); // Attend 3 secondes
-        tentatives++;
-    }
-    alert("⌛ Délai dépassé. Si vous avez été débité, contactez l'assistance.");
-    document.getElementById('mvola-modal').style.display = 'none';
-    return false;
-}
+// Note : verifierStatut n'est plus nécessaire car le client 
+// reçoit directement la notification USSD sur son téléphone.
