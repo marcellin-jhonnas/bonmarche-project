@@ -129,13 +129,11 @@ header {
 /* --- 4. SLIDER PUBLICITAIRE --- */
 .promo-slider {
     margin: 20px;
-    height: 250px;
+    min-height: 300px; /* On utilise min-height au lieu de height */
     background: linear-gradient(135deg, var(--primary), var(--accent));
     border-radius: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-align: center;
     position: relative;
     overflow: hidden;
 }
@@ -578,4 +576,31 @@ button {
     width: auto !important;
     margin: 0 !important;
     padding: 0 !important;
+}
+
+
+/* Gestion du slider responsive */
+@media (max-width: 768px) {
+    .slide-container {
+        flex-direction: column; /* Empile le texte et l'image */
+        text-align: center !important;
+        padding: 20px !important;
+    }
+    .slide-content {
+        text-align: center !important;
+    }
+    .slide-image {
+        display: none; /* Cache l'image sur mobile pour gagner de la place */
+    }
+}
+
+/* Animation du loader MVola */
+.loader {
+    display: inline-block;
+    animation: rotate 2s linear infinite;
+    font-size: 2rem;
+}
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
