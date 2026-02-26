@@ -272,5 +272,10 @@
     // Déclencher après 10 secondes
     setTimeout(showFakeNotif, 10000);
 </script>
+
+<div class="floating-cart" onclick="envoyerCommande()" style="position: fixed; bottom: 20px; right: 20px; background: #ffcc00; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999; cursor: pointer; border: 3px solid #1a1a1a; animation: bounce 2s infinite;">
+    <i class="fas fa-shopping-basket" style="font-size: 1.5rem; color: #1a1a1a;"></i>
+    <span id="cart-count-float" style="position: absolute; top: 0; right: 0; background: #ff3b30; color: white; border-radius: 50%; padding: 4px 8px; font-size: 0.7rem; font-weight: bold;">0</span>
+</div>
 </body>
 </html>
