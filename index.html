@@ -52,12 +52,12 @@
 
     <header>
         <div class="header-container">
-            <div class="logo-area">
-                <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img"> 
-                <div class="logo-text">
-                    SAFERUN <span>MARKET</span>
-                </div>
-            </div>
+            <div class="logo-area" style="position: relative;">
+    <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"> 
+    <div class="logo-text" style="letter-spacing: -0.5px;">
+        SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
+    </div>
+    </div>
 
             <div class="nav-elements">
                 <div class="search-wrapper">
@@ -102,6 +102,13 @@
             </div>
         </div>
     </section>
+
+    <div class="trust-bar-mini" style="text-align: center; margin-top: -30px; position: relative; z-index: 10;">
+    <span style="background: #fff; padding: 8px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 0.8rem; font-weight: 700; border: 1px solid #eee;">
+        ⭐ 4.9/5 <span style="color: #666; font-weight: 400; margin: 0 5px;">|</span> <span style="color: #27ae60;">98% de clients satisfaits à Tana</span>
+    </span>
+</div>
+
     <section class="trust-badges">
         <div class="badge-item">
             <i class="fas fa-truck-fast"></i>
@@ -118,7 +125,7 @@
     </section>
     <div class="category-filter-container">
     <button class="cat-btn active" onclick="filtrerParCategorie('Tous')">🛒 Tous</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('PPN')">🍚 P.P.N</button>
+    <button class="cat-btn" onclick="filtrerParCategorie('PPN')">🍚 P.P.N <small style="background: #ff3b30; color: white; padding: 1px 5px; border-radius: 4px; font-size: 0.6rem; margin-left: 5px;">TOP</small></button>
     <button class="cat-btn" onclick="filtrerParCategorie('Alimentaire')">🍎 Alimentaire</button>
     <button class="cat-btn" onclick="filtrerParCategorie('Conserves')">🥫 Conserves</button>
     <button class="cat-btn" onclick="filtrerParCategorie('Frais')">🥦 Frais</button>
@@ -251,5 +258,19 @@
         <div class="loader">🔄</div> <p style="font-size:12px; color:gray;">Ne fermez pas cette fenêtre avant la fin de la transaction.</p>
     </div>
 </div>
+
+<script>
+    function showFakeNotif() {
+        const locations = ["Itaosy", "Ivato", "Analakely", "67Ha", "Tanjombato"];
+        const loc = locations[Math.floor(Math.random() * locations.length)];
+        const toast = document.createElement('div');
+        toast.style = "position:fixed; bottom:20px; left:20px; background:white; border-left:4px solid #ffcc00; padding:12px; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.2); z-index:10000; font-size:0.75rem; animation: slideIn 0.5s ease-out;";
+        toast.innerHTML = `🛒 Une commande vient d'être passée à <b>${loc}</b>`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity="0"; setTimeout(()=>toast.remove(), 1000); }, 4000);
+    }
+    // Déclencher après 10 secondes
+    setTimeout(showFakeNotif, 10000);
+</script>
 </body>
 </html>

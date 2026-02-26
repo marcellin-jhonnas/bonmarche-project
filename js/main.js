@@ -451,3 +451,33 @@ async function traiterPaiement(montant, telClient) {
 
 // Note : verifierStatut n'est plus nécessaire car le client 
 // reçoit directement la notification USSD sur son téléphone.
+
+function animerBadgePanier() {
+    const badge = document.getElementById('cart-count');
+    badge.style.transform = "scale(1.5)";
+    badge.style.backgroundColor = "#ff3b30"; // Devient rouge flash
+    setTimeout(() => {
+        badge.style.transform = "scale(1)";
+        badge.style.backgroundColor = "var(--primary)"; // Revient au jaune
+    }, 300);
+}
+
+function montrerNotificationAchat() {
+    const quartiers = ["Itaosy", "Analakely", "Ivato", "Talatamaty", "Ankorondrano"];
+    const quartier = quartiers[Math.floor(Math.random() * quartiers.length)];
+    
+    const notif = document.createElement('div');
+    notif.innerHTML = `🛒 Une commande vient d'être livrée à <b>${quartier}</b>`;
+    notif.style = "position:fixed; bottom:20px; left:20px; background:white; padding:12px 20px; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.2); z-index:10000; border-left:5px solid #ffcc00; font-size:0.8rem; animation: slideIn 0.5s forwards;";
+    
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = "slideOut 0.5s forwards";
+        setTimeout(() => notif.remove(), 500);
+    }, 4000);
+}
+
+// Lance une fausse notification après 5 secondes, puis toutes les 30 secondes
+setTimeout(montrerNotificationAchat, 5000);
+setInterval(montrerNotificationAchat, 30000);

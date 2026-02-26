@@ -157,6 +157,30 @@ header {
     font-weight: bold;
 }
 
+/* Effet de halo lumineux derrière le livreur */
+.slide-image {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slide-image::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.4);
+    filter: blur(60px);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.slide-image img {
+    position: relative;
+    z-index: 1; /* L'image passe devant le halo */
+}
+
 /* --- 5. BADGES DE CONFIANCE --- */
 .trust-badges {
     display: flex;
@@ -192,8 +216,9 @@ header {
 }
 
 .carte-produit:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border: 1px solid var(--primary); /* Une petite bordure jaune apparaît */
 }
 
 .carte-produit img {
@@ -202,6 +227,7 @@ header {
     object-fit: contain;
     border-radius: 20px;
     background: #f9f9f9;
+    transition: transform 0.5s ease;
 }
 
 .prix-badge {
