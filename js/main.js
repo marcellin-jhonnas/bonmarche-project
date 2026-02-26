@@ -52,6 +52,10 @@ function ajouterAuPanier(nom, prix) {
     } else {
         panier.push({ nom, prix, quantite: 1 });
     }
+    document.querySelector('.floating-cart').style.animation = "none";
+setTimeout(() => {
+    document.querySelector('.floating-cart').style.animation = "bounce 0.5s ease-in-out";
+}, 10);
     mettreAJourBadge();
 }
 
@@ -481,3 +485,19 @@ function montrerNotificationAchat() {
 // Lance une fausse notification après 5 secondes, puis toutes les 30 secondes
 setTimeout(montrerNotificationAchat, 5000);
 setInterval(montrerNotificationAchat, 30000);
+
+// Cette fonction synchronise les deux badges automatiquement
+function synchroniserBadges(nombre) {
+    const badgeHaut = document.getElementById('cart-count');
+    const badgeFlottant = document.getElementById('cart-count-float');
+    
+    if (badgeHaut) {
+        badgeHaut.innerText = nombre;
+        badgeHaut.style.display = nombre > 0 ? "block" : "none";
+    }
+    
+    if (badgeFlottant) {
+        badgeFlottant.innerText = nombre;
+        badgeFlottant.style.display = nombre > 0 ? "block" : "none";
+    }
+}
