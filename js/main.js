@@ -56,10 +56,12 @@ async function chargerBoutique() {
 function rendreProduits(liste) {
     const container = document.getElementById('boutique');
     if (!container) return;
+    
     if (liste.length === 0) {
         container.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
         return;
     }
+
     container.innerHTML = liste.map(p => `
         <div class="carte-produit">
             <div class="prix-badge">${Number(p.Prix).toLocaleString()} Ar</div>
@@ -67,6 +69,18 @@ function rendreProduits(liste) {
             <div style="padding:15px;">
                 <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
                 <h3>${p.Nom}</h3>
+                
+                <div class="interaction-bar" style="display: flex; gap: 15px; padding: 10px 0; border-top: 1px solid #f0f0f0; margin: 10px 0;">
+                    <button class="btn-interaction" onclick="actionLike(this)" style="background:none; border:none; padding:0; width:auto; margin:0; cursor:pointer; display:flex; align-items:center; gap:5px; color:#666;">
+                        <i class="far fa-heart"></i>
+                        <span>J'aime</span>
+                    </button>
+                    <button class="btn-interaction" onclick="actionCommentaire('${p.Nom.replace(/'/g, "\\'")}')" style="background:none; border:none; padding:0; width:auto; margin:0; cursor:pointer; display:flex; align-items:center; gap:5px; color:#666;">
+                        <i class="far fa-comment"></i>
+                        <span>Commenter</span>
+                    </button>
+                </div>
+
                 <button onclick="ajouterAuPanier('${p.Nom.replace(/'/g, "\\'")}', ${p.Prix})">
                     <i class="fas fa-cart-plus"></i> AJOUTER AU PANIER
                 </button>
@@ -74,7 +88,6 @@ function rendreProduits(liste) {
         </div>
     `).join('');
 }
-
 // 2. PANIER
 function ajouterAuPanier(nom, prix) {
     const produitExistant = panier.find(item => item.nom === nom);
@@ -535,3 +548,29 @@ function synchroniserBadges(nombre) {
     }
 }
 
+// Fonction pour le Like (Rouge + Gras)
+function actionLike(element) {
+    element.classList.toggle('active-like');
+    const icon = element.querySelector('i');
+    const label = element.querySelector('span');
+    
+    if (element.classList.contains('active-like')) {
+        icon.classList.replace('far', 'fas'); // Coeur plein
+        icon.style.color = "#ff3b30";        // Rouge
+        label.style.fontWeight = "bold";     // Gras
+        label.style.color = "#1a1a1a";
+    } else {
+        icon.classList.replace('fas', 'far'); // Coeur vide
+        icon.style.color = "#666";
+        label.style.fontWeight = "normal";   // Normal
+        label.style.color = "#666";
+    }
+}
+
+// Fonction pour le Commentaire
+function actionCommentaire(nomProduit) {
+    const avis = prompt(`Donnez votre avis sur : ${nomProduit}`);
+    if (avis && avis.trim() !== "") {
+        alert("Merci ! Votre commentaire a été envoyé pour vérification.");
+    }
+}

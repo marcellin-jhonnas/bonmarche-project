@@ -693,3 +693,43 @@ button {
     width: 100%;
     margin-bottom: 20px;
 }
+/* Barre d'interaction sous le produit */
+.interaction-bar {
+    display: flex;
+    gap: 15px;
+    padding: 10px 5px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.btn-interaction {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    color: #666;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s;
+}
+
+/* État quand on clique sur J'aime */
+.btn-interaction.active-like i {
+    color: #ff3b30; /* Coeur Rouge */
+    font-weight: 900; /* Coeur Plein */
+}
+
+.btn-interaction.active-like span {
+    color: #1a1a1a;
+    font-weight: 700; /* Texte Gras */
+}
+
+/* Animation de pop */
+@keyframes heartPop {
+    50% { transform: scale(1.3); }
+}
+.btn-interaction.active-like i { animation: heartPop 0.3s ease; }
