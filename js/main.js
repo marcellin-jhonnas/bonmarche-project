@@ -140,6 +140,16 @@ setTimeout(() => {
     mettreAJourBadge();
     // On appelle la fonction de synchronisation avec la taille actuelle du panier
 synchroniserBadges(panier.length);
+// À ajouter à la fin de ta fonction ajouterAuPanier()
+const dot = document.getElementById('cart-dot');
+if(dot) dot.style.display = 'block'; // Affiche le petit point rouge
+
+// Animation de vibration sur l'item panier de la barre mobile
+const navCart = document.querySelector('.nav-item-m i.fa-shopping-bag');
+if(navCart) {
+    navCart.style.transform = "scale(1.4)";
+    setTimeout(() => { navCart.style.transform = "scale(1)"; }, 300);
+}
 }
 
 function mettreAJourBadge() {

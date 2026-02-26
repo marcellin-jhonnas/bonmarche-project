@@ -282,5 +282,26 @@
     <i class="fas fa-shopping-basket" style="font-size: 1.5rem; color: #1a1a1a;"></i>
     <span id="cart-count-float" style="position: absolute; top: 0; right: 0; background: #ff3b30; color: white; border-radius: 50%; padding: 4px 8px; font-size: 0.7rem; font-weight: bold;">0</span>
 </div>
+<div class="mobile-bottom-nav">
+    <div class="nav-item-m active-m" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+    </div>
+    <div class="nav-item-m" onclick="document.getElementById('search').focus()">
+        <i class="fas fa-search"></i>
+        <span>Chercher</span>
+    </div>
+    <div class="nav-item-m" onclick="envoyerCommande()">
+        <div style="position:relative;">
+            <i class="fas fa-shopping-bag"></i>
+            <span id="cart-dot" style="display:none; position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#ff3b30; border-radius:50%; border:2px solid white;"></span>
+        </div>
+        <span>Panier</span>
+    </div>
+    <div class="nav-item-m" onclick="toggleSidebar()">
+        <i class="fas fa-user-circle"></i>
+        <span>Profil</span>
+    </div>
+</div>
 </body>
 </html>
