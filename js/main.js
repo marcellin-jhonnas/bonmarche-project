@@ -653,9 +653,9 @@ window.addEventListener('scroll', () => {
     }
 });
 const imagesHero = [
-    'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000', // Marché / Alimentaire
-    'https://images.unsplash.com/photo-1506484334402-40f21501f673?q=80&w=2000', // Fruits Frais
-    'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000'  // Epicerie
+    'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=2000', // Riz & Grains
+    'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000', // Fruits & Légumes
+    'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000'  // Epicerie & PPN
 ];
 
 let heroIdx = 0;
