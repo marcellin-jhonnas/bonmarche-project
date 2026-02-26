@@ -633,3 +633,22 @@ function actionCommentaire(nomProduit) {
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 }
+// --- GESTION DE LA BARRE DE NAVIGATION MOBILE ---
+document.querySelectorAll('.nav-item-m').forEach(item => {
+    item.addEventListener('click', function() {
+        // 1. Retirer la classe 'active-m' de tous les boutons
+        document.querySelectorAll('.nav-item-m').forEach(nav => nav.classList.remove('active-m'));
+        
+        // 2. Ajouter la classe 'active-m' uniquement sur celui cliqué
+        this.classList.add('active-m');
+    });
+});
+// Détection du scroll pour animer le header
+window.addEventListener('scroll', () => {
+    const header = document.querySelector('header');
+    if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+    } else {
+        header.classList.remove('scrolled');
+    }
+});
