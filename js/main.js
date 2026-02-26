@@ -652,19 +652,74 @@ window.addEventListener('scroll', () => {
         header.classList.remove('scrolled');
     }
 });
-const imagesHero = [
-    'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=2000', // Riz & Grains
-    'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000', // Fruits & Légumes
-    'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000'  // Epicerie & PPN
+/* ==========================================================
+   NOUVEAU : GESTION DU HERO DYNAMIQUE (5 IMAGES + TEXTES)
+   ========================================================== */
+
+const heroData = [
+    {
+        img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=2000',
+        badge: "🌻 Cuisine",
+        title: "HUILES ET MATIÈRES GRASSES",
+        desc: "L'essentiel pour vos cuissons au meilleur prix du marché."
+    },
+    {
+        img: 'https://images.unsplash.com/photo-1552829722-b5939e1f414f?q=80&w=2000',
+        badge: "💧 Hydratation",
+        title: "CRISTALINE & EAU DE SOURCE",
+        desc: "Restez hydraté ! Vos packs livrés directement à l'étage."
+    },
+    {
+        img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=2000',
+        badge: "🍚 Essentiel",
+        title: "LE MEILLEUR RIZ GASY",
+        desc: "La base de votre alimentation, sélectionnée avec soin."
+    },
+    {
+        img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000',
+        badge: "🥫 Épicerie",
+        title: "CONSERVES ET PPN",
+        desc: "Tout votre stock de provisions livré en moins de 2h."
+    },
+    {
+        img: 'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000',
+        badge: "🍎 Fraîcheur",
+        title: "FRUITS ET LÉGUMES FRAIS",
+        desc: "Le goût du marché d'Anosibe, sans bouger de chez vous."
+    }
 ];
 
-let heroIdx = 0;
-const heroElement = document.getElementById('hero-slider');
+let currentHeroIdx = 0; // Changé le nom pour éviter tout conflit
 
-function updateHeroBackground() {
-    heroIdx = (heroIdx + 1) % imagesHero.length;
-    heroElement.style.setProperty('--bg-image', `url('${imagesHero[heroIdx]}')`);
+function updateHeroAnimate() {
+    const heroSection = document.getElementById('hero-slider');
+    const title = document.getElementById('hero-title');
+    const desc = document.getElementById('hero-desc');
+    const badge = document.getElementById('hero-badge');
+
+    if (!heroSection || !title || !desc || !badge) return;
+
+    // 1. Sortie (disparition douce)
+    title.style.opacity = "0";
+    desc.style.opacity = "0";
+    badge.style.opacity = "0";
+
+    setTimeout(() => {
+        currentHeroIdx = (currentHeroIdx + 1) % heroData.length;
+        const current = heroData[currentHeroIdx];
+
+        // 2. Mise à jour du contenu
+        heroSection.style.setProperty('--bg-image', `url('${current.img}')`);
+        badge.innerText = current.badge;
+        title.innerText = current.title;
+        desc.innerText = current.desc;
+
+        // 3. Entrée (apparition douce)
+        title.style.opacity = "1";
+        desc.style.opacity = "1";
+        badge.style.opacity = "1";
+    }, 600);
 }
 
-// Lancer le changement d'image toutes les 5 secondes (en synchro avec tes slides)
-setInterval(updateHeroBackground, 5000);
+// Lancer l'animation toutes les 5 secondes
+setInterval(updateHeroAnimate, 5000);
