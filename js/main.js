@@ -57,12 +57,19 @@ function rendreProduits(liste) {
     const container = document.getElementById('boutique');
     if (!container) return;
     
+    // On cache le loader et on prépare l'affichage
+    const loader = document.getElementById('loading-placeholder');
+    if (loader) loader.style.display = 'none';
+    container.style.display = 'grid';
+
     if (liste.length === 0) {
         container.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
         return;
     }
 
-    container.innerHTML = liste.map(p => `
+    container.innerHTML = liste.map(p => {
+        const nomPropre = p.Nom.replace(/'/g, "\\'");
+        return `
         <div class="carte-produit">
             <div class="prix-badge">${Number(p.Prix).toLocaleString()} Ar</div>
             <img src="${p.Image_URL}" alt="${p.Nom}" onerror="this.src='https://via.placeholder.com/150?text=SafeRun'">
@@ -71,22 +78,49 @@ function rendreProduits(liste) {
                 <h3>${p.Nom}</h3>
                 
                 <div class="interaction-bar" style="display: flex; gap: 15px; padding: 10px 0; border-top: 1px solid #f0f0f0; margin: 10px 0;">
-                    <button class="btn-interaction" onclick="actionLike(this)" style="background:none; border:none; padding:0; width:auto; margin:0; cursor:pointer; display:flex; align-items:center; gap:5px; color:#666;">
+                    <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.85rem;">
                         <i class="far fa-heart"></i>
                         <span>J'aime</span>
-                    </button>
-                    <button class="btn-interaction" onclick="actionCommentaire('${p.Nom.replace(/'/g, "\\'")}')" style="background:none; border:none; padding:0; width:auto; margin:0; cursor:pointer; display:flex; align-items:center; gap:5px; color:#666;">
+                    </div>
+                    <div class="btn-interaction" onclick="actionCommentaire('${nomPropre}')" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.85rem;">
                         <i class="far fa-comment"></i>
                         <span>Commenter</span>
-                    </button>
+                    </div>
                 </div>
 
-                <button onclick="ajouterAuPanier('${p.Nom.replace(/'/g, "\\'")}', ${p.Prix})">
+                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:12px; border-radius:12px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer;">
                     <i class="fas fa-cart-plus"></i> AJOUTER AU PANIER
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
+}
+
+// AJOUTE CES DEUX FONCTIONS TOUT EN BAS DE TON main.js
+function actionLike(element) {
+    const icon = element.querySelector('i');
+    const span = element.querySelector('span');
+    
+    if (icon.classList.contains('far')) {
+        // ACTIVER : Rouge et Gras
+        icon.classList.replace('far', 'fas');
+        icon.style.color = "#ff3b30";
+        span.style.fontWeight = "bold";
+        span.style.color = "#1a1a1a";
+    } else {
+        // DESACTIVER : Gris et Normal
+        icon.classList.replace('fas', 'far');
+        icon.style.color = "#666";
+        span.style.fontWeight = "normal";
+        span.style.color = "#666";
+    }
+}
+
+function actionCommentaire(nom) {
+    const avis = prompt("Donnez votre avis sur " + nom + " :");
+    if (avis) {
+        alert("Merci ! Votre avis sur " + nom + " a été envoyé.");
+    }
 }
 // 2. PANIER
 function ajouterAuPanier(nom, prix) {
