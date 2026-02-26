@@ -43,12 +43,14 @@ body {
 
 /* --- 3. HEADER ORCHESTRÉ --- */
 header {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.85); /* Transparent */
+    backdrop-filter: blur(10px); /* Flou derrière (Effet iPhone) */
+    -webkit-backdrop-filter: blur(10px);
     padding: 10px 5%;
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .header-container {
@@ -239,6 +241,27 @@ header {
     padding: 6px 14px;
     border-radius: 12px;
     font-weight: 700;
+}
+
+/* --- AJOUT POUR LA BOUTIQUE ET LE CHARGEMENT --- */
+#boutique {
+    display: none; /* Caché au début pour laisser place au skeleton */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+
+#loading-placeholder {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 /* --- 7. BOUTONS --- */
@@ -642,6 +665,31 @@ button {
 }
 
 /* On le cache sur grand écran si tu préfères, mais sur mobile c'est indispensable */
-@media (min-width: 1024px) {
-    .floating-cart { display: none; }
+@media (max-width: 768px) {
+    .logo-text, .icon-label, .search-wrapper { display: none; }
+    /* On applique les 2 colonnes à la fois à la boutique et au skeleton */
+    .container, #boutique, #loading-placeholder { 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 15px; 
+    }
+    .promo-slider { height: 180px; }
+}
+
+/* Animation de chargement fantôme */
+.skeleton {
+    background: #eee;
+    background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+    border-radius: 15px;
+    background-size: 200% 100%;
+    animation: 1.5s shine linear infinite;
+}
+
+@keyframes shine {
+    to { background-position-right: -200%; }
+}
+
+.skeleton-card {
+    height: 250px;
+    width: 100%;
+    margin-bottom: 20px;
 }

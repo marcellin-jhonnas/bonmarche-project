@@ -11,14 +11,45 @@ let panier = [];
 
 // 1. CHARGEMENT
 async function chargerBoutique() {
+    const loader = document.getElementById('loading-placeholder');
+    const boutique = document.getElementById('boutique');
+
     try {
+        // 1. On s'assure que le loader est visible au début
+        if (loader) loader.style.display = 'grid';
+        if (boutique) boutique.style.opacity = '0'; // On prépare l'apparition douce
+
         const response = await fetch(API_URL);
         tousLesProduits = await response.json();
+        
+        // 2. On génère les produits (mais ils sont encore invisibles)
         rendreProduits(tousLesProduits);
+
+        // 3. On cache le skeleton et on montre la boutique avec élégance
+        setTimeout(() => {
+            if (loader) {
+                loader.style.transition = "opacity 0.5s ease";
+                loader.style.opacity = "0";
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    if (boutique) {
+                        boutique.style.display = 'grid';
+                        // Petit délai pour l'effet de fondu (Fade-in)
+                        setTimeout(() => boutique.style.opacity = '1', 50);
+                    }
+                }, 500);
+            }
+        }, 800); // On laisse le skeleton 0.8s pour un effet visuel pro
+
     } catch (e) { 
         console.error("Erreur de chargement", e); 
-        const container = document.getElementById('boutique');
-        if(container) container.innerHTML = "<p>Erreur de chargement des produits...</p>";
+        if (loader) loader.style.display = 'none';
+        if (boutique) {
+            boutique.style.display = 'block';
+            boutique.style.opacity = '1';
+            boutique.innerHTML = "<p style='text-align:center; padding:20px;'>⚠️ Impossible de charger les produits. Vérifiez votre connexion.</p>";
+        }
     }
 }
 
@@ -503,3 +534,4 @@ function synchroniserBadges(nombre) {
         badgeFlottant.style.display = nombre > 0 ? "block" : "none";
     }
 }
+
