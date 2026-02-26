@@ -652,3 +652,19 @@ window.addEventListener('scroll', () => {
         header.classList.remove('scrolled');
     }
 });
+const imagesHero = [
+    'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000', // Marché / Alimentaire
+    'https://images.unsplash.com/photo-1506484334402-40f21501f673?q=80&w=2000', // Fruits Frais
+    'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000'  // Epicerie
+];
+
+let heroIdx = 0;
+const heroElement = document.getElementById('hero-slider');
+
+function updateHeroBackground() {
+    heroIdx = (heroIdx + 1) % imagesHero.length;
+    heroElement.style.setProperty('--bg-image', `url('${imagesHero[heroIdx]}')`);
+}
+
+// Lancer le changement d'image toutes les 5 secondes (en synchro avec tes slides)
+setInterval(updateHeroBackground, 5000);
