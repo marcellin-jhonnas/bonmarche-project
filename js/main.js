@@ -57,6 +57,8 @@ setTimeout(() => {
     document.querySelector('.floating-cart').style.animation = "bounce 0.5s ease-in-out";
 }, 10);
     mettreAJourBadge();
+    // On appelle la fonction de synchronisation avec la taille actuelle du panier
+synchroniserBadges(panier.length);
 }
 
 function mettreAJourBadge() {
