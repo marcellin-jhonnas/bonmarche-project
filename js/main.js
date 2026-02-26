@@ -57,7 +57,6 @@ function rendreProduits(liste) {
     const container = document.getElementById('boutique');
     if (!container) return;
     
-    // On cache le loader et on prépare l'affichage
     const loader = document.getElementById('loading-placeholder');
     if (loader) loader.style.display = 'none';
     container.style.display = 'grid';
@@ -69,6 +68,9 @@ function rendreProduits(liste) {
 
     container.innerHTML = liste.map(p => {
         const nomPropre = p.Nom.replace(/'/g, "\\'");
+        // Génère un nombre de likes aléatoire entre 12 et 48 pour faire "vivant"
+        const likesAleatoires = Math.floor(Math.random() * 37) + 12;
+
         return `
         <div class="carte-produit">
             <div class="prix-badge">${Number(p.Prix).toLocaleString()} Ar</div>
@@ -80,7 +82,8 @@ function rendreProduits(liste) {
                 <div class="interaction-bar" style="display: flex; gap: 15px; padding: 10px 0; border-top: 1px solid #f0f0f0; margin: 10px 0;">
                     <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.85rem;">
                         <i class="far fa-heart"></i>
-                        <span>J'aime</span>
+                        <span class="txt-like">J'aime</span>
+                        <span class="nb-likes" style="opacity:0.6;">${likesAleatoires}</span>
                     </div>
                     <div class="btn-interaction" onclick="actionCommentaire('${nomPropre}')" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.85rem;">
                         <i class="far fa-comment"></i>
@@ -88,7 +91,7 @@ function rendreProduits(liste) {
                     </div>
                 </div>
 
-                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:12px; border-radius:12px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer;">
+                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:12px; border-radius:12px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a;">
                     <i class="fas fa-cart-plus"></i> AJOUTER AU PANIER
                 </button>
             </div>
@@ -583,28 +586,40 @@ function synchroniserBadges(nombre) {
 }
 
 // Fonction pour le Like (Rouge + Gras)
+// Gère le Like (Rouge + Gras + Compteur)
 function actionLike(element) {
-    element.classList.toggle('active-like');
     const icon = element.querySelector('i');
-    const label = element.querySelector('span');
+    const txt = element.querySelector('.txt-like');
+    const count = element.querySelector('.nb-likes');
+    let nb = parseInt(count.innerText);
     
-    if (element.classList.contains('active-like')) {
-        icon.classList.replace('far', 'fas'); // Coeur plein
-        icon.style.color = "#ff3b30";        // Rouge
-        label.style.fontWeight = "bold";     // Gras
-        label.style.color = "#1a1a1a";
+    if (icon.classList.contains('far')) {
+        // ACTIVER
+        icon.classList.replace('far', 'fas');
+        icon.style.color = "#ff3b30";
+        txt.style.fontWeight = "bold";
+        txt.style.color = "#1a1a1a";
+        count.innerText = nb + 1;
+        count.style.color = "#ff3b30";
+        element.style.transform = "scale(1.1)";
+        setTimeout(() => element.style.transform = "scale(1)", 200);
     } else {
-        icon.classList.replace('fas', 'far'); // Coeur vide
+        // DESACTIVER
+        icon.classList.replace('fas', 'far');
         icon.style.color = "#666";
-        label.style.fontWeight = "normal";   // Normal
-        label.style.color = "#666";
+        txt.style.fontWeight = "normal";
+        txt.style.color = "#666";
+        count.innerText = nb - 1;
+        count.style.color = "#666";
     }
 }
 
-// Fonction pour le Commentaire
+// Gère le commentaire via WhatsApp (Plus efficace pour vendre)
 function actionCommentaire(nomProduit) {
-    const avis = prompt(`Donnez votre avis sur : ${nomProduit}`);
+    const avis = prompt(`Qu'en pensez-vous de : ${nomProduit} ?`);
     if (avis && avis.trim() !== "") {
-        alert("Merci ! Votre commentaire a été envoyé pour vérification.");
+        const tel = "261382453610"; // Ton numéro WhatsApp
+        const msg = `Bonjour SafeRun ! Voici mon avis sur le produit *${nomProduit}* : \n\n"${avis}"`;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 }
