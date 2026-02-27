@@ -14,6 +14,8 @@
     <button class="close-sidebar" onclick="toggleSidebar()">×</button>
    <div class="user-profile">
     <div class="user-avatar" id="user-initials">S</div> 
+    <div id="qrcode-container" style="background: white; padding: 10px; border-radius: 10px; margin: 15px auto; width: 120px; height: 120px; display: none; border: 2px solid var(--primary);">
+    <div id="qrcode"></div> </div>
     <h3 id="side-user-nom">Utilisateur</h3>
     <p id="side-user-tel" style="font-size: 0.9rem; color: #ffcc00; margin-bottom: 5px;">
         <i class="fas fa-phone"></i> Numéro non renseigné
@@ -293,5 +295,6 @@
         <span>Profil</span>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>

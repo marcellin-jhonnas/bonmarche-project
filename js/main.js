@@ -296,6 +296,7 @@ function rafraichirSidebar() {
     if (elQuartier) {
         elQuartier.innerHTML = quartier ? `<i class="fas fa-map-marker-alt"></i> ${quartier}` : `<i class="fas fa-map-marker-alt"></i> Quartier non renseigné`;
     }
+    genererQRCodeClient();
 }
 
 function ouvrirInscription() {
@@ -723,3 +724,33 @@ function updateHeroAnimate() {
 
 // Lancer l'animation toutes les 5 secondes
 setInterval(updateHeroAnimate, 5000);
+
+function genererQRCodeClient() {
+    const nom = localStorage.getItem('saferun_nom');
+    const tel = localStorage.getItem('saferun_tel');
+    const container = document.getElementById('qrcode-container');
+    const qrcodeDiv = document.getElementById('qrcode');
+
+    if (nom && tel) {
+        // On vide l'ancien QR code s'il existe
+        qrcodeDiv.innerHTML = "";
+        
+        // On crée les données du client (format JSON simple)
+        const donneesClient = `SafeRun-${tel}-${nom}`;
+
+        // On génère le nouveau QR Code
+        new QRCode(qrcodeDiv, {
+            text: donneesClient,
+            width: 120,
+            height: 120,
+            colorDark : "#1a1a1a",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        // On affiche le conteneur
+        container.style.display = "block";
+    } else {
+        container.style.display = "none";
+    }
+}
