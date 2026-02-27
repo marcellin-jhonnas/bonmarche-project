@@ -136,29 +136,38 @@ function actionCommentaire(nom) {
 // 2. PANIER
 function ajouterAuPanier(nom, prix) {
     const produitExistant = panier.find(item => item.nom === nom);
+    
     if (produitExistant) {
         produitExistant.quantite += 1;
     } else {
         panier.push({ nom, prix, quantite: 1 });
     }
-    document.querySelector('.floating-cart').style.animation = "none";
-setTimeout(() => {
-    document.querySelector('.floating-cart').style.animation = "bounce 0.5s ease-in-out";
-}, 10);
-    mettreAJourBadge();
-    // On appelle la fonction de synchronisation avec la taille actuelle du panier
-synchroniserBadges(panier.length);
-// À ajouter à la fin de ta fonction ajouterAuPanier()
-const dot = document.getElementById('cart-dot');
-if(dot) dot.style.display = 'block'; // Affiche le petit point rouge
 
-// Animation de vibration sur l'item panier de la barre mobile
-const navCart = document.querySelector('.nav-item-m i.fa-shopping-bag');
-if(navCart) {
-    navCart.style.transform = "scale(1.4)";
-    setTimeout(() => { navCart.style.transform = "scale(1)"; }, 300);
-}
-localStorage.setItem('saferun_panier', JSON.stringify(panier));
+    // Animation du panier flottant
+    const cartBtn = document.querySelector('.floating-cart');
+    if (cartBtn) {
+        cartBtn.style.animation = "none";
+        setTimeout(() => { cartBtn.style.animation = "bounce 0.5s ease-in-out"; }, 10);
+    }
+
+    // Sauvegarde immédiate dans le téléphone
+    localStorage.setItem('saferun_panier', JSON.stringify(panier));
+
+    // MISE À JOUR DES COMPTEURS (On envoie le total réel, pas la longueur)
+    const totalArticles = panier.reduce((acc, item) => acc + item.quantite, 0);
+    
+    mettreAJourBadge(); 
+    synchroniserBadges(totalArticles); // Utilise le total calculé ici !
+
+    // Petit point rouge et vibration
+    const dot = document.getElementById('cart-dot');
+    if(dot) dot.style.display = 'block';
+
+    const navCart = document.querySelector('.nav-item-m i.fa-shopping-bag');
+    if(navCart) {
+        navCart.style.transform = "scale(1.4)";
+        setTimeout(() => { navCart.style.transform = "scale(1)"; }, 300);
+    }
 }
 
 function mettreAJourBadge() {
