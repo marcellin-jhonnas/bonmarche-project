@@ -1,3 +1,10 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SafeRun PWA prête !'))
+      .catch(err => console.log('Erreur PWA', err));
+  });
+}
 // --- CONFIGURATION DES PONTS GOOGLE ---
 // Ce lien sert à LIRE tes produits
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
@@ -7,7 +14,8 @@ const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-
 let datePlanifiee = null; 
 let rdvData = null;       
 let tousLesProduits = [];
-let panier = [];
+let panier = JSON.parse(localStorage.getItem('saferun_panier')) || [];
+mettreAJourBadge(); // Pour afficher le nombre dès l'ouverture
 
 // 1. CHARGEMENT
 async function chargerBoutique() {
@@ -150,6 +158,7 @@ if(navCart) {
     navCart.style.transform = "scale(1.4)";
     setTimeout(() => { navCart.style.transform = "scale(1)"; }, 300);
 }
+localStorage.setItem('saferun_panier', JSON.stringify(panier));
 }
 
 function mettreAJourBadge() {
@@ -754,3 +763,28 @@ function genererQRCodeClient() {
         container.style.display = "none";
     }
 }
+const CACHE_NAME = 'saferun-v1';
+const assets = [
+  '/',
+  '/index.html',
+  '/css/style.css',
+  '/js/main.js'
+];
+
+// Installation : Mise en cache des fichiers
+self.addEventListener('install', evt => {
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      cache.addAll(assets);
+    })
+  );
+});
+
+// Intercepter les requêtes pour servir le cache
+self.addEventListener('fetch', evt => {
+  evt.respondWith(
+    caches.match(evt.request).then(response => {
+      return response || fetch(evt.request);
+    })
+  );
+});
