@@ -1,4 +1,5 @@
 /* --- 1. CONFIGURATION GÉNÉRALE --- */
+/* 1. POLICE ET VARIABLES (Toujours en premier) */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
 :root {
@@ -11,13 +12,21 @@
     --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* 2. SÉCURITÉ MOBILE (Empêche le site de glisser à gauche/droite) */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     background-color: var(--bg-color);
     font-family: 'Poppins', sans-serif;
-    margin: 0;
     color: var(--secondary);
-    overflow-x: hidden;
 }
+
+/* --- ICI CONTINUE TON RESTE DE CODE CSS (Header, Boutons, etc.) --- */
 
 /* --- 2. TEXTE DÉFILANT (TOP BAR) --- */
 .top-announcement {
@@ -910,4 +919,64 @@ header.scrolled .logo-img {
 
 @media (max-width: 768px) {
     .hero-giz { height: 350px; margin: 10px; }
+}
+/* ==========================================================
+   DERNIÈRES CORRECTIONS : SPÉCIAL ANDROID & PETITS ÉCRANS
+   ========================================================== */
+@media (max-width: 768px) {
+
+    /* 1. On ajuste le Hero Dynamique pour qu'il soit moins haut */
+    .hero-giz {
+        height: 280px !important;
+        margin: 10px !important;
+        border-radius: 15px !important;
+    }
+
+    .hero-content h1 {
+        font-size: 1.4rem !important;
+        margin-bottom: 5px !important;
+    }
+
+    .hero-content p {
+        font-size: 0.8rem !important;
+        line-height: 1.3;
+    }
+
+    /* 2. BOUTIQUE : On force 2 colonnes pour éviter les cartes trop larges */
+    #boutique {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding: 10px !important;
+    }
+
+    /* 3. CARTES PRODUITS : On réduit la taille pour mobile */
+    .carte-produit img {
+        height: 120px !important; /* Image moins haute */
+    }
+
+    .carte-produit h3 {
+        font-size: 0.8rem !important;
+        margin: 5px 0 !important;
+    }
+
+    .prix-badge {
+        font-size: 0.7rem !important;
+        padding: 4px 8px !important;
+    }
+
+    .btn-commander {
+        font-size: 0.7rem !important;
+        padding: 10px 5px !important;
+    }
+
+    /* 4. SÉCURITÉ BAS D'ÉCRAN : On ajoute de l'espace pour ne pas cacher 
+       les produits derrière la barre de navigation mobile */
+    body {
+        padding-bottom: 80px !important;
+    }
+
+    /* 5. HEADER MOBILE : On cache les textes pour gagner de la place */
+    .icon-label {
+        display: none !important;
+    }
 }
