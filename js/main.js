@@ -240,8 +240,17 @@ function ouvrirTicketAutomatique() {
 
 async function envoyerDonneesAuSheet() {
     const btn = (window.event && window.event.target) ? window.event.target : null;
+    
+    // Calcul précis du montant
     const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
     const telClient = localStorage.getItem('saferun_tel');
+    
+    // Sécurité si le téléphone n'existe pas
+    if (!telClient) {
+        alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
+        return;
+    }
+
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
 
     if (btn && btn.tagName === 'BUTTON') {
@@ -250,8 +259,7 @@ async function envoyerDonneesAuSheet() {
     }
 
     try {
-        // --- ÉTAPE UNIQUE : MVOLA + ENREGISTREMENT ---
-        // On appelle traiterPaiement qui s'occupe de tout envoyer au script Google
+        // --- ÉTAPE : MVOLA + ENREGISTREMENT ---
         const paiementLance = await traiterPaiement(montantTotal, telNettoye);
 
         if (paiementLance) {
@@ -266,28 +274,29 @@ async function envoyerDonneesAuSheet() {
             });
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
             
-            // Message de succès et reset
-            alert("Commande enregistrée ! Vérifiez votre téléphone.");
-            panier = [];
-            mettreAJourBadge();
+            // --- LE NETTOYAGE CRITIQUE ---
+            alert("Commande enregistrée ! Vérifiez votre téléphone pour confirmer le paiement Mvola.");
+            
+            panier = []; // Vide la variable
+            localStorage.removeItem('saferun_panier'); // Vide la mémoire du téléphone
+            
+            if (typeof mettreAJourBadge === 'function') mettreAJourBadge();
+            if (typeof synchroniserBadges === 'function') synchroniserBadges(0);
+
+            // Rechargement pour appliquer le panier vide
             location.reload(); 
         } else {
             if (btn) {
-                btn.innerHTML = "Réessayer";
+                btn.innerHTML = "Réessayer le paiement";
                 btn.disabled = false;
             }
         }
     } catch (error) {
-        console.error("Erreur critique:", error);
+        console.error("Erreur critique lors de l'envoi:", error);
+        // En cas d'erreur réseau, on bascule sur WhatsApp
         finaliserVersWhatsApp();
     }
 }
-
-function finaliserVersWhatsApp() {
-    const message = `Commande SafeRun :\n${panier.map(i => `- ${i.quantite}x ${i.nom}`).join('\n')}`;
-    window.open(`https://wa.me/261382453610?text=${encodeURIComponent(message)}`, '_blank');
-}
-
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
