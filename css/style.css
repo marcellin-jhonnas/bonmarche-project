@@ -497,13 +497,20 @@ header.scrolled .logo-img {
     top: 0;
     left: -300px; /* Caché par défaut */
     width: 280px;
-    height: 100%;
+    height: 100vh; /* Utilise toute la hauteur de l'écran */
     background: #1a1a1a;
     color: white;
     z-index: 9999;
     transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 20px;
     box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    
+    /* --- LES LIGNES QUI RÉPARENT TON PROBLÈME --- */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Permet de défiler vers le bas si ça dépasse */
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
 }
 
 .sidebar.open { left: 0; }
@@ -978,5 +985,32 @@ header.scrolled .logo-img {
     /* 5. HEADER MOBILE : On cache les textes pour gagner de la place */
     .icon-label {
         display: none !important;
+    }
+}
+/* Correction pour le débordement de la Sidebar */
+.user-sidebar .sidebar-content {
+    flex: 1; /* Prend l'espace disponible */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* On s'assure que le bouton en bas a de l'espace */
+.user-sidebar .btn-livraison, 
+.user-sidebar .btn-inscription {
+    margin-top: auto; /* Pousse les boutons vers le bas si l'écran est grand */
+    margin-bottom: 10px;
+    min-height: 45px; /* Taille minimale pour être cliquable */
+}
+
+/* Pour les très petits écrans (Android type Galaxy A10/A12) */
+@media (max-height: 600px) {
+    #qrcode-container {
+        width: 80px !important; /* On réduit le QR code si l'écran est trop court */
+        height: 80px !important;
+    }
+    #qrcode canvas, #qrcode img {
+        width: 80px !important;
+        height: 80px !important;
     }
 }
