@@ -1031,3 +1031,36 @@ header.scrolled .logo-img {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+/* --- GESTION DES THÈMES --- */
+:root { --bg: #ffffff; --card: #ffffff; --text: #333; }
+[data-theme="moderne"] { --bg: #f4f7f6; --card: #ffffff; --text: #2c3e50; }
+[data-theme="sombre"] { --bg: #1a1a1a; --card: #2d2d2d; --text: #f0f0f0; }
+
+body { background-color: var(--bg); color: var(--text); transition: 0.3s; }
+.product-card { background-color: var(--card); }
+
+/* --- DESIGN POP-UP (MODAL) --- */
+.modal-overlay {
+    display: none; /* Caché par défaut */
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    width: 80%;
+    max-width: 300px;
+    color: #333; /* Toujours lisible même en mode sombre */
+}
+
+#qrcode img {
+    margin: 15px auto;
+    border: 5px solid white;
+}

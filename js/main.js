@@ -806,3 +806,37 @@ self.addEventListener('fetch', evt => {
     })
   );
 });
+// 1. Fonction pour changer le thème
+function changerTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('saferun_theme', theme);
+}
+
+// 2. Fonctions pour le QR Code
+function ouvrirQR() {
+    const tel = localStorage.getItem('saferun_tel') || "Non enregistré";
+    const qrContainer = document.getElementById("qrcode");
+    
+    // On vide l'ancien QR code s'il existe
+    qrContainer.innerHTML = "";
+    
+    // On génère le nouveau QR code avec le numéro de téléphone
+    new QRCode(qrContainer, {
+        text: tel,
+        width: 200,
+        height: 200
+    });
+
+    document.getElementById('qr-tel-display').innerText = "Tel: " + tel;
+    document.getElementById('qr-modal').style.display = 'flex';
+}
+
+function fermerQR() {
+    document.getElementById('qr-modal').style.display = 'none';
+}
+
+// 3. Charger le thème préféré au démarrage
+window.addEventListener('load', () => {
+    const savedTheme = localStorage.getItem('saferun_theme') || 'blanc';
+    changerTheme(savedTheme);
+});

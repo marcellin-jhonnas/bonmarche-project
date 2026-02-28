@@ -7,6 +7,7 @@
     <title>SafeRun Market - Votre Marché à Antananarivo</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffcc00">
 </head>
@@ -298,5 +299,22 @@
     </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div class="theme-controls">
+    <button onclick="changerTheme('blanc')" class="btn-theme">⚪ Clair</button>
+    <button onclick="changerTheme('moderne')" class="btn-theme">🔘 Moderne</button>
+    <button onclick="changerTheme('sombre')" class="btn-theme">⚫ Sombre</button>
+</div>
+
+<div id="qr-modal" class="modal-overlay" onclick="fermerQR()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3>Mon QR Code Client</h3>
+        <div id="qrcode"></div> <p id="qr-tel-display"></p>
+        <button onclick="fermerQR()" class="btn-fermer">Fermer</button>
+    </div>
+</div>
+
+<button onclick="ouvrirQR()" class="btn-mon-qr">
+    <i class="fas fa-qrcode"></i> Mon Pass
+</button>
 </body>
 </html>
