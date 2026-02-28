@@ -80,6 +80,9 @@
                         <span class="cart-badge" id="cart-count" style="display:none;">0</span>
                         <span class="icon-label">Panier</span>
                     </div>
+                    <button class="settings-btn" onclick="toggleSettings()" aria-label="Paramètres">
+    <i class="fas fa-cog"></i>
+</button>
                 </div>
             </div>
         </div>
@@ -299,22 +302,28 @@
     </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<div class="theme-controls">
-    <button onclick="changerTheme('blanc')" class="btn-theme">⚪ Clair</button>
-    <button onclick="changerTheme('moderne')" class="btn-theme">🔘 Moderne</button>
-    <button onclick="changerTheme('sombre')" class="btn-theme">⚫ Sombre</button>
-</div>
+<div id="settings-menu" class="settings-popup" style="display:none;">
+    <div class="settings-content">
+        <h3><i class="fas fa-user-cog"></i> SafeRun Config</h3>
+        <hr>
+        
+        <p>Choisir l'ambiance :</p>
+        <div class="theme-options">
+            <button onclick="changerTheme('blanc')" class="dot dot-white"></button>
+            <button onclick="changerTheme('moderne')" class="dot dot-gray"></button>
+            <button onclick="changerTheme('sombre')" class="dot dot-black"></button>
+        </div>
 
-<div id="qr-modal" class="modal-overlay" onclick="fermerQR()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3>Mon QR Code Client</h3>
-        <div id="qrcode"></div> <p id="qr-tel-display"></p>
-        <button onclick="fermerQR()" class="btn-fermer">Fermer</button>
+        <hr>
+        
+        <button class="qr-trigger-btn" onclick="genererMonQR()">
+            <i class="fas fa-qrcode"></i> Mon QR Code Client
+        </button>
+        
+        <div id="qrcode-area"></div> <p id="qr-number" style="font-weight: bold; margin-top: 10px;"></p>
+
+        <button class="close-settings" onclick="toggleSettings()">Fermer</button>
     </div>
 </div>
-
-<button onclick="ouvrirQR()" class="btn-mon-qr">
-    <i class="fas fa-qrcode"></i> Mon Pass
-</button>
 </body>
 </html>

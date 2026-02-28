@@ -1031,36 +1031,52 @@ header.scrolled .logo-img {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
-/* --- GESTION DES THÈMES --- */
-:root { --bg: #ffffff; --card: #ffffff; --text: #333; }
-[data-theme="moderne"] { --bg: #f4f7f6; --card: #ffffff; --text: #2c3e50; }
-[data-theme="sombre"] { --bg: #1a1a1a; --card: #2d2d2d; --text: #f0f0f0; }
+/* Style pour la roue dentée */
+.settings-btn {
+    background: #ffcc00;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
 
-body { background-color: var(--bg); color: var(--text); transition: 0.3s; }
-.product-card { background-color: var(--card); }
-
-/* --- DESIGN POP-UP (MODAL) --- */
-.modal-overlay {
-    display: none; /* Caché par défaut */
+/* Fond noir transparent derrière le menu */
+.settings-popup {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    z-index: 2000;
-    justify-content: center;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: flex; /* Utilisé avec style.display='none'/'flex' en JS */
     align-items: center;
+    justify-content: center;
 }
 
-.modal-content {
+/* La boîte blanche au centre */
+.settings-content {
     background: white;
-    padding: 20px;
-    border-radius: 20px;
+    padding: 25px;
+    border-radius: 25px;
+    width: 85%;
+    max-width: 320px;
     text-align: center;
-    width: 80%;
-    max-width: 300px;
-    color: #333; /* Toujours lisible même en mode sombre */
+    color: #333;
 }
 
-#qrcode img {
-    margin: 15px auto;
-    border: 5px solid white;
+/* Points de couleur pour les thèmes */
+.theme-options { display: flex; justify-content: center; gap: 20px; margin: 15px 0; }
+.dot { width: 35px; height: 35px; border-radius: 50%; border: 3px solid #eee; cursor: pointer; }
+.dot-white { background: #ffffff; }
+.dot-gray { background: #f4f7f6; }
+.dot-black { background: #1a1a1a; }
+
+/* Bouton QR */
+.qr-trigger-btn {
+    background: #000; color: #fff; border: none;
+    padding: 12px; border-radius: 12px; width: 100%; cursor: pointer;
 }
+
+#qrcode-area img { margin: 20px auto; display: block; }
+.close-settings { margin-top: 20px; background: none; border: none; color: red; cursor: pointer; font-weight: bold; }

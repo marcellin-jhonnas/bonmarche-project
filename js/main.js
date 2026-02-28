@@ -806,37 +806,53 @@ self.addEventListener('fetch', evt => {
     })
   );
 });
-// 1. Fonction pour changer le thème
+// 1. Ouvrir ou fermer le menu
+function toggleSettings() {
+    const menu = document.getElementById('settings-menu');
+    if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'flex';
+    } else {
+        menu.style.display = 'none';
+        // On nettoie le QR quand on ferme pour éviter les doublons
+        document.getElementById('qrcode-area').innerHTML = "";
+    }
+}
+
+// 2. Changer le thème (couleur de fond)
 function changerTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.body.className = 'theme-' + theme; // Ajoute une classe au body
     localStorage.setItem('saferun_theme', theme);
+    
+    // Optionnel: si tu utilises les variables CSS :root
+    if(theme === 'sombre') {
+        document.documentElement.style.setProperty('--bg-page', '#1a1a1a');
+    } else if(theme === 'moderne') {
+        document.documentElement.style.setProperty('--bg-page', '#f4f7f6');
+    } else {
+        document.documentElement.style.setProperty('--bg-page', '#ffffff');
+    }
 }
 
-// 2. Fonctions pour le QR Code
-function ouvrirQR() {
-    const tel = localStorage.getItem('saferun_tel') || "Non enregistré";
-    const qrContainer = document.getElementById("qrcode");
+// 3. Générer le QR Code proprement
+function genererMonQR() {
+    const tel = localStorage.getItem('saferun_tel') || "Non configuré";
+    const zoneQR = document.getElementById('qrcode-area');
     
-    // On vide l'ancien QR code s'il existe
-    qrContainer.innerHTML = "";
+    zoneQR.innerHTML = ""; // Supprime l'ancien QR avant d'en créer un nouveau
     
-    // On génère le nouveau QR code avec le numéro de téléphone
-    new QRCode(qrContainer, {
+    new QRCode(zoneQR, {
         text: tel,
-        width: 200,
-        height: 200
+        width: 160,
+        height: 160,
+        colorDark : "#000000",
+        colorLight : "#ffffff"
     });
-
-    document.getElementById('qr-tel-display').innerText = "Tel: " + tel;
-    document.getElementById('qr-modal').style.display = 'flex';
+    
+    document.getElementById('qr-number').innerText = "Numéro : " + tel;
 }
 
-function fermerQR() {
-    document.getElementById('qr-modal').style.display = 'none';
-}
-
-// 3. Charger le thème préféré au démarrage
-window.addEventListener('load', () => {
-    const savedTheme = localStorage.getItem('saferun_theme') || 'blanc';
-    changerTheme(savedTheme);
+// 4. Charger le thème au démarrage du site
+window.addEventListener('DOMContentLoaded', () => {
+    const themeSauve = localStorage.getItem('saferun_theme') || 'blanc';
+    changerTheme(themeSauve);
 });
