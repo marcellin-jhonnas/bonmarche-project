@@ -1088,3 +1088,29 @@ header.scrolled .logo-img {
 
 #qrcode-area img { margin: 20px auto; display: block; }
 .close-settings { margin-top: 20px; background: none; border: none; color: red; cursor: pointer; font-weight: bold; }
+
+/* --- NOUVEAU STYLE DU BOUTON PROFIL --- */
+#main-settings-btn {
+    display: inline-flex !important; /* Force l'alignement sur une ligne */
+    align-items: center !important;  /* Centre l'icône et le texte verticalement */
+    padding: 6px 12px;
+    background-color: #ffcc00;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#user-icon {
+    font-size: 17px;
+    color: #000;
+}
+
+#user-name-display {
+    margin-left: 8px; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 700; /* Met le prénom bien en gras */
+    color: #000;
+    text-transform: capitalize;
+}

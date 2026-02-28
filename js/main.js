@@ -890,3 +890,28 @@ function rafraichirNomUtilisateur() {
 
 // On demande au navigateur d'exécuter cela au démarrage
 document.addEventListener('DOMContentLoaded', rafraichirNomUtilisateur);
+
+function rafraichirNomUtilisateur() {
+    const nomComplet = localStorage.getItem('saferun_nom');
+    const display = document.getElementById('user-name-display');
+    const icon = document.getElementById('user-icon');
+
+    if (nomComplet && nomComplet.trim() !== "") {
+        // On prend juste le premier mot (ex: "Toky")
+        let prenom = nomComplet.trim().split(' ')[0];
+        
+        // On l'affiche proprement
+        if(display) {
+            display.innerText = prenom;
+            display.style.display = "inline-block";
+        }
+        
+        // On change l'icône Roue par l'icône Utilisateur
+        if(icon) {
+            icon.className = "fas fa-user-circle";
+        }
+    }
+}
+
+// On demande d'afficher le nom dès que la page s'ouvre
+document.addEventListener('DOMContentLoaded', rafraichirNomUtilisateur);
