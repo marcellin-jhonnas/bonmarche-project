@@ -834,16 +834,28 @@ function toggleSettings() {
 
 // 2. Changer le thème (Sécurisé)
 function changerTheme(theme) {
+    // 1. On garde ta méthode de classe sur le body
     document.body.className = 'theme-' + theme;
+    
+    // 2. On enregistre le choix
     localStorage.setItem('saferun_theme', theme);
     
     const root = document.documentElement;
+
+    // 3. On change la variable --bg-color (celle de ton CSS)
     if (theme === 'sombre') {
-        root.style.setProperty('--bg-page', '#1a1a1a');
+        root.style.setProperty('--bg-color', '#121212'); // Fond noir
+        root.style.setProperty('--secondary', '#ffffff'); // Texte blanc
+        root.style.setProperty('--white', '#1e1e1e');    // Cartes sombres
     } else if (theme === 'moderne') {
-        root.style.setProperty('--bg-page', '#f4f7f6');
+        root.style.setProperty('--bg-color', '#eef2f7'); // Gris bleu
+        root.style.setProperty('--secondary', '#2c3e50'); // Texte bleu nuit
+        root.style.setProperty('--white', '#ffffff');
     } else {
-        root.style.setProperty('--bg-page', '#ffffff');
+        // Mode Blanc par défaut
+        root.style.setProperty('--bg-color', '#f4f7f6');
+        root.style.setProperty('--secondary', '#1a1a1a');
+        root.style.setProperty('--white', '#ffffff');
     }
 }
 

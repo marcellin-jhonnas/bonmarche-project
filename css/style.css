@@ -11,6 +11,27 @@
     --text-muted: #7f8c8d;
     --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+/* --- GESTION DES THÈMES (DYNAMIQUE) --- */
+
+/* 1. Configuration pour le MODE SOMBRE */
+[data-theme="sombre"] {
+    --bg-color: #121212 !important;   /* Fond noir profond */
+    --secondary: #ffffff !important;  /* Le texte et la Top Bar deviennent blancs */
+    --white: #1e1e1e !important;      /* Les cartes deviennent gris foncé */
+    --text-muted: #aaaaaa !important; /* Texte secondaire plus clair */
+}
+
+/* 2. Configuration pour le MODE MODERNE */
+[data-theme="moderne"] {
+    --bg-color: #eef2f7 !important;   /* Gris bleuté moderne */
+    --secondary: #2c3e50 !important;  /* Bleu nuit élégant */
+    --white: #ffffff !important;      /* Reste blanc pur */
+}
+
+/* 3. Transition douce pour ne pas agresser les yeux */
+body {
+    transition: background-color 0.4s ease, color 0.4s ease !important;
+}
 
 /* 2. SÉCURITÉ MOBILE (Empêche le site de glisser à gauche/droite) */
 html, body {
