@@ -106,7 +106,9 @@ header.scrolled .logo-img {
 
 .search-wrapper {
     position: relative;
-    width: 250px;
+    width: 100%;       /* Il essaie de prendre la place */
+    max-width: 180px;  /* MAIS il s'arrête à 180px pour laisser de la place aux icônes */
+    flex: 1;           /* Il devient flexible */
 }
 
 /* --- RECHERCHE ANIMÉE --- */
@@ -138,7 +140,9 @@ header.scrolled .logo-img {
 
 .header-icons {
     display: flex;
-    gap: 15px;
+    gap: 12px;
+    align-items: center;
+    flex-shrink: 0; /* EMPECHE les icônes de se faire écraser par la recherche */
 }
 
 .icon-item {
