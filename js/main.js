@@ -870,32 +870,28 @@ function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
     const display = document.getElementById('user-name-display');
     const icon = document.getElementById('user-icon');
-    const btn = document.getElementById('main-settings-btn');
 
-    if (nomComplet && nomComplet.trim() !== "") {
-        // 1. On extrait le prénom et on force la Majuscule (ex: toky -> Toky)
+    // On vérifie si le nom existe ET n'est pas vide
+    if (nomComplet && nomComplet.trim().length > 0) {
         let prenom = nomComplet.trim().split(' ')[0];
-        prenom = prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase();
         
-        // 2. On l'affiche avec un style de police propre
         if(display) {
             display.innerText = prenom;
-            display.style.display = "inline-block"; 
-            display.style.verticalAlign = "middle"; // Aligne le texte avec l'icône
+            display.style.display = "inline-block";
         }
         
-        // 3. On change l'icône
         if(icon) {
-            icon.className = "fas fa-user-circle";
-            icon.style.verticalAlign = "middle";
+            // On remplace TOUTES les classes pour être sûr
+            icon.className = "fas fa-user-circle"; 
         }
         
-        // 4. On ajuste le bouton "Pilule"
-        if(btn) {
-            btn.style.borderRadius = "25px";
-            btn.style.padding = "6px 14px";
-            btn.style.display = "inline-flex"; // Force l'alignement horizontal
-            btn.style.alignItems = "center";   // Centre tout verticalement
-        }
+        console.log("Succès : Nom affiché pour " + prenom);
+    } else {
+        console.log("Info : Aucun nom trouvé dans le stockage.");
     }
 }
+
+    // On attend que TOUT soit prêt avant de lancer
+window.addEventListener('load', () => {
+    rafraichirNomUtilisateur();
+});
