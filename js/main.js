@@ -344,13 +344,20 @@ function ouvrirInscription() {
     if (q === null) return;
 
     if (n.trim() && t.trim() && q.trim()) {
+        // 1. On enregistre les données
         localStorage.setItem('saferun_nom', n.trim());
         localStorage.setItem('saferun_tel', t.trim());
         localStorage.setItem('saferun_quartier', q.trim());
+        
+        // 2. On met à jour la barre latérale (ton ancien code)
         rafraichirSidebar();
-        alert("✨ Profil mis à jour !");
+        
+        // 3. ON AJOUTE LA MISE À JOUR DU NOM SUR LE BOUTON ICI
         if (typeof rafraichirNomUtilisateur === 'function') {
             rafraichirNomUtilisateur();
+        }
+
+        alert("✨ Profil mis à jour !");
     } else {
         alert("Tous les champs sont obligatoires.");
     }
