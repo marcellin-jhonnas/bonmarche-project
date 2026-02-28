@@ -349,6 +349,8 @@ function ouvrirInscription() {
         localStorage.setItem('saferun_quartier', q.trim());
         rafraichirSidebar();
         alert("✨ Profil mis à jour !");
+        if (typeof rafraichirNomUtilisateur === 'function') {
+            rafraichirNomUtilisateur();
     } else {
         alert("Tous les champs sont obligatoires.");
     }
@@ -856,3 +858,28 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeSauve = localStorage.getItem('saferun_theme') || 'blanc';
     changerTheme(themeSauve);
 });
+// Fonction pour afficher le prénom du client s'il existe
+function rafraichirNomUtilisateur() {
+    const nomComplet = localStorage.getItem('saferun_nom'); // On récupère le nom stocké
+    const display = document.getElementById('user-name-display');
+    const icon = document.getElementById('user-icon');
+
+    if (nomComplet && nomComplet.trim() !== "") {
+        // 1. On extrait seulement le premier prénom
+        const prenom = nomComplet.split(' ')[0]; 
+        
+        // 2. On l'affiche et on le rend visible
+        display.innerText = prenom;
+        display.style.display = "inline"; 
+        
+        // 3. On change la roue dentée par une icône d'utilisateur
+        if(icon) icon.className = "fas fa-user-circle";
+        
+        // 4. On donne un peu plus de largeur au bouton pour le nom
+        document.getElementById('main-settings-btn').style.borderRadius = "20px";
+        document.getElementById('main-settings-btn').style.padding = "5px 12px";
+    }
+}
+
+// On demande au navigateur d'exécuter cela au démarrage
+document.addEventListener('DOMContentLoaded', rafraichirNomUtilisateur);
