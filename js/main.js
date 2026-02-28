@@ -816,82 +816,94 @@ self.addEventListener('fetch', evt => {
   );
 });
 // 1. Ouvrir ou fermer le menu
+// 1. Ouvrir/Fermer le menu (Sécurisé)
 function toggleSettings() {
     const menu = document.getElementById('settings-menu');
+    const qrArea = document.getElementById('qrcode-area');
+    
+    if (!menu) return; // Si le menu n'existe pas, on arrête sans erreur
+
     if (menu.style.display === 'none' || menu.style.display === '') {
         menu.style.display = 'flex';
     } else {
         menu.style.display = 'none';
-        // On nettoie le QR quand on ferme pour éviter les doublons
-        document.getElementById('qrcode-area').innerHTML = "";
+        // On nettoie le QR seulement si la zone existe
+        if (qrArea) qrArea.innerHTML = "";
     }
 }
 
-// 2. Changer le thème (couleur de fond)
+// 2. Changer le thème (Sécurisé)
 function changerTheme(theme) {
-    document.body.className = 'theme-' + theme; // Ajoute une classe au body
+    document.body.className = 'theme-' + theme;
     localStorage.setItem('saferun_theme', theme);
     
-    // Optionnel: si tu utilises les variables CSS :root
-    if(theme === 'sombre') {
-        document.documentElement.style.setProperty('--bg-page', '#1a1a1a');
-    } else if(theme === 'moderne') {
-        document.documentElement.style.setProperty('--bg-page', '#f4f7f6');
+    const root = document.documentElement;
+    if (theme === 'sombre') {
+        root.style.setProperty('--bg-page', '#1a1a1a');
+    } else if (theme === 'moderne') {
+        root.style.setProperty('--bg-page', '#f4f7f6');
     } else {
-        document.documentElement.style.setProperty('--bg-page', '#ffffff');
+        root.style.setProperty('--bg-page', '#ffffff');
     }
 }
 
-// 3. Générer le QR Code proprement
+// 3. Générer le QR Code (Sécurisé contre les doublons)
 function genererMonQR() {
     const tel = localStorage.getItem('saferun_tel') || "Non configuré";
     const zoneQR = document.getElementById('qrcode-area');
+    const numDisplay = document.getElementById('qr-number');
     
-    zoneQR.innerHTML = ""; // Supprime l'ancien QR avant d'en créer un nouveau
+    if (!zoneQR) return; // Sécurité : si la zone n'existe pas, on sort
+
+    zoneQR.innerHTML = ""; // Nettoyage
     
-    new QRCode(zoneQR, {
-        text: tel,
-        width: 160,
-        height: 160,
-        colorDark : "#000000",
-        colorLight : "#ffffff"
-    });
-    
-    document.getElementById('qr-number').innerText = "Numéro : " + tel;
+    // On vérifie si la bibliothèque QRCode est bien chargée
+    if (typeof QRCode !== "undefined") {
+        new QRCode(zoneQR, {
+            text: tel,
+            width: 160,
+            height: 160,
+            colorDark : "#000000",
+            colorLight : "#ffffff"
+        });
+    }
+
+    if (numDisplay) numDisplay.innerText = "Numéro : " + tel;
 }
 
-// 4. Charger le thème au démarrage du site
-window.addEventListener('DOMContentLoaded', () => {
-    const themeSauve = localStorage.getItem('saferun_theme') || 'blanc';
-    changerTheme(themeSauve);
-});
-// Fonction pour afficher le prénom du client s'il existe
+// 4. Affichage du prénom (Sécurisé et robuste)
 function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
     const display = document.getElementById('user-name-display');
     const icon = document.getElementById('user-icon');
 
-    // On vérifie si le nom existe ET n'est pas vide
     if (nomComplet && nomComplet.trim().length > 0) {
         let prenom = nomComplet.trim().split(' ')[0];
+        // On met la première lettre en majuscule proprement
+        prenom = prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase();
         
-        if(display) {
+        if (display) {
             display.innerText = prenom;
             display.style.display = "inline-block";
         }
         
-        if(icon) {
-            // On remplace TOUTES les classes pour être sûr
+        if (icon) {
+            // On force le changement de classe pour remplacer la roue par le profil
             icon.className = "fas fa-user-circle"; 
         }
-        
-        console.log("Succès : Nom affiché pour " + prenom);
     } else {
-        console.log("Info : Aucun nom trouvé dans le stockage.");
+        // Si pas de nom, on s'assure que l'icône reste la roue dentée
+        if (icon) icon.className = "fas fa-cog";
+        if (display) display.style.display = "none";
     }
 }
 
-    // On attend que TOUT soit prêt avant de lancer
+// --- INITIALISATION ---
 window.addEventListener('load', () => {
+    // Charger le thème
+    const themeSauve = localStorage.getItem('saferun_theme') || 'blanc';
+    changerTheme(themeSauve);
+    
+    // Charger le nom d'utilisateur
     rafraichirNomUtilisateur();
 });
