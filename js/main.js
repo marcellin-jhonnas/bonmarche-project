@@ -867,51 +867,35 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 // Fonction pour afficher le prénom du client s'il existe
 function rafraichirNomUtilisateur() {
-    const nomComplet = localStorage.getItem('saferun_nom'); // On récupère le nom stocké
-    const display = document.getElementById('user-name-display');
-    const icon = document.getElementById('user-icon');
-
-    if (nomComplet && nomComplet.trim() !== "") {
-        // 1. On extrait seulement le premier prénom
-        const prenom = nomComplet.split(' ')[0]; 
-        
-        // 2. On l'affiche et on le rend visible
-        display.innerText = prenom;
-        display.style.display = "inline"; 
-        
-        // 3. On change la roue dentée par une icône d'utilisateur
-        if(icon) icon.className = "fas fa-user-circle";
-        
-        // 4. On donne un peu plus de largeur au bouton pour le nom
-        document.getElementById('main-settings-btn').style.borderRadius = "20px";
-        document.getElementById('main-settings-btn').style.padding = "5px 12px";
-    }
-}
-
-// On demande au navigateur d'exécuter cela au démarrage
-document.addEventListener('DOMContentLoaded', rafraichirNomUtilisateur);
-
-function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
     const display = document.getElementById('user-name-display');
     const icon = document.getElementById('user-icon');
+    const btn = document.getElementById('main-settings-btn');
 
     if (nomComplet && nomComplet.trim() !== "") {
-        // On prend juste le premier mot (ex: "Toky")
+        // 1. On extrait le prénom et on force la Majuscule (ex: toky -> Toky)
         let prenom = nomComplet.trim().split(' ')[0];
+        prenom = prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase();
         
-        // On l'affiche proprement
+        // 2. On l'affiche avec un style de police propre
         if(display) {
             display.innerText = prenom;
-            display.style.display = "inline-block";
+            display.style.display = "inline-block"; 
+            display.style.verticalAlign = "middle"; // Aligne le texte avec l'icône
         }
         
-        // On change l'icône Roue par l'icône Utilisateur
+        // 3. On change l'icône
         if(icon) {
             icon.className = "fas fa-user-circle";
+            icon.style.verticalAlign = "middle";
+        }
+        
+        // 4. On ajuste le bouton "Pilule"
+        if(btn) {
+            btn.style.borderRadius = "25px";
+            btn.style.padding = "6px 14px";
+            btn.style.display = "inline-flex"; // Force l'alignement horizontal
+            btn.style.alignItems = "center";   // Centre tout verticalement
         }
     }
 }
-
-// On demande d'afficher le nom dès que la page s'ouvre
-document.addEventListener('DOMContentLoaded', rafraichirNomUtilisateur);
