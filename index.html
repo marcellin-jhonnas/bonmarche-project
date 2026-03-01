@@ -135,23 +135,36 @@
     <button class="cat-btn" onclick="filtrerParCategorie('Energie')">🔋 Énergie</button>
     </div>
     <div id="boutique-section">
-        <div id="status-planif" style="display:none; background: #e8f4fd; color: #2980b9; padding: 15px; text-align: center; font-weight: bold; border-radius: 10px; margin: 10px auto; max-width: 90%;">
-    <i class="fas fa-calendar-check"></i> Livraison prévue le : <span id="date-affichage"></span>
-    <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
-</div>
-        <div class="section-title">
-            <h2>🛒 Nos Produits</h2>
-            <div class="underline"></div>
-        </div>
-        <main id="boutique" class="container">
-            <div id="loading-placeholder" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px;">
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-</div>
-        </main>
+    <div id="status-planif" style="display:none; background: #e8f4fd; color: #2980b9; padding: 15px; text-align: center; font-weight: bold; border-radius: 10px; margin: 10px auto; max-width: 90%;">
+        <i class="fas fa-calendar-check"></i> Livraison prévue le : <span id="date-affichage"></span>
+        <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
     </div>
+
+    <div class="section-title">
+        <h2>🍚 Les Essentiels (PPN)</h2>
+        <div class="underline"></div>
+    </div>
+    
+    <div id="boutique-ppn" class="ppn-scroll-container">
+        <div class="skeleton-horizontal"></div>
+        <div class="skeleton-horizontal"></div>
+        <div class="skeleton-horizontal"></div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">
+        <h2>🛒 Tout le Marché</h2>
+        <div class="underline"></div>
+    </div>
+
+    <main id="boutique" class="container">
+        <div id="loading-placeholder" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px;">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+        </div>
+    </main>
+</div>
 
     <footer class="footer-premium">
         <div class="footer-waves"></div>

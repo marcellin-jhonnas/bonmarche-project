@@ -1186,3 +1186,33 @@ body.sidebar-open .menu-toggle-btn {
 body.sidebar-open .sidebar-overlay {
     display: block;
 }
+/* Le couloir de défilement horizontal */
+.ppn-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 15px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    
+    /* AJOUT CONSEILLÉ : Un fond très léger pour délimiter la zone PPN */
+    background: #fdfdfd; 
+    border-bottom: 1px solid #eee;
+}
+
+/* On cache la barre de défilement */
+.ppn-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Force les cartes PPN à garder une taille fixe */
+.ppn-scroll-container .carte-produit {
+    min-width: 180px; /* Taille idéale pour voir 1.5 carte à l'écran */
+    max-width: 180px;
+    scroll-snap-align: start;
+    
+    /* AJOUT CONSEILLÉ : Une petite ombre pour que les cartes "décollent" du fond */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background: white;
+    border-radius: 12px;
+}
