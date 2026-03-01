@@ -63,7 +63,7 @@ async function chargerBoutique() {
 
 function rendreProduits(liste) {
     const containerGrille = document.getElementById('boutique');
-    const containerScroll = document.getElementById('boutique-ppn'); // Nouveau
+    const containerScroll = document.getElementById('boutique-ppn'); 
     
     if (!containerGrille) return;
     
@@ -76,41 +76,49 @@ function rendreProduits(liste) {
         return;
     }
 
-    // On vide les deux zones avant de remplir
+    // On vide proprement les deux zones
     containerGrille.innerHTML = "";
     if (containerScroll) containerScroll.innerHTML = "";
 
     liste.forEach(p => {
         const nomPropre = p.Nom.replace(/'/g, "\\'");
         const likesAleatoires = Math.floor(Math.random() * 37) + 12;
+        const prixFormatte = Number(p.Prix).toLocaleString();
 
-        // On crée le HTML de la carte
+        // --- GÉNÉRATION DE LA CARTE AVEC STRUCTURE PREMIUM ---
         const carteHTML = `
         <div class="carte-produit">
-            <div class="prix-badge">${Number(p.Prix).toLocaleString()} Ar</div>
-            <img src="${p.Image_URL}" alt="${p.Nom}" onerror="this.src='https://via.placeholder.com/150?text=SafeRun'">
-            <div style="padding:15px;">
+            <div class="prix-badge">${prixFormatte} Ar</div>
+            
+            <div class="img-container">
+                <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" onerror="this.src='https://via.placeholder.com/150?text=SafeRun'">
+            </div>
+
+            <div style="padding:12px;">
                 <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
                 <h3>${p.Nom}</h3>
-                <div class="interaction-bar" style="display: flex; gap: 15px; padding: 10px 0; border-top: 1px solid #f0f0f0; margin: 10px 0;">
-                    <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.85rem;">
-                        <i class="far fa-heart"></i> <span class="txt-like">J'aime</span> <span class="nb-likes" style="opacity:0.6;">${likesAleatoires}</span>
+                
+                <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin: 8px 0;">
+                    <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.75rem;">
+                        <i class="far fa-heart"></i> 
+                        <span class="nb-likes">${likesAleatoires}</span>
                     </div>
+                    <div style="color:#eee;">|</div>
+                    <div style="font-size:0.75rem; color:#999;">Top Vente</div>
                 </div>
-                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:12px; border-radius:12px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a;">
-                    <i class="fas fa-cart-plus"></i> PANIER
+
+                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a; font-size:0.8rem;">
+                    <i class="fas fa-cart-plus"></i> AJOUTER
                 </button>
             </div>
         </div>`;
 
-        // --- LE TRI SÉCURISÉ ---
+        // --- TRI INTELLIGENT ---
         const categorie = (p.Categorie || "").toUpperCase();
         
         if (categorie === 'PPN' && containerScroll) {
-            // Si c'est du PPN, on l'ajoute au scroll horizontal
             containerScroll.insertAdjacentHTML('beforeend', carteHTML);
         } else {
-            // Sinon, dans la grille classique
             containerGrille.insertAdjacentHTML('beforeend', carteHTML);
         }
     });

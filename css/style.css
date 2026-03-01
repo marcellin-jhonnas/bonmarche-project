@@ -292,13 +292,18 @@ header.scrolled .logo-img {
 
 .prix-badge {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background: var(--secondary);
-    color: var(--primary);
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-weight: 700;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 204, 0, 0.9); /* Jaune SafeRun semi-transparent */
+    backdrop-filter: blur(5px); /* Flou derrière le prix */
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-weight: 800;
+    color: #1a1a1a;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 5;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
 /* --- AJOUT POUR LA BOUTIQUE ET LE CHARGEMENT --- */
@@ -884,17 +889,26 @@ body {
 
 /* 3. Effet de survol d'image (CORRIGÉ POUR TON JS) */
 .carte-produit {
-    overflow: hidden; /* Empêche l'image de dépasser de la carte au zoom */
+    background: #ffffff;
+    border-radius: 24px; /* Plus arrondi pour un look "App" */
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.carte-produit:hover {
+    transform: translateY(-5px); /* La carte se lève au survol */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
 }
 
 .carte-produit img {
-    transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-    display: block;
     width: 100%;
-}
-
-.carte-produit:hover img {
-    transform: scale(1.1); /* Zoom de 10% quand on survole la carte */
+    height: 160px;
+    object-fit: cover;
+    background: #f8f8f8; /* Fond gris clair si l'image charge mal */
 }
 /* --- ANIMATION DE CHARGEMENT INITIALE --- */
 .loading-bar {
@@ -1187,32 +1201,78 @@ body.sidebar-open .sidebar-overlay {
     display: block;
 }
 /* Le couloir de défilement horizontal */
+/* --- LE CONTENEUR DE DÉFILEMENT (APPARENCE PLUS PRO) --- */
 .ppn-scroll-container {
     display: flex;
     overflow-x: auto;
-    gap: 15px;
-    padding: 15px;
+    gap: 12px; /* Un peu plus serré pour voir la carte suivante */
+    padding: 20px 15px; /* Plus d'air en haut et en bas */
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    
-    /* AJOUT CONSEILLÉ : Un fond très léger pour délimiter la zone PPN */
-    background: #fdfdfd; 
-    border-bottom: 1px solid #eee;
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa); /* Dégradé subtil */
+    border-bottom: 1px solid #f0f0f0;
 }
 
-/* On cache la barre de défilement */
 .ppn-scroll-container::-webkit-scrollbar {
     display: none;
 }
 
-/* Force les cartes PPN à garder une taille fixe */
+/* --- LE STYLE DES CARTES (MODERNE & ÉPURÉ) --- */
 .ppn-scroll-container .carte-produit {
-    min-width: 180px; /* Taille idéale pour voir 1.5 carte à l'écran */
-    max-width: 180px;
+    min-width: 165px; /* On réduit pour laisser "dépasser" la 2ème carte (effet d'appel) */
+    max-width: 165px;
     scroll-snap-align: start;
-    
-    /* AJOUT CONSEILLÉ : Une petite ombre pour que les cartes "décollent" du fond */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     background: white;
-    border-radius: 12px;
+    border-radius: 20px; /* Angles beaucoup plus ronds = plus moderne */
+    border: 1px solid rgba(0,0,0,0.03); /* Bordure presque invisible */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); /* Ombre plus diffuse et douce */
+    transition: transform 0.2s ease;
+    overflow: hidden; /* Pour que l'image ne dépasse pas des arrondis */
+}
+
+/* Effet de pression au clic sur mobile */
+.ppn-scroll-container .carte-produit:active {
+    transform: scale(0.96);
+}
+
+/* Ajustement des images dans le scroll */
+.ppn-scroll-container .carte-produit img {
+    height: 130px; /* Un peu plus court pour garder de la place pour le texte */
+    object-fit: cover;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+/* Ajustement des titres dans le scroll */
+/* Ajustement des titres dans le scroll */
+.ppn-scroll-container .carte-produit h3 {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    margin: 8px 0;
+    color: #333;
+    
+    /* --- LA CORRECTION EST ICI --- */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;    /* Pour Chrome et Safari */
+    line-clamp: 2;            /* LA PROPRIÉTÉ STANDARD (pour la compatibilité) */
+    -webkit-box-orient: vertical;
+    
+    overflow: hidden;         /* Coupe le texte qui dépasse */
+    height: 2.4em;            /* Fixe la hauteur pour que toutes les cartes soient alignées */
+}
+.img-container {
+    width: 100%;
+    height: 130px; /* Hauteur fixe pour le scroll */
+    overflow: hidden;
+    border-radius: 20px 20px 0 0; /* Arrondi uniquement en haut */
+}
+
+.img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* L'image remplit la case sans se déformer */
+    transition: transform 0.5s ease;
+}
+
+.carte-produit:hover img {
+    transform: scale(1.1); /* Petit zoom élégant au survol */
 }
