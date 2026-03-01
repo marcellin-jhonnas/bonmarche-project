@@ -542,7 +542,36 @@ header.scrolled .logo-img {
     overflow-x: hidden;
 }
 
-.sidebar.open { left: 0; }
+/* --- LE MOTEUR DE L'EFFET PUSH --- */
+
+/* 1. On prépare le contenu du site pour qu'il puisse bouger */
+#main-content {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+}
+
+/* 2. QUAND LE MENU EST OUVERT (La magie opère ici) */
+
+/* On pousse tout le contenu du site de 280px vers la droite */
+body.sidebar-open #main-content {
+    transform: translateX(280px);
+}
+
+/* On fait sortir la sidebar de la gauche */
+body.sidebar-open .sidebar {
+    left: 0 !important;
+}
+
+/* 3. On cache l'ancien bouton X (car le bouton fixe s'en occupe) */
+.close-sidebar {
+    display: none !important;
+}
+
+/* 4. Sécurité pour éviter que le site ne "dépasse" à droite pendant le mouvement */
+body {
+    overflow-x: hidden;
+    width: 100%;
+}
 
 .user-profile { text-align: center; padding: 30px 0; border-bottom: 1px solid #333; margin-bottom: 20px; }
 .user-avatar { font-size: 60px; color: #ffcc00; margin-bottom: 10px; }

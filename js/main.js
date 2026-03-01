@@ -299,8 +299,22 @@ async function envoyerDonneesAuSheet() {
 }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
-    const sidebar = document.getElementById('user-sidebar');
-    if (sidebar) sidebar.classList.toggle('open');
+    // 1. On cible le corps de la page et l'icône du bouton
+    const body = document.body;
+    const icon = document.getElementById('menu-icon-main');
+
+    // 2. On ajoute ou on enlève la classe 'sidebar-open' au body
+    // C'est cette classe qui va déclencher le mouvement CSS du menu ET du contenu
+    body.classList.toggle('sidebar-open');
+
+    // 3. Changement d'icône dynamique pour le bouton fixe
+    if (body.classList.contains('sidebar-open')) {
+        // Si le menu est ouvert, l'icône devient une croix (X)
+        if (icon) icon.className = "fas fa-times";
+    } else {
+        // Si le menu est fermé, on remet les 3 barres (Hamburger)
+        if (icon) icon.className = "fas fa-bars";
+    }
 }
 
 function rafraichirSidebar() {
