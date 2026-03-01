@@ -1166,20 +1166,23 @@ body.sidebar-open .menu-toggle-btn {
     background-color: #1a1a1a; /* Optionnel : il devient noir */
     color: #ffcc00;            /* Optionnel : l'icône devient jaune */
 }
-/* Le voile qui recouvre le contenu poussé */
+/* Le voile corrigé */
 .sidebar-overlay {
-    position: absolute;
+    position: fixed;   /* CHANGEMENT : 'fixed' pour qu'il suive le scroll */
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.3); /* Un léger assombrissement */
-    z-index: 10000;
-    display: none; /* Caché par défaut */
+    width: 100vw;      /* Utilise toute la largeur de la vue */
+    height: 100vh;     /* Utilise toute la hauteur de la vue */
+    background: rgba(0,0,0,0.5); /* Un peu plus sombre pour bien voir */
+    
+    /* Z-INDEX : Doit être entre le contenu (bas) et la sidebar (haut) */
+    z-index: 9500;     
+    
+    display: none;     /* Caché par défaut */
     cursor: pointer;
 }
 
-/* On l'affiche SEULEMENT quand le menu est ouvert */
+/* On l'affiche quand le body a la classe sidebar-open */
 body.sidebar-open .sidebar-overlay {
     display: block;
 }
