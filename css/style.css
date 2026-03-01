@@ -1166,3 +1166,20 @@ body.sidebar-open .menu-toggle-btn {
     background-color: #1a1a1a; /* Optionnel : il devient noir */
     color: #ffcc00;            /* Optionnel : l'icône devient jaune */
 }
+/* Le voile qui recouvre le contenu poussé */
+.sidebar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3); /* Un léger assombrissement */
+    z-index: 10000;
+    display: none; /* Caché par défaut */
+    cursor: pointer;
+}
+
+/* On l'affiche SEULEMENT quand le menu est ouvert */
+body.sidebar-open .sidebar-overlay {
+    display: block;
+}
