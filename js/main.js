@@ -322,43 +322,66 @@ async function envoyerDonneesAuSheet() {
     const nomClient = localStorage.getItem('saferun_nom');
 
     if (!telClient || montantFinal <= 0) {
-        alert("Erreur : Panier vide.");
+        alert("Erreur : Votre panier est vide.");
         return;
     }
 
-    // 1. ENVOI SILENCIEUX À GOOGLE (On ne bloque pas le client)
-    traiterPaiement(montantFinal, telClient); 
+    // 1. On ferme d'abord le modal du panier pour libérer l'écran
+    if (typeof fermerModal === "function") { fermerModal(); }
 
-    // 2. AFFICHAGE DE L'INTERFACE DE PAIEMENT SANS QUITTER LE SITE
+    // 2. Envoi des infos vers Google Sheet en arrière-plan
+    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
+    traiterPaiement(montantFinal, telNettoye); 
+
+    // 3. CRÉATION DU POP-UP DE PAIEMENT PERSONNALISÉ
     const modalPaiement = document.createElement('div');
-    modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; font-family:sans-serif;";
+    modalPaiement.id = "modal-paiement-final";
+    modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; align-items:center; justify-content:center; font-family:'Poppins', sans-serif; padding:10px;";
+    
     modalPaiement.innerHTML = `
-        <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:400px; text-align:center; position:relative;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d3/MVola_logo.png" style="width:100px; margin-bottom:15px;">
-            <h3 style="margin:0; color:#333;">Finalisation du paiement</h3>
-            <p style="color:#666; font-size:0.9rem;">Montant total : <strong style="color:#e67e22;">${montantFinal.toLocaleString()} Ar</strong></p>
+        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <img src="https://i.imgur.com/nSlqv5W.jpeg" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #ffcc00; margin-bottom:15px;">
             
-            <div style="background:#f8f9fa; border:2px dashed #ffcc00; padding:15px; border-radius:15px; margin:15px 0;">
-                <p style="margin:0; font-size:0.85rem;">Composez sur votre téléphone :</p>
-                <div style="font-size:1.4rem; font-weight:bold; color:#1a1a1a; margin:10px 0;">#111*1*2*0382453610*${montantFinal}#</div>
-                <p style="margin:0; font-size:0.75rem; color:#d35400;">(Le montant est déjà inclus dans le code)</p>
+            <h3 style="margin:0; color:#333; font-size:1.2rem;">Paiement Sécurisé</h3>
+            <p style="margin:5px 0; color:#666;">Titulaire : <strong>MARCELLIN JHONNAS</strong></p>
+            
+            <div style="margin:15px 0; padding:10px; background:#fff9e6; border-radius:10px;">
+                <p style="margin:0; color:#e67e22; font-size:0.9rem;">Montant à régler :</p>
+                <span style="font-size:1.5rem; font-weight:bold; color:#d35400;">${montantFinal.toLocaleString()} Ar</span>
             </div>
 
-            <button id="btn-deja-paye" style="width:100%; background:#27ae60; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1rem;">
-                J'AI EFFECTUÉ LE PAIEMENT ✅
+            <div style="background:#f4f4f4; border:2px solid #ddd; padding:15px; border-radius:15px; margin-bottom:20px;">
+                <p style="margin:0 0 10px 0; font-size:0.85rem; font-weight:bold; color:#555;">TAPEZ CE CODE SUR VOTRE TÉLÉPHONE :</p>
+                <div id="code-ussd" style="font-size:1.3rem; font-weight:800; color:#1a1a1a; letter-spacing:1px; background:white; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                    #111*1*2*0382453610*${montantFinal}#
+                </div>
+                <button onclick="navigator.clipboard.writeText('#111*1*2*0382453610*${montantFinal}#'); alert('Code copié ! Collez-le dans votre application téléphone.');" 
+                        style="margin-top:10px; background:none; border:none; color:#007bff; cursor:pointer; font-size:0.8rem; text-decoration:underline;">
+                    Copier le code
+                </button>
+            </div>
+
+            <button id="confirm-pay-btn" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; transition:0.3s;">
+                J'AI ENVOYÉ LE PAIEMENT ✅
             </button>
             
-            <p style="font-size:0.7rem; color:#999; margin-top:15px;">Dès que vous validez, nous recevons une notification et préparons votre livraison.</p>
+            <p style="font-size:0.75rem; color:#888; margin-top:15px; line-height:1.4;">
+                Après votre validation, un SMS de confirmation sera reçu par <b>MARCELLIN JHONNAS</b> et votre commande sera traitée.
+            </p>
         </div>
     `;
 
     document.body.appendChild(modalPaiement);
 
-    // 3. GESTION DU CLIC FINAL
-    document.getElementById('btn-deja-paye').onclick = function() {
-        this.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Vérification...";
+    // 4. Action quand le client confirme avoir payé
+    document.getElementById('confirm-pay-btn').onclick = function() {
+        this.innerHTML = "<i class='fas fa-circle-notch fa-spin'></i> Vérification...";
+        this.style.opacity = "0.7";
+        
         setTimeout(() => {
-            alert("Merci " + nomClient + " ! Nous avons bien reçu votre demande. Votre livraison est en cours de préparation.");
+            alert("Parfait " + nomClient + " ! Votre commande est enregistrée. Nous préparons votre livraison dès réception du SMS MVola.");
+            
+            // Nettoyage final
             panier = [];
             localStorage.removeItem('saferun_panier');
             window.location.reload();
