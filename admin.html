@@ -78,24 +78,32 @@
 
         async function charger() {
     const list = document.getElementById('commandes-liste');
-    list.innerHTML = "<p style='text-align:center;'>Mise à jour des commandes...</p>";
+    list.innerHTML = "<p style='text-align:center;'>Connexion au registre...</p>";
     
     try {
-        // On ajoute ?action=getCommandes pour que le GAS sache quoi envoyer
+        // On appelle le script avec l'action getCommandes
         const res = await fetch(API_URL + "?action=getCommandes");
         const data = await res.json();
         list.innerHTML = "";
 
-        if (data.length === 0) {
-            list.innerHTML = "<p style='text-align:center;'>Aucune commande trouvée.</p>";
+        if (!data || data.length === 0) {
+            list.innerHTML = "<p style='text-align:center;'>Aucune commande dans l'archive.</p>";
             return;
         }
 
-        // On affiche de la plus récente à la plus ancienne
+        // On inverse pour avoir les plus récentes en haut
         data.reverse().forEach(cmd => {
+            // --- CORRESPONDANCE DES COLONNES DU SHEET ---
             const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
+            const nomClient = cmd["Client"] || "Client Anonyme";
+            const tel = cmd["Téléphone"] || "N/A";
+            const montant = cmd["Montant"] || 0;
+            const produits = cmd["Produits"] || "Liste vide";
+            const idCommande = cmd["ID"] || "---";
+            const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
+
             let classeCard = "";
-            let couleurBadge = "#f1c40f"; // Jaune par défaut
+            let couleurBadge = "#f1c40f"; 
             
             if(statut === "SÉRIEUX") {
                 classeCard = "status-serieux";
@@ -107,38 +115,39 @@
 
             list.innerHTML += `
                 <div class="order-card ${classeCard}">
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
                             <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
-                            <b style="font-size:1.1rem;">${cmd["Client"] || "Inconnu"}</b>
+                            <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
                         </div>
                         <div style="text-align:right;">
-                            <b style="font-size:1.1rem; color:var(--dark);">${Number(cmd["Montant"] || 0).toLocaleString()} Ar</b><br>
-                            <small style="color:#888;">ID: ${cmd["ID"] || '---'}</small>
+                            <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
+                            <small style="color:#888;">${dateCmd}</small>
                         </div>
                     </div>
                     
-                    <p style="margin:10px 0; font-size:0.9rem;">
-                        <i class="fas fa-phone"></i> <b>${cmd["Téléphone"] || 'N/A'}</b>
+                    <p style="margin:12px 0; font-size:0.95rem;">
+                        <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
+                        <span style="color:#ccc; margin:0 10px;">|</span> 
+                        <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
                     </p>
                     
-                    <div style="background:rgba(255,107,0,0.05); padding:10px; border-radius:8px; border:1px dashed #ff6b00; font-size:0.85rem; margin-bottom:10px;">
-                        <i class="fas fa-shopping-basket"></i> ${cmd["Produits"] || 'Aucun produit'}
+                    <div style="background:#fffaf0; border:1px solid #ffe0b2; padding:12px; border-radius:10px; color:#d35400; font-size:0.9rem;">
+                        <i class="fas fa-shopping-bag"></i> ${produits}
                     </div>
 
                     <div class="actions">
-                        <button class="btn-action btn-ok" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">
-                            <i class="fas fa-check-circle"></i> VALIDER PAIEMENT
+                        <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
+                            <i class="fas fa-check"></i> FIDÉLISER (PAYÉ)
                         </button>
-                        <button class="btn-action btn-ban" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">
-                            <i class="fas fa-times-circle"></i> CLIENT DOUTEUX
+                        <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
+                            <i class="fas fa-user-slash"></i> MAUVAIS CLIENT
                         </button>
                     </div>
                 </div>`;
         });
     } catch (e) { 
-        console.error(e);
-        list.innerHTML = "<p style='color:red; text-align:center;'>Erreur de chargement. Vérifiez l'URL de l'API.</p>"; 
+        list.innerHTML = "<p style='color:red; text-align:center;'>Erreur : Impossible de lire le Google Sheet.</p>"; 
     }
 }
 
