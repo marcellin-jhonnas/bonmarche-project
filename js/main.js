@@ -792,8 +792,6 @@ const heroData = [
     }
 ];
 
-let currentHeroIdx = 0; // Changé le nom pour éviter tout conflit
-
 function updateHeroAnimate() {
     const heroSection = document.getElementById('hero-slider');
     const title = document.getElementById('hero-title');
@@ -999,8 +997,6 @@ function supprimerProduitDirectement(index) {
     
     console.log("Produit retiré du panier");
 }
-}
-];
 
 let currentHeroIdx = 0;
 function updateHeroAnimate() {
