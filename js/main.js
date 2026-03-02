@@ -1002,7 +1002,6 @@ function genererMonQR() {
 
     if (numDisplay) numDisplay.innerText = "Numéro : " + tel;
 }
-}
 // 4. Affichage du prénom (Sécurisé et robuste)
 function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
