@@ -658,35 +658,33 @@ function fermerModal() {
 // --- 7. GESTION MVOLA (SÉCURISÉE VIA GOOGLE SCRIPT) ---
 
 async function traiterPaiement(montant, telClient) {
-    // Ton URL de script Google (le pont vers MVola)
     const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec"; 
 
     try {
-        console.log("Initialisation MVola pour:", telClient);
+        // On prépare les données proprement
+        const payload = {
+            date: new Date().toLocaleString('fr-FR'),
+            nom: localStorage.getItem('saferun_nom') || "Client",
+            telClient: telClient,
+            quartier: localStorage.getItem('saferun_quartier') || "Tana", // Ajout important
+            montant: montant, // On envoie le nombre directement
+            produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+            type: "COMMANDE_MVOLA" 
+        };
 
-        // On envoie tout en un seul bloc au script Google
+        // Envoi
         await fetch(SCRIPT_PAYS_URL, {
             method: "POST",
-            mode: "no-cors", // Pour GitHub Pages
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                typePaiement: "MVOLA_INIT",
-                nom: localStorage.getItem('saferun_nom') || "Client",
-                telClient: telClient,
-                montant: String(montant),
-                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-                correlationId: "SR" + Date.now()
-            })
+            mode: "no-cors", 
+            body: JSON.stringify(payload)
         });
 
-        // Comme on est en "no-cors", on ne peut pas lire la réponse,
-        // donc on affiche directement l'instruction au client.
-        alert("📲 Demande envoyée !\n\nVeuillez saisir votre code secret MVola sur votre téléphone pour valider le paiement de " + montant + " Ar.");
+        // Message de confirmation
+        alert("📲 Demande MVola envoyée !\n\nMontant : " + montant.toLocaleString() + " Ar\n\nEntrez votre code secret sur votre téléphone.");
         return true; 
 
     } catch (error) {
-        console.error("Erreur de liaison script:", error);
-        alert("⚠️ Erreur de connexion au service de paiement.");
+        console.error("Erreur d'envoi Sheet:", error);
         return false;
     }
 }
