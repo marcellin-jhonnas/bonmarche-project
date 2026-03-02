@@ -424,6 +424,10 @@ function envoyerRdv() {
 }
 
 function ouvrirPlanification(titre) {
+    // --- SÉCURITÉ : Fermer le sidebar s'il est ouvert ---
+    if (document.body.classList.contains('sidebar-open')) {
+        toggleSidebar(); 
+    }
     const modal = document.getElementById('modal-planification');
     if (modal) {
         document.getElementById('planif-titre').innerText = titre;
@@ -496,6 +500,10 @@ function contacterAssistance() {
 }
 
 function ouvrirLivraisons() {
+    // --- SÉCURITÉ : Fermer le sidebar s'il est ouvert ---
+    if (document.body.classList.contains('sidebar-open')) {
+        toggleSidebar(); 
+    }
     localStorage.setItem('livraison_vue', 'true');
     mettreAJourBadgeLivraison();
     const modal = document.getElementById('modal-livraisons');

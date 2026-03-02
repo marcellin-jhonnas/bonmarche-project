@@ -674,6 +674,7 @@ body {
 }
 
 /* --- 9. SYSTÈME DE MODALS UNIFIÉ (LE CŒUR DU CENTRAGE) --- */
+/* --- 9. SYSTÈME DE MODALS UNIFIÉ (PRIORITÉ MAXIMALE) --- */
 #modal-rdv,
 #modal-planification,
 #modal-livraisons,
@@ -686,16 +687,17 @@ body {
     width: 100vw !important;
     height: 100vh !important;
     background: rgba(0, 0, 0, 0.8) !important;
-    z-index: 10000 !important;
     
-    /* Centrage Flexbox */
+    /* SOLUTION : On passe au dessus de la sidebar (9999) et du bouton menu (10001) */
+    z-index: 20000 !important; 
+    
     justify-content: center !important;
     align-items: center !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* Affichage actif */
+/* On force l'affichage flexible quand la classe .show est là */
 #modal-rdv.show,
 #modal-planification.show,
 #modal-livraisons.show,
@@ -705,27 +707,20 @@ body {
 }
 
 /* La boîte blanche (Le contenu) */
-#modal-panier .popup-content, 
-#modal-livraisons .modal-content,
-#modal-rdv .modal-content,
-#modal-planification .modal-content,
-.modal-box {
+.modal-content, .popup-content, .modal-box {
     background: white !important;
     padding: 25px !important;
-    border-radius: 20px !important;
+    border-radius: 25px !important; /* Plus arrondi pour 2026 */
     width: 90% !important;
     max-width: 400px !important;
     position: relative !important;
     margin: auto !important; 
-    transform: none !important; 
-    left: auto !important;
-    top: auto !important;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-    animation: popIn 0.3s ease-out;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes popIn {
-    from { transform: scale(0.9); opacity: 0; }
+    from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
@@ -1275,4 +1270,32 @@ body.sidebar-open .sidebar-overlay {
 
 .carte-produit:hover img {
     transform: scale(1.1); /* Petit zoom élégant au survol */
+}
+/* --- CORRECTIF DESIGN : ALIGNEMENT ET IMAGES --- */
+
+/* On cadre l'image pour éviter les déformations */
+.carte-produit img {
+    height: 140px !important; /* Hauteur fixe pour l'harmonie */
+    object-fit: cover !important; /* L'image remplit sans s'écraser */
+    width: 100% !important;
+}
+
+/* On force le titre sur 2 lignes maximum pour aligner les boutons */
+.carte-produit h3 {
+    font-size: 0.9rem !important;
+    height: 2.4em !important; /* Réserve la place pour exactement 2 lignes */
+    line-height: 1.2 !important;
+    margin: 10px 0 !important;
+
+    /* --- COMPATIBILITÉ TOTALE --- */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;         /* Pour Chrome, Safari, Edge */
+    line-clamp: 2;                 /* Propriété STANDARD (Future-proof) */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Espacement propre pour le bouton commander */
+.btn-commander {
+    margin-top: 10px !important;
 }
