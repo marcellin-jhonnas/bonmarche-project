@@ -11,6 +11,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775
 
 // Ce lien sert à ENVOYER la commande et PAYER (Ton dernier déploiement)
 const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
+const POURCENTAGE_LIVRAISON = 0.15; // 15% de frais de service
+const MINIMUM_LIVRAISON = 3500;     // Minimum de perception (3.500 Ar)
+const SEUIL_LIVRAISON_GRATUITE = 200000; // Cadeau si le client achète beaucoup (Optionnel)
 let datePlanifiee = null; 
 let rdvData = null;       
 let tousLesProduits = [];
@@ -218,15 +221,15 @@ function afficherPanier() {
     const totalLabel = document.getElementById('total-modal');
     if(!detail || !totalLabel) return;
 
+    let sousTotal = 0; 
     let resume = "";
-    let total = 0;
 
     if (panier.length === 0) {
         resume = "<p style='text-align:center; padding:20px;'>Votre panier est vide.</p>";
     } else {
         panier.forEach((item, index) => {
             const st = item.prix * item.quantite;
-            total += st;
+            sousTotal += st; // On calcule le prix des articles
             resume += `
                 <div class="item-panier-ligne" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
                     <div style="flex: 1;">
@@ -243,10 +246,37 @@ function afficherPanier() {
         });
     }
 
-    detail.innerHTML = `<strong>Récapitulatif</strong><hr>${resume}`;
-    totalLabel.innerText = total.toLocaleString() + " Ar";
-}
+    // --- LE CALCUL DOIT ÊTRE ICI (APRES LA BOUCLE) ---
+    let fraisLivraison = 0;
+    if (sousTotal > 0) {
+        let calcul15 = sousTotal * 0.15;
+        fraisLivraison = Math.max(calcul15, 3500); 
+        fraisLivraison = Math.ceil(fraisLivraison / 10) * 10; 
+    }
 
+    let totalFinal = sousTotal + fraisLivraison;
+
+    // --- MISE À JOUR DE L'AFFICHAGE ---
+    detail.innerHTML = `
+        <strong>Récapitulatif</strong><hr>
+        ${resume}
+        ${sousTotal > 0 ? `
+        <div style="margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px; border:1px solid #eee;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#666;">
+                <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#d35400; font-weight:bold; margin-top:5px;">
+                <span>Livraison (15%) :</span> <span>+ ${fraisLivraison.toLocaleString()} Ar</span>
+            </div>
+        </div>` : ''}
+    `;
+
+    // Utilisation de totalFinal ici au lieu de total
+    totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+    
+    // On garde en mémoire pour MVola
+    window.dernierTotalCalcule = totalFinal;
+}
 // FONCTION DE SUPPRESSION
 function supprimerProduitDirectement(index) {
     panier.splice(index, 1);
