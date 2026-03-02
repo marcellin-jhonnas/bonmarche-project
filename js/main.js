@@ -213,6 +213,49 @@ function filtrerParCategorie(categorieCible) {
     }
 }
 
+function afficherPanier() {
+    const detail = document.getElementById('detail-panier');
+    const totalLabel = document.getElementById('total-modal');
+    if(!detail || !totalLabel) return;
+
+    let resume = "";
+    let total = 0;
+
+    if (panier.length === 0) {
+        resume = "<p style='text-align:center; padding:20px;'>Votre panier est vide.</p>";
+    } else {
+        panier.forEach((item, index) => {
+            const st = item.prix * item.quantite;
+            total += st;
+            resume += `
+                <div class="item-panier-ligne" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">${item.nom}</div>
+                        <div style="font-size: 0.8rem; color: #666;">${item.quantite} x ${item.prix.toLocaleString()} Ar</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: bold; font-size: 0.85rem;">${st.toLocaleString()} Ar</span>
+                        <button onclick="supprimerProduitDirectement(${index})" style="background: #fff5f5; border: none; color: #ff4757; width: 30px; height: 30px; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    detail.innerHTML = `<strong>Récapitulatif</strong><hr>${resume}`;
+    totalLabel.innerText = total.toLocaleString() + " Ar";
+}
+
+// FONCTION DE SUPPRESSION
+function supprimerProduitDirectement(index) {
+    panier.splice(index, 1);
+    localStorage.setItem('saferun_panier', JSON.stringify(panier));
+    mettreAJourBadge();
+    const totalArticles = panier.reduce((acc, item) => acc + item.quantite, 0);
+    synchroniserBadges(totalArticles);
+    afficherPanier(); // Rafraîchit la liste
+}
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
@@ -228,34 +271,58 @@ async function envoyerCommande() {
 
 function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
-    const detail = document.getElementById('detail-panier');
-    const totalLabel = document.getElementById('total-modal');
     if(!modal) return;
     
-    
-    let resume = "";
-    let total = 0;
-    panier.forEach(item => {
-        const st = item.prix * item.quantite;
-        total += st;
-        resume += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>${item.quantite}x ${item.nom}</span>
-                    <span>${st.toLocaleString()} Ar</span>
-                   </div>`;
-    });
-
-    detail.innerHTML = `<strong>Récapitulatif de votre commande</strong><hr>${resume}`;
-    totalLabel.innerText = total.toLocaleString() + " Ar";
+    // Appelle la fonction qu'on vient de créer pour dessiner la liste
+    afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
-    btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-    btnEnvoi.onclick = envoyerDonneesAuSheet;
+    if (btnEnvoi) {
+        btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
+        btnEnvoi.onclick = envoyerDonneesAuSheet;
+    }
 
     modal.style.display = "flex";
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
 async function envoyerDonneesAuSheet() {
+    const btn = (window.event && window.event.target) ? window.event.target : null;
+    
+    // Calcul précis du montant
+    const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
+    const telClient = localStorage.getItem('saferun_tel');
+    
+    // Sécurité si le téléphone n'existe pas
+    if (!telClient) {
+        alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
+        return;
+    }
+
+    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
+
+    if (btn && btn.tagName === 'BUTTON') {
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
+        btn.disabled = true;
+    }
+
+    try {
+        // --- ÉTAPE : MVOLA + ENREGISTREMENT ---
+        const paiementLance = await traiterPaiement(montantTotal, telNettoye);
+
+        if (paiementLance) {
+            // Sauvegarde dans l'historique local pour le client
+            const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+            historique.push({
+                id: Date.now(),
+                date: new Date().toLocaleString('fr-FR'),
+                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+                total: montantTotal,
+                statut: "En attente de paiement"
+            });
+            localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+            
+            async function envoyerDonneesAuSheet() {
     const btn = (window.event && window.event.target) ? window.event.target : null;
     
     // Calcul précis du montant
@@ -314,6 +381,20 @@ async function envoyerDonneesAuSheet() {
         finaliserVersWhatsApp();
     }
 }
+        } else {
+            if (btn) {
+                btn.innerHTML = "Réessayer le paiement";
+                btn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error("Erreur critique lors de l'envoi:", error);
+        alert("Désolé, une erreur est survenue. Contactez l'assistance si le problème persiste.");
+        if (btn) {
+            btn.innerHTML = "Réessayer";
+            btn.disabled = false;
+        }
+    }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
@@ -921,7 +1002,7 @@ function genererMonQR() {
 
     if (numDisplay) numDisplay.innerText = "Numéro : " + tel;
 }
-
+}
 // 4. Affichage du prénom (Sécurisé et robuste)
 function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
@@ -958,3 +1039,17 @@ window.addEventListener('load', () => {
     // Charger le nom d'utilisateur
     rafraichirNomUtilisateur();
 });
+// FONCTION POUR SUPPRIMER UN PRODUIT DU PANIER
+function supprimerProduitDirectement(index) {
+    // 1. Retirer l'élément du tableau grâce à son index
+    panier.splice(index, 1);
+    
+    // 2. Sauvegarder le panier modifié dans le stockage du téléphone
+    localStorage.setItem('panier', JSON.stringify(panier));
+    
+    // 3. Mettre à jour l'affichage immédiatement
+    if (typeof mettreAJourBadge === "function") mettreAJourBadge(); 
+    if (typeof afficherPanier === "function") afficherPanier();
+    
+    console.log("Produit retiré du panier");
+}
