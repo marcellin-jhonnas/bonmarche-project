@@ -665,28 +665,33 @@ function fermerModal() {
 // --- 7. GESTION MVOLA (SÉCURISÉE VIA GOOGLE SCRIPT) ---
 
 async function traiterPaiement(montant, telClient) {
-    const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec"; 
+    // 1. L'URL de ton script GAS (Assure-toi que c'est bien la dernière version déployée)
+    const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
     try {
-        // On prépare les données proprement
-       const payload = {
-            typePaiement: "MVOLA_INIT", // <--- LE NOM EXACT POUR TON SCRIPT GAS
-            nom: localStorage.getItem('saferun_nom') || "Client",
-            telClient: telNettoye, // Assure-toi d'utiliser le numéro nettoyé
+        // 2. Préparation des données
+        // Note : On utilise 'telClient' car c'est le nom défini dans les parenthèses en haut
+        const payload = {
+            action: "nouvelleCommande", // Indique au script que c'est un client
+            nom: localStorage.getItem('saferun_nom') || "Client Site",
+            telClient: telClient, 
             montant: montant, 
             produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-            correlationId: "SR" + Date.now()
+            correlationId: "SR" + Date.now(),
+            quartier: localStorage.getItem('saferun_quartier') || "Non précisé"
         };
 
-        // Envoi
-        await fetch(SCRIPT_PAYS_URL, {
+        console.log("Données envoyées :", payload);
+
+        // 3. Envoi (on retire 'await' pour ne pas bloquer si la connexion est lente)
+        fetch(SCRIPT_PAYS_URL, {
             method: "POST",
             mode: "no-cors", 
+            cache: "no-cache",
             body: JSON.stringify(payload)
         });
 
-        // Message de confirmation
-        alert("📲 Demande MVola envoyée !\n\nMontant : " + montant.toLocaleString() + " Ar\n\nEntrez votre code secret sur votre téléphone.");
+        console.log("L'envoi a été lancé vers Google Sheet.");
         return true; 
 
     } catch (error) {
