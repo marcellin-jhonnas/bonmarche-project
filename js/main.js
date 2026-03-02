@@ -662,14 +662,13 @@ async function traiterPaiement(montant, telClient) {
 
     try {
         // On prépare les données proprement
-        const payload = {
-            date: new Date().toLocaleString('fr-FR'),
+       const payload = {
+            typePaiement: "MVOLA_INIT", // <--- LE NOM EXACT POUR TON SCRIPT GAS
             nom: localStorage.getItem('saferun_nom') || "Client",
-            telClient: telClient,
-            quartier: localStorage.getItem('saferun_quartier') || "Tana", // Ajout important
-            montant: montant, // On envoie le nombre directement
+            telClient: telNettoye, // Assure-toi d'utiliser le numéro nettoyé
+            montant: montant, 
             produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-            type: "COMMANDE_MVOLA" 
+            correlationId: "SR" + Date.now()
         };
 
         // Envoi
