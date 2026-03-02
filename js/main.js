@@ -317,23 +317,38 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
+    // 1. D'abord, on prépare les variables et on vérifie si tout est OK
     const montantFinal = window.dernierTotalCalcule || 0;
     const telClient = localStorage.getItem('saferun_tel');
     const nomClient = localStorage.getItem('saferun_nom');
 
     if (!telClient || montantFinal <= 0) {
-        alert("Erreur : Votre panier est vide.");
+        alert("Erreur : Votre profil est incomplet ou le panier est vide.");
         return;
     }
 
-    // 1. On ferme d'abord le modal du panier pour libérer l'écran
+    // 2. On enregistre l'HISTORIQUE (Sécurisé : on ne le fait que si le montant est > 0)
+    const nouvelleCommande = {
+        id: "SR" + Date.now(),
+        date: new Date().toLocaleString('fr-FR'),
+        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        total: montantFinal,
+        statut: "En attente"
+    };
+
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    historique.unshift(nouvelleCommande);
+    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    console.log("Historique mis à jour localement");
+
+    // 3. On ferme le modal du panier pour laisser place au paiement
     if (typeof fermerModal === "function") { fermerModal(); }
 
-    // 2. Envoi des infos vers Google Sheet en arrière-plan
+    // 4. Envoi vers Google Sheet (en arrière-plan)
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
     traiterPaiement(montantFinal, telNettoye); 
 
-    // 3. CRÉATION DU POP-UP DE PAIEMENT PERSONNALISÉ
+    // 5. CRÉATION DU POP-UP DE PAIEMENT (MARCELLIN JHONNAS)
     const modalPaiement = document.createElement('div');
     modalPaiement.id = "modal-paiement-final";
     modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; align-items:center; justify-content:center; font-family:'Poppins', sans-serif; padding:10px;";
@@ -341,47 +356,34 @@ async function envoyerDonneesAuSheet() {
     modalPaiement.innerHTML = `
         <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
             <img src="https://i.imgur.com/nSlqv5W.jpeg" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #ffcc00; margin-bottom:15px;">
-            
             <h3 style="margin:0; color:#333; font-size:1.2rem;">Paiement Sécurisé</h3>
             <p style="margin:5px 0; color:#666;">Titulaire : <strong>MARCELLIN JHONNAS</strong></p>
-            
             <div style="margin:15px 0; padding:10px; background:#fff9e6; border-radius:10px;">
                 <p style="margin:0; color:#e67e22; font-size:0.9rem;">Montant à régler :</p>
                 <span style="font-size:1.5rem; font-weight:bold; color:#d35400;">${montantFinal.toLocaleString()} Ar</span>
             </div>
-
             <div style="background:#f4f4f4; border:2px solid #ddd; padding:15px; border-radius:15px; margin-bottom:20px;">
                 <p style="margin:0 0 10px 0; font-size:0.85rem; font-weight:bold; color:#555;">TAPEZ CE CODE SUR VOTRE TÉLÉPHONE :</p>
                 <div id="code-ussd" style="font-size:1.3rem; font-weight:800; color:#1a1a1a; letter-spacing:1px; background:white; padding:10px; border-radius:8px; border:1px solid #ccc;">
                     #111*1*2*0382453610*${montantFinal}#
                 </div>
-                <button onclick="navigator.clipboard.writeText('#111*1*2*0382453610*${montantFinal}#'); alert('Code copié ! Collez-le dans votre application téléphone.');" 
+                <button onclick="navigator.clipboard.writeText('#111*1*2*0382453610*${montantFinal}#'); alert('Code copié ! Collez-le dans votre clavier d\\'appel.');" 
                         style="margin-top:10px; background:none; border:none; color:#007bff; cursor:pointer; font-size:0.8rem; text-decoration:underline;">
                     Copier le code
                 </button>
             </div>
-
-            <button id="confirm-pay-btn" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; transition:0.3s;">
+            <button id="confirm-pay-btn" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem;">
                 J'AI ENVOYÉ LE PAIEMENT ✅
             </button>
-            
-            <p style="font-size:0.75rem; color:#888; margin-top:15px; line-height:1.4;">
-                Après votre validation, un SMS de confirmation sera reçu par <b>MARCELLIN JHONNAS</b> et votre commande sera traitée.
-            </p>
         </div>
     `;
 
     document.body.appendChild(modalPaiement);
 
-    // 4. Action quand le client confirme avoir payé
     document.getElementById('confirm-pay-btn').onclick = function() {
         this.innerHTML = "<i class='fas fa-circle-notch fa-spin'></i> Vérification...";
-        this.style.opacity = "0.7";
-        
         setTimeout(() => {
-            alert("Parfait " + nomClient + " ! Votre commande est enregistrée. Nous préparons votre livraison dès réception du SMS MVola.");
-            
-            // Nettoyage final
+            alert("Merci " + nomClient + " ! Votre commande est enregistrée. Livraison en cours de préparation.");
             panier = [];
             localStorage.removeItem('saferun_panier');
             window.location.reload();
