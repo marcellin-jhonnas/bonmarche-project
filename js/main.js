@@ -317,16 +317,24 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
+    // 1. On récupère le bouton pour l'animation
     const btn = (window.event && window.event.target) ? window.event.target : document.querySelector('.btn-inscription');
     
-    const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
-    const telClient = localStorage.getItem('saferun_tel');
+    // 2. CRUCIAL : On utilise le total avec livraison calculé dans afficherPanier
+    const montantTotalPaye = window.dernierTotalCalcule || 0;
     
+    if (montantTotalPaye <= 0) {
+        alert("Votre panier est vide.");
+        return;
+    }
+
+    const telClient = localStorage.getItem('saferun_tel');
     if (!telClient) {
         alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
         return;
     }
 
+    // Nettoyage du numéro pour MVola
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
 
     if (btn) {
@@ -335,23 +343,27 @@ async function envoyerDonneesAuSheet() {
     }
 
     try {
-        const paiementLance = await traiterPaiement(montantTotal, telNettoye);
+        // 3. On envoie le montant REEL (avec livraison) à MVola
+        const paiementLance = await traiterPaiement(montantTotalPaye, telNettoye);
 
         if (paiementLance) {
+            // 4. Enregistrement dans l'historique du téléphone
             const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
             historique.push({
                 id: Date.now(),
                 date: new Date().toLocaleString('fr-FR'),
                 produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-                total: montantTotal,
+                total: montantTotalPaye, // Montant total avec livraison
                 statut: "En attente"
             });
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
             
-            alert("Commande enregistrée ! Validez le paiement MVola sur votre téléphone.");
+            alert("🚀 Commande de " + montantTotalPaye.toLocaleString() + " Ar enregistrée ! Validez le paiement MVola sur votre téléphone.");
             
+            // 5. Nettoyage après succès
             panier = []; 
             localStorage.removeItem('saferun_panier'); 
+            window.dernierTotalCalcule = 0; // On remet à zéro
             
             mettreAJourBadge();
             synchroniserBadges(0);
