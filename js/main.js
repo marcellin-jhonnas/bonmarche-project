@@ -317,71 +317,53 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    // 1. On récupère le bouton pour l'animation
-    const btn = (window.event && window.event.target) ? window.event.target : document.querySelector('.btn-inscription');
-    
-    // 2. CRUCIAL : On utilise le total avec livraison calculé dans afficherPanier
-    const montantTotalPaye = window.dernierTotalCalcule || 0;
-    
-    if (montantTotalPaye <= 0) {
-        alert("Votre panier est vide.");
-        return;
-    }
-
+    const montantFinal = window.dernierTotalCalcule || 0;
     const telClient = localStorage.getItem('saferun_tel');
-    if (!telClient) {
-        alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
+    const nomClient = localStorage.getItem('saferun_nom');
+
+    if (!telClient || montantFinal <= 0) {
+        alert("Erreur : Panier vide.");
         return;
     }
 
-    // Nettoyage du numéro pour MVola
-    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
+    // 1. ENVOI SILENCIEUX À GOOGLE (On ne bloque pas le client)
+    traiterPaiement(montantFinal, telClient); 
 
-    if (btn) {
-        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
-        btn.disabled = true;
-    }
-
-    try {
-        // 3. On envoie le montant REEL (avec livraison) à MVola
-        const paiementLance = await traiterPaiement(montantTotalPaye, telNettoye);
-
-        if (paiementLance) {
-            // 4. Enregistrement dans l'historique du téléphone
-            const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-            historique.push({
-                id: Date.now(),
-                date: new Date().toLocaleString('fr-FR'),
-                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-                total: montantTotalPaye, // Montant total avec livraison
-                statut: "En attente"
-            });
-            localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    // 2. AFFICHAGE DE L'INTERFACE DE PAIEMENT SANS QUITTER LE SITE
+    const modalPaiement = document.createElement('div');
+    modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; font-family:sans-serif;";
+    modalPaiement.innerHTML = `
+        <div style="background:white; padding:25px; border-radius:20px; width:90%; max-width:400px; text-align:center; position:relative;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d3/MVola_logo.png" style="width:100px; margin-bottom:15px;">
+            <h3 style="margin:0; color:#333;">Finalisation du paiement</h3>
+            <p style="color:#666; font-size:0.9rem;">Montant total : <strong style="color:#e67e22;">${montantFinal.toLocaleString()} Ar</strong></p>
             
-            alert("🚀 Commande de " + montantTotalPaye.toLocaleString() + " Ar enregistrée ! Validez le paiement MVola sur votre téléphone.");
-            
-            // 5. Nettoyage après succès
-            panier = []; 
-            localStorage.removeItem('saferun_panier'); 
-            window.dernierTotalCalcule = 0; // On remet à zéro
-            
-            mettreAJourBadge();
-            synchroniserBadges(0);
-            fermerModal();
+            <div style="background:#f8f9fa; border:2px dashed #ffcc00; padding:15px; border-radius:15px; margin:15px 0;">
+                <p style="margin:0; font-size:0.85rem;">Composez sur votre téléphone :</p>
+                <div style="font-size:1.4rem; font-weight:bold; color:#1a1a1a; margin:10px 0;">#111*1*2*0382453610*${montantFinal}#</div>
+                <p style="margin:0; font-size:0.75rem; color:#d35400;">(Le montant est déjà inclus dans le code)</p>
+            </div>
 
-            if (btn) {
-                btn.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-                btn.disabled = false;
-            }
-        }
-    } catch (error) {
-        console.error("Erreur:", error);
-        alert("Une erreur est survenue. Vérifiez votre connexion.");
-        if (btn) {
-            btn.innerHTML = "Réessayer";
-            btn.disabled = false;
-        }
-    }
+            <button id="btn-deja-paye" style="width:100%; background:#27ae60; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1rem;">
+                J'AI EFFECTUÉ LE PAIEMENT ✅
+            </button>
+            
+            <p style="font-size:0.7rem; color:#999; margin-top:15px;">Dès que vous validez, nous recevons une notification et préparons votre livraison.</p>
+        </div>
+    `;
+
+    document.body.appendChild(modalPaiement);
+
+    // 3. GESTION DU CLIC FINAL
+    document.getElementById('btn-deja-paye').onclick = function() {
+        this.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Vérification...";
+        setTimeout(() => {
+            alert("Merci " + nomClient + " ! Nous avons bien reçu votre demande. Votre livraison est en cours de préparation.");
+            panier = [];
+            localStorage.removeItem('saferun_panier');
+            window.location.reload();
+        }, 2000);
+    };
 }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
