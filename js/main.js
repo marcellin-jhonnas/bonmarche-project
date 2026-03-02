@@ -287,13 +287,11 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    const btn = (window.event && window.event.target) ? window.event.target : null;
+    const btn = (window.event && window.event.target) ? window.event.target : document.querySelector('.btn-inscription');
     
-    // Calcul précis du montant
     const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
     const telClient = localStorage.getItem('saferun_tel');
     
-    // Sécurité si le téléphone n'existe pas
     if (!telClient) {
         alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
         return;
@@ -301,100 +299,48 @@ async function envoyerDonneesAuSheet() {
 
     const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
 
-    if (btn && btn.tagName === 'BUTTON') {
+    if (btn) {
         btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
         btn.disabled = true;
     }
 
     try {
-        // --- ÉTAPE : MVOLA + ENREGISTREMENT ---
         const paiementLance = await traiterPaiement(montantTotal, telNettoye);
 
         if (paiementLance) {
-            // Sauvegarde dans l'historique local pour le client
             const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
             historique.push({
                 id: Date.now(),
                 date: new Date().toLocaleString('fr-FR'),
                 produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
                 total: montantTotal,
-                statut: "En attente de paiement"
+                statut: "En attente"
             });
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
             
-            async function envoyerDonneesAuSheet() {
-    const btn = (window.event && window.event.target) ? window.event.target : null;
-    
-    // Calcul précis du montant
-    const montantTotal = panier.reduce((sum, i) => sum + (i.prix * i.quantite), 0);
-    const telClient = localStorage.getItem('saferun_tel');
-    
-    // Sécurité si le téléphone n'existe pas
-    if (!telClient) {
-        alert("Veuillez entrer votre numéro de téléphone dans votre profil.");
-        return;
-    }
-
-    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
-
-    if (btn && btn.tagName === 'BUTTON') {
-        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Paiement en cours...";
-        btn.disabled = true;
-    }
-
-    try {
-        // --- ÉTAPE : MVOLA + ENREGISTREMENT ---
-        const paiementLance = await traiterPaiement(montantTotal, telNettoye);
-
-        if (paiementLance) {
-            // Sauvegarde dans l'historique local pour le client
-            const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-            historique.push({
-                id: Date.now(),
-                date: new Date().toLocaleString('fr-FR'),
-                produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-                total: montantTotal,
-                statut: "En attente de paiement"
-            });
-            localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+            alert("Commande enregistrée ! Validez le paiement MVola sur votre téléphone.");
             
-            // --- LE NETTOYAGE CRITIQUE ---
-            alert("Commande enregistrée ! Vérifiez votre téléphone pour confirmer le paiement Mvola.");
+            panier = []; 
+            localStorage.removeItem('saferun_panier'); 
             
-            panier = []; // Vide la variable
-            localStorage.removeItem('saferun_panier'); // Vide la mémoire du téléphone
-            
-            if (typeof mettreAJourBadge === 'function') mettreAJourBadge();
-            if (typeof synchroniserBadges === 'function') synchroniserBadges(0);
+            mettreAJourBadge();
+            synchroniserBadges(0);
+            fermerModal();
 
-            // Rechargement pour appliquer le panier vide
-            location.reload(); 
-        } else {
             if (btn) {
-                btn.innerHTML = "Réessayer le paiement";
+                btn.innerHTML = "🚀 CONFIRMER LA COMMANDE";
                 btn.disabled = false;
             }
         }
     } catch (error) {
-        console.error("Erreur critique lors de l'envoi:", error);
-        // En cas d'erreur réseau, on bascule sur WhatsApp
-        finaliserVersWhatsApp();
-    }
-}
-        } else {
-            if (btn) {
-                btn.innerHTML = "Réessayer le paiement";
-                btn.disabled = false;
-            }
-        }
-    } catch (error) {
-        console.error("Erreur critique lors de l'envoi:", error);
-        alert("Désolé, une erreur est survenue. Contactez l'assistance si le problème persiste.");
+        console.error("Erreur:", error);
+        alert("Une erreur est survenue. Vérifiez votre connexion.");
         if (btn) {
             btn.innerHTML = "Réessayer";
             btn.disabled = false;
         }
     }
+}
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
@@ -1002,6 +948,7 @@ function genererMonQR() {
 
     if (numDisplay) numDisplay.innerText = "Numéro : " + tel;
 }
+
 // 4. Affichage du prénom (Sécurisé et robuste)
 function rafraichirNomUtilisateur() {
     const nomComplet = localStorage.getItem('saferun_nom');
@@ -1051,4 +998,34 @@ function supprimerProduitDirectement(index) {
     if (typeof afficherPanier === "function") afficherPanier();
     
     console.log("Produit retiré du panier");
+}
+}
+];
+
+let currentHeroIdx = 0;
+function updateHeroAnimate() {
+    const heroSection = document.getElementById('hero-slider');
+    const title = document.getElementById('hero-title');
+    const desc = document.getElementById('hero-desc');
+    const badge = document.getElementById('hero-badge');
+    if (!heroSection || !title) return;
+    currentHeroIdx = (currentHeroIdx + 1) % heroData.length;
+    const current = heroData[currentHeroIdx];
+    heroSection.style.setProperty('--bg-image', `url('${current.img}')`);
+    if(badge) badge.innerText = current.badge;
+    if(title) title.innerText = current.title;
+    if(desc) desc.innerText = current.desc;
+}
+setInterval(updateHeroAnimate, 5000);
+
+// RÉPARATION FINALE DU BOUTON X
+function fermerModal() {
+    const ids = ['modal-panier', 'modal-rdv', 'modal-planification', 'modal-livraisons', 'welcome-popup'];
+    ids.forEach(id => {
+        const m = document.getElementById(id);
+        if(m) {
+            m.classList.remove('show');
+            setTimeout(() => { m.style.display = "none"; }, 300);
+        }
+    });
 }
