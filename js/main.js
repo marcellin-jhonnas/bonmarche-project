@@ -1080,70 +1080,50 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    const livraison = calculerLivraison(); // La date calculée
+    const livraisonInfo = calculerLivraison(); // On récupère la date/heure ici
     const tel = localStorage.getItem('saferun_tel') || "N/A";
-    const produitsListe = panier.map(i => `${i.quantite}x ${i.nom}`).join(', ');
 
-    // --- ÉTAPE A : ENVOI RÉEL AU GOOGLE SHEET ---
+    // --- ÉTAPE A : ENVOI RÉEL ---
     if (typeof traiterPaiement === "function") {
         const telNettoye = tel.replace(/\s+/g, '').replace('+261', '0');
         
-        // On prépare l'objet complet pour le Script Google
-        const donnéesCommande = {
-            nom: nom,
-            telClient: telNettoye,
-            produits: produitsListe,
-            montant: montant,
-            correlationId: ref,
-            livraison: livraison // <--- On ajoute la livraison ici
-        };
-        
-        // On appelle traiterPaiement avec l'objet complet
-        traiterPaiement(donnéesCommande); 
+        // ON PASSE LES 3 PARAMÈTRES : montant, téléphone, et livraison
+        traiterPaiement(montant, telNettoye, livraisonInfo); 
     }
 
-    // --- ÉTAPE B : REMPLIR "LIVRAISON EN COURS" (Local) ---
+    // --- ÉTAPE B : HISTORIQUE LOCAL ---
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    const nouvelleCommande = {
+    historique.unshift({
         id: ref,
         date: new Date().toLocaleString('fr-FR'),
-        produits: produitsListe,
+        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         total: montant,
         statut: "En attente",
-        livraisonPrevue: livraison
-    };
-    historique.unshift(nouvelleCommande);
+        livraisonPrevue: livraisonInfo
+    });
     localStorage.setItem('saferun_commandes', JSON.stringify(historique));
 
-    // --- ÉTAPE C : AFFICHAGE DE LA FACTURE ---
+    // --- ÉTAPE C : AFFICHAGE ---
     container.innerHTML = `
         <div style="text-align:center; animation: fadeIn 0.5s;">
             <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
             <h2 style="margin:10px 0; color:#27ae60;">Succès !</h2>
-            
             <div id="qrcode-place" style="display:flex; justify-content:center; margin:15px 0;"></div>
-
             <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem;">
                 <p><b>Réf :</b> ${ref}</p>
                 <p><b>Montant :</b> ${montant.toLocaleString()} Ar</p>
                 <hr style="border:none; border-top:1px dashed #ccc;">
-                <p style="color:#d35400; font-weight:bold;">${livraison}</p>
+                <p style="color:#d35400; font-weight:bold;"><i class="fas fa-truck"></i> ${livraisonInfo}</p>
             </div>
-
-            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; cursor:pointer; font-weight:bold;">
-                RETOUR AU SITE
-            </button>
+            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; font-weight:bold;">RETOUR AU SITE</button>
         </div>
     `;
 
-    // Génération du QR Code (Inclus aussi la livraison pour le scan)
     new QRCode(document.getElementById("qrcode-place"), {
-        text: `REF:${ref}|TOTAL:${montant}|LIV:${livraison}`,
-        width: 120,
-        height: 120
+        text: `REF:${ref}|TOTAL:${montant}`,
+        width: 120, height: 120
     });
 
-    // Nettoyage
     panier = [];
     localStorage.removeItem('saferun_panier');
 }
