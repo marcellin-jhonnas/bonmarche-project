@@ -1127,3 +1127,113 @@ function genererFactureFinale(montant, nom) {
     panier = [];
     localStorage.removeItem('saferun_panier');
 }
+
+async function synchroniserAchats() {
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    if (historique.length === 0) return;
+
+    try {
+        const response = await fetch(API_URL + "?action=getCommandes");
+        const commandesSheet = await response.json();
+
+        let modification = false;
+        historique.forEach(maCmd => {
+            const cmdSheet = commandesSheet.find(c => c.ID === maCmd.id);
+            // Si l'admin a mis "SÉRIEUX", on valide localement
+            if (cmdSheet && (cmdSheet.Statut === "SÉRIEUX") && maCmd.statut !== "Validé") {
+                maCmd.statut = "Validé";
+                modification = true;
+            }
+        });
+
+        if (modification) {
+            localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+            // Optionnel : jouer un petit son ici
+        }
+    } catch (e) { console.log("Erreur synchro"); }
+}
+
+function ouvrirAchatsValides() {
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    const valides = historique.filter(cmd => cmd.statut === "Validé");
+
+    let html = `
+        <div style="padding:15px; text-align:center;">
+            <h3 style="margin-bottom:15px;"><i class="fas fa-check-circle" style="color:#27ae60;"></i> Achats Confirmés</h3>
+            <div style="max-height:400px; overflow-y:auto;">
+    `;
+
+    if (valides.length === 0) {
+        html += `<p style="color:#888; margin:20px 0;">Aucun paiement confirmé pour le moment.</p>`;
+    } else {
+        valides.forEach(cmd => {
+            html += `
+                <div id="card-${cmd.id}" style="background:#fff; border:1px solid #e0e0e0; padding:15px; border-radius:18px; margin-bottom:12px; text-align:left; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <b style="color:#27ae60;">PAYÉ ✅</b>
+                        <small style="color:#999;">${cmd.id}</small>
+                    </div>
+                    <p style="font-size:0.9rem; margin:5px 0;"><strong>Produits :</strong> ${cmd.produits}</p>
+                    <p style="font-size:0.9rem; margin:5px 0; color:#d35400;"><strong>Livraison :</strong> ${cmd.livraisonPrevue}</p>
+                    <hr style="border:none; border-top:1px solid #eee; margin:10px 0;">
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:1; background:#f1f1f1; border:none; padding:10px; border-radius:10px; font-size:0.8rem; cursor:pointer;">
+                            <i class="fas fa-file-invoice"></i> Reçu
+                        </button>
+                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; background:#ebfbee; color:#27ae60; border:1px solid #27ae60; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
+                            <i class="fas fa-box-open"></i> Colis reçu
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div><button onclick="fermerModal()" style="width:100%; margin-top:15px; padding:12px; border-radius:12px; border:none; background:#333; color:white;">Fermer</button></div>`;
+    
+    afficherModalGenerique(html);
+}
+function supprimerAchatLivre(id) {
+    if (confirm("Confirmez-vous avoir reçu votre colis ? Cela supprimera le reçu de votre historique.")) {
+        let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+        // On filtre pour garder TOUT sauf l'ID qu'on veut supprimer
+        historique = historique.filter(cmd => cmd.id !== id);
+        
+        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+        
+        // Rafraîchir l'affichage
+        ouvrirAchatsValides();
+        // Optionnel : mettre à jour les badges de notification
+        if (typeof mettreAJourBadges === "function") mettreAJourBadges();
+    }
+}
+function afficherRecuDetaille(id) {
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    const cmd = historique.find(c => c.id === id);
+
+    if(!cmd) return;
+
+    const htmlRecu = `
+        <div style="padding:20px; text-align:center; font-family:sans-serif;">
+            <div id="qrcode-rappel" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
+            <h3 style="margin:0; color:#27ae60;">FACTURE PAYÉE</h3>
+            <p style="font-size:0.8rem; color:#888;">Réf: ${cmd.id}</p>
+            <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:12px; margin-top:15px;">
+                <p><b>Client:</b> ${localStorage.getItem('saferun_nom')}</p>
+                <p><b>Produits:</b> ${cmd.produits}</p>
+                <p><b>Total:</b> ${cmd.total.toLocaleString()} Ar</p>
+                <p><b>Livraison:</b> ${cmd.livraisonPrevue}</p>
+            </div>
+            <button onclick="fermerModal()" style="width:100%; margin-top:20px; padding:12px; border:none; background:#333; color:white; border-radius:10px;">Fermer</button>
+        </div>
+    `;
+
+    afficherModalGenerique(htmlRecu);
+
+    // On régénère le QR Code pour le marchand si besoin
+    new QRCode(document.getElementById("qrcode-rappel"), {
+        text: `REF:${cmd.id}|TOTAL:${cmd.total}`,
+        width: 130,
+        height: 130
+    });
+}
