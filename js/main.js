@@ -637,26 +637,23 @@ function fermerModal() {
 
 // --- 7. GESTION MVOLA (SÉCURISÉE VIA GOOGLE SCRIPT) ---
 
-async function traiterPaiement(montant, telClient) {
-    // 1. L'URL de ton script GAS (Assure-toi que c'est bien la dernière version déployée)
+async function traiterPaiement(montant, telClient, livraison) {
     const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
     try {
-        // 2. Préparation des données
-        // Note : On utilise 'telClient' car c'est le nom défini dans les parenthèses en haut
         const payload = {
-            action: "nouvelleCommande", // Indique au script que c'est un client
+            action: "nouvelleCommande", 
             nom: localStorage.getItem('saferun_nom') || "Client Site",
             telClient: telClient, 
             montant: montant, 
             produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-            correlationId: "SR" + Date.now(),
-            quartier: localStorage.getItem('saferun_quartier') || "Non précisé"
+            correlationId: "SR" + Date.now().toString().slice(-6),
+            quartier: localStorage.getItem('saferun_quartier') || "Non précisé",
+            livraison: livraison // <--- AJOUTÉ : l'info va maintenant vers la colonne H
         };
 
-        console.log("Données envoyées :", payload);
+        console.log("Données envoyées au Sheet :", payload);
 
-        // 3. Envoi (on retire 'await' pour ne pas bloquer si la connexion est lente)
         fetch(SCRIPT_PAYS_URL, {
             method: "POST",
             mode: "no-cors", 
@@ -664,9 +661,7 @@ async function traiterPaiement(montant, telClient) {
             body: JSON.stringify(payload)
         });
 
-        console.log("L'envoi a été lancé vers Google Sheet.");
         return true; 
-
     } catch (error) {
         console.error("Erreur d'envoi Sheet:", error);
         return false;
@@ -1085,22 +1080,34 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    const livraison = calculerLivraison();
+    const livraison = calculerLivraison(); // La date calculée
     const tel = localStorage.getItem('saferun_tel') || "N/A";
+    const produitsListe = panier.map(i => `${i.quantite}x ${i.nom}`).join(', ');
 
     // --- ÉTAPE A : ENVOI RÉEL AU GOOGLE SHEET ---
-    // On appelle ta fonction qui communique avec le script Google
     if (typeof traiterPaiement === "function") {
         const telNettoye = tel.replace(/\s+/g, '').replace('+261', '0');
-        traiterPaiement(montant, telNettoye); 
+        
+        // On prépare l'objet complet pour le Script Google
+        const donnéesCommande = {
+            nom: nom,
+            telClient: telNettoye,
+            produits: produitsListe,
+            montant: montant,
+            correlationId: ref,
+            livraison: livraison // <--- On ajoute la livraison ici
+        };
+        
+        // On appelle traiterPaiement avec l'objet complet
+        traiterPaiement(donnéesCommande); 
     }
 
-    // --- ÉTAPE B : REMPLIR "LIVRAISON EN COURS" ---
+    // --- ÉTAPE B : REMPLIR "LIVRAISON EN COURS" (Local) ---
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     const nouvelleCommande = {
         id: ref,
         date: new Date().toLocaleString('fr-FR'),
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        produits: produitsListe,
         total: montant,
         statut: "En attente",
         livraisonPrevue: livraison
@@ -1129,14 +1136,14 @@ function genererFactureFinale(montant, nom) {
         </div>
     `;
 
-    // Génération du QR Code
+    // Génération du QR Code (Inclus aussi la livraison pour le scan)
     new QRCode(document.getElementById("qrcode-place"), {
-        text: `REF:${ref}|TOTAL:${montant}`,
+        text: `REF:${ref}|TOTAL:${montant}|LIV:${livraison}`,
         width: 120,
         height: 120
     });
 
-    // On vide le panier après le succès total
+    // Nettoyage
     panier = [];
     localStorage.removeItem('saferun_panier');
 }
