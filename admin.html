@@ -101,53 +101,64 @@
                     return;
                 }
 
-                data.reverse().forEach(cmd => {
-                    const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
-                    const nomClient = cmd["Client"] || "Client Anonyme";
-                    const tel = cmd["Téléphone"] || "N/A";
-                    const montant = cmd["Montant"] || 0;
-                    const produits = cmd["Produits"] || "Liste vide";
-                    const idCommande = cmd["ID"] || "---";
-                    const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
+               data.reverse().forEach(cmd => {
+    const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
+    const nomClient = cmd["Client"] || "Client Anonyme";
+    const tel = cmd["Téléphone"] || "N/A";
+    const montant = cmd["Montant"] || 0;
+    const produits = cmd["Produits"] || "Liste vide";
+    const idCommande = cmd["ID"] || "---";
+    const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
+    
+    // ON RÉCUPÈRE LA DATE DE LIVRAISON DEPUIS LE SHEET
+    // (Assure-toi que ton Google Sheet a bien une colonne "Livraison")
+    const livraison = cmd["Livraison"] || "Non spécifiée"; 
 
-                    let classeCard = "";
-                    let couleurBadge = "#f1c40f"; 
-                    if(statut === "SÉRIEUX") { classeCard = "status-serieux"; couleurBadge = "var(--success)"; }
-                    else if(statut === "PAS SÉRIEUX") { classeCard = "status-danger"; couleurBadge = "var(--danger)"; }
+    let classeCard = "";
+    let couleurBadge = "#f1c40f"; 
+    if(statut === "SÉRIEUX") { classeCard = "status-serieux"; couleurBadge = "var(--success)"; }
+    else if(statut === "PAS SÉRIEUX") { classeCard = "status-danger"; couleurBadge = "var(--danger)"; }
 
-                    list.innerHTML += `
-                        <div class="order-card ${classeCard}">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                <div>
-                                    <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
-                                    <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
-                                </div>
-                                <div style="text-align:right;">
-                                    <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
-                                    <small style="color:#888;">${dateCmd}</small>
-                                </div>
-                            </div>
-                            <p style="margin:12px 0; font-size:0.95rem;">
-                                <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
-                                <span style="color:#ccc; margin:0 10px;">|</span> 
-                                <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
-                            </p>
-                            <div style="background:#fffaf0; border:1px solid #ffe0b2; padding:12px; border-radius:10px; color:#d35400; font-size:0.9rem;">
-                                <i class="fas fa-shopping-bag"></i> ${produits}
-                            </div>
-                            <div class="actions">
-                                <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
-                                    <i class="fas fa-check"></i> PAYÉ
-                                </button>
-                                <button class="btn-action btn-facture" onclick="voirFacture('${idCommande}', '${nomClient}', '${montant}', '${produits.replace(/'/g, "\\'")}')">
-                                    <i class="fas fa-qrcode"></i> FACTURE
-                                </button>
-                                <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
-                                    <i class="fas fa-user-slash"></i> BAN
-                                </button>
-                            </div>
-                        </div>`;
-                });
+    list.innerHTML += `
+        <div class="order-card ${classeCard}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
+                    <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
+                </div>
+                <div style="text-align:right;">
+                    <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
+                    <small style="color:#888;">Commandé le : ${dateCmd}</small>
+                </div>
+            </div>
+            
+            <div style="margin: 10px 0; padding: 8px; background: #fff4e6; border-radius: 8px; border: 1px solid #ffe0b2; color: #d35400; font-weight: bold; font-size: 0.9rem;">
+                <i class="fas fa-truck"></i> LIVRAISON PRÉVUE : ${livraison}
+            </div>
+
+            <p style="margin:12px 0; font-size:0.95rem;">
+                <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
+                <span style="color:#ccc; margin:0 10px;">|</span> 
+                <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
+            </p>
+            
+            <div style="background:#f1f1f1; padding:12px; border-radius:10px; color:#555; font-size:0.9rem;">
+                <i class="fas fa-shopping-bag"></i> ${produits}
+            </div>
+            
+            <div class="actions">
+                <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
+                    <i class="fas fa-check"></i> PAYÉ
+                </button>
+                <button class="btn-action btn-facture" onclick="voirFacture('${idCommande}', '${nomClient}', '${montant}', '${produits.replace(/'/g, "\\'")}', '${livraison}')">
+                    <i class="fas fa-qrcode"></i> FACTURE
+                </button>
+                <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
+                    <i class="fas fa-user-slash"></i> BAN
+                </button>
+            </div>
+        </div>`;
+});
             } catch (e) { 
                 list.innerHTML = "<p style='color:red; text-align:center;'>Erreur : Impossible de lire le Google Sheet.</p>"; 
             }
@@ -168,20 +179,25 @@
             } catch (e) { alert("Erreur lors de la mise à jour."); loader.style.display = "none"; }
         }
 
-        function voirFacture(id, nom, montant, produits) {
-            const modal = document.getElementById('modal-facture');
-            const details = document.getElementById('facture-details');
-            const qrcodeDiv = document.getElementById('admin-qrcode');
-            qrcodeDiv.innerHTML = "";
-            details.innerHTML = `
-                <p><b>ID :</b> ${id}</p>
-                <p><b>Client :</b> ${nom}</p>
-                <p><b>Montant :</b> ${Number(montant).toLocaleString()} Ar</p>
-                <p><b>Produits :</b> ${produits}</p>
-            `;
-            new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
-            modal.style.display = "flex";
-        }
+    function voirFacture(id, nom, montant, produits, livraison) {
+    const modal = document.getElementById('modal-facture');
+    const details = document.getElementById('facture-details');
+    const qrcodeDiv = document.getElementById('admin-qrcode');
+    
+    qrcodeDiv.innerHTML = "";
+    details.innerHTML = `
+        <p><b>ID :</b> ${id}</p>
+        <p><b>Client :</b> ${nom}</p>
+        <p><b>Montant :</b> ${Number(montant).toLocaleString()} Ar</p>
+        <hr>
+        <p style="color:#d35400; font-weight:bold;"><i class="fas fa-truck"></i> ${livraison}</p>
+        <hr>
+        <p><b>Produits :</b> ${produits}</p>
+    `;
+    
+    new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
+    modal.style.display = "flex";
+}
     </script>
 </body>
 </html>
