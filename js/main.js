@@ -1086,9 +1086,31 @@ function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
     const livraison = calculerLivraison();
+    const tel = localStorage.getItem('saferun_tel') || "N/A";
 
+    // --- ÉTAPE A : ENVOI RÉEL AU GOOGLE SHEET ---
+    // On appelle ta fonction qui communique avec le script Google
+    if (typeof traiterPaiement === "function") {
+        const telNettoye = tel.replace(/\s+/g, '').replace('+261', '0');
+        traiterPaiement(montant, telNettoye); 
+    }
+
+    // --- ÉTAPE B : REMPLIR "LIVRAISON EN COURS" ---
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    const nouvelleCommande = {
+        id: ref,
+        date: new Date().toLocaleString('fr-FR'),
+        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        total: montant,
+        statut: "En attente",
+        livraisonPrevue: livraison
+    };
+    historique.unshift(nouvelleCommande);
+    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+
+    // --- ÉTAPE C : AFFICHAGE DE LA FACTURE ---
     container.innerHTML = `
-        <div style="text-align:center;">
+        <div style="text-align:center; animation: fadeIn 0.5s;">
             <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
             <h2 style="margin:10px 0; color:#27ae60;">Succès !</h2>
             
@@ -1101,19 +1123,20 @@ function genererFactureFinale(montant, nom) {
                 <p style="color:#d35400; font-weight:bold;">${livraison}</p>
             </div>
 
-            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; cursor:pointer;">
+            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; cursor:pointer; font-weight:bold;">
                 RETOUR AU SITE
             </button>
         </div>
     `;
 
-    // Création du QR Code réel
+    // Génération du QR Code
     new QRCode(document.getElementById("qrcode-place"), {
-        text: `SAFERUN-${ref}-${montant}`,
+        text: `REF:${ref}|TOTAL:${montant}`,
         width: 120,
         height: 120
     });
 
-    // Nettoyage local
+    // On vide le panier après le succès total
+    panier = [];
     localStorage.removeItem('saferun_panier');
 }
