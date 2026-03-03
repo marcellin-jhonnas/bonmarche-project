@@ -9,12 +9,10 @@
         :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* LOGIN */
         #login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* PANEL */
         #admin-panel { display: none; width: 95%; max-width: 850px; align-self: flex-start; margin: 30px 0; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
@@ -24,20 +22,34 @@
         
         .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-weight: bold; color: white; }
         
-        /* BOUTONS D'ACTION */
-        .actions { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 15px; }
+        .actions { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 15px; flex-wrap: wrap; }
         .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-ok { background: #ebfbee; color: var(--success); border: 1px solid var(--success); }
         .btn-ok:hover { background: var(--success); color: white; }
         .btn-ban { background: #fff5f5; color: var(--danger); border: 1px solid var(--danger); }
         .btn-ban:hover { background: var(--danger); color: white; }
+        .btn-facture { background: #e3f2fd; color: #1976d2; border: 1px solid #1976d2; }
+        .btn-facture:hover { background: #1976d2; color: white; }
 
         .btn-refresh { background: var(--dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-        
         .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; color: var(--orange); }
+
+        .modal-facture { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:2000; }
+        .facture-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:350px; text-align:center; position:relative; }
+        .btn-print { background:#333; color:white; border:none; padding:10px; width:100%; border-radius:8px; margin-top:15px; cursor:pointer; font-weight:bold; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+
+    <div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
+        <div class="facture-content" onclick="event.stopPropagation()">
+            <h3 style="margin:0 0 15px 0;"><i class="fas fa-file-invoice"></i> Détails Facture</h3>
+            <div id="admin-qrcode" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
+            <div id="facture-details" style="text-align:left; font-size:0.85rem; background:#f9f9f9; padding:10px; border-radius:10px;"></div>
+            <button class="btn-print" onclick="document.getElementById('modal-facture').style.display='none'">FERMER</button>
+        </div>
+    </div>
 
     <div id="loading" class="loading-overlay">Traitement en cours...</div>
 
@@ -58,7 +70,6 @@
                 <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
-
         <div id="commandes-liste"></div>
     </div>
 
@@ -77,111 +88,100 @@
         }
 
         async function charger() {
-    const list = document.getElementById('commandes-liste');
-    list.innerHTML = "<p style='text-align:center;'>Connexion au registre...</p>";
-    
-    try {
-        // On appelle le script avec l'action getCommandes
-        const res = await fetch(API_URL + "?action=getCommandes");
-        const data = await res.json();
-        list.innerHTML = "";
+            const list = document.getElementById('commandes-liste');
+            list.innerHTML = "<p style='text-align:center;'>Connexion au registre...</p>";
+            
+            try {
+                const res = await fetch(API_URL + "?action=getCommandes");
+                const data = await res.json();
+                list.innerHTML = "";
 
-        if (!data || data.length === 0) {
-            list.innerHTML = "<p style='text-align:center;'>Aucune commande dans l'archive.</p>";
-            return;
+                if (!data || data.length === 0) {
+                    list.innerHTML = "<p style='text-align:center;'>Aucune commande dans l'archive.</p>";
+                    return;
+                }
+
+                data.reverse().forEach(cmd => {
+                    const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
+                    const nomClient = cmd["Client"] || "Client Anonyme";
+                    const tel = cmd["Téléphone"] || "N/A";
+                    const montant = cmd["Montant"] || 0;
+                    const produits = cmd["Produits"] || "Liste vide";
+                    const idCommande = cmd["ID"] || "---";
+                    const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
+
+                    let classeCard = "";
+                    let couleurBadge = "#f1c40f"; 
+                    if(statut === "SÉRIEUX") { classeCard = "status-serieux"; couleurBadge = "var(--success)"; }
+                    else if(statut === "PAS SÉRIEUX") { classeCard = "status-danger"; couleurBadge = "var(--danger)"; }
+
+                    list.innerHTML += `
+                        <div class="order-card ${classeCard}">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
+                                    <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
+                                </div>
+                                <div style="text-align:right;">
+                                    <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
+                                    <small style="color:#888;">${dateCmd}</small>
+                                </div>
+                            </div>
+                            <p style="margin:12px 0; font-size:0.95rem;">
+                                <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
+                                <span style="color:#ccc; margin:0 10px;">|</span> 
+                                <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
+                            </p>
+                            <div style="background:#fffaf0; border:1px solid #ffe0b2; padding:12px; border-radius:10px; color:#d35400; font-size:0.9rem;">
+                                <i class="fas fa-shopping-bag"></i> ${produits}
+                            </div>
+                            <div class="actions">
+                                <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
+                                    <i class="fas fa-check"></i> PAYÉ
+                                </button>
+                                <button class="btn-action btn-facture" onclick="voirFacture('${idCommande}', '${nomClient}', '${montant}', '${produits.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-qrcode"></i> FACTURE
+                                </button>
+                                <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
+                                    <i class="fas fa-user-slash"></i> BAN
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            } catch (e) { 
+                list.innerHTML = "<p style='color:red; text-align:center;'>Erreur : Impossible de lire le Google Sheet.</p>"; 
+            }
         }
 
-        // On inverse pour avoir les plus récentes en haut
-        data.reverse().forEach(cmd => {
-            // --- CORRESPONDANCE DES COLONNES DU SHEET ---
-            const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
-            const nomClient = cmd["Client"] || "Client Anonyme";
-            const tel = cmd["Téléphone"] || "N/A";
-            const montant = cmd["Montant"] || 0;
-            const produits = cmd["Produits"] || "Liste vide";
-            const idCommande = cmd["ID"] || "---";
-            const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
-
-            let classeCard = "";
-            let couleurBadge = "#f1c40f"; 
-            
-            if(statut === "SÉRIEUX") {
-                classeCard = "status-serieux";
-                couleurBadge = "var(--success)";
-            } else if(statut === "PAS SÉRIEUX") {
-                classeCard = "status-danger";
-                couleurBadge = "var(--danger)";
-            }
-
-            list.innerHTML += `
-                <div class="order-card ${classeCard}">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
-                            <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
-                        </div>
-                        <div style="text-align:right;">
-                            <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
-                            <small style="color:#888;">${dateCmd}</small>
-                        </div>
-                    </div>
-                    
-                    <p style="margin:12px 0; font-size:0.95rem;">
-                        <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
-                        <span style="color:#ccc; margin:0 10px;">|</span> 
-                        <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
-                    </p>
-                    
-                    <div style="background:#fffaf0; border:1px solid #ffe0b2; padding:12px; border-radius:10px; color:#d35400; font-size:0.9rem;">
-                        <i class="fas fa-shopping-bag"></i> ${produits}
-                    </div>
-
-                    <div class="actions">
-                        <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
-                            <i class="fas fa-check"></i> FIDÉLISER (PAYÉ)
-                        </button>
-                        <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
-                            <i class="fas fa-user-slash"></i> MAUVAIS CLIENT
-                        </button>
-                    </div>
-                </div>`;
-        });
-    } catch (e) { 
-        list.innerHTML = "<p style='color:red; text-align:center;'>Erreur : Impossible de lire le Google Sheet.</p>"; 
-    }
-}
-
         async function modifierStatut(idCommande, nouveauStatut) {
-    if(!idCommande) return alert("Erreur: ID de commande introuvable.");
-    if(!confirm(`Passer cette commande en statut : ${nouveauStatut} ?`)) return;
-    
-    const loader = document.getElementById('loading');
-    loader.style.display = "flex";
+            if(!idCommande) return alert("Erreur: ID de commande introuvable.");
+            if(!confirm(`Passer cette commande en statut : ${nouveauStatut} ?`)) return;
+            const loader = document.getElementById('loading');
+            loader.style.display = "flex";
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({ action: "updateStatut", idCommande: idCommande, nouveauStatut: nouveauStatut })
+                });
+                setTimeout(() => { loader.style.display = "none"; charger(); }, 2000);
+            } catch (e) { alert("Erreur lors de la mise à jour."); loader.style.display = "none"; }
+        }
 
-    try {
-        const payload = {
-            action: "updateStatut",
-            idCommande: idCommande,
-            nouveauStatut: nouveauStatut
-        };
-
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors", // Crucial pour Google Apps Script
-            body: JSON.stringify(payload)
-        });
-
-        // On attend 2 secondes pour laisser le temps à Google de traiter
-        setTimeout(() => {
-            loader.style.display = "none";
-            charger(); // On rafraîchit la liste
-        }, 2000);
-
-    } catch (e) {
-        alert("Erreur lors de la mise à jour.");
-        loader.style.display = "none";
-    }
-}
+        function voirFacture(id, nom, montant, produits) {
+            const modal = document.getElementById('modal-facture');
+            const details = document.getElementById('facture-details');
+            const qrcodeDiv = document.getElementById('admin-qrcode');
+            qrcodeDiv.innerHTML = "";
+            details.innerHTML = `
+                <p><b>ID :</b> ${id}</p>
+                <p><b>Client :</b> ${nom}</p>
+                <p><b>Montant :</b> ${Number(montant).toLocaleString()} Ar</p>
+                <p><b>Produits :</b> ${produits}</p>
+            `;
+            new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
+            modal.style.display = "flex";
+        }
     </script>
 </body>
 </html>
