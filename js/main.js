@@ -317,76 +317,49 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    // 1. D'abord, on prépare les variables et on vérifie si tout est OK
     const montantFinal = window.dernierTotalCalcule || 0;
+    const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
-    const nomClient = localStorage.getItem('saferun_nom');
 
     if (!telClient || montantFinal <= 0) {
-        alert("Erreur : Votre profil est incomplet ou le panier est vide.");
+        alert("Profil incomplet ou panier vide !");
         return;
     }
 
-    // 2. On enregistre l'HISTORIQUE (Sécurisé : on ne le fait que si le montant est > 0)
-    const nouvelleCommande = {
-        id: "SR" + Date.now(),
-        date: new Date().toLocaleString('fr-FR'),
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-        total: montantFinal,
-        statut: "En attente"
-    };
-
-    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    historique.unshift(nouvelleCommande);
-    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-    console.log("Historique mis à jour localement");
-
-    // 3. On ferme le modal du panier pour laisser place au paiement
+    // 1. Fermer le panier
     if (typeof fermerModal === "function") { fermerModal(); }
 
-    // 4. Envoi vers Google Sheet (en arrière-plan)
-    const telNettoye = telClient.replace(/\s+/g, '').replace('+261', '0');
-    traiterPaiement(montantFinal, telNettoye); 
-
-    // 5. CRÉATION DU POP-UP DE PAIEMENT (MARCELLIN JHONNAS)
+    // 2. Créer le Modal de Paiement
     const modalPaiement = document.createElement('div');
     modalPaiement.id = "modal-paiement-final";
-    modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; align-items:center; justify-content:center; font-family:'Poppins', sans-serif; padding:10px;";
+    modalPaiement.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; align-items:center; justify-content:center; padding:10px;";
     
     modalPaiement.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-            <img src="https://i.imgur.com/nSlqv5W.jpeg" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #ffcc00; margin-bottom:15px;">
-            <h3 style="margin:0; color:#333; font-size:1.2rem;">Paiement Sécurisé</h3>
-            <p style="margin:5px 0; color:#666;">Titulaire : <strong>MARCELLIN JHONNAS</strong></p>
-            <div style="margin:15px 0; padding:10px; background:#fff9e6; border-radius:10px;">
-                <p style="margin:0; color:#e67e22; font-size:0.9rem;">Montant à régler :</p>
-                <span style="font-size:1.5rem; font-weight:bold; color:#d35400;">${montantFinal.toLocaleString()} Ar</span>
+        <div id="facture-container" style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center;">
+            <img src="https://i.imgur.com/nSlqv5W.jpeg" style="width:100px; height:100px; border-radius:50%; border:3px solid #ffcc00; margin-bottom:15px;">
+            <h3 style="margin:0;">Paiement Sécurisé</h3>
+            <p style="font-size:0.9rem;">Envoyez <b>${montantFinal.toLocaleString()} Ar</b> à :</p>
+            <p><strong>MARCELLIN JHONNAS</strong> (038 24 536 10)</p>
+            
+            <div style="background:#f4f4f4; padding:15px; border-radius:15px; margin:15px 0;">
+                <code style="font-size:1.1rem; font-weight:bold;">#111*1*2*0382453610*${montantFinal}#</code>
             </div>
-            <div style="background:#f4f4f4; border:2px solid #ddd; padding:15px; border-radius:15px; margin-bottom:20px;">
-                <p style="margin:0 0 10px 0; font-size:0.85rem; font-weight:bold; color:#555;">TAPEZ CE CODE SUR VOTRE TÉLÉPHONE :</p>
-                <div id="code-ussd" style="font-size:1.3rem; font-weight:800; color:#1a1a1a; letter-spacing:1px; background:white; padding:10px; border-radius:8px; border:1px solid #ccc;">
-                    #111*1*2*0382453610*${montantFinal}#
-                </div>
-                <button onclick="navigator.clipboard.writeText('#111*1*2*0382453610*${montantFinal}#'); alert('Code copié ! Collez-le dans votre clavier d\\'appel.');" 
-                        style="margin-top:10px; background:none; border:none; color:#007bff; cursor:pointer; font-size:0.8rem; text-decoration:underline;">
-                    Copier le code
-                </button>
-            </div>
-            <button id="confirm-pay-btn" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem;">
+
+            <button id="confirm-pay-btn" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer;">
                 J'AI ENVOYÉ LE PAIEMENT ✅
             </button>
         </div>
     `;
-
     document.body.appendChild(modalPaiement);
 
+    // 3. Gérer le clic sur le bouton de validation
     document.getElementById('confirm-pay-btn').onclick = function() {
-        this.innerHTML = "<i class='fas fa-circle-notch fa-spin'></i> Vérification...";
+        this.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Vérification...";
+        this.disabled = true;
+
+        // Lancement de la facture après 2 secondes
         setTimeout(() => {
-            alert("Merci " + nomClient + " ! Votre commande est enregistrée. Livraison en cours de préparation.");
-            panier = [];
-            localStorage.removeItem('saferun_panier');
-            window.location.reload();
+            genererFactureFinale(montantFinal, nomClient);
         }, 2000);
     };
 }
@@ -1075,4 +1048,72 @@ function fermerModal() {
             setTimeout(() => { m.style.display = "none"; }, 300);
         }
     });
+}
+function calculerLivraison() {
+    const maintenant = new Date();
+    const jourSemaine = maintenant.getDay(); // 0 = Dimanche
+    const heure = maintenant.getHours();
+    const tempsActuel = heure + (maintenant.getMinutes() / 60);
+
+    let dateLivraison = new Date();
+    let creneau = "";
+
+    // Règle Dimanche ou Samedi après 11h
+    if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
+        let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
+        dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
+        creneau = "Lundi matin (entre 9h et 11h)";
+    } 
+    else {
+        if (tempsActuel >= 5 && tempsActuel <= 11) {
+            creneau = "cet après-midi (entre 14h et 17h)";
+        } else {
+            dateLivraison.setDate(maintenant.getDate() + 1);
+            if (dateLivraison.getDay() === 0) { // Si demain est dimanche
+                dateLivraison.setDate(dateLivraison.getDate() + 1);
+                creneau = "Lundi matin (entre 9h et 11h)";
+            } else {
+                creneau = "demain matin (entre 9h et 11h)";
+            }
+        }
+    }
+
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    let dateFormatee = dateLivraison.toLocaleDateString('fr-FR', options);
+    return `LIVRAISON : ${dateFormatee.charAt(0).toUpperCase() + dateFormatee.slice(1)}, ${creneau}`;
+}
+function genererFactureFinale(montant, nom) {
+    const container = document.getElementById('facture-container');
+    const ref = "SR-" + Date.now().toString().slice(-6);
+    const livraison = calculerLivraison();
+
+    container.innerHTML = `
+        <div style="text-align:center;">
+            <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
+            <h2 style="margin:10px 0; color:#27ae60;">Succès !</h2>
+            
+            <div id="qrcode-place" style="display:flex; justify-content:center; margin:15px 0;"></div>
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem;">
+                <p><b>Réf :</b> ${ref}</p>
+                <p><b>Montant :</b> ${montant.toLocaleString()} Ar</p>
+                <hr style="border:none; border-top:1px dashed #ccc;">
+                <p style="color:#d35400; font-weight:bold;">${livraison}</p>
+            </div>
+
+            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; cursor:pointer;">
+                RETOUR AU SITE
+            </button>
+        </div>
+    `;
+
+    // Création du QR Code réel
+    new QRCode(document.getElementById("qrcode-place"), {
+        text: `SAFERUN-${ref}-${montant}`,
+        width: 120,
+        height: 120
+    });
+
+    // Nettoyage local
+    localStorage.removeItem('saferun_panier');
 }
