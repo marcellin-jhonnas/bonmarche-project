@@ -1138,9 +1138,10 @@ async function synchroniserAchats() {
 
         let modification = false;
         historique.forEach(maCmd => {
-            const cmdSheet = commandesSheet.find(c => c.ID === maCmd.id);
-            // Si l'admin a mis "SÉRIEUX", on valide localement
-            if (cmdSheet && (cmdSheet.Statut === "SÉRIEUX") && maCmd.statut !== "Validé") {
+            const cmdSheet = commandesSheet.find(c => c.ID == maCmd.id); 
+            
+            // Si l'admin a mis "SÉRIEUX" sur le Sheet, on valide sur le téléphone
+            if (cmdSheet && cmdSheet.Statut === "SÉRIEUX" && maCmd.statut !== "Validé") {
                 maCmd.statut = "Validé";
                 modification = true;
             }
@@ -1148,9 +1149,19 @@ async function synchroniserAchats() {
 
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            // Optionnel : jouer un petit son ici
+            
+            // --- SIGNAL : On met à jour les badges et on peut jouer un son ---
+            mettreAJourSignalValidation();
+            
+            // Si la fenêtre est déjà ouverte, on la rafraîchit pour montrer le nouveau reçu
+            const modal = document.getElementById('modal-panier');
+            if(modal && modal.style.display === "flex") {
+                ouvrirAchatsValides(); 
+            }
         }
-    } catch (e) { console.log("Erreur synchro"); }
+    } catch (e) { 
+        console.log("Sync en attente..."); 
+    }
 }
 
 function ouvrirAchatsValides() {
@@ -1280,13 +1291,14 @@ function mettreAJourSignalValidation() {
     if (!badge) return;
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    const nbValides = historique.filter(cmd => cmd.statut === "Validé" || cmd.statut === "SÉRIEUX").length;
+    // On compte combien de commandes sont validées
+    const nbValides = historique.filter(cmd => cmd.statut === "Validé").length;
     
     if (nbValides > 0) {
         badge.innerText = nbValides;
-        badge.style.display = "flex"; // Affiche le petit rond vert
-        badge.style.background = "#27ae60";
-        badge.classList.add('pulse-alerte'); // Si tu as cette animation CSS
+        badge.style.display = "flex"; 
+        badge.style.background = "#27ae60"; // Vert SafeRun
+        badge.classList.add('pulse-alerte'); // Animation si définie dans ton CSS
     } else {
         badge.style.display = "none";
     }
