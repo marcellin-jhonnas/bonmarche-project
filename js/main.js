@@ -1129,6 +1129,7 @@ function genererFactureFinale(montant, nom) {
 }
 
 async function synchroniserAchats() {
+
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     if (historique.length === 0) return;
 
@@ -1136,24 +1137,32 @@ async function synchroniserAchats() {
         const response = await fetch(`${API_URL}?action=getCommandes&t=${Date.now()}`);
         const commandesSheet = await response.json();
 
-        console.info("Données reçues du Sheet :", commandesSheet.length, "commandes");
-
         let modification = false;
 
         historique.forEach(maCmd => {
+
             const idLocal = String(maCmd.id).trim().toUpperCase();
-            
-            // On cherche la correspondance
-            const cmdSheet = commandesSheet.find(c => String(c.ID).trim().toUpperCase() === idLocal);
+
+            const cmdSheet = commandesSheet.find(c =>
+                String(c.ID || c.Id || c.id || "")
+                    .trim()
+                    .toUpperCase() === idLocal
+            );
 
             if (cmdSheet) {
-                const statutSheet = String(cmdSheet.Statut).toUpperCase().trim();
-                console.log(`Comparaison ID ${idLocal}: Statut local=${maCmd.statut}, Statut Sheet=${statutSheet}`);
 
-                if ((statutSheet === "SÉRIEUX" || statutSheet === "VALIDÉ") && maCmd.statut !== "Validé") {
-                    maCmd.statut = "Validé";
-                    modification = true;
-                    console.warn("!!! MATCH TROUVÉ !!!");
+                const statutSheet = String(cmdSheet.Statut || "")
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .toUpperCase()
+                    .trim();
+
+                if (["SERIEUX", "VALIDE", "CONFIRME"].includes(statutSheet)) {
+
+                    if (maCmd.statut !== "Validé") {
+                        maCmd.statut = "Validé";
+                        modification = true;
+                    }
                 }
             }
         });
@@ -1161,32 +1170,26 @@ async function synchroniserAchats() {
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
             mettreAJourSignalValidation();
-            // Si la fenêtre est ouverte, on la rafraîchit
-            const modal = document.getElementById('modal-panier');
-            if (modal && modal.style.display === "flex") ouvrirAchatsValides();
         }
+
     } catch (e) {
-        console.error("Erreur Synchro : Vérifie ton API_URL ou ta connexion.");
+        console.error("Erreur Synchro :", e);
     }
 }
 
-function ouvrirAchatsValides() {
-    // 1. Fermer le sidebar immédiatement
-    if (document.body.classList.contains('sidebar-open')) {
-        toggleSidebar(); 
-    }
+
+async function ouvrirAchatsValides() {
+
+    await synchroniserAchats(); // attendre la mise à jour
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    // On filtre ce qui est "Validé"
     const valides = historique.filter(cmd => cmd.statut === "Validé");
 
     let html = `<div style="padding:10px; text-align:center;">
                 <h3 style="color:#27ae60;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>`;
 
     if (valides.length === 0) {
-        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé trouvé.<br>Récupération des données...</p>`;
-        // On relance une synchro forcée si c'est vide
-        synchroniserAchats();
+        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé trouvé.</p>`;
     } else {
         valides.forEach(cmd => {
             html += `
