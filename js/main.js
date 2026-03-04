@@ -1154,37 +1154,42 @@ async function synchroniserAchats() {
 }
 
 function ouvrirAchatsValides() {
-    console.log("Le bouton fonctionne !"); // Si tu vois ça dans la console (F12), c'est gagné.
+    console.log("Ouverture des achats validés...");
     
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    // On filtre pour ne garder que ce qui est marqué "Validé" ou "SÉRIEUX"
     const valides = historique.filter(cmd => cmd.statut === "Validé" || cmd.statut === "SÉRIEUX");
 
-    let html = `<div style="padding:20px; text-align:center;">
-                <h3><i class="fas fa-history"></i> Vos Achats Validés</h3>`;
+    let html = `
+        <div style="padding:10px; text-align:center;">
+            <h3 style="color:#27ae60; margin-bottom:15px;"><i class="fas fa-history"></i> Vos Achats Validés</h3>
+            <div style="max-height:350px; overflow-y:auto; padding:5px;">
+    `;
 
     if (valides.length === 0) {
-        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé pour le moment.</p>`;
+        html += `<p style="margin:20px 0; color:#888; font-size:0.9rem;">Aucun achat validé pour le moment.<br><small>Vérification automatique en cours...</small></p>`;
     } else {
         valides.forEach(cmd => {
             html += `
-                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:10px; text-align:left; border-left:5px solid #27ae60;">
-                    <b>Réf: ${cmd.id}</b><br>
-                    <small>${cmd.produits}</small><br>
-                    <button onclick="supprimerAchatLivre('${cmd.id}')" style="margin-top:10px; background:none; border:1px solid #27ae60; color:#27ae60; border-radius:8px; padding:5px 10px; cursor:pointer;">
-                        Colis reçu (Supprimer)
+                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b style="font-size:0.85rem;">Réf: ${cmd.id}</b>
+                        <span style="color:#27ae60; font-weight:bold; font-size:0.8rem;">PAYÉ ✅</span>
+                    </div>
+                    <p style="font-size:0.8rem; margin:8px 0; color:#555;">${cmd.produits}</p>
+                    <button onclick="supprimerAchatLivre('${cmd.id}')" style="width:100%; margin-top:5px; background:white; border:1px solid #27ae60; color:#27ae60; border-radius:10px; padding:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+                        <i class="fas fa-box-open"></i> COLIS REÇU (ARCHIVER)
                     </button>
                 </div>`;
         });
     }
 
-    html += `<button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:10px; border-radius:10px; border:none; background:#333; color:white;">Fermer</button></div>`;
+    html += `</div>
+        <button onclick="fermerModal()" style="width:100%; padding:14px; margin-top:15px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold;">RETOUR</button>
+    </div>`;
     
-    // VERIFIE ICI : Ta fonction pour afficher les modales s'appelle-t-elle bien afficherModalGenerique ?
-    if (typeof afficherModalGenerique === "function") {
-        afficherModalGenerique(html);
-    } else {
-        alert("Erreur : La fonction afficherModalGenerique est introuvable.");
-    }
+    // On appelle la fonction d'affichage
+    afficherModalGenerique(html);
 }
 function supprimerAchatLivre(id) {
     if (confirm("Confirmez-vous avoir reçu votre colis ? Cela supprimera le reçu de votre historique.")) {
