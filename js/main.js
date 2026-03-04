@@ -1129,52 +1129,43 @@ function genererFactureFinale(montant, nom) {
 }
 
 async function synchroniserAchats() {
-    // Récupère l'historique local ou initialise un tableau vide
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     if (historique.length === 0) return;
 
     try {
-        // On appelle l'API pour récupérer les commandes depuis la feuille "Commandes"
         const response = await fetch(`${API_URL}?action=getCommandes&t=${Date.now()}`);
-        const commandesSheet = await response.json(); // données de la feuille "Commandes"
+        const commandesSheet = await response.json();
 
         let modification = false;
 
         historique.forEach(maCmd => {
-            // On normalise l'ID local pour ignorer la casse et les espaces
             const idLocal = String(maCmd.id).trim().toUpperCase();
-
-            // On cherche la commande correspondante dans la feuille "Commandes"
-            const cmdSheet = commandesSheet.find(c =>
-                String(c.ID || c.Id || c.id || "")
-                    .trim()
-                    .toUpperCase() === idLocal
+            const cmdSheet = commandesSheet.find(c => 
+                String(c.ID || c.Id || c.id || "").trim().toUpperCase() === idLocal
             );
 
             if (cmdSheet) {
-                // Normalisation du statut pour ignorer les accents et la casse
-                const statutSheet = String(cmdSheet.Statut || "")
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "") // retire accents
-                    .toUpperCase()
-                    .trim();
+                const statutSheet = String(cmdSheet.Statut || "").toUpperCase().trim();
+                
+                // Comparaison flexible (SÉRIEUX ou VALIDÉ, avec ou sans accents)
+                const estValide = (
+                    statutSheet.includes("SÉRIEUX") || 
+                    statutSheet.includes("SERIEUX") || 
+                    statutSheet.includes("VALIDE") ||
+                    statutSheet.includes("VALIDÉ")
+                );
 
-                // Si le statut est validé dans la feuille, on met à jour localStorage
-                if (["SÉRIEUX", "VALIDE", "CONFIRME"].includes(statutSheet)) {
-                    if (maCmd.statut !== "Validé") {
-                        maCmd.statut = "Validé";
-                        modification = true;
-                    }
+                if (estValide && maCmd.statut !== "Validé") {
+                    maCmd.statut = "Validé";
+                    modification = true;
                 }
             }
         });
 
-        // Si des modifications ont été faites, on met à jour localStorage et le signal
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            mettreAJourSignalValidation(); // ta fonction existante pour notifier
+            mettreAJourSignalValidation();
         }
-
     } catch (e) {
         console.error("Erreur Synchro :", e);
     }
@@ -1182,29 +1173,82 @@ async function synchroniserAchats() {
 
 
 async function ouvrirAchatsValides() {
+    // 1. FERMER LE SIDEBAR AUTOMATIQUEMENT
+    // On retire la classe 'active' ou 'sidebar-open' selon ton système
+    document.body.classList.remove('sidebar-open'); 
+    const sidebar = document.getElementById('sidebar'); // Ajuste l'ID si différent
+    if (sidebar) sidebar.classList.remove('active');
 
-    await synchroniserAchats(); // attendre la mise à jour
+    // 2. LANCER UNE SYNCHRONISATION RAPIDE AVANT D'OUVRIR
+    // Cela permet d'afficher le badge vert si l'admin vient de valider
+    try {
+        await synchroniserAchats(); 
+    } catch (e) {
+        console.log("Synchro silencieuse échouée, affichage des données locales.");
+    }
 
+    // 3. RÉCUPÉRER LES DONNÉES DEPUIS LE LOCALSTORAGE
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    
+    // On ne garde que les commandes marquées "Validé" par la fonction synchroniserAchats
     const valides = historique.filter(cmd => cmd.statut === "Validé");
 
-    let html = `<div style="padding:10px; text-align:center;">
-                <h3 style="color:#27ae60;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>`;
+    // 4. PRÉPARER LE CONTENU HTML DU MODAL
+    let html = `
+        <div style="padding:10px; text-align:center; font-family: 'Poppins', sans-serif;">
+            <div style="width:50px; height:50px; background:#e8f5e9; color:#27ae60; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px; font-size:24px;">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <h3 style="color:#27ae60; margin-bottom:5px;">Achats Confirmés</h3>
+            <p style="font-size:0.8rem; color:#888; margin-bottom:20px;">Retrouvez ici vos reçus après validation.</p>
+            
+            <div style="max-height:350px; overflow-y:auto; padding:5px; scrollbar-width: thin;">
+    `;
 
     if (valides.length === 0) {
-        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé trouvé.</p>`;
+        html += `
+            <div style="padding:30px 10px; background:#f9f9f9; border-radius:15px; border:1px dashed #ccc;">
+                <i class="fas fa-box-open" style="font-size:30px; color:#ddd; margin-bottom:10px;"></i>
+                <p style="margin:0; color:#999; font-size:0.9rem;">Aucun achat validé trouvé.</p>
+                <small style="color:#bbb;">L'admin vérifie vos paiements en cours.</small>
+            </div>
+        `;
     } else {
         valides.forEach(cmd => {
             html += `
-                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:10px; text-align:left; border-left:5px solid #27ae60;">
-                    <b>Réf: ${cmd.id}</b> ✅<br>
-                    <small>${cmd.produits}</small>
+                <div style="background:white; padding:15px; border-radius:18px; margin-bottom:12px; text-align:left; border:1px solid #eee; box-shadow:0 4px 12px rgba(0,0,0,0.05); position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:0; left:0; width:5px; height:100%; background:#27ae60;"></div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                        <b style="font-size:0.9rem; color:#333;">Réf: ${cmd.id}</b>
+                        <span style="background:#27ae60; color:white; font-size:0.65rem; padding:3px 8px; border-radius:20px; font-weight:bold;">PAYÉ</span>
+                    </div>
+                    
+                    <p style="font-size:0.8rem; color:#666; margin:5px 0; line-height:1.4;">
+                        <i class="fas fa-shopping-basket" style="width:15px;"></i> ${cmd.produits}
+                    </p>
+                    
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:1; background:#f1f1f1; border:none; padding:10px; border-radius:10px; font-size:0.75rem; font-weight:bold; cursor:pointer; color:#555;">
+                            <i class="fas fa-eye"></i> VOIR REÇU
+                        </button>
+                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; background:#fff; border:1px solid #ff7675; padding:10px; border-radius:10px; font-size:0.75rem; font-weight:bold; cursor:pointer; color:#ff7675;">
+                            <i class="fas fa-archive"></i> ARCHIVER
+                        </button>
+                    </div>
                 </div>`;
         });
     }
 
-    html += `<button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:10px; border-radius:10px; border:none; background:#333; color:white;">Fermer</button></div>`;
+    html += `
+            </div>
+            <button onclick="fermerModal()" style="width:100%; padding:15px; margin-top:20px; border-radius:15px; border:none; background:#333; color:white; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                FERMER
+            </button>
+        </div>
+    `;
     
+    // 5. ENVOYER AU MODAL GÉNÉRIQUE
     afficherModalGenerique(html);
 }
 function supprimerAchatLivre(id) {
