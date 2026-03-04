@@ -1140,24 +1140,22 @@ async function synchroniserAchats() {
 
         historique.forEach(maCmd => {
             const idLocal = String(maCmd.id).trim().toUpperCase();
+            
+            // On cherche dans le Sheet
             const cmdSheet = commandesSheet.find(c => 
-                String(c.ID || c.Id || c.id || "").trim().toUpperCase() === idLocal
+                String(c.ID || c.id || "").trim().toUpperCase() === idLocal
             );
 
             if (cmdSheet) {
                 const statutSheet = String(cmdSheet.Statut || "").toUpperCase().trim();
                 
-                // Comparaison flexible (SÉRIEUX ou VALIDÉ, avec ou sans accents)
-                const estValide = (
-                    statutSheet.includes("SÉRIEUX") || 
-                    statutSheet.includes("SERIEUX") || 
-                    statutSheet.includes("VALIDE") ||
-                    statutSheet.includes("VALIDÉ")
-                );
-
-                if (estValide && maCmd.statut !== "Validé") {
-                    maCmd.statut = "Validé";
-                    modification = true;
+                // On accepte SÉRIEUX, VALIDÉ, ou PAYÉ
+                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("VALIDE") || statutSheet.includes("PAYÉ")) {
+                    if (maCmd.statut !== "Validé") {
+                        maCmd.statut = "Validé"; // ON MARQUE COMME VALIDÉ
+                        modification = true;
+                        console.log("✅ MODIFICATION APPLIQUÉE pour " + idLocal);
+                    }
                 }
             }
         });
@@ -1167,7 +1165,7 @@ async function synchroniserAchats() {
             mettreAJourSignalValidation();
         }
     } catch (e) {
-        console.error("Erreur Synchro :", e);
+        console.error("Erreur de synchro :", e);
     }
 }
 
