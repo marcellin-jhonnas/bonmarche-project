@@ -1173,82 +1173,49 @@ async function synchroniserAchats() {
 
 
 async function ouvrirAchatsValides() {
-    // 1. FERMER LE SIDEBAR AUTOMATIQUEMENT
-    // On retire la classe 'active' ou 'sidebar-open' selon ton système
-    document.body.classList.remove('sidebar-open'); 
-    const sidebar = document.getElementById('sidebar'); // Ajuste l'ID si différent
-    if (sidebar) sidebar.classList.remove('active');
+    // FERMER LE SIDEBAR (Important pour voir le pop-up)
+    document.body.classList.remove('sidebar-open');
+    const side = document.getElementById('sidebar');
+    if(side) side.classList.remove('active');
 
-    // 2. LANCER UNE SYNCHRONISATION RAPIDE AVANT D'OUVRIR
-    // Cela permet d'afficher le badge vert si l'admin vient de valider
-    try {
-        await synchroniserAchats(); 
-    } catch (e) {
-        console.log("Synchro silencieuse échouée, affichage des données locales.");
-    }
+    // Lancer la synchro
+    await synchroniserAchats();
 
-    // 3. RÉCUPÉRER LES DONNÉES DEPUIS LE LOCALSTORAGE
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    
-    // On ne garde que les commandes marquées "Validé" par la fonction synchroniserAchats
     const valides = historique.filter(cmd => cmd.statut === "Validé");
 
-    // 4. PRÉPARER LE CONTENU HTML DU MODAL
     let html = `
-        <div style="padding:10px; text-align:center; font-family: 'Poppins', sans-serif;">
-            <div style="width:50px; height:50px; background:#e8f5e9; color:#27ae60; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px; font-size:24px;">
-                <i class="fas fa-check-double"></i>
-            </div>
-            <h3 style="color:#27ae60; margin-bottom:5px;">Achats Confirmés</h3>
-            <p style="font-size:0.8rem; color:#888; margin-bottom:20px;">Retrouvez ici vos reçus après validation.</p>
-            
-            <div style="max-height:350px; overflow-y:auto; padding:5px; scrollbar-width: thin;">
-    `;
+        <div style="padding:10px; text-align:center;">
+            <h3 style="color:#27ae60; margin-bottom:5px;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>
+            <p style="font-size:0.8rem; color:#888; margin-bottom:15px;">Vos reçus officiels après validation</p>
+            <div style="max-height:300px; overflow-y:auto;">`;
 
     if (valides.length === 0) {
         html += `
-            <div style="padding:30px 10px; background:#f9f9f9; border-radius:15px; border:1px dashed #ccc;">
-                <i class="fas fa-box-open" style="font-size:30px; color:#ddd; margin-bottom:10px;"></i>
-                <p style="margin:0; color:#999; font-size:0.9rem;">Aucun achat validé trouvé.</p>
-                <small style="color:#bbb;">L'admin vérifie vos paiements en cours.</small>
-            </div>
-        `;
+            <div style="padding:20px; border:1px dashed #ccc; border-radius:10px;">
+                <p style="color:#999;">Aucun achat validé trouvé.</p>
+            </div>`;
     } else {
         valides.forEach(cmd => {
             html += `
-                <div style="background:white; padding:15px; border-radius:18px; margin-bottom:12px; text-align:left; border:1px solid #eee; box-shadow:0 4px 12px rgba(0,0,0,0.05); position:relative; overflow:hidden;">
-                    <div style="position:absolute; top:0; left:0; width:5px; height:100%; background:#27ae60;"></div>
-                    
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-                        <b style="font-size:0.9rem; color:#333;">Réf: ${cmd.id}</b>
-                        <span style="background:#27ae60; color:white; font-size:0.65rem; padding:3px 8px; border-radius:20px; font-weight:bold;">PAYÉ</span>
+                <div style="background:#fff; border:1px solid #eee; padding:12px; border-radius:12px; margin-bottom:10px; text-align:left; border-left:5px solid #27ae60; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="font-size:0.85rem;">Réf: ${cmd.id}</b>
+                        <span style="background:#27ae60; color:white; font-size:0.7rem; padding:2px 6px; border-radius:5px;">PAYÉ</span>
                     </div>
-                    
-                    <p style="font-size:0.8rem; color:#666; margin:5px 0; line-height:1.4;">
-                        <i class="fas fa-shopping-basket" style="width:15px;"></i> ${cmd.produits}
-                    </p>
-                    
-                    <div style="display:flex; gap:8px; margin-top:12px;">
-                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:1; background:#f1f1f1; border:none; padding:10px; border-radius:10px; font-size:0.75rem; font-weight:bold; cursor:pointer; color:#555;">
-                            <i class="fas fa-eye"></i> VOIR REÇU
-                        </button>
-                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; background:#fff; border:1px solid #ff7675; padding:10px; border-radius:10px; font-size:0.75rem; font-weight:bold; cursor:pointer; color:#ff7675;">
-                            <i class="fas fa-archive"></i> ARCHIVER
-                        </button>
+                    <p style="font-size:0.8rem; margin:5px 0; color:#555;">${cmd.produits}</p>
+                    <div style="display:flex; gap:5px; margin-top:8px;">
+                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:1; padding:7px; font-size:0.7rem; border:none; background:#f0f0f0; border-radius:5px;">VOIR</button>
+                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; padding:7px; font-size:0.7rem; border:1px solid #ff7675; color:#ff7675; background:none; border-radius:5px;">ARCHIVER</button>
                     </div>
                 </div>`;
         });
     }
 
-    html += `
-            </div>
-            <button onclick="fermerModal()" style="width:100%; padding:15px; margin-top:20px; border-radius:15px; border:none; background:#333; color:white; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                FERMER
-            </button>
-        </div>
-    `;
-    
-    // 5. ENVOYER AU MODAL GÉNÉRIQUE
+    html += `</div>
+        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px; border:none; background:#333; color:white; font-weight:bold;">RETOUR</button>
+    </div>`;
+
     afficherModalGenerique(html);
 }
 function supprimerAchatLivre(id) {
