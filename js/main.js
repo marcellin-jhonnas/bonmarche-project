@@ -1129,20 +1129,22 @@ function genererFactureFinale(montant, nom) {
 }
 
 async function synchroniserAchats() {
-
+    // Récupère l'historique local ou initialise un tableau vide
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     if (historique.length === 0) return;
 
     try {
+        // On appelle l'API pour récupérer les commandes depuis la feuille "Commandes"
         const response = await fetch(`${API_URL}?action=getCommandes&t=${Date.now()}`);
-        const commandesSheet = await response.json();
+        const commandesSheet = await response.json(); // données de la feuille "Commandes"
 
         let modification = false;
 
         historique.forEach(maCmd => {
-
+            // On normalise l'ID local pour ignorer la casse et les espaces
             const idLocal = String(maCmd.id).trim().toUpperCase();
 
+            // On cherche la commande correspondante dans la feuille "Commandes"
             const cmdSheet = commandesSheet.find(c =>
                 String(c.ID || c.Id || c.id || "")
                     .trim()
@@ -1150,15 +1152,15 @@ async function synchroniserAchats() {
             );
 
             if (cmdSheet) {
-
+                // Normalisation du statut pour ignorer les accents et la casse
                 const statutSheet = String(cmdSheet.Statut || "")
                     .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[\u0300-\u036f]/g, "") // retire accents
                     .toUpperCase()
                     .trim();
 
+                // Si le statut est validé dans la feuille, on met à jour localStorage
                 if (["SERIEUX", "VALIDE", "CONFIRME"].includes(statutSheet)) {
-
                     if (maCmd.statut !== "Validé") {
                         maCmd.statut = "Validé";
                         modification = true;
@@ -1167,9 +1169,10 @@ async function synchroniserAchats() {
             }
         });
 
+        // Si des modifications ont été faites, on met à jour localStorage et le signal
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            mettreAJourSignalValidation();
+            mettreAJourSignalValidation(); // ta fonction existante pour notifier
         }
 
     } catch (e) {
