@@ -1160,7 +1160,7 @@ async function synchroniserAchats() {
                     .trim();
 
                 // Si le statut est validé dans la feuille, on met à jour localStorage
-                if (["SERIEUX", "VALIDE", "CONFIRME"].includes(statutSheet)) {
+                if (["SÉRIEUX", "VALIDE", "CONFIRME"].includes(statutSheet)) {
                     if (maCmd.statut !== "Validé") {
                         maCmd.statut = "Validé";
                         modification = true;
