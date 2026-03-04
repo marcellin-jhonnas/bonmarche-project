@@ -1154,44 +1154,37 @@ async function synchroniserAchats() {
 }
 
 function ouvrirAchatsValides() {
+    console.log("Le bouton fonctionne !"); // Si tu vois ça dans la console (F12), c'est gagné.
+    
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    const valides = historique.filter(cmd => cmd.statut === "Validé");
+    const valides = historique.filter(cmd => cmd.statut === "Validé" || cmd.statut === "SÉRIEUX");
 
-    let html = `
-        <div style="padding:15px; text-align:center;">
-            <h3 style="margin-bottom:15px;"><i class="fas fa-check-circle" style="color:#27ae60;"></i> Achats Confirmés</h3>
-            <div style="max-height:400px; overflow-y:auto;">
-    `;
+    let html = `<div style="padding:20px; text-align:center;">
+                <h3><i class="fas fa-history"></i> Vos Achats Validés</h3>`;
 
     if (valides.length === 0) {
-        html += `<p style="color:#888; margin:20px 0;">Aucun paiement confirmé pour le moment.</p>`;
+        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé pour le moment.</p>`;
     } else {
         valides.forEach(cmd => {
             html += `
-                <div id="card-${cmd.id}" style="background:#fff; border:1px solid #e0e0e0; padding:15px; border-radius:18px; margin-bottom:12px; text-align:left; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <b style="color:#27ae60;">PAYÉ ✅</b>
-                        <small style="color:#999;">${cmd.id}</small>
-                    </div>
-                    <p style="font-size:0.9rem; margin:5px 0;"><strong>Produits :</strong> ${cmd.produits}</p>
-                    <p style="font-size:0.9rem; margin:5px 0; color:#d35400;"><strong>Livraison :</strong> ${cmd.livraisonPrevue}</p>
-                    <hr style="border:none; border-top:1px solid #eee; margin:10px 0;">
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:1; background:#f1f1f1; border:none; padding:10px; border-radius:10px; font-size:0.8rem; cursor:pointer;">
-                            <i class="fas fa-file-invoice"></i> Reçu
-                        </button>
-                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; background:#ebfbee; color:#27ae60; border:1px solid #27ae60; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
-                            <i class="fas fa-box-open"></i> Colis reçu
-                        </button>
-                    </div>
-                </div>
-            `;
+                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:10px; text-align:left; border-left:5px solid #27ae60;">
+                    <b>Réf: ${cmd.id}</b><br>
+                    <small>${cmd.produits}</small><br>
+                    <button onclick="supprimerAchatLivre('${cmd.id}')" style="margin-top:10px; background:none; border:1px solid #27ae60; color:#27ae60; border-radius:8px; padding:5px 10px; cursor:pointer;">
+                        Colis reçu (Supprimer)
+                    </button>
+                </div>`;
         });
     }
 
-    html += `</div><button onclick="fermerModal()" style="width:100%; margin-top:15px; padding:12px; border-radius:12px; border:none; background:#333; color:white;">Fermer</button></div>`;
+    html += `<button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:10px; border-radius:10px; border:none; background:#333; color:white;">Fermer</button></div>`;
     
-    afficherModalGenerique(html);
+    // VERIFIE ICI : Ta fonction pour afficher les modales s'appelle-t-elle bien afficherModalGenerique ?
+    if (typeof afficherModalGenerique === "function") {
+        afficherModalGenerique(html);
+    } else {
+        alert("Erreur : La fonction afficherModalGenerique est introuvable.");
+    }
 }
 function supprimerAchatLivre(id) {
     if (confirm("Confirmez-vous avoir reçu votre colis ? Cela supprimera le reçu de votre historique.")) {
