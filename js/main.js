@@ -1171,55 +1171,60 @@ async function synchroniserAchats() {
 
 
 async function ouvrirAchatsValides() {
-    // 1. Fermer le sidebar (On force la fermeture visuelle)
+    // 1. Fermer le sidebar
     document.body.classList.remove('sidebar-open');
     const side = document.getElementById('sidebar');
     if(side) side.classList.remove('active');
 
-    // 2. Lancer la synchronisation avec le Google Sheet
+    // 2. Récupérer l'historique AVANT synchro pour voir s'il existe
+    let historiqueAvant = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    console.log("Historique local trouvé :", historiqueAvant);
+
+    // 3. Lancer la synchronisation
     await synchroniserAchats();
 
+    // 4. Récupérer après synchro
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    
-    // 3. Filtrage ultra-souple pour éviter les bugs de texte
     const valides = historique.filter(cmd => {
-        if (!cmd.statut) return false;
-        const s = String(cmd.statut).toUpperCase().trim();
-        return s.includes("VALID") || s.includes("SÉRIEUX") || s.includes("SERIEUX") || s.includes("PAY");
+        return cmd.statut === "Validé" || String(cmd.statut).toUpperCase() === "SÉRIEUX";
     });
 
     let html = `
         <div style="padding:10px; text-align:center;">
             <h3 style="color:#27ae60; margin-bottom:5px;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>
-            <p style="font-size:0.8rem; color:#888; margin-bottom:15px;">Retrouvez ici vos reçus officiels</p>
-            <div style="max-height:320px; overflow-y:auto; padding:5px;">`;
+            <div style="max-height:300px; overflow-y:auto; padding:10px;">`;
 
     if (valides.length === 0) {
+        // --- SYSTÈME DE DIAGNOSTIC VISUEL ---
+        let raison = "Aucune commande trouvée dans le téléphone.";
+        if (historique.length > 0) {
+            raison = `Vous avez ${historique.length} commande(s) en attente, mais l'ID ne correspond pas à celui du Google Sheet ou le statut n'est pas encore 'SÉRIEUX'.`;
+        }
+
         html += `
-            <div style="padding:30px 10px; border:1px dashed #ccc; border-radius:15px;">
-                <i class="fas fa-history" style="font-size:30px; color:#eee; margin-bottom:10px;"></i>
-                <p style="color:#999; font-size:0.9rem; margin:0;">Aucun achat validé trouvé.</p>
-                <small style="color:#bbb;">Vérifiez que l'admin a mis "SÉRIEUX" sur votre commande.</small>
+            <div style="padding:20px; border:1px dashed #ff7675; border-radius:15px; background:#fff5f5;">
+                <p style="color:#d63031; font-size:0.9rem; font-weight:bold;">Aucun achat validé</p>
+                <p style="color:#636e72; font-size:0.75rem; margin-top:10px;">${raison}</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                <p style="font-size:0.7rem; color:#888;">IDs locaux : ${historique.map(c => c.id).join(', ') || 'Aucun'}</p>
             </div>`;
     } else {
+        // --- AFFICHAGE DES REÇUS SI VALIDÉS ---
         valides.forEach(cmd => {
             html += `
-                <div style="background:white; border:1px solid #eee; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <b style="font-size:0.85rem; color:#333;">Réf: ${cmd.id}</b>
-                        <span style="background:#27ae60; color:white; font-size:0.65rem; padding:3px 8px; border-radius:20px; font-weight:bold;">PAYÉ</span>
+                <div style="background:white; border:1px solid #eee; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="font-size:0.85rem;">Réf: ${cmd.id}</b>
+                        <span style="background:#27ae60; color:white; font-size:0.7rem; padding:3px 8px; border-radius:20px;">PAYÉ</span>
                     </div>
-                    <p style="font-size:0.8rem; color:#666; margin:5px 0;">${cmd.produits}</p>
-                    <div style="display:flex; gap:8px; margin-top:10px;">
-                        <button onclick="afficherRecuDetaille('${cmd.id}')" style="flex:2; padding:8px; font-size:0.75rem; border:none; background:#f5f5f5; border-radius:8px; font-weight:bold; cursor:pointer;">VOIR LE REÇU</button>
-                        <button onclick="supprimerAchatLivre('${cmd.id}')" style="flex:1; padding:8px; font-size:0.75rem; border:1px solid #ff7675; color:#ff7675; background:none; border-radius:8px; cursor:pointer;">ARCHIVER</button>
-                    </div>
+                    <p style="font-size:0.8rem; color:#666; margin-top:5px;">${cmd.produits}</p>
+                    <button onclick="afficherRecuDetaille('${cmd.id}')" style="width:100%; margin-top:10px; padding:8px; border:none; background:#f1f1f1; border-radius:8px; font-size:0.75rem; font-weight:bold;">VOIR REÇU</button>
                 </div>`;
         });
     }
 
     html += `</div>
-        <button onclick="fermerModal()" style="width:100%; padding:14px; margin-top:20px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold; cursor:pointer;">RETOUR</button>
+        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px; border:none; background:#333; color:white;">RETOUR</button>
     </div>`;
 
     afficherModalGenerique(html);
