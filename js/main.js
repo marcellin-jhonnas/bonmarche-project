@@ -1139,22 +1139,25 @@ async function synchroniserAchats() {
         let modification = false;
 
         historique.forEach(maCmd => {
-            const idLocal = String(maCmd.id).trim().toUpperCase();
-            
+            // On nettoie l'ID local (ex: "SR-123" devient "SR123")
+            const idLocalNettoye = String(maCmd.id).replace(/-/g, "").trim().toUpperCase();
+
             // On cherche dans le Sheet
-            const cmdSheet = commandesSheet.find(c => 
-                String(c.ID || c.id || "").trim().toUpperCase() === idLocal
-            );
+            const cmdSheet = commandesSheet.find(c => {
+                // On nettoie aussi l'ID du Sheet au cas où
+                const idSheetNettoye = String(c.ID || c.id || "").replace(/-/g, "").trim().toUpperCase();
+                return idSheetNettoye === idLocalNettoye;
+            });
 
             if (cmdSheet) {
                 const statutSheet = String(cmdSheet.Statut || "").toUpperCase().trim();
                 
-                // On accepte SÉRIEUX, VALIDÉ, ou PAYÉ
-                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("VALIDE") || statutSheet.includes("PAYÉ")) {
+                // On accepte SÉRIEUX ou VALIDÉ
+                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("VALIDE")) {
                     if (maCmd.statut !== "Validé") {
-                        maCmd.statut = "Validé"; // ON MARQUE COMME VALIDÉ
+                        maCmd.statut = "Validé";
                         modification = true;
-                        console.log("✅ MODIFICATION APPLIQUÉE pour " + idLocal);
+                        console.log("✅ Match trouvé pour : " + idLocalNettoye);
                     }
                 }
             }
@@ -1165,7 +1168,7 @@ async function synchroniserAchats() {
             mettreAJourSignalValidation();
         }
     } catch (e) {
-        console.error("Erreur de synchro :", e);
+        console.error("Erreur Synchro :", e);
     }
 }
 
@@ -1176,55 +1179,55 @@ async function ouvrirAchatsValides() {
     const side = document.getElementById('sidebar');
     if(side) side.classList.remove('active');
 
-    // 2. Récupérer l'historique AVANT synchro pour voir s'il existe
-    let historiqueAvant = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    console.log("Historique local trouvé :", historiqueAvant);
-
-    // 3. Lancer la synchronisation
+    // 2. Lancer la synchronisation (celle qui nettoie les tirets)
     await synchroniserAchats();
 
-    // 4. Récupérer après synchro
+    // 3. Récupérer l'historique mis à jour
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+
+    // 4. Filtrage ULTRA-SOUPLE (on accepte "Validé" ou "SÉRIEUX")
     const valides = historique.filter(cmd => {
-        return cmd.statut === "Validé" || String(cmd.statut).toUpperCase() === "SÉRIEUX";
+        if (!cmd.statut) return false;
+        const s = String(cmd.statut).toUpperCase().trim();
+        return s === "VALIDÉ" || s === "VALIDE" || s === "SÉRIEUX";
     });
 
     let html = `
-        <div style="padding:10px; text-align:center;">
+        <div style="padding:10px; text-align:center; font-family:sans-serif;">
             <h3 style="color:#27ae60; margin-bottom:5px;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>
-            <div style="max-height:300px; overflow-y:auto; padding:10px;">`;
+            <div style="max-height:350px; overflow-y:auto; padding:5px;">`;
 
     if (valides.length === 0) {
-        // --- SYSTÈME DE DIAGNOSTIC VISUEL ---
-        let raison = "Aucune commande trouvée dans le téléphone.";
+        // Diagnostic si rien n'est trouvé
+        let raison = "Aucune commande dans le téléphone.";
         if (historique.length > 0) {
-            raison = `Vous avez ${historique.length} commande(s) en attente, mais l'ID ne correspond pas à celui du Google Sheet ou le statut n'est pas encore 'SÉRIEUX'.`;
+            raison = `Vous avez ${historique.length} commande(s), mais l'admin ne les a pas encore marquées comme 'SÉRIEUX' dans le Google Sheet.`;
         }
 
         html += `
-            <div style="padding:20px; border:1px dashed #ff7675; border-radius:15px; background:#fff5f5;">
-                <p style="color:#d63031; font-size:0.9rem; font-weight:bold;">Aucun achat validé</p>
-                <p style="color:#636e72; font-size:0.75rem; margin-top:10px;">${raison}</p>
-                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-                <p style="font-size:0.7rem; color:#888;">IDs locaux : ${historique.map(c => c.id).join(', ') || 'Aucun'}</p>
+            <div style="padding:20px; border:1px dashed #ccc; border-radius:15px; background:#f9f9f9;">
+                <p style="color:#999; font-size:0.9rem;">${raison}</p>
+                <p style="font-size:0.7rem; color:#bbb; margin-top:10px;">IDs en attente : ${historique.map(c => c.id).join(', ')}</p>
             </div>`;
     } else {
-        // --- AFFICHAGE DES REÇUS SI VALIDÉS ---
+        // Affichage des reçus valides
         valides.forEach(cmd => {
             html += `
                 <div style="background:white; border:1px solid #eee; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b style="font-size:0.85rem;">Réf: ${cmd.id}</b>
-                        <span style="background:#27ae60; color:white; font-size:0.7rem; padding:3px 8px; border-radius:20px;">PAYÉ</span>
+                        <b style="font-size:0.85rem; color:#333;">Réf: ${cmd.id}</b>
+                        <span style="background:#27ae60; color:white; font-size:0.65rem; padding:3px 8px; border-radius:20px; font-weight:bold;">PAYÉ</span>
                     </div>
-                    <p style="font-size:0.8rem; color:#666; margin-top:5px;">${cmd.produits}</p>
-                    <button onclick="afficherRecuDetaille('${cmd.id}')" style="width:100%; margin-top:10px; padding:8px; border:none; background:#f1f1f1; border-radius:8px; font-size:0.75rem; font-weight:bold;">VOIR REÇU</button>
+                    <p style="font-size:0.8rem; color:#666; margin:8px 0;">${cmd.produits}</p>
+                    <button onclick="afficherRecuDetaille('${cmd.id}')" style="width:100%; padding:10px; border:none; background:#f1f1f1; border-radius:10px; font-weight:bold; cursor:pointer; font-size:0.75rem;">
+                        <i class="fas fa-file-invoice"></i> VOIR LE REÇU
+                    </button>
                 </div>`;
         });
     }
 
     html += `</div>
-        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px; border:none; background:#333; color:white;">RETOUR</button>
+        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px; border:none; background:#333; color:white; font-weight:bold;">RETOUR</button>
     </div>`;
 
     afficherModalGenerique(html);
