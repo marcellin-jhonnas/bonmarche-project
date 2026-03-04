@@ -1133,31 +1133,31 @@ async function synchroniserAchats() {
     if (historique.length === 0) return;
 
     try {
+        // Ajout d'un paramètre anti-cache (?t=...) pour forcer Google à donner les vraies infos
         const response = await fetch(`${API_URL}?action=getCommandes&t=${Date.now()}`);
         const commandesSheet = await response.json();
 
         let modification = false;
 
         historique.forEach(maCmd => {
-            // On nettoie l'ID local (ex: "SR-123" devient "SR123")
+            // NETTOYAGE : on enlève les tirets de l'ID du téléphone (ex: SR-123 -> SR123)
             const idLocalNettoye = String(maCmd.id).replace(/-/g, "").trim().toUpperCase();
 
-            // On cherche dans le Sheet
+            // RECHERCHE dans les données reçues de Google
             const cmdSheet = commandesSheet.find(c => {
-                // On nettoie aussi l'ID du Sheet au cas où
-                const idSheetNettoye = String(c.ID || c.id || "").replace(/-/g, "").trim().toUpperCase();
-                return idSheetNettoye === idLocalNettoye;
+                const idSheet = String(c.ID || c.id || "").replace(/-/g, "").trim().toUpperCase();
+                return idSheet === idLocalNettoye;
             });
 
             if (cmdSheet) {
+                // On récupère le statut et on le met en majuscules sans espaces
                 const statutSheet = String(cmdSheet.Statut || "").toUpperCase().trim();
                 
-                // On accepte SÉRIEUX ou VALIDÉ
-                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("VALIDE")) {
+                // Si le statut est SÉRIEUX ou VALIDÉ
+                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("SERIEUX") || statutSheet.includes("VALIDE")) {
                     if (maCmd.statut !== "Validé") {
-                        maCmd.statut = "Validé";
+                        maCmd.statut = "Validé"; // On met à jour localement
                         modification = true;
-                        console.log("✅ Match trouvé pour : " + idLocalNettoye);
                     }
                 }
             }
@@ -1165,10 +1165,11 @@ async function synchroniserAchats() {
 
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            mettreAJourSignalValidation();
+            // On met à jour le badge si la fonction existe
+            if (typeof mettreAJourSignalValidation === "function") mettreAJourSignalValidation();
         }
     } catch (e) {
-        console.error("Erreur Synchro :", e);
+        console.error("Erreur de connexion au Sheet :", e);
     }
 }
 
