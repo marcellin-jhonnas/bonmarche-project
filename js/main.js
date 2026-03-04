@@ -1133,76 +1133,67 @@ async function synchroniserAchats() {
     if (historique.length === 0) return;
 
     try {
-        const response = await fetch(API_URL + "?action=getCommandes");
+        // Ajout d'un paramètre 't' pour éviter que le navigateur ne garde une ancienne version en cache
+        const response = await fetch(API_URL + "?action=getCommandes&t=" + Date.now());
         const commandesSheet = await response.json();
 
         let modification = false;
+        
         historique.forEach(maCmd => {
-// Par celle-ci (plus robuste) :
-const cmdSheet = commandesSheet.find(c => String(c.ID).trim() === String(maCmd.id).trim());
-            // Si l'admin a mis "SÉRIEUX" sur le Sheet, on valide sur le téléphone
-            if (cmdSheet && cmdSheet.Statut === "SÉRIEUX" && maCmd.statut !== "Validé") {
-                maCmd.statut = "Validé";
-                modification = true;
+            // On compare en transformant tout en String et en enlevant les espaces
+            const cmdSheet = commandesSheet.find(c => String(c.ID).trim() === String(maCmd.id).trim());
+
+            if (cmdSheet) {
+                console.log("Commande trouvée sur le Sheet :", cmdSheet.ID, "Statut :", cmdSheet.Statut);
+                
+                // On accepte "SÉRIEUX" ou "Validé" (attention aux majuscules)
+                const statutPropre = String(cmdSheet.Statut).toUpperCase().trim();
+                
+                if ((statutPropre === "SÉRIEUX" || statutPropre === "VALIDÉ") && maCmd.statut !== "Validé") {
+                    maCmd.statut = "Validé";
+                    modification = true;
+                }
             }
         });
 
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            
-            // --- SIGNAL : On met à jour les badges et on peut jouer un son ---
-            mettreAJourSignalValidation();
-            
-            // Si la fenêtre est déjà ouverte, on la rafraîchit pour montrer le nouveau reçu
-            const modal = document.getElementById('modal-panier');
-            if(modal && modal.style.display === "flex") {
-                ouvrirAchatsValides(); 
-            }
+            mettreAJourSignalValidation(); // On allume le signal vert
+            console.log("✅ Historique mis à jour avec des achats validés !");
         }
     } catch (e) { 
-        console.log("Sync en attente..."); 
+        console.error("Erreur de synchro :", e); 
     }
 }
 
 function ouvrirAchatsValides() {
-    // 1. FORCER LA FERMETURE DU SIDEBAR
+    // 1. Fermer le sidebar immédiatement
     if (document.body.classList.contains('sidebar-open')) {
         toggleSidebar(); 
     }
 
-    console.log("Ouverture des achats validés...");
-    
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    // On vérifie les deux statuts possibles pour être sûr
-    const valides = historique.filter(cmd => cmd.statut === "Validé" || cmd.statut === "SÉRIEUX");
+    // On filtre ce qui est "Validé"
+    const valides = historique.filter(cmd => cmd.statut === "Validé");
 
-    let html = `
-        <div style="padding:10px; text-align:center;">
-            <h3 style="color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i> Vos Achats Validés</h3>
-            <div style="max-height:350px; overflow-y:auto; padding:5px;">
-    `;
+    let html = `<div style="padding:10px; text-align:center;">
+                <h3 style="color:#27ae60;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>`;
 
     if (valides.length === 0) {
-        html += `<p style="margin:20px 0; color:#888; font-size:0.9rem;">Aucun achat validé pour le moment.<br><small>Dès que l'admin valide votre SMS, vos reçus apparaîtront ici.</small></p>`;
+        html += `<p style="margin:20px 0; color:#888;">Aucun achat validé trouvé.<br>Récupération des données...</p>`;
+        // On relance une synchro forcée si c'est vide
+        synchroniserAchats();
     } else {
         valides.forEach(cmd => {
             html += `
-                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <b style="font-size:0.85rem;">Réf: ${cmd.id}</b>
-                        <span style="color:#27ae60; font-weight:bold; font-size:0.8rem;">PAYÉ ✅</span>
-                    </div>
-                    <p style="font-size:0.8rem; margin:8px 0; color:#555;">${cmd.produits}</p>
-                    <button onclick="supprimerAchatLivre('${cmd.id}')" style="width:100%; background:white; border:1px solid #27ae60; color:#27ae60; border-radius:10px; padding:8px; font-weight:bold; cursor:pointer;">
-                        COLIS REÇU (ARCHIVER)
-                    </button>
+                <div style="background:#f1f9f4; padding:15px; border-radius:15px; margin-bottom:10px; text-align:left; border-left:5px solid #27ae60;">
+                    <b>Réf: ${cmd.id}</b> ✅<br>
+                    <small>${cmd.produits}</small>
                 </div>`;
         });
     }
 
-    html += `</div>
-        <button onclick="fermerModal()" style="width:100%; padding:14px; margin-top:15px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold;">RETOUR</button>
-    </div>`;
+    html += `<button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:10px; border-radius:10px; border:none; background:#333; color:white;">Fermer</button></div>`;
     
     afficherModalGenerique(html);
 }
@@ -1291,14 +1282,13 @@ function mettreAJourSignalValidation() {
     if (!badge) return;
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    // On compte combien de commandes sont validées
     const nbValides = historique.filter(cmd => cmd.statut === "Validé").length;
     
     if (nbValides > 0) {
         badge.innerText = nbValides;
-        badge.style.display = "flex"; 
-        badge.style.background = "#27ae60"; // Vert SafeRun
-        badge.classList.add('pulse-alerte'); // Animation si définie dans ton CSS
+        badge.style.display = "flex";
+        badge.style.background = "#27ae60"; // Vert
+        badge.classList.add('pulse-alerte'); 
     } else {
         badge.style.display = "none";
     }
