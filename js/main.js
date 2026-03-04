@@ -1133,36 +1133,51 @@ async function synchroniserAchats() {
     if (historique.length === 0) return;
 
     try {
-        // Ajout d'un paramètre 't' pour éviter que le navigateur ne garde une ancienne version en cache
+        // Le paramètre ?t= évite que le navigateur ne te montre une ancienne version du Sheet
         const response = await fetch(API_URL + "?action=getCommandes&t=" + Date.now());
         const commandesSheet = await response.json();
 
         let modification = false;
-        
+
         historique.forEach(maCmd => {
-            // On compare en transformant tout en String et en enlevant les espaces
-            const cmdSheet = commandesSheet.find(c => String(c.ID).trim() === String(maCmd.id).trim());
+            // NETTOYAGE : On enlève les espaces et on met en MAJUSCULES
+            const idLocal = String(maCmd.id).trim().toUpperCase();
+
+            // On cherche dans la liste reçue du Sheet
+            const cmdSheet = commandesSheet.find(c => {
+                const idSheet = String(c.ID).trim().toUpperCase();
+                return idSheet === idLocal;
+            });
 
             if (cmdSheet) {
-                console.log("Commande trouvée sur le Sheet :", cmdSheet.ID, "Statut :", cmdSheet.Statut);
-                
-                // On accepte "SÉRIEUX" ou "Validé" (attention aux majuscules)
-                const statutPropre = String(cmdSheet.Statut).toUpperCase().trim();
-                
-                if ((statutPropre === "SÉRIEUX" || statutPropre === "VALIDÉ") && maCmd.statut !== "Validé") {
+                const statutSheet = String(cmdSheet.Statut).toUpperCase().trim();
+                console.log("Analyse : " + idLocal + " | Statut trouvé : " + statutSheet);
+
+                // On vérifie si l'admin a écrit SÉRIEUX ou VALIDÉ
+                if ((statutSheet === "SÉRIEUX" || statutSheet === "VALIDÉ") && maCmd.statut !== "Validé") {
                     maCmd.statut = "Validé";
                     modification = true;
+                    console.log("✅ MATCH ! Commande " + idLocal + " passée en Validé.");
                 }
             }
         });
 
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            mettreAJourSignalValidation(); // On allume le signal vert
-            console.log("✅ Historique mis à jour avec des achats validés !");
+            
+            // On met à jour le badge vert sur le bouton
+            if (typeof mettreAJourSignalValidation === "function") {
+                mettreAJourSignalValidation();
+            }
+            
+            // Si l'utilisateur a la fenêtre ouverte, on la rafraîchit en direct
+            const modal = document.getElementById('modal-panier');
+            if (modal && modal.style.display === "flex") {
+                ouvrirAchatsValides();
+            }
         }
-    } catch (e) { 
-        console.error("Erreur de synchro :", e); 
+    } catch (e) {
+        console.error("Erreur lors de la récupération des données Google Sheet", e);
     }
 }
 
