@@ -1138,8 +1138,8 @@ async function synchroniserAchats() {
 
         let modification = false;
         historique.forEach(maCmd => {
-            const cmdSheet = commandesSheet.find(c => c.ID == maCmd.id); 
-            
+// Par celle-ci (plus robuste) :
+const cmdSheet = commandesSheet.find(c => String(c.ID).trim() === String(maCmd.id).trim());
             // Si l'admin a mis "SÉRIEUX" sur le Sheet, on valide sur le téléphone
             if (cmdSheet && cmdSheet.Statut === "SÉRIEUX" && maCmd.statut !== "Validé") {
                 maCmd.statut = "Validé";
