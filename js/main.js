@@ -1230,3 +1230,38 @@ function afficherRecuDetaille(id) {
         height: 130
     });
 }
+/* --- FONCTION POUR AFFICHER LES FENETRES (MODALS) --- */
+function afficherModalGenerique(contenu) {
+    const modal = document.getElementById('modal-panier');
+    const detail = document.getElementById('detail-panier');
+    const footer = modal ? modal.querySelector('.modal-footer') : null;
+
+    if (modal && detail) {
+        // On remplit le modal avec ton historique
+        detail.innerHTML = contenu;
+        
+        // On cache le bouton "Confirmer la commande" car on est juste en mode lecture
+        if (footer) footer.style.display = "none"; 
+        
+        // On affiche la fenêtre
+        modal.style.display = "flex";
+        setTimeout(() => modal.classList.add('show'), 10);
+    } else {
+        console.error("Erreur : Les éléments du modal (modal-panier ou detail-panier) sont absents du HTML.");
+    }
+}
+
+/* --- FONCTION POUR FERMER ET RÉINITIALISER --- */
+function fermerModalGenerique() {
+    const modal = document.getElementById('modal-panier');
+    const footer = modal ? modal.querySelector('.modal-footer') : null;
+    
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = "none";
+            // On réaffiche le footer pour que le panier normal fonctionne après
+            if (footer) footer.style.display = "flex";
+        }, 300);
+    }
+}
