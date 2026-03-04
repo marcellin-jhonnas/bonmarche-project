@@ -1239,20 +1239,21 @@ function afficherRecuDetaille(id) {
 function afficherModalGenerique(contenu) {
     const modal = document.getElementById('modal-panier');
     const detail = document.getElementById('detail-panier');
-    const footer = modal ? modal.querySelector('.modal-footer') : null;
-
+    
     if (modal && detail) {
-        // On remplit le modal avec ton historique
         detail.innerHTML = contenu;
         
-        // On cache le bouton "Confirmer la commande" car on est juste en mode lecture
-        if (footer) footer.style.display = "none"; 
-        
-        // On affiche la fenêtre
+        // On force les styles pour être sûr que ça s'affiche
         modal.style.display = "flex";
-        setTimeout(() => modal.classList.add('show'), 10);
+        modal.style.opacity = "1";
+        modal.style.zIndex = "99999"; // On le met tout devant
+        modal.classList.add('show');
+
+        // On cache le bouton de commande du bas s'il existe
+        const footer = modal.querySelector('.modal-footer');
+        if (footer) footer.style.display = "none";
     } else {
-        console.error("Erreur : Les éléments du modal (modal-panier ou detail-panier) sont absents du HTML.");
+        alert("Éléments modal introuvables dans le HTML");
     }
 }
 
