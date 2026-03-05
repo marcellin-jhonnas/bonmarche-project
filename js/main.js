@@ -1233,41 +1233,29 @@ function afficherRecuDetaille(id) {
 
     if(!cmd) return;
 
-    // --- CORRECTION DU TOTAL ---
-    // On cherche le montant sous toutes ses formes possibles
-    const prixFinal = cmd.Montant || cmd.montant || cmd.total || 0;
-    
-    // --- CORRECTION LIVRAISON ---
-    // Dans ton Sheet la colonne s'appelle "Livraison", pas "livraisonPrevue"
-    const livraisonFinale = cmd.Livraison || cmd.livraison || cmd.livraisonPrevue || "Non spécifiée";
-
     const htmlRecu = `
         <div style="padding:20px; text-align:center; font-family:sans-serif;">
             <div id="qrcode-rappel" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
             <h3 style="margin:0; color:#27ae60;">FACTURE PAYÉE</h3>
             <p style="font-size:0.8rem; color:#888;">Réf: ${cmd.id}</p>
             <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:12px; margin-top:15px;">
-                <p><b>Client:</b> ${localStorage.getItem('saferun_nom') || "Client"}</p>
+                <p><b>Client:</b> ${localStorage.getItem('saferun_nom')}</p>
                 <p><b>Produits:</b> ${cmd.produits}</p>
-                <p style="font-size:1.1rem; border-top:1px dashed #ccc; pt:10px; margin-top:10px;">
-                    <b>Total:</b> <span style="color:#27ae60; font-weight:bold;">${Number(prixFinal).toLocaleString()} Ar</span>
-                </p>
-                <p style="font-size:0.85rem; color:#666;"><b>Livraison:</b> ${livraisonFinale}</p>
+                <p><b>Total:</b> ${cmd.total.toLocaleString()} Ar</p>
+                <p><b>Livraison:</b> ${cmd.livraisonPrevue}</p>
             </div>
-            <button onclick="fermerModal()" style="width:100%; margin-top:20px; padding:12px; border:none; background:#333; color:white; border-radius:10px; cursor:pointer;">Fermer</button>
+            <button onclick="fermerModal()" style="width:100%; margin-top:20px; padding:12px; border:none; background:#333; color:white; border-radius:10px;">Fermer</button>
         </div>
     `;
 
     afficherModalGenerique(htmlRecu);
 
-    // On génère le QR Code avec le bon prix
-    setTimeout(() => {
-        new QRCode(document.getElementById("qrcode-rappel"), {
-            text: `REF:${cmd.id}|TOTAL:${prixFinal}`,
-            width: 130,
-            height: 130
-        });
-    }, 100);
+    // On régénère le QR Code pour le marchand si besoin
+    new QRCode(document.getElementById("qrcode-rappel"), {
+        text: `REF:${cmd.id}|TOTAL:${cmd.total}`,
+        width: 130,
+        height: 130
+    });
 }
 /* --- FONCTION POUR AFFICHER LES FENETRES (MODALS) --- */
 function afficherModalGenerique(contenu) {
