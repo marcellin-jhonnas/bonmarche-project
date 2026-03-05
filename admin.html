@@ -236,6 +236,33 @@
             new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
             modal.style.display = "flex";
         }
+        // --- SYSTÈME DE MISE À JOUR AUTOMATIQUE ---
+
+// On crée une variable pour savoir quel onglet est actif
+let ongletActif = 'commandes';
+
+// On modifie la fonction switchTab pour mettre à jour l'onglet actif
+const ancienneFonctionSwitch = switchTab;
+switchTab = function(tab) {
+    ongletActif = tab;
+    ancienneFonctionSwitch(tab);
+};
+
+// Fonction qui tourne en arrière-plan
+setInterval(async () => {
+    // Si on est sur l'onglet Chat, on rafraîchit la liste et les messages
+    if (ongletActif === 'chat') {
+        console.log("Mise à jour automatique du chat...");
+        await chargerConversations();
+        
+        // Si une discussion est déjà ouverte, on rafraîchit les messages à l'intérieur
+        if (clientActuel) {
+            const res = await fetch(API_URL + "?action=readAllChat");
+            const messages = await res.json();
+            afficherDiscussion(clientActuel, messages);
+        }
+    }
+}, 10000); // 10000 ms = 10 secondes
     </script>
 </body>
 </html>
