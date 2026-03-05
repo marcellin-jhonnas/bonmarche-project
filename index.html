@@ -284,17 +284,75 @@
 </div>
 
 <script>
+    // --- LOGIQUE DES FAUSSES NOTIFICATIONS ---
     function showFakeNotif() {
         const locations = ["Itaosy", "Ivato", "Analakely", "67Ha", "Tanjombato"];
         const loc = locations[Math.floor(Math.random() * locations.length)];
         const toast = document.createElement('div');
-        toast.style = "position:fixed; bottom:20px; left:20px; background:white; border-left:4px solid #ffcc00; padding:12px; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.2); z-index:10000; font-size:0.75rem; animation: slideIn 0.5s ease-out;";
+        toast.style = "position:fixed; bottom:20px; left:20px; background:white; border-left:4px solid #ffcc00; padding:12px; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.2); z-index:10000; font-size:0.75rem; transition: opacity 0.5s;";
         toast.innerHTML = `🛒 Une commande vient d'être passée à <b>${loc}</b>`;
         document.body.appendChild(toast);
         setTimeout(() => { toast.style.opacity="0"; setTimeout(()=>toast.remove(), 1000); }, 4000);
     }
-    // Déclencher après 10 secondes
     setTimeout(showFakeNotif, 10000);
+
+    // --- LOGIQUE DU VOLET ROULLANT (PROMO CHAT) ---
+    const messagesPromo = [
+        "Besoin d'aide ? 😊",
+        "Mila fanampiana ve ianao?",
+        "Livraison rapide ? 🚀",
+        "Fanaterana haingana be!",
+        "Une question ? 📦",
+        "Misy fanontaniana ve?",
+        "Réponse immédiate ! ⚡",
+        "Tonga dia mivaly!"
+    ];
+
+    let indexMsg = 0;
+
+    function animerMessagePromo() {
+        const bubble = document.getElementById('chat-promo-text');
+        const chatWindow = document.getElementById('chat-window');
+        
+        // On n'anime que si le chat est FERMÉ
+        if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+            if (bubble) {
+                bubble.style.display = "block";
+                bubble.style.opacity = "0";
+                bubble.style.transform = "translateY(5px)";
+
+                setTimeout(() => {
+                    bubble.innerText = messagesPromo[indexMsg];
+                    bubble.style.opacity = "1";
+                    bubble.style.transform = "translateY(0)";
+                    indexMsg = (indexMsg + 1) % messagesPromo.length;
+                }, 400);
+            }
+        } else {
+            if (bubble) bubble.style.display = "none";
+        }
+    }
+
+    // Lancer la rotation
+    setInterval(animerMessagePromo, 3000);
+    setTimeout(animerMessagePromo, 1500);
+
+    // --- MISE À JOUR DE TOGGLE CHAT (S'assurer qu'elle est aussi dans main.js) ---
+    function toggleChat() {
+        const chatWindow = document.getElementById('chat-window');
+        const promo = document.getElementById('chat-promo-container');
+        
+        if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+            chatWindow.style.display = "flex";
+            if (promo) promo.style.display = "none";
+            document.getElementById('chat-notif').style.display = "none";
+            const msgContainer = document.getElementById('chat-messages');
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        } else {
+            chatWindow.style.display = "none";
+            if (promo) promo.style.display = "block";
+        }
+    }
 </script>
 
 <div class="floating-cart" onclick="envoyerCommande()" style="position: fixed; bottom: 20px; right: 20px; background: #ffcc00; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999; cursor: pointer; border: 3px solid #1a1a1a; animation: bounce 2s infinite;">
@@ -347,7 +405,11 @@
     </div>
 </div>
 </div>
-
+<div id="chat-promo-container" style="position: fixed; bottom: 170px; right: 20px; z-index: 9999;">
+    <div id="chat-promo-text" style="background: white; color: #333; padding: 10px 15px; border-radius: 20px 20px 5px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 0.85rem; font-weight: bold; border: 2px solid #25D366; text-align: center; transition: all 0.5s ease-in-out; opacity: 0; transform: translateY(10px);">
+        Besoin d'aide ?
+    </div>
+</div>
 <div id="chat-bubble" onclick="toggleChat()" style="position: fixed; bottom: 100px; right: 20px; width: 55px; height: 55px; background: #25D366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
     <i class="fas fa-comments"></i>
     <span id="chat-notif" style="display:none; position:absolute; top:0; right:0; background:red; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center;">!</span>

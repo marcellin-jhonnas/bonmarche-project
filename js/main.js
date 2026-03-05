@@ -1371,58 +1371,87 @@ setInterval(async () => {
     mettreAJourSignalValidation(); // <--- Très important pour que le signal s'allume tout seul
 }, 30000);
 
+// 1. CONFIGURATION GLOBALE (En haut du fichier)
+const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+let dernierNombreMessages = 0;
+let indexMsg = 0;
+
+// 2. GESTION DU BOUTON ET DES SECTIONS
 function toggleChat() {
     const chatWindow = document.getElementById('chat-window');
+    const promo = document.getElementById('chat-promo-container');
+    
     if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
         chatWindow.style.display = "flex";
+        if (promo) promo.style.display = "none";
         document.getElementById('chat-notif').style.display = "none";
-        // On scrolle vers le bas automatiquement à l'ouverture
+        
         const msgContainer = document.getElementById('chat-messages');
         msgContainer.scrollTop = msgContainer.scrollHeight;
     } else {
         chatWindow.style.display = "none";
+        if (promo) promo.style.display = "block";
     }
 }
 
+// 3. LOGIQUE DU VOLET ROULANT (BILINGUE)
+const messagesPromo = [
+    "Besoin d'aide ? 😊", "Mila fanampiana ve ianao?",
+    "Livraison rapide ? 🚀", "Fanaterana haingana be!",
+    "Une question ? 📦", "Misy fanontaniana ve?",
+    "Réponse immédiate ! ⚡", "Tonga dia mivaly!"
+];
+
+function animerMessagePromo() {
+    const bubble = document.getElementById('chat-promo-text');
+    const chatWindow = document.getElementById('chat-window');
+    
+    if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+        if (bubble) {
+            bubble.style.opacity = "0";
+            bubble.style.transform = "translateY(5px)";
+            setTimeout(() => {
+                bubble.innerText = messagesPromo[indexMsg];
+                bubble.style.opacity = "1";
+                bubble.style.transform = "translateY(0)";
+                indexMsg = (indexMsg + 1) % messagesPromo.length;
+            }, 400);
+        }
+    }
+}
+setInterval(animerMessagePromo, 3000);
+
+// 4. ENVOI DE MESSAGE
 async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
     const idClient = localStorage.getItem('saferun_nom') || "Anonyme";
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // <--- METS TON URL ICI
 
     if (!message) return;
 
-    // AFFICHER IMMÉDIATEMENT (UI Optimiste)
+    // UI Optimiste
     const container = document.getElementById('chat-messages');
     container.innerHTML += `
-        <div class="message client" style="background: #dcf8c6; align-self: flex-end; padding: 8px 12px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; font-size: 0.9rem; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom:5px;">
+        <div class="message client" style="background: #dcf8c6; align-self: flex-end; padding: 8px 12px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; font-size: 0.9rem; margin-bottom:5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
             ${message}
         </div>
     `;
     input.value = "";
     container.scrollTop = container.scrollHeight;
 
-    // ENVOI RÉEL AU GAS
     try {
         await fetch(scriptURL, {
             method: "POST",
-            mode: "no-cors", // Crucial pour Google Script
-            body: JSON.stringify({
-                action: "sendChatMessage",
-                idClient: idClient,
-                expediteur: "Client",
-                message: message
-            })
+            mode: "no-cors",
+            body: JSON.stringify({ action: "sendChatMessage", idClient: idClient, expediteur: "Client", message: message })
         });
-    } catch (e) { console.error("Erreur chat:", e); }
+    } catch (e) { console.error("Erreur d'envoi", e); }
 }
 
-let dernierNombreMessages = 0;
-
+// 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
     const idClient = localStorage.getItem('saferun_nom');
     const chatWindow = document.getElementById('chat-window');
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // <--- REMPLACE PAR TON URL
 
     if (!idClient) return;
 
@@ -1430,31 +1459,27 @@ async function chargerMessagesChat() {
         const response = await fetch(`${scriptURL}?action=readChat&idClient=${idClient}`);
         const messages = await response.json();
 
-        // On ne met à jour que s'il y a des nouveaux messages
         if (messages.length > dernierNombreMessages) {
             const container = document.getElementById('chat-messages');
-            container.innerHTML = ""; // On vide pour reconstruire proprement
+            container.innerHTML = ""; 
             
             messages.forEach(msg => {
                 const estAdmin = (msg.expediteur === "Admin" || msg.expediteur === "Support");
-                const classeStyle = estAdmin ? "msg-admin" : "msg-client";
-                
-                // Formater l'heure proprement (ex: 14:30)
+                const styleBulle = estAdmin ? 
+                    "background:white; align-self:flex-start; border-bottom-left-radius:2px;" : 
+                    "background:#dcf8c6; align-self:flex-end; border-bottom-right-radius:2px;";
+
                 const dateMsg = new Date(msg.date);
-                const heureFormatee = dateMsg.getHours().toString().padStart(2, '0') + ":" + 
-                                     dateMsg.getMinutes().toString().padStart(2, '0');
+                const heure = dateMsg.getHours().toString().padStart(2, '0') + ":" + dateMsg.getMinutes().toString().padStart(2, '0');
 
                 container.innerHTML += `
-                    <div class="message ${classeStyle}">
-                        <div class="texte">${msg.message}</div>
-                        <div style="font-size: 0.65rem; color: #888; text-align: right; margin-top: 3px;">
-                            ${heureFormatee} ${estAdmin ? '' : '<i class="fas fa-check-double" style="color:#34b7f1; font-size:10px;"></i>'}
-                        </div>
+                    <div style="max-width:80%; padding:8px 12px; border-radius:15px; margin-bottom:8px; font-size:0.9rem; box-shadow:0 1px 2px rgba(0,0,0,0.1); ${styleBulle}">
+                        ${msg.message}
+                        <div style="font-size:0.65rem; color:#888; text-align:right; margin-top:3px;">${heure}</div>
                     </div>
                 `;
             });
 
-            // Gérer la notification si le chat est fermé
             if (chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
                 const badge = document.getElementById('chat-notif');
                 badge.style.display = "flex";
@@ -1462,12 +1487,9 @@ async function chargerMessagesChat() {
             }
 
             dernierNombreMessages = messages.length;
-            container.scrollTop = container.scrollHeight; // Toujours scroller en bas
+            container.scrollTop = container.scrollHeight;
         }
-    } catch (e) { 
-        console.log("En attente de messages..."); 
-    }
+    } catch (e) { console.log("Synchro..."); }
 }
 
-// Lancement automatique toutes les 10 secondes
-setInterval(chargerMessagesChat, 10000);
+setInterval(chargerMessagesChat, 5000);
