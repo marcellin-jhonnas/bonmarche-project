@@ -497,10 +497,38 @@ function fermerPlanif() {
 
 function sauvegarderPlanif() {
     const dateInput = document.getElementById('date-planif').value;
-    if(!dateInput) { alert("Veuillez choisir une date !"); return; }
-    datePlanifiee = dateInput;
-    document.getElementById('date-affichage').innerText = new Date(datePlanifiee).toLocaleString('fr-FR');
+    if(!dateInput) { alert("Veuillez choisir une date et une heure !"); return; }
+
+    const dateObj = new Date(dateInput);
+    const jour = dateObj.getDay(); 
+    const heure = dateObj.getHours();
+
+    // --- TES RÈGLES DE VALIDATION ---
+    if (jour === 0) {
+        alert("Nous sommes fermés le dimanche. Choisissez un autre jour.");
+        return;
+    }
+
+    if (heure < 8 || heure >= 17) {
+        alert("Veuillez choisir un créneau entre 8h et 17h.");
+        return;
+    }
+
+    // --- STOCKAGE POUR LA FACTURE ---
+    datePlanifiee = dateInput; 
+    
+    // On crée une version lisible (ex: "5 mars à 14:30")
+    const dateLisible = dateObj.toLocaleString('fr-FR', { 
+        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' 
+    });
+
+    // On met à jour l'affichage sur la page
+    document.getElementById('date-affichage').innerText = dateLisible;
     document.getElementById('status-planif').style.display = "block";
+    
+    // IMPORTANT : On sauvegarde dans le localStorage pour que la facture le récupère
+    localStorage.setItem('saferun_creneau_final', dateLisible);
+    
     fermerPlanif();
 }
 
@@ -1080,16 +1108,33 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    const livraisonInfo = calculerLivraison(); // On récupère la date/heure ici
+    
+    // --- ÉTAPE CRITIQUE : LE CHOIX DE LA DATE ---
+    // 1. On regarde s'il y a une planification manuelle en mémoire
+    const planifManuelle = localStorage.getItem('saferun_creneau_final');
+    
+    let livraisonInfo;
+    
+    if (planifManuelle) {
+        // Si le client a utilisé "Achat Planifié", on prend sa date
+        livraisonInfo = "LIVRAISON : " + planifManuelle;
+        // On nettoie la mémoire pour la prochaine fois
+        localStorage.removeItem('saferun_creneau_final');
+    } else {
+        // Sinon, on lance ton calcul automatique (tes règles de samedi/dimanche)
+        livraisonInfo = calculerLivraison(); 
+    }
+    // --------------------------------------------
+
     const tel = localStorage.getItem('saferun_tel') || "N/A";
 
-    // --- ÉTAPE A : ENVOI RÉEL ---
+    // --- ÉTAPE A : ENVOI RÉEL (On passe livraisonInfo qui contient soit le planifié soit l'auto) ---
     if (typeof traiterPaiement === "function") {
         const telNettoye = tel.replace(/\s+/g, '').replace('+261', '0');
-        
-        // ON PASSE LES 3 PARAMÈTRES : montant, téléphone, et livraison
         traiterPaiement(montant, telNettoye, livraisonInfo); 
     }
+
+    // ... (Le reste de ton code pour l'historique et l'affichage reste le même)
 
     // --- ÉTAPE B : HISTORIQUE LOCAL ---
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
