@@ -1353,3 +1353,16 @@ body.sidebar-open .sidebar-overlay {
 .recu-details-btn:active {
     transform: scale(0.95);
 }
+#badge-achats-valides {
+    display: inline-flex !important; /* Empêche de prendre toute la ligne */
+    align-items: center;
+    justify-content: center;
+    width: 20px !important;  /* Largeur fixe */
+    height: 20px !important; /* Hauteur fixe */
+    border-radius: 50% !important; /* Cercle parfait */
+    padding: 0 !important;   /* On enlève les paddings qui déforment */
+    margin-left: 10px;
+    font-weight: bold;
+    font-size: 11px;
+    flex-shrink: 0; /* Empêche l'écrasement */
+}
