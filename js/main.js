@@ -1310,10 +1310,13 @@ function mettreAJourSignalValidation() {
     }
 }
 // Vérifier les achats dès l'ouverture
-window.addEventListener('load', () => {
-    synchroniserAchats();
+window.addEventListener('load', async () => {
+    await synchroniserAchats();
     mettreAJourSignalValidation();
 });
 
-// Vérifier toutes les 30 secondes automatiquement
-setInterval(synchroniserAchats, 30000);
+// Vérifier toutes les 30 secondes ET allumer le badge
+setInterval(async () => {
+    await synchroniserAchats();
+    mettreAJourSignalValidation(); // <--- Très important pour que le signal s'allume tout seul
+}, 30000);
