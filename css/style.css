@@ -1366,3 +1366,7 @@ body.sidebar-open .sidebar-overlay {
     font-size: 11px;
     flex-shrink: 0; /* Empêche l'écrasement */
 }
+#sidebar a:hover span {
+    color: #27ae60 !important;
+    transition: 0.3s;
+}
