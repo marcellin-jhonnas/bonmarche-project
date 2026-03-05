@@ -53,7 +53,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
     <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i> &nbsp; Synchronisation...</div>
 
     <div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
@@ -110,159 +110,204 @@
     </div>
 
     <script>
-        const USER_ADMIN = "admin";
-        const PASS_ADMIN = "SafeRun2026"; 
-        const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
+    const USER_ADMIN = "admin";
+    const PASS_ADMIN = "SafeRun2026"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
-        let clientActuel = null;
+    let clientActuel = null;
+    let rafraichissementEnCours = false;
+    let messageCountTotal = 0; 
 
-        function verifierConnexion() {
-            if(document.getElementById('user').value === USER_ADMIN && document.getElementById('pass').value === PASS_ADMIN) {
-                document.getElementById('login-box').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
-                document.body.style.alignItems = 'flex-start';
-                charger();
-            } else { document.getElementById('err-msg').style.display = 'block'; }
-        }
+    // --- CONNEXION ---
+    function verifierConnexion() {
+        if(document.getElementById('user').value === USER_ADMIN && document.getElementById('pass').value === PASS_ADMIN) {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            document.body.style.alignItems = 'flex-start';
+            charger();
+        } else { document.getElementById('err-msg').style.display = 'block'; }
+    }
 
-        function switchTab(tab) {
-            document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
-            document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
-            document.getElementById('btn-tab-cmd').classList.toggle('active', tab === 'commandes');
-            document.getElementById('btn-tab-chat').classList.toggle('active', tab === 'chat');
-            if(tab === 'chat') chargerConversations();
-        }
-
-        // --- LOGIQUE COMMANDES ---
-        async function charger() {
-            const list = document.getElementById('commandes-liste');
-            list.innerHTML = "<p style='text-align:center;'>Chargement des données...</p>";
-            try {
-                const res = await fetch(API_URL + "?action=getCommandes");
-                const data = await res.json();
-                list.innerHTML = "";
-                data.reverse().forEach(cmd => {
-                    const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
-                    const classeCard = statut === "SÉRIEUX" ? "status-serieux" : (statut === "PAS SÉRIEUX" ? "status-danger" : "");
-                    list.innerHTML += `
-                        <div class="order-card ${classeCard}">
-                            <div style="display:flex; justify-content:space-between;">
-                                <b>${cmd["Client"]}</b>
-                                <b style="color:var(--orange)">${Number(cmd["Montant"]).toLocaleString()} Ar</b>
-                            </div>
-                            <p style="font-size:0.85rem; color:#666; margin:5px 0;">ID: ${cmd["ID"]} | Tel: ${cmd["Téléphone"]}</p>
-                            <div style="background:#f9f9f9; padding:8px; border-radius:5px; font-size:0.85rem;">${cmd["Produits"]}</div>
-                            <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
-                            <div style="margin-top:10px;">
-                                <button class="btn-action" style="background:var(--success); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">PAYÉ</button>
-                                <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${cmd["Client"]}', '${cmd["Montant"]}', '${cmd["Produits"].replace(/'/g, "\\'")}', '${cmd["Livraison"]}')">FACTURE</button>
-                                <button class="btn-action" style="background:var(--danger); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">BAN</button>
-                            </div>
-                        </div>`;
-                });
-            } catch(e) { list.innerHTML = "Erreur de connexion."; }
-        }
-
-        // --- LOGIQUE CHAT ADMIN ---
-        async function chargerConversations() {
-            const list = document.getElementById('liste-clients-chat');
-            try {
-                const res = await fetch(API_URL + "?action=readAllChat");
-                const messages = await res.json();
-                list.innerHTML = "";
-                const clients = [...new Set(messages.map(m => m.idClient))];
-                
-                clients.forEach(id => {
-                    const div = document.createElement('div');
-                    div.className = "client-item " + (clientActuel === id ? 'active' : '');
-                    div.innerHTML = `<i class="fas fa-user-circle"></i> ${id}`;
-                    div.onclick = () => { 
-                        clientActuel = id; 
-                        document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
-                        div.classList.add('active');
-                        afficherDiscussion(id, messages); 
-                    };
-                    list.appendChild(div);
-                });
-            } catch(e) { list.innerHTML = "Erreur chat."; }
-        }
-
-        function afficherDiscussion(id, tousLesMessages) {
-            document.getElementById('chat-admin-header').innerHTML = `<i class="fas fa-user"></i> ${id}`;
-            document.getElementById('chat-admin-input-area').style.display = "flex";
-            const area = document.getElementById('chat-admin-messages');
-            area.innerHTML = "";
-            tousLesMessages.filter(m => m.idClient === id).forEach(m => {
-                const estAdmin = m.expediteur === "Admin";
-                area.innerHTML += `
-                    <div class="bubble ${estAdmin ? 'admin' : 'client'}">
-                        ${m.message}
-                        <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${new Date(m.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                    </div>`;
-            });
-            area.scrollTop = area.scrollHeight;
-        }
-
-        async function envoyerReponseAdmin() {
-            const input = document.getElementById('input-msg-admin');
-            const msg = input.value.trim();
-            if(!msg || !clientActuel) return;
-            
-            document.getElementById('loading').style.display = "flex";
-            try {
-                await fetch(API_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
-                });
-                input.value = "";
-                setTimeout(() => { document.getElementById('loading').style.display = "none"; chargerConversations(); }, 1500);
-            } catch(e) { alert("Erreur d'envoi"); }
-        }
-
-        async function modifierStatut(id, statut) {
-            if(!confirm("Changer le statut ?")) return;
-            document.getElementById('loading').style.display = "flex";
-            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) });
-            setTimeout(() => { document.getElementById('loading').style.display = "none"; charger(); }, 2000);
-        }
-
-        function voirFacture(id, nom, montant, produits, livraison) {
-            const modal = document.getElementById('modal-facture');
-            const details = document.getElementById('facture-details');
-            const qrcodeDiv = document.getElementById('admin-qrcode');
-            qrcodeDiv.innerHTML = "";
-            details.innerHTML = `<p><b>ID :</b> ${id}</p><p><b>Client :</b> ${nom}</p><p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p><p><b>Livraison :</b> ${livraison}</p><p><b>Produits :</b> ${produits}</p>`;
-            new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
-            modal.style.display = "flex";
-        }
-        // --- SYSTÈME DE MISE À JOUR AUTOMATIQUE ---
-
-// On crée une variable pour savoir quel onglet est actif
-let ongletActif = 'commandes';
-
-// On modifie la fonction switchTab pour mettre à jour l'onglet actif
-const ancienneFonctionSwitch = switchTab;
-switchTab = function(tab) {
-    ongletActif = tab;
-    ancienneFonctionSwitch(tab);
-};
-
-// Fonction qui tourne en arrière-plan
-setInterval(async () => {
-    // Si on est sur l'onglet Chat, on rafraîchit la liste et les messages
-    if (ongletActif === 'chat') {
-        console.log("Mise à jour automatique du chat...");
-        await chargerConversations();
+    // --- NAVIGATION (Version avec Alerte) ---
+    function switchTab(tab) {
+        document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
+        document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
         
-        // Si une discussion est déjà ouverte, on rafraîchit les messages à l'intérieur
-        if (clientActuel) {
-            const res = await fetch(API_URL + "?action=readAllChat");
-            const messages = await res.json();
-            afficherDiscussion(clientActuel, messages);
+        const btnChat = document.getElementById('btn-tab-chat');
+        const btnCmd = document.getElementById('btn-tab-cmd');
+        
+        btnChat.classList.toggle('active', tab === 'chat');
+        btnCmd.classList.toggle('active', tab === 'commandes');
+
+        if(tab === 'chat') {
+            btnChat.style.background = ""; 
+            btnChat.style.color = "";
+            btnChat.innerHTML = `<i class="fas fa-comments"></i> Conversations`;
+            chargerConversations(); 
         }
     }
-}, 4000); // 10000 ms = 10 secondes
-    </script>
+
+    // --- LOGIQUE COMMANDES ---
+    async function charger() {
+        const list = document.getElementById('commandes-liste');
+        list.innerHTML = "<p style='text-align:center;'>Chargement des données...</p>";
+        try {
+            const res = await fetch(API_URL + "?action=getCommandes");
+            const data = await res.json();
+            list.innerHTML = "";
+            data.reverse().forEach(cmd => {
+                const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
+                const classeCard = statut === "SÉRIEUX" ? "status-serieux" : (statut === "PAS SÉRIEUX" ? "status-danger" : "");
+                list.innerHTML += `
+                    <div class="order-card ${classeCard}">
+                        <div style="display:flex; justify-content:space-between;">
+                            <b>${cmd["Client"]}</b>
+                            <b style="color:var(--orange)">${Number(cmd["Montant"]).toLocaleString()} Ar</b>
+                        </div>
+                        <p style="font-size:0.85rem; color:#666; margin:5px 0;">ID: ${cmd["ID"]} | Tel: ${cmd["Téléphone"]}</p>
+                        <div style="background:#f9f9f9; padding:8px; border-radius:5px; font-size:0.85rem;">${cmd["Produits"]}</div>
+                        <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
+                        <div style="margin-top:10px;">
+                            <button class="btn-action" style="background:var(--success); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">PAYÉ</button>
+                            <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${cmd["Client"]}', '${cmd["Montant"]}', '${cmd["Produits"].replace(/'/g, "\\'")}', '${cmd["Livraison"]}')">FACTURE</button>
+                            <button class="btn-action" style="background:var(--danger); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">BAN</button>
+                        </div>
+                    </div>`;
+            });
+        } catch(e) { list.innerHTML = "Erreur de connexion."; }
+    }
+
+    // --- LOGIQUE CHAT ADMIN ---
+    async function chargerConversations() {
+        const list = document.getElementById('liste-clients-chat');
+        try {
+            const res = await fetch(API_URL + "?action=readAllChat");
+            const messages = await res.json();
+            list.innerHTML = "";
+            const clients = [...new Set(messages.map(m => m.idClient))];
+            
+            clients.forEach(id => {
+                const div = document.createElement('div');
+                div.className = "client-item " + (clientActuel === id ? 'active' : '');
+                div.innerHTML = `<i class="fas fa-user-circle"></i> ${id}`;
+                div.onclick = () => { 
+                    clientActuel = id; 
+                    document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    afficherDiscussion(id, messages); 
+                };
+                list.appendChild(div);
+            });
+            // Mettre à jour le compteur pour éviter une alerte au chargement initial
+            messageCountTotal = messages.length;
+        } catch(e) { list.innerHTML = "Erreur chat."; }
+    }
+
+    function afficherDiscussion(id, tousLesMessages) {
+        document.getElementById('chat-admin-header').innerHTML = `<i class="fas fa-user"></i> ${id}`;
+        document.getElementById('chat-admin-input-area').style.display = "flex";
+        const area = document.getElementById('chat-admin-messages');
+        area.innerHTML = "";
+        tousLesMessages.filter(m => m.idClient === id).forEach(m => {
+            const estAdmin = m.expediteur === "Admin";
+            area.innerHTML += `
+                <div class="bubble ${estAdmin ? 'admin' : 'client'}">
+                    ${m.message}
+                    <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${new Date(m.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                </div>`;
+        });
+        area.scrollTop = area.scrollHeight;
+    }
+
+    async function envoyerReponseAdmin() {
+        const input = document.getElementById('input-msg-admin');
+        const msg = input.value.trim();
+        if(!msg || !clientActuel) return;
+        
+        document.getElementById('loading').style.display = "flex";
+        try {
+            await fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
+            });
+            input.value = "";
+            // On force une mise à jour rapide pour voir notre message
+            setTimeout(() => { document.getElementById('loading').style.display = "none"; chargerConversations(); }, 1000);
+        } catch(e) { alert("Erreur d'envoi"); document.getElementById('loading').style.display = "none"; }
+    }
+
+    async function modifierStatut(id, statut) {
+        if(!confirm("Changer le statut ?")) return;
+        document.getElementById('loading').style.display = "flex";
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) });
+        setTimeout(() => { document.getElementById('loading').style.display = "none"; charger(); }, 2000);
+    }
+
+    function voirFacture(id, nom, montant, produits, livraison) {
+        const modal = document.getElementById('modal-facture');
+        const details = document.getElementById('facture-details');
+        const qrcodeDiv = document.getElementById('admin-qrcode');
+        qrcodeDiv.innerHTML = "";
+        details.innerHTML = `<p><b>ID :</b> ${id}</p><p><b>Client :</b> ${nom}</p><p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p><p><b>Livraison :</b> ${livraison}</p><p><b>Produits :</b> ${produits}</p>`;
+        new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
+        modal.style.display = "flex";
+    }
+
+    // --- SYSTÈME D'ALERTE ET MISE À JOUR RAPIDE (4s) ---
+    setInterval(async () => {
+        if (rafraichissementEnCours) return;
+
+        rafraichissementEnCours = true;
+        try {
+            const res = await fetch(API_URL + "?action=readAllChat");
+            const messages = await res.json();
+            
+            if (messages.length > messageCountTotal) {
+                if (messageCountTotal !== 0) {
+                    const dernierMsg = messages[messages.length - 1];
+                    if (dernierMsg.expediteur !== "Admin") {
+                        const audio = document.getElementById('notif-sound');
+                        if(audio) audio.play().catch(e => console.log("Audio bloqué par le navigateur"));
+                        
+                        if (document.getElementById('section-chat-container').style.display !== 'flex') {
+                            alerterNouvelleConversation(dernierMsg.idClient);
+                        }
+                    }
+                }
+                messageCountTotal = messages.length;
+            }
+
+            if (document.getElementById('section-chat-container').style.display === 'flex') {
+                mettreAJourInterfaceChat(messages);
+            }
+        } catch (e) { console.log("Synchro..."); } 
+        finally { rafraichissementEnCours = false; }
+    }, 4000);
+
+    function alerterNouvelleConversation(nomClient) {
+        const tabChat = document.getElementById('btn-tab-chat');
+        tabChat.style.background = "#e74c3c"; 
+        tabChat.style.color = "white";
+        tabChat.innerHTML = `<i class="fas fa-bell"></i> NOUVEAU : ${nomClient}`;
+    }
+
+    async function mettreAJourInterfaceChat(messages) {
+        const list = document.getElementById('liste-clients-chat');
+        const clients = [...new Set(messages.map(m => m.idClient))];
+        
+        if (list.children.length !== clients.length) {
+            chargerConversations();
+        }
+
+        if (clientActuel) {
+            const area = document.getElementById('chat-admin-messages');
+            const messagesFiltres = messages.filter(m => m.idClient === clientActuel);
+            if (area.children.length !== messagesFiltres.length) {
+                afficherDiscussion(clientActuel, messages);
+            }
+        }
+    }
+</script>
 </body>
 </html>
