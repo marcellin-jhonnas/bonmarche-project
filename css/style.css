@@ -1309,3 +1309,47 @@ body.sidebar-open .sidebar-overlay {
     70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
 }
+/* Design des cartes de reçus */
+.recu-card {
+    background: white;
+    border: 1px solid #f0f0f0;
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 15px;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border-left: 6px solid #27ae60;
+}
+
+.recu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.recu-status {
+    background: #27ae60;
+    color: white;
+    font-size: 0.6rem;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.recu-details-btn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.recu-details-btn:active {
+    transform: scale(0.95);
+}

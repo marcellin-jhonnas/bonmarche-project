@@ -1172,80 +1172,48 @@ async function synchroniserAchats() {
 
 
 async function ouvrirAchatsValides() {
-    // Fermeture propre du menu
     document.body.classList.remove('sidebar-open');
-    const side = document.getElementById('sidebar');
-    if(side) side.classList.remove('active');
-
-    // Lancer la synchro discrètement
     await synchroniserAchats();
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    
-    // Filtrage souple pour les commandes payées
     const valides = historique.filter(cmd => {
-        if (!cmd.statut) return false;
-        const s = String(cmd.statut).toUpperCase().trim();
-        return s === "VALIDÉ" || s === "VALIDE" || s === "SÉRIEUX";
+        const s = String(cmd.statut || "").toUpperCase();
+        return s === "VALIDÉ" || s === "SÉRIEUX";
     });
 
     let html = `
-        <div style="padding:15px; text-align:center; font-family:'Segoe UI', Roboto, sans-serif;">
-            <div style="margin-bottom:20px;">
-                <div style="width:50px; height:50px; background:#e8f5e9; color:#27ae60; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 10px;">
-                    <i class="fas fa-receipt" style="font-size:24px;"></i>
-                </div>
-                <h3 style="margin:0; color:#333; font-size:1.2rem;">Mes Reçus Officiels</h3>
-                <p style="font-size:0.8rem; color:#888; margin-top:5px;">Historique de vos achats validés</p>
-            </div>
-            
-            <div style="max-height:380px; overflow-y:auto; padding:5px; scrollbar-width: thin;">`;
+        <div style="padding:15px; text-align:center;">
+            <h3 style="margin-bottom:20px;"><i class="fas fa-receipt"></i> Mes Reçus</h3>
+            <div style="max-height:400px; overflow-y:auto;">`;
 
     if (valides.length === 0) {
-        // STYLE ÉPURÉ POUR L'ÉTAT "VIDE"
         html += `
-            <div style="padding:40px 20px; border:2px dashed #eee; border-radius:20px; background:#fafafa;">
-                <i class="fas fa-clock" style="font-size:30px; color:#ddd; margin-bottom:15px;"></i>
-                <p style="color:#666; font-size:0.9rem; line-height:1.5;">
-                    ${historique.length > 0 ? 
-                    "Vos commandes sont en cours de validation par l'administration." : 
-                    "Vous n'avez effectué aucun achat pour le moment."}
-                </p>
-                <button onclick="fermerModal()" style="margin-top:15px; background:none; border:1px solid #27ae60; color:#27ae60; padding:8px 15px; border-radius:20px; font-size:0.75rem; font-weight:bold; cursor:pointer;">ACTUALISER</button>
+            <div style="padding:30px; border:2px dashed #eee; border-radius:20px; color:#888;">
+                <p>Aucune commande validée pour le moment.</p>
             </div>`;
     } else {
-        // STYLE MODERNE POUR LES REÇUS
         valides.forEach(cmd => {
             const montant = cmd.Montant || cmd.montant || cmd.total || 0;
             html += `
-                <div style="background:white; border:1px solid #f0f0f0; padding:18px; border-radius:18px; margin-bottom:15px; text-align:left; position:relative; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                <div class="recu-card">
+                    <div class="recu-header">
                         <div>
-                            <span style="display:block; font-size:0.65rem; color:#aaa; text-transform:uppercase; letter-spacing:1px;">ID COMMANDE</span>
-                            <b style="font-size:0.9rem; color:#2d3436;">#${cmd.id}</b>
+                            <small style="color:#aaa; display:block;">REF</small>
+                            <b>#${cmd.id}</b>
                         </div>
-                        <div style="background:#27ae60; color:white; font-size:0.6rem; padding:4px 10px; border-radius:8px; font-weight:bold; letter-spacing:0.5px;">CONFIRMÉ</div>
+                        <div class="recu-status">CONFIRMÉ</div>
                     </div>
-                    
-                    <div style="border-top:1px solid #f9f9f9; padding-top:10px; margin-top:10px;">
-                        <p style="font-size:0.8rem; color:#636e72; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                            ${cmd.produits}
-                        </p>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:1rem; font-weight:bold; color:#27ae60;">${Number(montant).toLocaleString()} Ar</span>
-                            <button onclick="afficherRecuDetaille('${cmd.id}')" style="background:#333; color:white; border:none; padding:10px 18px; border-radius:12px; font-size:0.75rem; font-weight:bold; cursor:pointer; transition:0.3s;">
-                                <i class="fas fa-eye"></i> DÉTAILS
-                            </button>
-                        </div>
+                    <p style="font-size:0.85rem; color:#666; margin:10px 0;">${cmd.produits}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f9f9f9; pt:10px; padding-top:10px;">
+                        <b style="color:#27ae60;">${Number(montant).toLocaleString()} Ar</b>
+                        <button class="recu-details-btn" onclick="afficherRecuDetaille('${cmd.id}')">DÉTAILS</button>
                     </div>
                 </div>`;
         });
     }
 
     html += `</div>
-        <div style="margin-top:20px; padding-top:10px; border-top:1px solid #eee;">
-            <button onclick="fermerModal()" style="width:100%; padding:14px; border-radius:15px; border:none; background:#f5f5f5; color:#666; font-weight:bold; cursor:pointer;">Fermer la fenêtre</button>
-        </div>
+        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border:none; background:#eee; border-radius:12px; cursor:pointer;">Fermer</button>
     </div>`;
 
     afficherModalGenerique(html);
