@@ -1396,18 +1396,16 @@ function toggleChat() {
 
 // 3. LOGIQUE DU VOLET ROULANT (BILINGUE)
 const messagesPromo = [
-    "🚀 Livraison en moins de 2h sur Tana",
-    "🚀 Fanaterana entana ao anatin'ny 2 ora",
-    "✅ Produits frais et qualité contrôlée",
-    "✅ Voatily sy vaovao ny vokatra rehetra",
-    "💰 Le prix du marché, livré chez vous",
-    "💰 Vidiny mirary toy ny eny an-tsena",
-    "🤝 Payez cash à la livraison",
-    "🤝 Aloavy rehefa tonga ny entana",
-    "💬 Support client disponible 7j/7",
-    "💬 Afaka miresaka amintsika foana",
-    "📦 100% de clients satisfaits",
-    "📦 Mahafa-po ny mpanjifa rehetra"
+    "🚀 Commande validée dès réception du paiement",
+    "🚀 Voamarina ny kaomandinao raha vao voaray ny sarany",
+    "💳 Payez via MVola/AirtelMoney pour réserver",
+    "💳 Aloavy amin'ny finday mba hanamafisana ny baiko",
+    "🔒 Transaction 100% sécurisée",
+    "🔒 Antoka feno ny fandoavam-bola",
+    "⚡ Votre reçu envoyé immédiatement après paiement",
+    "⚡ Handefasana tapakila ianao raha vao voaray ny vola",
+    "📦 Livraison prioritaire pour les pré-paiements",
+    "📦 Laharam-pahamehana ny mpandoa vola mialoha"
 ];
 
 function animerMessagePromo() {
