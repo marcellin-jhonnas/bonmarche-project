@@ -1133,30 +1133,29 @@ async function synchroniserAchats() {
     if (historique.length === 0) return;
 
     try {
-        // Ajout d'un paramètre anti-cache (?t=...) pour forcer Google à donner les vraies infos
         const response = await fetch(`${API_URL}?action=getCommandes&t=${Date.now()}`);
         const commandesSheet = await response.json();
 
         let modification = false;
 
         historique.forEach(maCmd => {
-            // NETTOYAGE : on enlève les tirets de l'ID du téléphone (ex: SR-123 -> SR123)
-            const idLocalNettoye = String(maCmd.id).replace(/-/g, "").trim().toUpperCase();
+            // Nettoyage de l'ID du téléphone (ex: SR-523234 -> 523234)
+            const chiffresLocaux = String(maCmd.id).replace(/\D/g, "");
 
-            // RECHERCHE dans les données reçues de Google
-            const cmdSheet = commandesSheet.find(c => {
-                const idSheet = String(c.ID || c.id || "").replace(/-/g, "").trim().toUpperCase();
-                return idSheet === idLocalNettoye;
+            // On cherche dans le Sheet
+            const match = commandesSheet.find(c => {
+                const chiffresSheet = String(c.ID || "").replace(/\D/g, "");
+                // On accepte si c'est identique OU s'il y a un décalage de moins de 5 (cas du Date.now())
+                return chiffresSheet === chiffresLocaux || Math.abs(parseInt(chiffresSheet) - parseInt(chiffresLocaux)) < 5;
             });
 
-            if (cmdSheet) {
-                // On récupère le statut et on le met en majuscules sans espaces
-                const statutSheet = String(cmdSheet.Statut || "").toUpperCase().trim();
-                
-                // Si le statut est SÉRIEUX ou VALIDÉ
-                if (statutSheet.includes("SÉRIEUX") || statutSheet.includes("SERIEUX") || statutSheet.includes("VALIDE")) {
+            if (match) {
+                const statut = String(match.Statut || "").toUpperCase();
+                if (statut.includes("SÉRIEUX") || statut.includes("VALIDE")) {
                     if (maCmd.statut !== "Validé") {
-                        maCmd.statut = "Validé"; // On met à jour localement
+                        maCmd.statut = "Validé";
+                        // On met à jour l'ID local pour qu'il soit identique au reçu officiel
+                        maCmd.id = match.ID; 
                         modification = true;
                     }
                 }
@@ -1165,70 +1164,51 @@ async function synchroniserAchats() {
 
         if (modification) {
             localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-            // On met à jour le badge si la fonction existe
-            if (typeof mettreAJourSignalValidation === "function") mettreAJourSignalValidation();
         }
     } catch (e) {
-        console.error("Erreur de connexion au Sheet :", e);
+        console.error("Erreur synchro:", e);
     }
 }
 
 
 async function ouvrirAchatsValides() {
-    // 1. Fermer le sidebar
+    // Fermeture sidebar
     document.body.classList.remove('sidebar-open');
-    const side = document.getElementById('sidebar');
-    if(side) side.classList.remove('active');
-
-    // 2. Lancer la synchronisation (celle qui nettoie les tirets)
+    
     await synchroniserAchats();
 
-    // 3. Récupérer l'historique mis à jour
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-
-    // 4. Filtrage ULTRA-SOUPLE (on accepte "Validé" ou "SÉRIEUX")
-    const valides = historique.filter(cmd => {
-        if (!cmd.statut) return false;
-        const s = String(cmd.statut).toUpperCase().trim();
-        return s === "VALIDÉ" || s === "VALIDE" || s === "SÉRIEUX";
-    });
+    const valides = historique.filter(cmd => cmd.statut === "Validé");
 
     let html = `
-        <div style="padding:10px; text-align:center; font-family:sans-serif;">
-            <h3 style="color:#27ae60; margin-bottom:5px;"><i class="fas fa-check-circle"></i> Achats Confirmés</h3>
-            <div style="max-height:350px; overflow-y:auto; padding:5px;">`;
+        <div style="padding:10px; text-align:center;">
+            <h3 style="color:#27ae60; margin-bottom:15px;"><i class="fas fa-check-circle"></i> Mes Achats Validés</h3>
+            <div style="max-height:400px; overflow-y:auto;">`;
 
     if (valides.length === 0) {
-        // Diagnostic si rien n'est trouvé
-        let raison = "Aucune commande dans le téléphone.";
-        if (historique.length > 0) {
-            raison = `Vous avez ${historique.length} commande(s), mais l'admin ne les a pas encore marquées comme 'SÉRIEUX' dans le Google Sheet.`;
-        }
-
         html += `
-            <div style="padding:20px; border:1px dashed #ccc; border-radius:15px; background:#f9f9f9;">
-                <p style="color:#999; font-size:0.9rem;">${raison}</p>
-                <p style="font-size:0.7rem; color:#bbb; margin-top:10px;">IDs en attente : ${historique.map(c => c.id).join(', ')}</p>
+            <div style="padding:30px; border:2px dashed #eee; border-radius:15px; color:#999;">
+                <i class="fas fa-box-open" style="font-size:40px; margin-bottom:10px; color:#f1f1f1;"></i>
+                <p>Aucun reçu disponible.<br><small>L'admin doit valider vos commandes en attente.</small></p>
             </div>`;
     } else {
-        // Affichage des reçus valides
         valides.forEach(cmd => {
             html += `
-                <div style="background:white; border:1px solid #eee; padding:15px; border-radius:15px; margin-bottom:12px; text-align:left; border-left:5px solid #27ae60; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b style="font-size:0.85rem; color:#333;">Réf: ${cmd.id}</b>
-                        <span style="background:#27ae60; color:white; font-size:0.65rem; padding:3px 8px; border-radius:20px; font-weight:bold;">PAYÉ</span>
+                <div style="background:#fff; border:1px solid #e0e0e0; border-radius:15px; padding:15px; margin-bottom:15px; text-align:left; border-left:6px solid #27ae60; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-weight:bold; color:#333; font-size:0.9rem;">REÇU N° ${cmd.id}</span>
+                        <span style="background:#27ae60; color:white; font-size:0.7rem; padding:3px 8px; border-radius:50px; font-weight:bold;">PAYÉ</span>
                     </div>
-                    <p style="font-size:0.8rem; color:#666; margin:8px 0;">${cmd.produits}</p>
-                    <button onclick="afficherRecuDetaille('${cmd.id}')" style="width:100%; padding:10px; border:none; background:#f1f1f1; border-radius:10px; font-weight:bold; cursor:pointer; font-size:0.75rem;">
-                        <i class="fas fa-file-invoice"></i> VOIR LE REÇU
+                    <p style="font-size:0.85rem; color:#666; margin-bottom:12px; line-height:1.4;">${cmd.produits}</p>
+                    <button onclick="afficherRecuDetaille('${cmd.id}')" style="width:100%; padding:10px; background:#f8f9fa; border:1px solid #ddd; border-radius:10px; font-weight:bold; color:#27ae60; cursor:pointer;">
+                        <i class="fas fa-file-pdf"></i> VOIR LE REÇU DÉTAILLÉ
                     </button>
                 </div>`;
         });
     }
 
     html += `</div>
-        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px; border:none; background:#333; color:white; font-weight:bold;">RETOUR</button>
+        <button onclick="fermerModal()" style="width:100%; padding:14px; margin-top:20px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold; cursor:pointer;">FERMER</button>
     </div>`;
 
     afficherModalGenerique(html);
