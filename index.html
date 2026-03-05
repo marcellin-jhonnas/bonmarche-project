@@ -347,5 +347,35 @@
     </div>
 </div>
 </div>
+
+<div id="chat-bubble" onclick="toggleChat()" style="position: fixed; bottom: 100px; right: 20px; width: 55px; height: 55px; background: #25D366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    <i class="fas fa-comments"></i>
+    <span id="chat-notif" style="display:none; position:absolute; top:0; right:0; background:red; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center;">!</span>
+</div>
+
+<div id="chat-window" style="display:none; position: fixed; bottom: 165px; right: 20px; width: 320px; height: 400px; background: #e5ddd5; border-radius: 15px; flex-direction: column; box-shadow: 0 5px 25px rgba(0,0,0,0.2); z-index: 10000; overflow: hidden; font-family: sans-serif;">
+    <div style="background: #075e54; color: white; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:35px; height:35px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                <img src="https://i.imgur.com/nSlqv5W.jpeg" style="width:30px; border-radius:50%;">
+            </div>
+            <div>
+                <div style="font-weight:bold; font-size:0.9rem;">Support Saferun</div>
+                <div style="font-size:0.7rem; color:#dcf8c6;">En ligne</div>
+            </div>
+        </div>
+        <span onclick="toggleChat()" style="cursor:pointer; font-size:20px;">×</span>
+    </div>
+
+    <div id="chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        </div>
+
+    <div style="padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="chat-input" placeholder="Taper un message..." style="flex:1; border:none; padding:10px; border-radius:20px; outline:none; font-size:0.9rem;">
+        <button onclick="envoyerMessageChat()" style="background:#075e54; color:white; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-paper-plane" style="font-size:14px;"></i>
+        </button>
+    </div>
+</div>
 </body>
 </html>
