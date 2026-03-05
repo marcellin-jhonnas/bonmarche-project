@@ -6,52 +6,64 @@
     <title>SafeRun - Console de Gestion</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f1c40f; }
+        :root { --orange: #ff6b00; --dark: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f1c40f; --whatsapp: #075e54; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
+        /* Login */
         #login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-login { width: 100%; padding: 12px; background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        #admin-panel { display: none; width: 95%; max-width: 850px; align-self: flex-start; margin: 30px 0; }
+        /* Panel Principal */
+        #admin-panel { display: none; width: 95%; max-width: 1000px; align-self: flex-start; margin: 20px 0; }
+        
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .tab-btn.active { background: var(--dark); color: white; }
+
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-left: 8px solid var(--warning); }
+        /* Commandes */
+        .order-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 8px solid var(--warning); position: relative; }
         .status-serieux { border-left-color: var(--success) !important; background: #f0fff4; }
         .status-danger { border-left-color: var(--danger) !important; opacity: 0.6; }
-        
         .badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-weight: bold; color: white; }
+
+        /* Chat Admin Style WhatsApp Web */
+        #section-chat-container { background: white; border-radius: 15px; height: 75vh; overflow: hidden; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        #section-chat { display: flex; height: 100%; }
+        .chat-sidebar { width: 30%; border-right: 1px solid #eee; display: flex; flex-direction: column; background: #f8f9fa; }
+        .chat-main { width: 70%; display: flex; flex-direction: column; background: #e5ddd5; position: relative; }
+        .client-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .client-item:hover { background: #f0f0f0; }
+        .client-item.active { background: #fff; border-left-color: var(--whatsapp); font-weight: bold; }
         
-        .actions { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 15px; flex-wrap: wrap; }
-        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-ok { background: #ebfbee; color: var(--success); border: 1px solid var(--success); }
-        .btn-ok:hover { background: var(--success); color: white; }
-        .btn-ban { background: #fff5f5; color: var(--danger); border: 1px solid var(--danger); }
-        .btn-ban:hover { background: var(--danger); color: white; }
-        .btn-facture { background: #e3f2fd; color: #1976d2; border: 1px solid #1976d2; }
-        .btn-facture:hover { background: #1976d2; color: white; }
+        .chat-messages-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem; box-shadow: 0 1px 1px rgba(0,0,0,0.1); position: relative; }
+        .bubble.admin { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
+        .bubble.client { align-self: flex-start; background: white; border-bottom-left-radius: 2px; }
 
-        .btn-refresh { background: var(--dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; color: var(--orange); }
-
+        /* Modal Facture */
         .modal-facture { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:2000; }
-        .facture-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:350px; text-align:center; position:relative; }
-        .btn-print { background:#333; color:white; border:none; padding:10px; width:100%; border-radius:8px; margin-top:15px; cursor:pointer; font-weight:bold; }
+        .facture-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:350px; text-align:center; }
+        
+        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; color: var(--orange); }
+        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; margin-right: 5px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
+    <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i> &nbsp; Synchronisation...</div>
+
     <div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
         <div class="facture-content" onclick="event.stopPropagation()">
-            <h3 style="margin:0 0 15px 0;"><i class="fas fa-file-invoice"></i> Détails Facture</h3>
-            <div id="admin-qrcode" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
+            <h3><i class="fas fa-file-invoice"></i> Facture Client</h3>
+            <div id="admin-qrcode" style="display:flex; justify-content:center; margin: 15px 0;"></div>
             <div id="facture-details" style="text-align:left; font-size:0.85rem; background:#f9f9f9; padding:10px; border-radius:10px;"></div>
-            <button class="btn-print" onclick="document.getElementById('modal-facture').style.display='none'">FERMER</button>
+            <button onclick="document.getElementById('modal-facture').style.display='none'" style="margin-top:15px; width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">FERMER</button>
         </div>
     </div>
-
-    <div id="loading" class="loading-overlay">Traitement en cours...</div>
 
     <div id="login-box">
         <div style="font-size: 3rem; color: var(--orange);"><i class="fas fa-user-shield"></i></div>
@@ -63,20 +75,46 @@
     </div>
 
     <div id="admin-panel">
-        <div class="header">
-            <h2 style="margin:0;"><i class="fas fa-users-cog"></i> Gestion Clients</h2>
-            <div>
-                <button onclick="charger()" class="btn-refresh"><i class="fas fa-sync-alt"></i></button>
-                <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="btn-tab-cmd" onclick="switchTab('commandes')"><i class="fas fa-shopping-cart"></i> Commandes</button>
+            <button class="tab-btn" id="btn-tab-chat" onclick="switchTab('chat')"><i class="fas fa-comments"></i> Conversations</button>
+            <button onclick="location.reload()" style="margin-left:auto; background:var(--danger); color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;"><i class="fas fa-power-off"></i></button>
+        </div>
+
+        <div id="section-commandes">
+            <div class="header">
+                <h2 style="margin:0;"><i class="fas fa-box"></i> Gestion Commandes</h2>
+                <button onclick="charger()" style="border:none; background:var(--dark); color:white; padding:10px 20px; border-radius:8px; cursor:pointer;"><i class="fas fa-sync"></i> Actualiser</button>
+            </div>
+            <div id="commandes-liste"></div>
+        </div>
+
+        <div id="section-chat-container">
+            <div id="section-chat">
+                <div class="chat-sidebar">
+                    <div style="padding:15px; background:var(--whatsapp); color:white; font-weight:bold;"><i class="fas fa-users"></i> Messages Clients</div>
+                    <div id="liste-clients-chat" style="overflow-y:auto; flex:1;"></div>
+                </div>
+                <div class="chat-main">
+                    <div id="chat-admin-header" style="padding:15px; background:#f0f0f0; font-weight:bold; border-bottom:1px solid #ddd; display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-comment-dots"></i> Sélectionnez un client
+                    </div>
+                    <div id="chat-admin-messages" class="chat-messages-area"></div>
+                    <div id="chat-admin-input-area" style="padding:15px; background:#f0f0f0; display:none; gap:10px;">
+                        <input type="text" id="input-msg-admin" placeholder="Répondre au client..." style="flex:1; border:none; padding:12px; border-radius:25px; outline:none;">
+                        <button onclick="envoyerReponseAdmin()" style="background:var(--whatsapp); color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div id="commandes-liste"></div>
     </div>
 
     <script>
         const USER_ADMIN = "admin";
         const PASS_ADMIN = "SafeRun2026"; 
         const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
+
+        let clientActuel = null;
 
         function verifierConnexion() {
             if(document.getElementById('user').value === USER_ADMIN && document.getElementById('pass').value === PASS_ADMIN) {
@@ -87,124 +125,117 @@
             } else { document.getElementById('err-msg').style.display = 'block'; }
         }
 
-        async function charger() {
-    const list = document.getElementById('commandes-liste');
-    list.innerHTML = "<p style='text-align:center;'>Connexion au registre...</p>";
-    
-    try {
-        const res = await fetch(API_URL + "?action=getCommandes");
-        const data = await res.json();
-        list.innerHTML = "";
-
-        if (!data || data.length === 0) {
-            list.innerHTML = "<p style='text-align:center;'>Aucune commande dans l'archive.</p>";
-            return;
+        function switchTab(tab) {
+            document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
+            document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
+            document.getElementById('btn-tab-cmd').classList.toggle('active', tab === 'commandes');
+            document.getElementById('btn-tab-chat').classList.toggle('active', tab === 'chat');
+            if(tab === 'chat') chargerConversations();
         }
 
-        data.reverse().forEach(cmd => {
-            const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
-            const nomClient = cmd["Client"] || "Client Anonyme";
-            const tel = cmd["Téléphone"] || "N/A";
-            const montant = cmd["Montant"] || 0;
-            const produits = cmd["Produits"] || "Liste vide";
-            const idCommande = cmd["ID"] || "---";
-            const dateCmd = cmd["Date"] ? new Date(cmd["Date"]).toLocaleDateString('fr-FR') : "---";
+        // --- LOGIQUE COMMANDES ---
+        async function charger() {
+            const list = document.getElementById('commandes-liste');
+            list.innerHTML = "<p style='text-align:center;'>Chargement des données...</p>";
+            try {
+                const res = await fetch(API_URL + "?action=getCommandes");
+                const data = await res.json();
+                list.innerHTML = "";
+                data.reverse().forEach(cmd => {
+                    const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
+                    const classeCard = statut === "SÉRIEUX" ? "status-serieux" : (statut === "PAS SÉRIEUX" ? "status-danger" : "");
+                    list.innerHTML += `
+                        <div class="order-card ${classeCard}">
+                            <div style="display:flex; justify-content:space-between;">
+                                <b>${cmd["Client"]}</b>
+                                <b style="color:var(--orange)">${Number(cmd["Montant"]).toLocaleString()} Ar</b>
+                            </div>
+                            <p style="font-size:0.85rem; color:#666; margin:5px 0;">ID: ${cmd["ID"]} | Tel: ${cmd["Téléphone"]}</p>
+                            <div style="background:#f9f9f9; padding:8px; border-radius:5px; font-size:0.85rem;">${cmd["Produits"]}</div>
+                            <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
+                            <div style="margin-top:10px;">
+                                <button class="btn-action" style="background:var(--success); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">PAYÉ</button>
+                                <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${cmd["Client"]}', '${cmd["Montant"]}', '${cmd["Produits"].replace(/'/g, "\\'")}', '${cmd["Livraison"]}')">FACTURE</button>
+                                <button class="btn-action" style="background:var(--danger); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">BAN</button>
+                            </div>
+                        </div>`;
+                });
+            } catch(e) { list.innerHTML = "Erreur de connexion."; }
+        }
+
+        // --- LOGIQUE CHAT ADMIN ---
+        async function chargerConversations() {
+            const list = document.getElementById('liste-clients-chat');
+            try {
+                const res = await fetch(API_URL + "?action=readAllChat");
+                const messages = await res.json();
+                list.innerHTML = "";
+                const clients = [...new Set(messages.map(m => m.idClient))];
+                
+                clients.forEach(id => {
+                    const div = document.createElement('div');
+                    div.className = "client-item " + (clientActuel === id ? 'active' : '');
+                    div.innerHTML = `<i class="fas fa-user-circle"></i> ${id}`;
+                    div.onclick = () => { 
+                        clientActuel = id; 
+                        document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        afficherDiscussion(id, messages); 
+                    };
+                    list.appendChild(div);
+                });
+            } catch(e) { list.innerHTML = "Erreur chat."; }
+        }
+
+        function afficherDiscussion(id, tousLesMessages) {
+            document.getElementById('chat-admin-header').innerHTML = `<i class="fas fa-user"></i> ${id}`;
+            document.getElementById('chat-admin-input-area').style.display = "flex";
+            const area = document.getElementById('chat-admin-messages');
+            area.innerHTML = "";
+            tousLesMessages.filter(m => m.idClient === id).forEach(m => {
+                const estAdmin = m.expediteur === "Admin";
+                area.innerHTML += `
+                    <div class="bubble ${estAdmin ? 'admin' : 'client'}">
+                        ${m.message}
+                        <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${new Date(m.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>`;
+            });
+            area.scrollTop = area.scrollHeight;
+        }
+
+        async function envoyerReponseAdmin() {
+            const input = document.getElementById('input-msg-admin');
+            const msg = input.value.trim();
+            if(!msg || !clientActuel) return;
             
-            // --- NOUVEAU : Récupération de la livraison (Colonne H) ---
-            const livraison = cmd["Livraison"] || "Non spécifiée";
-
-            let classeCard = "";
-            let couleurBadge = "#f1c40f"; 
-            if(statut === "SÉRIEUX") { classeCard = "status-serieux"; couleurBadge = "var(--success)"; }
-            else if(statut === "PAS SÉRIEUX") { classeCard = "status-danger"; couleurBadge = "var(--danger)"; }
-
-            list.innerHTML += `
-                <div class="order-card ${classeCard}">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="badge" style="background:${couleurBadge}">${statut}</span><br>
-                            <b style="font-size:1.2rem; color:var(--dark);">${nomClient}</b>
-                        </div>
-                        <div style="text-align:right;">
-                            <b style="font-size:1.2rem; color:var(--orange);">${Number(montant).toLocaleString()} Ar</b><br>
-                            <small style="color:#888;">${dateCmd}</small>
-                        </div>
-                    </div>
-                    
-                    <div style="margin:12px 0; padding:10px; background:#fff4e6; border-radius:8px; border:1px solid #ffe0b2; color:#d35400; font-weight:bold; font-size:0.9rem;">
-                        <i class="fas fa-truck"></i> LIVRAISON : ${livraison}
-                    </div>
-
-                    <p style="margin:12px 0; font-size:0.95rem;">
-                        <i class="fas fa-phone-alt"></i> <b>${tel}</b> 
-                        <span style="color:#ccc; margin:0 10px;">|</span> 
-                        <i class="fas fa-fingerprint"></i> <small>${idCommande}</small>
-                    </p>
-                    
-                    <div style="background:#f9f9f9; padding:12px; border-radius:10px; color:#555; font-size:0.9rem;">
-                        <i class="fas fa-shopping-bag"></i> ${produits}
-                    </div>
-
-                    <div class="actions">
-                        <button class="btn-action btn-ok" onclick="modifierStatut('${idCommande}', 'SÉRIEUX')">
-                            <i class="fas fa-check"></i> PAYÉ
-                        </button>
-                        <button class="btn-action" style="background:#e3f2fd; color:#1976d2; border:1px solid #1976d2;" 
-                            onclick="voirFacture('${idCommande}', '${nomClient}', '${montant}', '${produits.replace(/'/g, "\\'")}', '${livraison}')">
-                            <i class="fas fa-qrcode"></i> FACTURE
-                        </button>
-                        <button class="btn-action btn-ban" onclick="modifierStatut('${idCommande}', 'PAS SÉRIEUX')">
-                            <i class="fas fa-user-slash"></i> BAN
-                        </button>
-                    </div>
-                </div>`;
-        });
-    } catch (e) { 
-        list.innerHTML = "<p style='color:red; text-align:center;'>Erreur de lecture du Sheet.</p>"; 
-    }
-}
-
-        async function modifierStatut(idCommande, nouveauStatut) {
-            if(!idCommande) return alert("Erreur: ID de commande introuvable.");
-            if(!confirm(`Passer cette commande en statut : ${nouveauStatut} ?`)) return;
-            const loader = document.getElementById('loading');
-            loader.style.display = "flex";
+            document.getElementById('loading').style.display = "flex";
             try {
                 await fetch(API_URL, {
                     method: "POST",
                     mode: "no-cors",
-                    body: JSON.stringify({ action: "updateStatut", idCommande: idCommande, nouveauStatut: nouveauStatut })
+                    body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
                 });
-                setTimeout(() => { loader.style.display = "none"; charger(); }, 2000);
-            } catch (e) { alert("Erreur lors de la mise à jour."); loader.style.display = "none"; }
+                input.value = "";
+                setTimeout(() => { document.getElementById('loading').style.display = "none"; chargerConversations(); }, 1500);
+            } catch(e) { alert("Erreur d'envoi"); }
         }
 
-    function voirFacture(id, nom, montant, produits, livraison) {
-    const modal = document.getElementById('modal-facture');
-    const details = document.getElementById('facture-details');
-    const qrcodeDiv = document.getElementById('admin-qrcode');
+        async function modifierStatut(id, statut) {
+            if(!confirm("Changer le statut ?")) return;
+            document.getElementById('loading').style.display = "flex";
+            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) });
+            setTimeout(() => { document.getElementById('loading').style.display = "none"; charger(); }, 2000);
+        }
 
-    qrcodeDiv.innerHTML = "";
-    details.innerHTML = `
-        <p><b>ID :</b> ${id}</p>
-        <p><b>Client :</b> ${nom}</p>
-        <p><b>Montant :</b> ${Number(montant).toLocaleString()} Ar</p>
-        <hr style="border:none; border-top:1px dashed #ccc; margin:10px 0;">
-        <p style="color:#d35400; font-weight:bold; margin:0;">
-            <i class="fas fa-truck"></i> ${livraison}
-        </p>
-        <hr style="border:none; border-top:1px dashed #ccc; margin:10px 0;">
-        <p><b>Produits :</b> ${produits}</p>
-    `;
-
-    new QRCode(qrcodeDiv, {
-        text: `REF:${id}|TOTAL:${montant}|LIV:${livraison}`,
-        width: 150,
-        height: 150
-    });
-
-    modal.style.display = "flex";
-}
+        function voirFacture(id, nom, montant, produits, livraison) {
+            const modal = document.getElementById('modal-facture');
+            const details = document.getElementById('facture-details');
+            const qrcodeDiv = document.getElementById('admin-qrcode');
+            qrcodeDiv.innerHTML = "";
+            details.innerHTML = `<p><b>ID :</b> ${id}</p><p><b>Client :</b> ${nom}</p><p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p><p><b>Livraison :</b> ${livraison}</p><p><b>Produits :</b> ${produits}</p>`;
+            new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
+            modal.style.display = "flex";
+        }
     </script>
 </body>
 </html>
