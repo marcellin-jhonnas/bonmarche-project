@@ -109,7 +109,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
     const USER_ADMIN = "admin";
     const PASS_ADMIN = "SafeRun2026"; 
     const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
@@ -128,7 +128,7 @@
         } else { document.getElementById('err-msg').style.display = 'block'; }
     }
 
-    // --- NAVIGATION (Version avec Alerte) ---
+    // --- NAVIGATION ---
     function switchTab(tab) {
         document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
         document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
@@ -147,7 +147,7 @@
         }
     }
 
-    // --- LOGIQUE COMMANDES ---
+    // --- LOGIQUE COMMANDES (AVEC LIEU EXACT) ---
     async function charger() {
         const list = document.getElementById('commandes-liste');
         list.innerHTML = "<p style='text-align:center;'>Chargement des données...</p>";
@@ -155,9 +155,21 @@
             const res = await fetch(API_URL + "?action=getCommandes");
             const data = await res.json();
             list.innerHTML = "";
+            
+            // On affiche les plus récentes en premier
             data.reverse().forEach(cmd => {
                 const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
                 const classeCard = statut === "SÉRIEUX" ? "status-serieux" : (statut === "PAS SÉRIEUX" ? "status-danger" : "");
+                
+                // Récupération sécurisée de la colonne I (Lieu Exact)
+                const lieu = cmd["Lieu Exact"] || "Non précisé";
+                
+                // Sécurisation des textes pour les boutons (évite les bugs avec les apostrophes)
+                const nomEscaped = (cmd["Client"] || "Anonyme").replace(/'/g, "\\'");
+                const prodEscaped = (cmd["Produits"] || "").replace(/'/g, "\\'");
+                const livEscaped = (cmd["Livraison"] || "").replace(/'/g, "\\'");
+                const lieuEscaped = lieu.replace(/'/g, "\\'");
+
                 list.innerHTML += `
                     <div class="order-card ${classeCard}">
                         <div style="display:flex; justify-content:space-between;">
@@ -165,16 +177,64 @@
                             <b style="color:var(--orange)">${Number(cmd["Montant"]).toLocaleString()} Ar</b>
                         </div>
                         <p style="font-size:0.85rem; color:#666; margin:5px 0;">ID: ${cmd["ID"]} | Tel: ${cmd["Téléphone"]}</p>
+                        
+                        <div style="background:#fff3e0; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:8px; border-left:4px solid var(--orange);">
+                            <i class="fas fa-map-marker-alt" style="color:var(--orange)"></i> <b>Lieu :</b> ${lieu}
+                        </div>
+
                         <div style="background:#f9f9f9; padding:8px; border-radius:5px; font-size:0.85rem;">${cmd["Produits"]}</div>
-                        <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
-                        <div style="margin-top:10px;">
+                        <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold; margin-top:5px;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
+                        
+                        <div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap;">
                             <button class="btn-action" style="background:var(--success); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">PAYÉ</button>
-                            <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${cmd["Client"]}', '${cmd["Montant"]}', '${cmd["Produits"].replace(/'/g, "\\'")}', '${cmd["Livraison"]}')">FACTURE</button>
+                            <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${nomEscaped}', '${cmd["Montant"]}', '${prodEscaped}', '${livEscaped}', '${lieuEscaped}')">FACTURE</button>
                             <button class="btn-action" style="background:var(--danger); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">BAN</button>
                         </div>
                     </div>`;
             });
         } catch(e) { list.innerHTML = "Erreur de connexion."; }
+    }
+
+    // --- LOGIQUE FACTURE ---
+    function voirFacture(id, nom, montant, produits, livraison, lieu) {
+        const modal = document.getElementById('modal-facture');
+        const details = document.getElementById('facture-details');
+        const qrcodeDiv = document.getElementById('admin-qrcode');
+        qrcodeDiv.innerHTML = "";
+        
+        details.innerHTML = `
+            <div style="text-align:left; font-size:0.9rem;">
+                <p><b>ID :</b> ${id}</p>
+                <p><b>Client :</b> ${nom}</p>
+                <p style="background:#fff3e0; padding:5px; border-radius:5px;"><b>📍 Lieu Exact :</b> ${lieu}</p>
+                <p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p>
+                <p><b>Livraison :</b> ${livraison}</p>
+                <p><b>Produits :</b> ${produits}</p>
+            </div>
+        `;
+        
+        new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
+        modal.style.display = "flex";
+    }
+
+    // --- LOGIQUE STATUT ---
+    async function modifierStatut(id, statut) {
+        if(!confirm("Changer le statut de la commande " + id + " ?")) return;
+        document.getElementById('loading').style.display = "flex";
+        try {
+            await fetch(API_URL, { 
+                method: "POST", 
+                mode: "no-cors", 
+                body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) 
+            });
+            setTimeout(() => { 
+                document.getElementById('loading').style.display = "none"; 
+                charger(); 
+            }, 2000);
+        } catch(e) { 
+            alert("Erreur réseau");
+            document.getElementById('loading').style.display = "none";
+        }
     }
 
     // --- LOGIQUE CHAT ADMIN ---
@@ -198,7 +258,6 @@
                 };
                 list.appendChild(div);
             });
-            // Mettre à jour le compteur pour éviter une alerte au chargement initial
             messageCountTotal = messages.length;
         } catch(e) { list.innerHTML = "Erreur chat."; }
     }
@@ -220,73 +279,29 @@
     }
 
     async function envoyerReponseAdmin() {
-    const input = document.getElementById('input-msg-admin');
-    const msg = input.value.trim();
-    const area = document.getElementById('chat-admin-messages');
-    
-    // On vérifie qu'il y a un message et un client sélectionné
-    if(!msg || !clientActuel) return;
+        const input = document.getElementById('input-msg-admin');
+        const msg = input.value.trim();
+        const area = document.getElementById('chat-admin-messages');
+        if(!msg || !clientActuel) return;
 
-    // --- 1. AFFICHAGE IMMÉDIAT DANS L'INTERFACE (UI OPTIMISTE) ---
-    const heure = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    area.innerHTML += `
-        <div class="bubble admin">
-            ${msg}
-            <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${heure}</div>
-        </div>`;
-    
-    input.value = ""; // On vide le champ de saisie immédiatement
-    area.scrollTop = area.scrollHeight; // On descend tout en bas
+        const heure = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        area.innerHTML += `<div class="bubble admin">${msg}<div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${heure}</div></div>`;
+        input.value = ""; 
+        area.scrollTop = area.scrollHeight;
 
-    // --- 2. ENVOI DISCRET AU SERVEUR (SANS LOADER) ---
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ 
-                action: "sendChatMessage", 
-                idClient: clientActuel, 
-                expediteur: "Admin", 
-                message: msg 
-            })
-        });
-        
-        // On augmente le compteur interne pour éviter que le rafraîchissement 
-        // automatique ne croie que c'est un nouveau message entrant
-        messageCountTotal++; 
-    } catch(e) { 
-        console.error("Erreur d'envoi", e);
-        alert("Erreur de connexion : le message n'a peut-être pas été envoyé.");
-    }
-}
-// Envoi automatique quand on appuie sur la touche Entrée
-document.getElementById('input-msg-admin').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        envoyerReponseAdmin();
-    }
-});
-
-    async function modifierStatut(id, statut) {
-        if(!confirm("Changer le statut ?")) return;
-        document.getElementById('loading').style.display = "flex";
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) });
-        setTimeout(() => { document.getElementById('loading').style.display = "none"; charger(); }, 2000);
+        try {
+            await fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
+            });
+            messageCountTotal++; 
+        } catch(e) { console.error("Erreur d'envoi", e); }
     }
 
-    function voirFacture(id, nom, montant, produits, livraison) {
-        const modal = document.getElementById('modal-facture');
-        const details = document.getElementById('facture-details');
-        const qrcodeDiv = document.getElementById('admin-qrcode');
-        qrcodeDiv.innerHTML = "";
-        details.innerHTML = `<p><b>ID :</b> ${id}</p><p><b>Client :</b> ${nom}</p><p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p><p><b>Livraison :</b> ${livraison}</p><p><b>Produits :</b> ${produits}</p>`;
-        new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
-        modal.style.display = "flex";
-    }
-
-    // --- SYSTÈME D'ALERTE ET MISE À JOUR RAPIDE (4s) ---
+    // --- SYNC AUTO ET ALERTES ---
     setInterval(async () => {
         if (rafraichissementEnCours) return;
-
         rafraichissementEnCours = true;
         try {
             const res = await fetch(API_URL + "?action=readAllChat");
@@ -297,8 +312,7 @@ document.getElementById('input-msg-admin').addEventListener('keypress', function
                     const dernierMsg = messages[messages.length - 1];
                     if (dernierMsg.expediteur !== "Admin") {
                         const audio = document.getElementById('notif-sound');
-                        if(audio) audio.play().catch(e => console.log("Audio bloqué par le navigateur"));
-                        
+                        if(audio) audio.play().catch(e => {});
                         if (document.getElementById('section-chat-container').style.display !== 'flex') {
                             alerterNouvelleConversation(dernierMsg.idClient);
                         }
@@ -307,10 +321,14 @@ document.getElementById('input-msg-admin').addEventListener('keypress', function
                 messageCountTotal = messages.length;
             }
 
-            if (document.getElementById('section-chat-container').style.display === 'flex') {
-                mettreAJourInterfaceChat(messages);
+            if (document.getElementById('section-chat-container').style.display === 'flex' && clientActuel) {
+                const area = document.getElementById('chat-admin-messages');
+                const messagesFiltres = messages.filter(m => m.idClient === clientActuel);
+                if (area.children.length !== messagesFiltres.length) {
+                    afficherDiscussion(clientActuel, messages);
+                }
             }
-        } catch (e) { console.log("Synchro..."); } 
+        } catch (e) { } 
         finally { rafraichissementEnCours = false; }
     }, 4000);
 
@@ -318,24 +336,7 @@ document.getElementById('input-msg-admin').addEventListener('keypress', function
         const tabChat = document.getElementById('btn-tab-chat');
         tabChat.style.background = "#e74c3c"; 
         tabChat.style.color = "white";
-        tabChat.innerHTML = `<i class="fas fa-bell"></i> NOUVEAU : ${nomClient}`;
-    }
-
-    async function mettreAJourInterfaceChat(messages) {
-        const list = document.getElementById('liste-clients-chat');
-        const clients = [...new Set(messages.map(m => m.idClient))];
-        
-        if (list.children.length !== clients.length) {
-            chargerConversations();
-        }
-
-        if (clientActuel) {
-            const area = document.getElementById('chat-admin-messages');
-            const messagesFiltres = messages.filter(m => m.idClient === clientActuel);
-            if (area.children.length !== messagesFiltres.length) {
-                afficherDiscussion(clientActuel, messages);
-            }
-        }
+        tabChat.innerHTML = `<i class="fas fa-bell"></i> NOUVEAU MSG`;
     }
 </script>
 </body>
