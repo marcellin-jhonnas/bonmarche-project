@@ -1388,12 +1388,14 @@ setInterval(async () => {
 // --- SYSTÈME D'IDENTIFICATION UNIQUE ---
 // Génère ou récupère l'identifiant unique (Inscrit ou Invité)
 function obtenirIdentiteChat() {
-    // 1. On vérifie si l'utilisateur est inscrit (via son nom ou tel)
-    const nomClient = localStorage.getItem('saferun_nom');
-    if (nomClient && nomClient !== "Anonyme") return nomClient;
+    // 1. On cherche d'abord le téléphone (c'est l'identifiant unique parfait)
+    const telClient = localStorage.getItem('saferun_tel');
+    if (telClient && telClient !== "") return telClient;
 
-    // 2. Sinon, on lui crée un ID "GUEST" unique s'il n'en a pas déjà un
+    // 2. Si pas de tel, on cherche si l'utilisateur a déjà un ID d'invité
     let guestId = localStorage.getItem('saferun_guest_id');
+    
+    // 3. Si rien n'existe du tout, on crée le GUEST ID
     if (!guestId) {
         guestId = "GUEST-" + Math.floor(1000 + Math.random() * 9000);
         localStorage.setItem('saferun_guest_id', guestId);
@@ -1508,9 +1510,12 @@ async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
     
-    // Utilisation de l'ID unique (GUEST ou TEL)
+    // On récupère l'ID (GUEST ou TEL)
     const idClient = obtenirIdentiteChat(); 
-    const nomAffichage = localStorage.getItem('saferun_nom') || "Visiteur";
+    
+    // CONDITION : On récupère le nom s'il existe, sinon on utilise l'ID
+    const nomClient = localStorage.getItem('saferun_nom');
+    const expediteurFinal = (nomClient && nomClient !== "Anonyme") ? nomClient : idClient;
 
     if (!message) return;
 
@@ -1524,9 +1529,7 @@ async function envoyerMessageChat() {
     input.value = "";
     container.scrollTop = container.scrollHeight;
 
-    // 2. MISE À JOUR DU COMPTEUR INTERNE
-    // On augmente manuellement le compteur pour que la fonction de chargement 
-    // automatique ne croit pas que c'est un message entrant de l'Admin.
+    // 2. MISE À JOUR DU COMPTEUR
     dernierNombreMessages++; 
 
     try {
@@ -1536,23 +1539,21 @@ async function envoyerMessageChat() {
             body: JSON.stringify({ 
                 action: "sendChatMessage", 
                 idClient: idClient, 
-                expediteur: "Client", // L'Admin trie souvent par "Client" ou "Admin"
+                expediteur: expediteurFinal, 
                 message: message 
             })
         });
     } catch (e) { 
         console.error("Erreur d'envoi", e);
-        // Optionnel: ajouter un petit message "Erreur d'envoi" en rouge si ça échoue
     }
 }
 
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
-    // MODIFICATION : On utilise obtenirIdentiteChat() au lieu de localStorage
+    // Utilise l'ID unique (GUEST ou TEL)
     const idClient = obtenirIdentiteChat(); 
     const chatWindow = document.getElementById('chat-window');
 
-    // On ne bloque plus si l'ID est un GUEST
     try {
         const response = await fetch(`${scriptURL}?action=readChat&idClient=${idClient}`);
         const messages = await response.json();
@@ -1578,16 +1579,21 @@ async function chargerMessagesChat() {
                 `;
             });
 
+            // Gérer la notification si le chat est fermé
             if (chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
                 const badge = document.getElementById('chat-notif');
-                badge.style.display = "flex";
-                badge.innerText = messages.length - dernierNombreMessages;
+                if (badge) {
+                    badge.style.display = "flex";
+                    badge.innerText = messages.length - dernierNombreMessages;
+                }
             }
 
             dernierNombreMessages = messages.length;
             container.scrollTop = container.scrollHeight;
         }
-    } catch (e) { console.log("Synchro..."); }
+    } catch (e) { 
+        console.log("Synchro chat..."); 
+    }
 }
 
 setInterval(chargerMessagesChat, 5000);
