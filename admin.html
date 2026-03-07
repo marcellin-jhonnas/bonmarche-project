@@ -197,117 +197,132 @@
 </head>
 <body>
    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
-<div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i> &nbsp; Synchronisation...</div>
-
-<div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
-    <div class="facture-content" onclick="event.stopPropagation()">
-        <h3><i class="fas fa-file-invoice"></i> Facture Client</h3>
-        <div id="admin-qrcode" style="display:flex; justify-content:center; margin: 15px 0;"></div>
-        <div id="facture-details" style="text-align:left; font-size:0.85rem; background:#f9f9f9; padding:10px; border-radius:10px;"></div>
-        <button onclick="document.getElementById('modal-facture').style.display='none'" style="margin-top:15px; width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">FERMER</button>
-    </div>
-</div>
-
-<div id="login-overlay">
-    <div id="login-box">
-        <div style="font-size: 3rem; color: var(--orange);"><i class="fas fa-user-shield"></i></div>
-        <h2>SafeRun Manager</h2>
-        <input type="text" id="user" placeholder="Utilisateur">
-        <input type="password" id="pass" placeholder="Mot de passe">
-        <button class="btn-login" onclick="verifierConnexion()">SE CONNECTER</button>
-        <p id="err-msg" style="color:red; display:none; margin-top:15px;">Accès refusé.</p>
-    </div>
-</div>
-
-<div id="admin-panel" class="admin-layout" style="display:none;">
-    
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2 style="margin:0; font-size:1.5rem;"><span style="color:var(--orange)">Safe</span>Run</h2>
-            <small style="opacity:0.5">Console de Gestion</small>
+    <div id="loading" class="loading-overlay">
+        <div style="text-align:center;">
+            <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--orange)"></i>
+            <p style="margin-top:10px; font-weight:bold;">Synchronisation...</p>
         </div>
-        <nav class="nav-menu">
-            <div class="nav-item active" id="btn-tab-dashboard" onclick="switchTab('dashboard')">
-                <i class="fas fa-th-large"></i> Dashboard
-            </div>
-            <div class="nav-item" id="btn-tab-cmd" onclick="switchTab('commandes')">
-                <i class="fas fa-shopping-cart"></i> Commandes
-            </div>
-            <div class="nav-item" id="btn-tab-chat" onclick="switchTab('chat')">
-                <i class="fas fa-comments"></i> Conversations
-            </div>
-        </nav>
-        <div style="padding: 20px;">
-            <button onclick="location.reload()" style="width:100%; background:rgba(231, 76, 60, 0.1); color:var(--danger); border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:bold;">
-                <i class="fas fa-power-off"></i> Déconnexion
-            </button>
+    </div>
+
+    <div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
+        <div class="facture-content" onclick="event.stopPropagation()">
+            <h3><i class="fas fa-file-invoice"></i> Facture Client</h3>
+            <div id="admin-qrcode" style="display:flex; justify-content:center; margin: 15px 0;"></div>
+            <div id="facture-details" style="text-align:left; font-size:0.85rem; background:#f9f9f9; padding:10px; border-radius:10px;"></div>
+            <button onclick="document.getElementById('modal-facture').style.display='none'" style="margin-top:15px; width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">FERMER</button>
         </div>
-    </aside>
+    </div>
 
-    <main class="main-content">
-        <header class="top-bar">
-            <h3 id="page-title" style="margin:0; color:var(--dark);">Tableau de bord</h3>
-            <div style="display:flex; align-items:center; gap:20px;">
-                <div style="position:relative;">
-                    <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#aaa;"></i>
-                    <input type="text" id="admin-search" placeholder="Rechercher..." onkeyup="filtrerCommandes()" style="margin:0; padding:10px 10px 10px 35px; border-radius:20px; border:1px solid #eee; background:#f9f9f9; width:250px;">
-                </div>
-                <i class="fas fa-sync" onclick="charger()" style="cursor:pointer; color:var(--dark);"></i>
+    <div id="login-overlay">
+        <div id="login-box">
+            <div style="font-size: 3rem; color: var(--orange); margin-bottom:10px;"><i class="fas fa-user-shield"></i></div>
+            <h2 style="margin-bottom:20px;">SafeRun Manager</h2>
+            <input type="text" id="user" placeholder="Utilisateur">
+            <input type="password" id="pass" placeholder="Mot de passe">
+            <button class="btn-login" onclick="verifierConnexion()" style="margin-top:10px; background:var(--orange); color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">SE CONNECTER</button>
+            <p id="err-msg" style="color:red; display:none; margin-top:15px;">Accès refusé.</p>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="admin-layout" style="display:none;">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 style="margin:0; font-size:1.8rem; letter-spacing:1px;">
+                    <span style="color:var(--orange)">Safe</span>Run
+                </h2>
+                <small style="color:rgba(255,255,255,0.5)">CONSOLE ADMIN</small>
             </div>
-        </header>
-
-        <div class="section-body">
             
-            <div id="view-dashboard" class="page-view active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background:var(--orange)"><i class="fas fa-box"></i></div>
-                        <div><p style="margin:0; color:#888;">Commandes</p><h2 id="stat-count-dash" style="margin:0;">0</h2></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background:var(--success)"><i class="fas fa-dollar-sign"></i></div>
-                        <div><p style="margin:0; color:#888;">Revenus</p><h2 id="stat-total-dash" style="margin:0;">0 Ar</h2></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background:var(--whatsapp)"><i class="fas fa-users"></i></div>
-                        <div><p style="margin:0; color:#888;">Clients actifs</p><h2 id="stat-clients-dash" style="margin:0;">0</h2></div>
-                    </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" id="btn-tab-dashboard" onclick="switchTab('dashboard')">
+                    <i class="fas fa-chart-pie"></i> Dashboard
                 </div>
-                <div style="background:white; padding:25px; border-radius:15px; height:300px; display:flex; align-items:center; justify-content:center; color:#ccc; border:2px dashed #eee;">
-                    <i class="fas fa-chart-line"></i> &nbsp; Graphique des ventes (Prêt à être activé)
+                <div class="nav-item" id="btn-tab-cmd" onclick="switchTab('commandes')">
+                    <i class="fas fa-shopping-basket"></i> Commandes
                 </div>
-            </div>
+                <div class="nav-item" id="btn-tab-chat" onclick="switchTab('chat')">
+                    <i class="fas fa-comment-dots"></i> Conversations
+                </div>
+            </nav>
 
-            <div id="view-commandes" class="page-view">
-                <div id="commandes-liste"></div>
+            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button onclick="location.reload()" style="width:100%; background:rgba(231, 76, 60, 0.1); color:var(--danger); border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:bold; transition:0.3s;">
+                    <i class="fas fa-power-off"></i> Déconnexion
+                </button>
             </div>
+        </aside>
 
-            <div id="view-chat" class="page-view">
-                <div id="section-chat-container" style="display: flex;">
-                    <div id="section-chat" style="width:100%; display:flex;">
-                        <div class="chat-sidebar">
-                            <div style="padding:15px; background:var(--whatsapp); color:white; font-weight:bold;"><i class="fas fa-users"></i> Messages</div>
-                            <div id="liste-clients-chat" style="overflow-y:auto; flex:1;"></div>
-                        </div>
-                        <div class="chat-main">
-                            <div id="chat-admin-header" style="padding:15px; background:#f8f9fa; font-weight:bold; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between;">
-                                <span>Sélectionnez un client</span>
-                                <button onclick="nettoyerVueChat()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-broom"></i></button>
+        <main class="main-content">
+            <header class="top-bar">
+                <h3 id="page-title" style="margin:0; color:var(--dark); font-weight:600;">Tableau de bord</h3>
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div style="position:relative;">
+                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#aaa;"></i>
+                        <input type="text" id="admin-search" placeholder="Rechercher une commande..." onkeyup="filtrerCommandes()" style="margin:0; padding:10px 10px 10px 35px; border-radius:20px; border:1px solid #eee; background:#f9f9f9; width:250px;">
+                    </div>
+                    <button onclick="charger()" style="border:none; background:none; cursor:pointer; font-size:1.2rem; color:var(--dark);"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </header>
+
+            <div class="section-body">
+                
+                <div id="view-dashboard" class="page-view active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:var(--orange)"><i class="fas fa-box-open"></i></div>
+                            <div>
+                                <p style="margin:0; color:#888; font-size:0.9rem;">Total Commandes</p>
+                                <h2 id="stat-count-dash" style="margin:0; font-size:1.8rem;">0</h2>
                             </div>
-                            <div id="chat-admin-messages" class="chat-messages-area"></div>
-                            <div id="chat-admin-input-area" style="padding:15px; background:white; display:none; gap:10px; border-top:1px solid #eee;">
-                                <input type="text" id="input-msg-admin" placeholder="Écrire ici..." style="flex:1; border:1px solid #eee; padding:12px; border-radius:25px; background:#f9f9f9;">
-                                <button onclick="envoyerReponseAdmin()" style="background:var(--whatsapp); color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:var(--success)"><i class="fas fa-wallet"></i></div>
+                            <div>
+                                <p style="margin:0; color:#888; font-size:0.9rem;">Chiffre d'Affaires</p>
+                                <h2 id="stat-total-dash" style="margin:0; font-size:1.8rem;">0 Ar</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:white; padding:30px; border-radius:15px; height:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ccc; border:2px dashed #eee; margin-top:10px;">
+                        <i class="fas fa-chart-line fa-3x" style="margin-bottom:15px;"></i>
+                        <p>Analyse des ventes en temps réel</p>
+                    </div>
+                </div>
+
+                <div id="view-commandes" class="page-view">
+                    <div id="commandes-liste"></div>
+                </div>
+
+                <div id="view-chat" class="page-view">
+                    <div id="section-chat-container">
+                        <div id="section-chat" style="width:100%; display:flex; height:100%;">
+                            <div class="chat-sidebar" style="width:30%; background:#f8f9fa; border-right:1px solid #eee; display:flex; flex-direction:column;">
+                                <div style="padding:20px; background:var(--whatsapp); color:white; font-weight:bold; font-size:0.9rem;">
+                                    <i class="fas fa-users"></i> CLIENTS EN LIGNE
+                                </div>
+                                <div id="liste-clients-chat" style="overflow-y:auto; flex:1;"></div>
+                            </div>
+                            <div class="chat-main" style="flex:1; display:flex; flex-direction:column; background:#e5ddd5;">
+                                <div id="chat-admin-header" style="padding:15px; background:#f0f0f0; font-weight:bold; border-bottom:1px solid #ddd; display:flex; align-items:center; justify-content:space-between;">
+                                    <span><i class="fas fa-comment-alt"></i> Discussion</span>
+                                    <button onclick="nettoyerVueChat()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-eraser"></i></button>
+                                </div>
+                                <div id="chat-admin-messages" class="chat-messages-area" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;"></div>
+                                <div id="chat-admin-input-area" style="padding:15px; background:#f0f0f0; display:none; gap:10px; border-top:1px solid #ddd;">
+                                    <input type="text" id="input-msg-admin" placeholder="Tapez votre réponse..." style="flex:1; border:none; padding:12px 20px; border-radius:25px; outline:none; box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">
+                                    <button onclick="envoyerReponseAdmin()" style="background:var(--whatsapp); color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </div>
-
-        </div>
-    </main>
-</div>
-
+        </main>
+    </div>
    <script>
     const USER_ADMIN = "admin";
     const PASS_ADMIN = "SafeRun2026"; 
