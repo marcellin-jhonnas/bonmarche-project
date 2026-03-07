@@ -1383,50 +1383,97 @@ function toggleChat() {
     
     if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
         chatWindow.style.display = "flex";
+        
+        // On cache la promo pour ne pas encombrer l'écran ouvert
         if (promo) promo.style.display = "none";
+        
         document.getElementById('chat-notif').style.display = "none";
         
         const msgContainer = document.getElementById('chat-messages');
-        msgContainer.scrollTop = msgContainer.scrollHeight;
+        if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
     } else {
         chatWindow.style.display = "none";
-        if (promo) promo.style.display = "block";
+        
+        if (promo) {
+            promo.style.display = "block";
+            // MODIFICATION ICI : on relance l'animation de frappe
+            // pour que le site redevienne "vivant" immédiatement.
+            animerMessagePromo(); 
+        }
     }
 }
 
-// 3. LOGIQUE DU VOLET ROULANT (BILINGUE)
-const messagesPromo = [
-    "🚀 Commande validée dès réception du paiement",
-    "🚀 Voamarina ny kaomandinao raha vao voaray ny sarany",
-    "💳 Payez via MVola/AirtelMoney pour réserver",
-    "💳 Aloavy amin'ny finday mba hanamafisana ny baiko",
-    "🔒 Transaction 100% sécurisée",
-    "🔒 Antoka feno ny fandoavam-bola",
-    "⚡ Votre reçu envoyé immédiatement après paiement",
-    "⚡ Handefasana tapakila ianao raha vao voaray ny vola",
-    "📦 Livraison prioritaire pour les pré-paiements",
-    "📦 Laharam-pahamehana ny mpandoa vola mialoha"
-];
+// 3. LOGIQUE DU VOLET ROULANT (BILINGUE + EFFET FRAPPE)
+function obtenirMessagesSelonHeure() {
+    const heure = new Date().getHours();
+    
+    // Ton nouveau message d'accueil (Matin)
+    const messagesMatin = [
+        "👋 Bienvenue chez SafeRun Market",
+        "👋 Tongasoa eto amin’ny SafeRun Market",
+        "Nous livrons vos produits rapidement à Tana",
+        "Entana ilainao alefa haingana ato Antananarivo",
+        "Besoin d’aide pour choisir ?",
+        "💬 Mila fanazavana ve ianao?",
+        "💬 Discutez avec nous maintenant.",
+        "💬 Mifandraisa aminay izao."
+    ];
+
+    // Ton offre spéciale (Après-midi dès 14h)
+    const messagesApresMidi = [
+        "🎁 Offre spéciale aujourd’hui",
+        "🎁 Tolotra manokana anio",
+        "Livraison disponible demain matin.",
+        "Afaka alefa rahampitso maraina ny entanao.",
+        "Commandez maintenant pour réserver !",
+        "🛒 Manaova commande dieny izao.",
+        "💬 Un conseiller vous répond ici",
+        "💬 Miresaha aminay ato."
+    ];
+
+    return (heure >= 14) ? messagesApresMidi : messagesMatin;
+}
+
+let isTyping = false;
+
+function taperMessage(element, texte, callback) {
+    if (!element) return;
+    let i = 0;
+    element.innerHTML = ""; 
+    isTyping = true;
+    
+    function type() {
+        if (i < texte.length) {
+            element.innerHTML += texte.charAt(i);
+            i++;
+            setTimeout(type, 35); // Vitesse légèrement plus rapide pour le confort (35ms)
+        } else {
+            isTyping = false;
+            if (callback) setTimeout(callback, 2500); // Pause avant le prochain message
+        }
+    }
+    type();
+}
 
 function animerMessagePromo() {
     const bubble = document.getElementById('chat-promo-text');
     const chatWindow = document.getElementById('chat-window');
     
-    if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
-        if (bubble) {
-            bubble.style.opacity = "0";
-            bubble.style.transform = "translateY(5px)";
-            setTimeout(() => {
-                bubble.innerText = messagesPromo[indexMsg];
-                bubble.style.opacity = "1";
-                bubble.style.transform = "translateY(0)";
-                indexMsg = (indexMsg + 1) % messagesPromo.length;
-            }, 400);
-        }
-    }
-}
-setInterval(animerMessagePromo, 3000);
+    // On vérifie si le chat est ouvert
+    const isChatOpen = chatWindow && (chatWindow.style.display === "flex");
 
+    if (isChatOpen || isTyping || !bubble) return;
+
+    const messagesActuels = obtenirMessagesSelonHeure();
+    const messageATaper = messagesActuels[indexMsg];
+
+    bubble.style.opacity = "1";
+    
+    taperMessage(bubble, messageATaper, () => {
+        indexMsg = (indexMsg + 1) % messagesActuels.length;
+        animerMessagePromo(); 
+    });
+}
 // 4. ENVOI DE MESSAGE
 async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
@@ -1499,3 +1546,7 @@ async function chargerMessagesChat() {
 }
 
 setInterval(chargerMessagesChat, 5000);
+// Lancement sécurisé une fois que tout le HTML est chargé
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(animerMessagePromo, 2000);
+});

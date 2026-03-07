@@ -1450,7 +1450,24 @@ body.sidebar-open .sidebar-overlay {
     animation: slideUp 0.5s ease-out forwards;
 }
 
+/* Modifié pour l'effet machine à écrire */
 #chat-promo-text {
-    pointer-events: none; /* Le client peut cliquer "à travers" le message */
-    white-space: nowrap; /* Évite que le texte se coupe en deux lignes */
+    pointer-events: none;
+    white-space: normal; /* Changé de nowrap à normal pour accepter les messages longs */
+    min-height: 1.2rem; /* Évite que la bulle ne saute quand elle est vide */
+    display: inline-block;
+}
+
+/* Le curseur clignotant après le texte */
+#chat-promo-text::after {
+    content: "|";
+    margin-left: 2px;
+    color: #25D366;
+    font-weight: bold;
+    animation: blinkCursor 0.8s infinite;
+}
+
+@keyframes blinkCursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
