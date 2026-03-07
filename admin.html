@@ -38,7 +38,7 @@
         .client-item:hover { background: #f0f0f0; }
         .client-item.active { background: #fff; border-left-color: var(--whatsapp); font-weight: bold; }
         
-        .chat-messages-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .chat-messages-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); scroll-behavior: smooth; }
         .bubble { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem; box-shadow: 0 1px 1px rgba(0,0,0,0.1); position: relative; }
         .bubble.admin { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
         .bubble.client { align-self: flex-start; background: white; border-bottom-left-radius: 2px; }
@@ -220,22 +220,51 @@
     }
 
     async function envoyerReponseAdmin() {
-        const input = document.getElementById('input-msg-admin');
-        const msg = input.value.trim();
-        if(!msg || !clientActuel) return;
+    const input = document.getElementById('input-msg-admin');
+    const msg = input.value.trim();
+    const area = document.getElementById('chat-admin-messages');
+    
+    // On vérifie qu'il y a un message et un client sélectionné
+    if(!msg || !clientActuel) return;
+
+    // --- 1. AFFICHAGE IMMÉDIAT DANS L'INTERFACE (UI OPTIMISTE) ---
+    const heure = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    area.innerHTML += `
+        <div class="bubble admin">
+            ${msg}
+            <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${heure}</div>
+        </div>`;
+    
+    input.value = ""; // On vide le champ de saisie immédiatement
+    area.scrollTop = area.scrollHeight; // On descend tout en bas
+
+    // --- 2. ENVOI DISCRET AU SERVEUR (SANS LOADER) ---
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ 
+                action: "sendChatMessage", 
+                idClient: clientActuel, 
+                expediteur: "Admin", 
+                message: msg 
+            })
+        });
         
-        document.getElementById('loading').style.display = "flex";
-        try {
-            await fetch(API_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
-            });
-            input.value = "";
-            // On force une mise à jour rapide pour voir notre message
-            setTimeout(() => { document.getElementById('loading').style.display = "none"; chargerConversations(); }, 1000);
-        } catch(e) { alert("Erreur d'envoi"); document.getElementById('loading').style.display = "none"; }
+        // On augmente le compteur interne pour éviter que le rafraîchissement 
+        // automatique ne croie que c'est un nouveau message entrant
+        messageCountTotal++; 
+    } catch(e) { 
+        console.error("Erreur d'envoi", e);
+        alert("Erreur de connexion : le message n'a peut-être pas été envoyé.");
     }
+}
+// Envoi automatique quand on appuie sur la touche Entrée
+document.getElementById('input-msg-admin').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        envoyerReponseAdmin();
+    }
+});
 
     async function modifierStatut(id, statut) {
         if(!confirm("Changer le statut ?")) return;
