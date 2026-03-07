@@ -678,16 +678,18 @@ async function traiterPaiement(montant, telClient, livraison, adresse) {
             produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
             correlationId: "SR" + Date.now().toString().slice(-6),
             
-            // --- MODIFICATION ICI ---
-            // On utilise l'adresse reçue, sinon celle du localStorage, sinon "Non précisé"
-            quartier: adresse || localStorage.getItem('saferun_adresse') || "Non précisé",
+            // --- CORRECTION ICI ---
+            // On utilise 'adresse' (passée par la fonction) 
+            // OU 'saferun_quartier' (le nom exact dans ton localStorage)
+            quartier: adresse || localStorage.getItem('saferun_quartier') || "Non précisé",
             
             livraison: livraison 
         };
 
         console.log("Données envoyées au Sheet :", payload);
 
-        fetch(SCRIPT_PAYS_URL, {
+        // On utilise await pour s'assurer que l'envoi est initié avant de continuer
+        await fetch(SCRIPT_PAYS_URL, {
             method: "POST",
             mode: "no-cors", 
             cache: "no-cache",
