@@ -333,54 +333,66 @@
     let messageCountTotal = 0; 
 
     // --- CONNEXION ---
-    function verifierConnexion() {
-        if(document.getElementById('user').value === USER_ADMIN && document.getElementById('pass').value === PASS_ADMIN) {
-            document.getElementById('login-box').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'block';
-            document.body.style.alignItems = 'flex-start';
-            charger();
-        } else { document.getElementById('err-msg').style.display = 'block'; }
-    }
-
-    // --- NAVIGATION ---
-    function switchTab(tab) {
-    // 1. Gestion de l'affichage des sections (Pages)
-    // On cache tout par défaut, puis on affiche selon l'onglet
-    document.getElementById('view-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
-    document.getElementById('view-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
-    document.getElementById('view-chat').style.display = tab === 'chat' ? 'block' : 'none';
-
-    // 2. Gestion visuelle des boutons de la Sidebar (Active / Inactive)
-    const btnDash = document.getElementById('btn-tab-dashboard');
-    const btnCmd = document.getElementById('btn-tab-cmd');
-    const btnChat = document.getElementById('btn-tab-chat');
-
-    // On retire la classe 'active' de tous les boutons
-    [btnDash, btnCmd, btnChat].forEach(btn => {
-        if(btn) btn.classList.remove('active');
-    });
-
-    // On ajoute la classe 'active' au bouton cliqué
-    if (tab === 'dashboard') btnDash.classList.add('active');
-    if (tab === 'commandes') btnCmd.classList.add('active');
-    if (tab === 'chat') btnChat.classList.add('active');
-
-    // 3. Mise à jour du titre de la page en haut (Top Bar)
-    const pageTitle = document.getElementById('page-title');
-    if (tab === 'dashboard') pageTitle.innerText = "Tableau de Bord";
-    if (tab === 'commandes') pageTitle.innerText = "Gestion des Commandes";
-    if (tab === 'chat') pageTitle.innerText = "Messagerie Client";
-
-    // 4. LOGIQUE SPÉCIFIQUE AU CHAT : Effacer l'alerte "Nouveau Message"
-    if (tab === 'chat') {
-        // On remet le style du bouton à la normale (au cas où il était rouge)
-        btnChat.style.background = ""; 
-        btnChat.style.color = "";      
-        btnChat.innerHTML = `<i class="fas fa-comments"></i> Conversations`;
+    // --- 1. CONNEXION MISE À JOUR ---
+function verifierConnexion() {
+    const user = document.getElementById('user').value;
+    const pass = document.getElementById('pass').value;
+    
+    if(user === USER_ADMIN && pass === PASS_ADMIN) {
+        // On cache le login et on affiche le panel avec le nouveau design
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'flex'; // Utilise Flex pour le layout Sidebar
         
-        // On charge les messages immédiatement
+        // Charger les données immédiatement
+        charger();
+        // Déclencher la demande de permission de notification au premier clic
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    } else { 
+        document.getElementById('err-msg').style.display = 'block'; 
+    }
+}
+
+// --- 2. NAVIGATION ENTRE LES ONGLETS (MODERNE) ---
+function switchTab(tab) {
+    // Gestion des vues (Pages)
+    const views = ['view-dashboard', 'view-commandes', 'view-chat'];
+    views.forEach(v => document.getElementById(v).classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+
+    // Gestion visuelle des boutons de la Sidebar
+    const btns = ['btn-tab-dashboard', 'btn-tab-cmd', 'btn-tab-chat'];
+    btns.forEach(b => document.getElementById(b).classList.remove('active'));
+    document.getElementById('btn-tab-' + (tab === 'dashboard' ? 'dashboard' : tab === 'commandes' ? 'cmd' : 'chat')).classList.add('active');
+
+    // Mise à jour du titre dans la Top Bar
+    const titres = { 'dashboard': 'Tableau de Bord', 'commandes': 'Gestion des Commandes', 'chat': 'Messagerie Client' };
+    document.getElementById('page-title').innerText = titres[tab];
+
+    // Logique spécifique au Chat
+    if(tab === 'chat') {
+        const btnChat = document.getElementById('btn-tab-chat');
+        btnChat.style.background = ""; // Retire l'alerte rouge
+        btnChat.style.color = "";
+        btnChat.innerHTML = `<i class="fas fa-comment-dots"></i> Conversations`;
         chargerConversations(); 
     }
+}
+
+// --- 3. MISE À JOUR DES STATS DANS CHARGER() ---
+// Ajoutez ces lignes à l'intérieur de votre fonction charger(), 
+// juste après le calcul de totalCASH et nbCmd :
+
+/* ... votre code actuel dans charger() ...
+   document.getElementById('stat-count').innerText = nbCmd; // Ancien ID
+   document.getElementById('stat-total').innerText = totalCASH.toLocaleString() + " Ar"; // Ancien ID
+*/
+
+// AJOUTER CECI POUR LE DASHBOARD :
+if(document.getElementById('stat-count-dash')) {
+    document.getElementById('stat-count-dash').innerText = nbCmd;
+    document.getElementById('stat-total-dash').innerText = totalCASH.toLocaleString() + " Ar";
 }
 
     // --- LOGIQUE COMMANDES (AVEC LIEU EXACT) ---
