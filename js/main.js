@@ -1385,6 +1385,21 @@ setInterval(async () => {
     mettreAJourSignalValidation(); // <--- Très important pour que le signal s'allume tout seul
 }, 30000);
 
+// --- SYSTÈME D'IDENTIFICATION UNIQUE ---
+// Génère ou récupère l'identifiant unique (Inscrit ou Invité)
+function obtenirIdentiteChat() {
+    // 1. On vérifie si l'utilisateur est inscrit (via son nom ou tel)
+    const nomClient = localStorage.getItem('saferun_nom');
+    if (nomClient && nomClient !== "Anonyme") return nomClient;
+
+    // 2. Sinon, on lui crée un ID "GUEST" unique s'il n'en a pas déjà un
+    let guestId = localStorage.getItem('saferun_guest_id');
+    if (!guestId) {
+        guestId = "GUEST-" + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem('saferun_guest_id', guestId);
+    }
+    return guestId;
+}
 // 1. CONFIGURATION GLOBALE (En haut du fichier)
 const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 let dernierNombreMessages = 0;
@@ -1492,11 +1507,14 @@ function animerMessagePromo() {
 async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
-    const idClient = localStorage.getItem('saferun_nom') || "Anonyme";
+    
+    // Utilisation de l'ID unique (GUEST ou TEL)
+    const idClient = obtenirIdentiteChat(); 
+    const nomAffichage = localStorage.getItem('saferun_nom') || "Visiteur";
 
     if (!message) return;
 
-    // UI Optimiste
+    // 1. AFFICHAGE IMMÉDIAT (UI Optimiste)
     const container = document.getElementById('chat-messages');
     container.innerHTML += `
         <div class="message client" style="background: #dcf8c6; align-self: flex-end; padding: 8px 12px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; font-size: 0.9rem; margin-bottom:5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
@@ -1506,22 +1524,35 @@ async function envoyerMessageChat() {
     input.value = "";
     container.scrollTop = container.scrollHeight;
 
+    // 2. MISE À JOUR DU COMPTEUR INTERNE
+    // On augmente manuellement le compteur pour que la fonction de chargement 
+    // automatique ne croit pas que c'est un message entrant de l'Admin.
+    dernierNombreMessages++; 
+
     try {
         await fetch(scriptURL, {
             method: "POST",
             mode: "no-cors",
-            body: JSON.stringify({ action: "sendChatMessage", idClient: idClient, expediteur: "Client", message: message })
+            body: JSON.stringify({ 
+                action: "sendChatMessage", 
+                idClient: idClient, 
+                expediteur: "Client", // L'Admin trie souvent par "Client" ou "Admin"
+                message: message 
+            })
         });
-    } catch (e) { console.error("Erreur d'envoi", e); }
+    } catch (e) { 
+        console.error("Erreur d'envoi", e);
+        // Optionnel: ajouter un petit message "Erreur d'envoi" en rouge si ça échoue
+    }
 }
 
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
-    const idClient = localStorage.getItem('saferun_nom');
+    // MODIFICATION : On utilise obtenirIdentiteChat() au lieu de localStorage
+    const idClient = obtenirIdentiteChat(); 
     const chatWindow = document.getElementById('chat-window');
 
-    if (!idClient) return;
-
+    // On ne bloque plus si l'ID est un GUEST
     try {
         const response = await fetch(`${scriptURL}?action=readChat&idClient=${idClient}`);
         const messages = await response.json();
