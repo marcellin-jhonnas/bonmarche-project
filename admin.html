@@ -263,28 +263,48 @@
 
     // --- LOGIQUE CHAT ADMIN ---
     async function chargerConversations() {
-        const list = document.getElementById('liste-clients-chat');
-        try {
-            const res = await fetch(API_URL + "?action=readAllChat");
-            const messages = await res.json();
-            list.innerHTML = "";
-            const clients = [...new Set(messages.map(m => m.idClient))];
+    const list = document.getElementById('liste-clients-chat');
+    try {
+        const res = await fetch(API_URL + "?action=readAllChat");
+        const messages = await res.json();
+        list.innerHTML = "";
+        
+        // On récupère la liste unique des ID clients (Tel ou GUEST)
+        const clients = [...new Set(messages.map(m => m.idClient))];
+        
+        clients.forEach(id => {
+            // On cherche si le client a envoyé un nom (différent de son ID)
+            // On regarde le dernier message envoyé par le client pour trouver son nom
+            const msgsClient = messages.filter(m => m.idClient === id && m.expediteur !== "Admin");
+            const dernierMsgClient = msgsClient[msgsClient.length - 1];
             
-            clients.forEach(id => {
-                const div = document.createElement('div');
-                div.className = "client-item " + (clientActuel === id ? 'active' : '');
-                div.innerHTML = `<i class="fas fa-user-circle"></i> ${id}`;
-                div.onclick = () => { 
-                    clientActuel = id; 
-                    document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
-                    div.classList.add('active');
-                    afficherDiscussion(id, messages); 
-                };
-                list.appendChild(div);
-            });
-            messageCountTotal = messages.length;
-        } catch(e) { list.innerHTML = "Erreur chat."; }
-    }
+            let nomAffichage = id; // Par défaut, on affiche l'ID
+            
+            // Si l'expéditeur enregistré est différent de l'ID, c'est que c'est son nom !
+            if (dernierMsgClient && dernierMsgClient.expediteur !== id) {
+                nomAffichage = `${dernierMsgClient.expediteur} (${id})`;
+            }
+
+            const isGuest = id.toString().startsWith("GUEST-");
+            const div = document.createElement('div');
+            div.className = "client-item " + (clientActuel === id ? 'active' : '');
+            
+            // Icône : Masque pour les GUEST, Utilisateur pour les inscrits
+            const icone = isGuest ? '<i class="fas fa-user-secret" style="color:#95a5a6"></i>' : '<i class="fas fa-user-circle" style="color:var(--whatsapp)"></i>';
+            
+            div.innerHTML = `${icone} <span style="margin-left:10px;">${nomAffichage}</span>`;
+            
+            div.onclick = () => { 
+                clientActuel = id; 
+                document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                afficherDiscussion(id, messages); 
+            };
+            list.appendChild(div);
+        });
+        messageCountTotal = messages.length;
+    } catch(e) { list.innerHTML = "Erreur chat."; }
+}
 
     function afficherDiscussion(id, tousLesMessages) {
         document.getElementById('chat-admin-header').innerHTML = `<i class="fas fa-user"></i> ${id}`;
