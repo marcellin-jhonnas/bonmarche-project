@@ -320,7 +320,7 @@ async function envoyerDonneesAuSheet() {
     const montantFinal = window.dernierTotalCalcule || 0;
     const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
-
+    const adresseClient = localStorage.getItem('saferun_adresse') || "Lieu non précisé";
     if (!telClient || montantFinal <= 0) {
         alert("Profil incomplet ou panier vide !");
         return;
@@ -359,7 +359,7 @@ async function envoyerDonneesAuSheet() {
 
         // Lancement de la facture après 2 secondes
         setTimeout(() => {
-            genererFactureFinale(montantFinal, nomClient);
+            genererFactureFinale(montantFinal, nomClient, telClient, adresseClient);
         }, 2000);
     };
 }
@@ -665,7 +665,8 @@ function fermerModal() {
 
 // --- 7. GESTION MVOLA (SÉCURISÉE VIA GOOGLE SCRIPT) ---
 
-async function traiterPaiement(montant, telClient, livraison) {
+// On ajoute "adresse" à la fin des arguments
+async function traiterPaiement(montant, telClient, livraison, adresse) {
     const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
     try {
@@ -676,8 +677,12 @@ async function traiterPaiement(montant, telClient, livraison) {
             montant: montant, 
             produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
             correlationId: "SR" + Date.now().toString().slice(-6),
-            quartier: localStorage.getItem('saferun_quartier') || "Non précisé",
-            livraison: livraison // <--- AJOUTÉ : l'info va maintenant vers la colonne H
+            
+            // --- MODIFICATION ICI ---
+            // On utilise l'adresse reçue, sinon celle du localStorage, sinon "Non précisé"
+            quartier: adresse || localStorage.getItem('saferun_adresse') || "Non précisé",
+            
+            livraison: livraison 
         };
 
         console.log("Données envoyées au Sheet :", payload);
@@ -1108,7 +1113,7 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    
+    const adresseClient = localStorage.getItem('saferun_adresse') || "Adresse à confirmer";
     // --- ÉTAPE CRITIQUE : LE CHOIX DE LA DATE ---
     // 1. On regarde s'il y a une planification manuelle en mémoire
     const planifManuelle = localStorage.getItem('saferun_creneau_final');
@@ -1149,6 +1154,7 @@ function genererFactureFinale(montant, nom) {
     localStorage.setItem('saferun_commandes', JSON.stringify(historique));
 
     // --- ÉTAPE C : AFFICHAGE ---
+    // --- ÉTAPE C : AFFICHAGE ---
     container.innerHTML = `
         <div style="text-align:center; animation: fadeIn 0.5s;">
             <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
@@ -1157,11 +1163,10 @@ function genererFactureFinale(montant, nom) {
             <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem;">
                 <p><b>Réf :</b> ${ref}</p>
                 <p><b>Montant :</b> ${montant.toLocaleString()} Ar</p>
+                <p><b>📍 Lieu :</b> ${adresseClient}</p> 
                 <hr style="border:none; border-top:1px dashed #ccc;">
                 <p style="color:#d35400; font-weight:bold;"><i class="fas fa-truck"></i> ${livraisonInfo}</p>
             </div>
-            <button onclick="window.location.reload()" style="width:100%; background:#333; color:white; border:none; padding:14px; border-radius:12px; margin-top:15px; font-weight:bold;">RETOUR AU SITE</button>
-        </div>
     `;
 
     new QRCode(document.getElementById("qrcode-place"), {
