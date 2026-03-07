@@ -1115,54 +1115,55 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    const adresseClient = localStorage.getItem('saferun_quartier') || "Quartier à préciser";
-    // --- ÉTAPE CRITIQUE : LE CHOIX DE LA DATE ---
-    // 1. On regarde s'il y a une planification manuelle en mémoire
-    const planifManuelle = localStorage.getItem('saferun_creneau_final');
     
+    // 1. Récupération du quartier enregistré
+    const adresseClient = localStorage.getItem('saferun_quartier') || "Quartier à préciser";
+    
+    // --- ÉTAPE CRITIQUE : LE CHOIX DE LA DATE ---
+    const planifManuelle = localStorage.getItem('saferun_creneau_final');
     let livraisonInfo;
     
     if (planifManuelle) {
-        // Si le client a utilisé "Achat Planifié", on prend sa date
         livraisonInfo = "LIVRAISON : " + planifManuelle;
-        // On nettoie la mémoire pour la prochaine fois
         localStorage.removeItem('saferun_creneau_final');
     } else {
-        // Sinon, on lance ton calcul automatique (tes règles de samedi/dimanche)
         livraisonInfo = calculerLivraison(); 
     }
-    // --------------------------------------------
 
     const tel = localStorage.getItem('saferun_tel') || "N/A";
 
-    // --- ÉTAPE A : ENVOI RÉEL (On passe livraisonInfo qui contient soit le planifié soit l'auto) ---
+    // --- ÉTAPE A : ENVOI RÉEL ---
+    // IMPORTANT : On ajoute adresseClient comme 4ème argument ici !
     if (typeof traiterPaiement === "function") {
         const telNettoye = tel.replace(/\s+/g, '').replace('+261', '0');
-        traiterPaiement(montant, telNettoye, livraisonInfo); 
+        traiterPaiement(montant, telNettoye, livraisonInfo, adresseClient); 
     }
 
-    // ... (Le reste de ton code pour l'historique et l'affichage reste le même)
+    // --- ÉTAPE B : VIDAGE DU PANIER (On le fait AVANT l'affichage pour être sûr) ---
+    panier = []; 
+    localStorage.removeItem('saferun_panier');
+    if (typeof rafraichirPanier === "function") rafraichirPanier(); // Mise à jour visuelle du compteur
 
-    // --- ÉTAPE B : HISTORIQUE LOCAL ---
+    // --- ÉTAPE C : HISTORIQUE LOCAL ---
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     historique.unshift({
         id: ref,
         date: new Date().toLocaleString('fr-FR'),
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+        produits: typeof panierMap === "function" ? panier.map(i => `${i.quantite}x ${i.nom}`).join(', ') : "Produits",
         total: montant,
         statut: "En attente",
         livraisonPrevue: livraisonInfo
     });
     localStorage.setItem('saferun_commandes', JSON.stringify(historique));
 
-    // --- ÉTAPE C : AFFICHAGE ---
-    // --- ÉTAPE C : AFFICHAGE ---
-    // --- ÉTAPE C : AFFICHAGE CORRIGÉ ---
+    // --- ÉTAPE D : AFFICHAGE FINAL ---
     container.innerHTML = `
         <div style="text-align:center; animation: fadeIn 0.5s;">
             <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
             <h2 style="margin:10px 0; color:#27ae60;">Commande Envoyée !</h2>
             
+            <div id="qrcode-place" style="display:flex; justify-content:center; margin:15px 0;"></div>
+
             <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem; margin:15px 0; border:1px solid #eee;">
                 <p><b>Réf :</b> ${ref}</p>
                 <p><b>Client :</b> ${nom}</p>
@@ -1177,13 +1178,13 @@ function genererFactureFinale(montant, nom) {
         </div>
     `;
 
-    new QRCode(document.getElementById("qrcode-place"), {
-        text: `REF:${ref}|TOTAL:${montant}`,
-        width: 120, height: 120
-    });
-
-    panier = [];
-    localStorage.removeItem('saferun_panier');
+    // Génération du QR Code
+    if (document.getElementById("qrcode-place")) {
+        new QRCode(document.getElementById("qrcode-place"), {
+            text: `REF:${ref}|TOTAL:${montant}`,
+            width: 120, height: 120
+        });
+    }
 }
 
 async function synchroniserAchats() {
