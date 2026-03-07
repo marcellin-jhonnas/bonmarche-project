@@ -298,6 +298,12 @@
             messageCountTotal++; 
         } catch(e) { console.error("Erreur d'envoi", e); }
     }
+    // Ajoute ceci juste après la fonction envoyerReponseAdmin()
+document.getElementById('input-msg-admin').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        envoyerReponseAdmin();
+    }
+});
 
     // --- SYNC AUTO ET ALERTES ---
     setInterval(async () => {
