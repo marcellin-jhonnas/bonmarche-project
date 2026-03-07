@@ -1113,7 +1113,7 @@ function calculerLivraison() {
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
-    const adresseClient = localStorage.getItem('saferun_adresse') || "Adresse à confirmer";
+    const adresseClient = localStorage.getItem('saferun_quartier') || "Quartier à préciser";
     // --- ÉTAPE CRITIQUE : LE CHOIX DE LA DATE ---
     // 1. On regarde s'il y a une planification manuelle en mémoire
     const planifManuelle = localStorage.getItem('saferun_creneau_final');
@@ -1155,18 +1155,24 @@ function genererFactureFinale(montant, nom) {
 
     // --- ÉTAPE C : AFFICHAGE ---
     // --- ÉTAPE C : AFFICHAGE ---
+    // --- ÉTAPE C : AFFICHAGE CORRIGÉ ---
     container.innerHTML = `
         <div style="text-align:center; animation: fadeIn 0.5s;">
             <i class="fas fa-check-circle" style="font-size:3rem; color:#27ae60;"></i>
-            <h2 style="margin:10px 0; color:#27ae60;">Succès !</h2>
-            <div id="qrcode-place" style="display:flex; justify-content:center; margin:15px 0;"></div>
-            <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem;">
+            <h2 style="margin:10px 0; color:#27ae60;">Commande Envoyée !</h2>
+            
+            <div style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:left; font-size:0.85rem; margin:15px 0; border:1px solid #eee;">
                 <p><b>Réf :</b> ${ref}</p>
-                <p><b>Montant :</b> ${montant.toLocaleString()} Ar</p>
+                <p><b>Client :</b> ${nom}</p>
                 <p><b>📍 Lieu :</b> ${adresseClient}</p> 
-                <hr style="border:none; border-top:1px dashed #ccc;">
+                <hr style="border:none; border-top:1px dashed #ccc; margin:10px 0;">
                 <p style="color:#d35400; font-weight:bold;"><i class="fas fa-truck"></i> ${livraisonInfo}</p>
             </div>
+
+            <button onclick="location.href=location.pathname" style="width:100%; background:#333; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                RETOUR À L'ACCUEIL
+            </button>
+        </div>
     `;
 
     new QRCode(document.getElementById("qrcode-place"), {
