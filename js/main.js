@@ -320,7 +320,7 @@ async function envoyerDonneesAuSheet() {
     const montantFinal = window.dernierTotalCalcule || 0;
     const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
-    const adresseClient = localStorage.getItem('saferun_adresse') || "Lieu non précisé";
+    const adresseClient = localStorage.getItem('saferun_quartier') || "Lieu non précisé";
     if (!telClient || montantFinal <= 0) {
         alert("Profil incomplet ou panier vide !");
         return;
