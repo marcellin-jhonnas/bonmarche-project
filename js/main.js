@@ -1550,7 +1550,6 @@ async function envoyerMessageChat() {
 
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
-    // Utilise l'ID unique (GUEST ou TEL)
     const idClient = obtenirIdentiteChat(); 
     const chatWindow = document.getElementById('chat-window');
 
@@ -1558,8 +1557,12 @@ async function chargerMessagesChat() {
         const response = await fetch(`${scriptURL}?action=readChat&idClient=${idClient}`);
         const messages = await response.json();
 
-        if (messages.length > dernierNombreMessages) {
+        // RECTIFICATION : On affiche si le nombre de messages a changé 
+        // OU si c'est le tout premier chargement (dernierNombreMessages === 0)
+        if (messages.length !== dernierNombreMessages) {
             const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
             container.innerHTML = ""; 
             
             messages.forEach(msg => {
@@ -1572,31 +1575,33 @@ async function chargerMessagesChat() {
                 const heure = dateMsg.getHours().toString().padStart(2, '0') + ":" + dateMsg.getMinutes().toString().padStart(2, '0');
 
                 container.innerHTML += `
-                    <div style="max-width:80%; padding:8px 12px; border-radius:15px; margin-bottom:8px; font-size:0.9rem; box-shadow:0 1px 2px rgba(0,0,0,0.1); ${styleBulle}">
+                    <div class="message-bubble" style="max-width:80%; padding:8px 12px; border-radius:15px; margin-bottom:8px; font-size:0.9rem; box-shadow:0 1px 2px rgba(0,0,0,0.1); display:flex; flex-direction:column; ${styleBulle}">
                         ${msg.message}
                         <div style="font-size:0.65rem; color:#888; text-align:right; margin-top:3px;">${heure}</div>
                     </div>
                 `;
             });
 
-            // Gérer la notification si le chat est fermé
-            if (chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
+            // Notification si nouveau message et chat fermé
+            if (chatWindow && chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
                 const badge = document.getElementById('chat-notif');
                 if (badge) {
                     badge.style.display = "flex";
+                    // On affiche le nombre de nouveaux messages reçus
                     badge.innerText = messages.length - dernierNombreMessages;
                 }
             }
 
+            // Mise à jour du compteur global
             dernierNombreMessages = messages.length;
             container.scrollTop = container.scrollHeight;
         }
     } catch (e) { 
-        console.log("Synchro chat..."); 
+        console.log("Erreur synchro chat client:", e); 
     }
 }
 
-setInterval(chargerMessagesChat, 5000);
+setInterval(chargerMessagesChat, 3000);
 // Lancement sécurisé une fois que tout le HTML est chargé
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(animerMessagePromo, 2000);
