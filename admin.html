@@ -4,57 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeRun - Console de Gestion</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-       :root { 
-    --orange: #ff6b00; 
-    --dark: #1a2226; 
-    --bg: #f4f7f6;
-    --success: #27ae60; 
-    --danger: #e74c3c; 
-    --whatsapp: #075e54;
-    --sidebar-w: 260px;
-}
+        :root { 
+            --orange: #ff6b00; 
+            --dark: #1a2226; 
+            --bg: #f4f7f6;
+            --success: #27ae60; 
+            --danger: #e74c3c; 
+            --whatsapp: #075e54;
+            --sidebar-w: 260px;
+        }
 
-body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; overflow: hidden; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            overflow: hidden; 
+        }
 
-/* Layout */
-.admin-layout { display: flex; height: 100vh; width: 100vw; }
+        /* --- LAYOUT PRINCIPAL --- */
+        .admin-layout { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw; 
+        }
 
-/* Sidebar */
-.sidebar { width: var(--sidebar-w); background: var(--dark); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
-.sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.nav-menu { flex: 1; padding: 20px 0; }
-.nav-item { 
-    padding: 15px 25px; cursor: pointer; display: flex; align-items: center; gap: 15px; 
-    color: #bdc3c7; transition: 0.2s; border-left: 4px solid transparent;
-}
-.nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--orange); }
+        /* --- SIDEBAR (MENU GAUCHE) --- */
+        .sidebar { 
+            width: var(--sidebar-w); 
+            background: var(--dark); 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            transition: 0.3s; 
+            z-index: 1000; 
+        }
+        
+        .sidebar-header { 
+            padding: 30px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        
+        .nav-menu { flex: 1; padding: 20px 0; }
+        
+        .nav-item { 
+            padding: 15px 25px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            color: #bdc3c7; 
+            transition: 0.2s; 
+            border-left: 4px solid transparent;
+        }
+        
+        .nav-item:hover, .nav-item.active { 
+            background: rgba(255,255,255,0.05); 
+            color: white; 
+            border-left-color: var(--orange); 
+        }
 
-/* Main Content */
-.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.top-bar { background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* --- CONTENU PRINCIPAL (DROITE) --- */
+        .main-content { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+        }
+        
+        .top-bar { 
+            background: white; 
+            height: 70px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 30px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        }
 
-/* Sections */
-.section-body { padding: 30px; overflow-y: auto; flex: 1; }
-.page-view { display: none; }
-.page-view.active { display: block; }
+        .section-body { 
+            padding: 30px; 
+            overflow-y: auto; 
+            flex: 1; 
+        }
 
-/* Stats Grid (Le Dashboard) */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
-.stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; }
-.stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; }
+        /* --- DASHBOARD (CARTES) --- */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 30px; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+        }
+        
+        .stat-icon { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.5rem; 
+            color: white; 
+        }
 
-/* Styles du Chat et Commandes (On garde tes styles mais on les adapte) */
-.order-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 8px solid var(--orange); }
-#section-chat-container { background: white; height: calc(100vh - 150px); border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        /* --- ÉLÉMENTS SPÉCIFIQUES --- */
+        .order-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border-left: 8px solid var(--orange); 
+        }
 
-/* Login Box (Reste au centre au début) */
-#login-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-#login-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        #section-chat-container { 
+            background: white; 
+            height: calc(100vh - 170px); 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
 
-/* Utility */
-.loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; }</style>
+        /* --- LOGIN & UTILS --- */
+        #login-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999; 
+        }
+        
+        #login-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            width: 350px; 
+            text-align: center; 
+        }
+
+        .loading-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255,255,255,0.8); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 3000; 
+        }
+
+        /* Modal Facture */
+        .modal-facture { 
+            position: fixed; 
+            top:0; left:0; 
+            width:100%; height:100%; 
+            background:rgba(0,0,0,0.8); 
+            display:none; 
+            justify-content:center; 
+            align-items:center; 
+            z-index:2000; 
+        }
+        .facture-content { 
+            background:white; 
+            padding:25px; 
+            border-radius:15px; 
+            width:90%; 
+            max-width:350px; 
+            text-align:center; 
+        }
+
+        /* Classes utilitaires pour le JS */
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
