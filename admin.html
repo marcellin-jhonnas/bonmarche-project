@@ -111,9 +111,10 @@
                     <div id="liste-clients-chat" style="overflow-y:auto; flex:1;"></div>
                 </div>
                 <div class="chat-main">
-                    <div id="chat-admin-header" style="padding:15px; background:#f0f0f0; font-weight:bold; border-bottom:1px solid #ddd; display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-comment-dots"></i> Sélectionnez un client
-                    </div>
+                    <div id="chat-admin-header" style="padding:15px; background:#f0f0f0; font-weight:bold; border-bottom:1px solid #ddd; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+    <span><i class="fas fa-comment-dots"></i> Sélectionnez un client</span>
+    <button onclick="nettoyerVueChat()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.8rem;"><i class="fas fa-broom"></i> Effacer la vue</button>
+</div>
                     <div id="chat-admin-messages" class="chat-messages-area"></div>
                     <div id="chat-admin-input-area" style="padding:15px; background:#f0f0f0; display:none; gap:10px;">
                         <input type="text" id="input-msg-admin" placeholder="Répondre au client..." style="flex:1; border:none; padding:12px; border-radius:25px; outline:none;">
@@ -145,22 +146,23 @@
 
     // --- NAVIGATION ---
     function switchTab(tab) {
-        document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
-        document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
-        
-        const btnChat = document.getElementById('btn-tab-chat');
-        const btnCmd = document.getElementById('btn-tab-cmd');
-        
-        btnChat.classList.toggle('active', tab === 'chat');
-        btnCmd.classList.toggle('active', tab === 'commandes');
+    document.getElementById('section-commandes').style.display = tab === 'commandes' ? 'block' : 'none';
+    document.getElementById('section-chat-container').style.display = tab === 'chat' ? 'flex' : 'none';
+    
+    const btnChat = document.getElementById('btn-tab-chat');
+    const btnCmd = document.getElementById('btn-tab-cmd');
+    
+    btnChat.classList.toggle('active', tab === 'chat');
+    btnCmd.classList.toggle('active', tab === 'commandes');
 
-        if(tab === 'chat') {
-            btnChat.style.background = ""; 
-            btnChat.style.color = "";
-            btnChat.innerHTML = `<i class="fas fa-comments"></i> Conversations`;
-            chargerConversations(); 
-        }
+    // SI ON CLIQUE SUR CHAT : On remet le bouton à son état normal (on efface l'alerte)
+    if(tab === 'chat') {
+        btnChat.style.background = ""; // Enlève le rouge
+        btnChat.style.color = "";      // Enlève le texte blanc
+        btnChat.innerHTML = `<i class="fas fa-comments"></i> Conversations`; // Remet le texte d'origine
+        chargerConversations(); 
     }
+}
 
     // --- LOGIQUE COMMANDES (AVEC LIEU EXACT) ---
     async function charger() {
@@ -371,9 +373,16 @@ document.getElementById('input-msg-admin').addEventListener('keypress', function
     const cards = document.querySelectorAll('.order-card');
     
     cards.forEach(card => {
-        const text = card.getAttribute('data-search');
+        // On récupère le texte de recherche qu'on a mis dans l'attribut data-search
+        const text = card.getAttribute('data-search') || "";
         card.style.display = text.includes(query) ? "block" : "none";
     });
+}
+function nettoyerVueChat() {
+    if(!clientActuel) return;
+    if(confirm("Voulez-vous vider l'affichage de cette discussion ? (Cela n'efface pas les messages sur le serveur)")) {
+        document.getElementById('chat-admin-messages').innerHTML = "";
+    }
 }
 </script>
 </body>
