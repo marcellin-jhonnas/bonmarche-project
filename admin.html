@@ -1,665 +1,549 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeRun - Console de Gestion</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <style>
-        :root { 
-            --orange: #ff6b00; 
-            --dark: #1a2226; 
-            --bg: #f4f7f6;
-            --success: #27ae60; 
-            --danger: #e74c3c; 
-            --whatsapp: #075e54;
-            --sidebar-w: 260px;
-        }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            overflow: hidden; 
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* --- LAYOUT PRINCIPAL --- */
-        .admin-layout { 
-            display: flex; 
-            height: 100vh; 
-            width: 100vw; 
-        }
+<title>SafeRun Admin Pro</title>
 
-        /* --- SIDEBAR (MENU GAUCHE) --- */
-        .sidebar { 
-            width: var(--sidebar-w); 
-            background: var(--dark); 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            transition: 0.3s; 
-            z-index: 1000; 
-        }
-        
-        .sidebar-header { 
-            padding: 30px 20px; 
-            text-align: center; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); 
-        }
-        
-        .nav-menu { flex: 1; padding: 20px 0; }
-        
-        .nav-item { 
-            padding: 15px 25px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            color: #bdc3c7; 
-            transition: 0.2s; 
-            border-left: 4px solid transparent;
-        }
-        
-        .nav-item:hover, .nav-item.active { 
-            background: rgba(255,255,255,0.05); 
-            color: white; 
-            border-left-color: var(--orange); 
-        }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        /* --- CONTENU PRINCIPAL (DROITE) --- */
-        .main-content { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-        }
-        
-        .top-bar { 
-            background: white; 
-            height: 70px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 0 30px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .section-body { 
-            padding: 30px; 
-            overflow-y: auto; 
-            flex: 1; 
-        }
+<style>
 
-        /* --- DASHBOARD (CARTES) --- */
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 25px; 
-            margin-bottom: 30px; 
-        }
-        
-        .stat-card { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 15px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            display: flex; 
-            align-items: center; 
-            gap: 20px; 
-        }
-        
-        .stat-icon { 
-            width: 50px; 
-            height: 50px; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 1.5rem; 
-            color: white; 
-        }
+/* VARIABLES */
 
-        /* --- ÉLÉMENTS SPÉCIFIQUES --- */
-        .order-card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 15px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            border-left: 8px solid var(--orange); 
-        }
+:root{
 
-        #section-chat-container { 
-            background: white; 
-            height: calc(100vh - 170px); 
-            border-radius: 15px; 
-            overflow: hidden; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-        }
+--orange:#ff6b00;
+--dark:#111827;
+--light:#f5f7fa;
+--success:#27ae60;
+--danger:#e74c3c;
+--gray:#777;
 
-        /* --- LOGIN & UTILS --- */
-        #login-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: var(--bg); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 9999; 
-        }
-        
-        #login-box { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
-            width: 350px; 
-            text-align: center; 
-        }
+}
 
-        .loading-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(255,255,255,0.8); 
-            display: none; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 3000; 
-        }
+/* RESET */
 
-        /* Modal Facture */
-        .modal-facture { 
-            position: fixed; 
-            top:0; left:0; 
-            width:100%; height:100%; 
-            background:rgba(0,0,0,0.8); 
-            display:none; 
-            justify-content:center; 
-            align-items:center; 
-            z-index:2000; 
-        }
-        .facture-content { 
-            background:white; 
-            padding:25px; 
-            border-radius:15px; 
-            width:90%; 
-            max-width:350px; 
-            text-align:center; 
-        }
+*{
+box-sizing:border-box;
+}
 
-        /* Classes utilitaires pour le JS */
-        .page-view { display: none; }
-        .page-view.active { display: block; }
+body{
 
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+margin:0;
+font-family:Segoe UI;
+background:var(--light);
+
+}
+
+/* LAYOUT */
+
+.admin{
+
+display:flex;
+height:100vh;
+
+}
+
+/* SIDEBAR */
+
+.sidebar{
+
+width:260px;
+background:var(--dark);
+color:white;
+display:flex;
+flex-direction:column;
+
+}
+
+.logo{
+
+padding:25px;
+font-size:22px;
+font-weight:bold;
+
+}
+
+.logo span{
+
+color:var(--orange);
+
+}
+
+.menu{
+
+flex:1;
+
+}
+
+.menu-item{
+
+padding:15px 25px;
+display:flex;
+gap:12px;
+cursor:pointer;
+align-items:center;
+opacity:0.8;
+
+}
+
+.menu-item:hover{
+
+background:#1f2937;
+opacity:1;
+
+}
+
+/* MAIN */
+
+.main{
+
+flex:1;
+display:flex;
+flex-direction:column;
+
+}
+
+/* TOPBAR */
+
+.topbar{
+
+height:65px;
+background:white;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 30px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+
+}
+
+.search{
+
+background:#f3f3f3;
+padding:8px 15px;
+border-radius:20px;
+
+}
+
+/* CONTENT */
+
+.content{
+
+padding:30px;
+overflow:auto;
+
+}
+
+/* STATS */
+
+.stats{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+margin-bottom:30px;
+
+}
+
+.card{
+
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.05);
+
+}
+
+.card h3{
+
+margin:0;
+color:var(--gray);
+
+}
+
+.card h1{
+
+margin:10px 0 0;
+
+}
+
+/* CHART */
+
+.chart{
+
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.05);
+margin-bottom:30px;
+
+}
+
+/* TABLE */
+
+table{
+
+width:100%;
+border-collapse:collapse;
+background:white;
+
+}
+
+th,td{
+
+padding:12px;
+border-bottom:1px solid #eee;
+text-align:left;
+
+}
+
+th{
+
+background:#fafafa;
+
+}
+
+/* STATUS */
+
+.status{
+
+padding:5px 10px;
+border-radius:20px;
+font-size:12px;
+
+}
+
+.new{
+
+background:#e3f2fd;
+color:#1976d2;
+
+}
+
+.delivery{
+
+background:#fff3cd;
+color:#856404;
+
+}
+
+.done{
+
+background:#e6f7ee;
+color:#27ae60;
+
+}
+
+</style>
+
 </head>
+
 <body>
-   <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
-    <div id="loading" class="loading-overlay">
-        <div style="text-align:center;">
-            <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--orange)"></i>
-            <p style="margin-top:10px; font-weight:bold;">Synchronisation...</p>
-        </div>
-    </div>
 
-    <div id="modal-facture" class="modal-facture" onclick="this.style.display='none'">
-        <div class="facture-content" onclick="event.stopPropagation()">
-            <h3><i class="fas fa-file-invoice"></i> Facture Client</h3>
-            <div id="admin-qrcode" style="display:flex; justify-content:center; margin: 15px 0;"></div>
-            <div id="facture-details" style="text-align:left; font-size:0.85rem; background:#f9f9f9; padding:10px; border-radius:10px;"></div>
-            <button onclick="document.getElementById('modal-facture').style.display='none'" style="margin-top:15px; width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">FERMER</button>
-        </div>
-    </div>
+<div class="admin">
 
-    <div id="login-overlay">
-        <div id="login-box">
-            <div style="font-size: 3rem; color: var(--orange); margin-bottom:10px;"><i class="fas fa-user-shield"></i></div>
-            <h2 style="margin-bottom:20px;">SafeRun Manager</h2>
-            <input type="text" id="user" placeholder="Utilisateur">
-            <input type="password" id="pass" placeholder="Mot de passe">
-            <button class="btn-login" onclick="verifierConnexion()" style="margin-top:10px; background:var(--orange); color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">SE CONNECTER</button>
-            <p id="err-msg" style="color:red; display:none; margin-top:15px;">Accès refusé.</p>
-        </div>
-    </div>
+<!-- SIDEBAR -->
 
-    <div id="admin-panel" class="admin-layout" style="display:none;">
-        
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2 style="margin:0; font-size:1.8rem; letter-spacing:1px;">
-                    <span style="color:var(--orange)">Safe</span>Run
-                </h2>
-                <small style="color:rgba(255,255,255,0.5)">CONSOLE ADMIN</small>
-            </div>
-            
-            <nav class="nav-menu">
-                <div class="nav-item active" id="btn-tab-dashboard" onclick="switchTab('dashboard')">
-                    <i class="fas fa-chart-pie"></i> Dashboard
-                </div>
-                <div class="nav-item" id="btn-tab-cmd" onclick="switchTab('commandes')">
-                    <i class="fas fa-shopping-basket"></i> Commandes
-                </div>
-                <div class="nav-item" id="btn-tab-chat" onclick="switchTab('chat')">
-                    <i class="fas fa-comment-dots"></i> Conversations
-                </div>
-            </nav>
+<div class="sidebar">
 
-            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <button onclick="location.reload()" style="width:100%; background:rgba(231, 76, 60, 0.1); color:var(--danger); border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:bold; transition:0.3s;">
-                    <i class="fas fa-power-off"></i> Déconnexion
-                </button>
-            </div>
-        </aside>
+<div class="logo">
 
-        <main class="main-content">
-            <header class="top-bar">
-                <h3 id="page-title" style="margin:0; color:var(--dark); font-weight:600;">Tableau de bord</h3>
-                <div style="display:flex; align-items:center; gap:20px;">
-                    <div style="position:relative;">
-                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#aaa;"></i>
-                        <input type="text" id="admin-search" placeholder="Rechercher une commande..." onkeyup="filtrerCommandes()" style="margin:0; padding:10px 10px 10px 35px; border-radius:20px; border:1px solid #eee; background:#f9f9f9; width:250px;">
-                    </div>
-                    <button onclick="charger()" style="border:none; background:none; cursor:pointer; font-size:1.2rem; color:var(--dark);"><i class="fas fa-sync-alt"></i></button>
-                </div>
-            </header>
+<span>Safe</span>Run Admin
 
-            <div class="section-body">
-                
-                <div id="view-dashboard" class="page-view active">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:var(--orange)"><i class="fas fa-box-open"></i></div>
-                            <div>
-                                <p style="margin:0; color:#888; font-size:0.9rem;">Total Commandes</p>
-                                <h2 id="stat-count-dash" style="margin:0; font-size:1.8rem;">0</h2>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background:var(--success)"><i class="fas fa-wallet"></i></div>
-                            <div>
-                                <p style="margin:0; color:#888; font-size:0.9rem;">Chiffre d'Affaires</p>
-                                <h2 id="stat-total-dash" style="margin:0; font-size:1.8rem;">0 Ar</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="background:white; padding:30px; border-radius:15px; height:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ccc; border:2px dashed #eee; margin-top:10px;">
-                        <i class="fas fa-chart-line fa-3x" style="margin-bottom:15px;"></i>
-                        <p>Analyse des ventes en temps réel</p>
-                    </div>
-                </div>
+</div>
 
-                <div id="view-commandes" class="page-view">
-                    <div id="commandes-liste"></div>
-                </div>
+<div class="menu">
 
-                <div id="view-chat" class="page-view">
-                    <div id="section-chat-container">
-                        <div id="section-chat" style="width:100%; display:flex; height:100%;">
-                            <div class="chat-sidebar" style="width:30%; background:#f8f9fa; border-right:1px solid #eee; display:flex; flex-direction:column;">
-                                <div style="padding:20px; background:var(--whatsapp); color:white; font-weight:bold; font-size:0.9rem;">
-                                    <i class="fas fa-users"></i> CLIENTS EN LIGNE
-                                </div>
-                                <div id="liste-clients-chat" style="overflow-y:auto; flex:1;"></div>
-                            </div>
-                            <div class="chat-main" style="flex:1; display:flex; flex-direction:column; background:#e5ddd5;">
-                                <div id="chat-admin-header" style="padding:15px; background:#f0f0f0; font-weight:bold; border-bottom:1px solid #ddd; display:flex; align-items:center; justify-content:space-between;">
-                                    <span><i class="fas fa-comment-alt"></i> Discussion</span>
-                                    <button onclick="nettoyerVueChat()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-eraser"></i></button>
-                                </div>
-                                <div id="chat-admin-messages" class="chat-messages-area" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;"></div>
-                                <div id="chat-admin-input-area" style="padding:15px; background:#f0f0f0; display:none; gap:10px; border-top:1px solid #ddd;">
-                                    <input type="text" id="input-msg-admin" placeholder="Tapez votre réponse..." style="flex:1; border:none; padding:12px 20px; border-radius:25px; outline:none; box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">
-                                    <button onclick="envoyerReponseAdmin()" style="background:var(--whatsapp); color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div class="menu-item" onclick="openPage('dashboard')">
+<i class="fa fa-chart-line"></i>
+Dashboard
+</div>
 
-            </div>
-        </main>
-    </div>
-   <script>
-    const USER_ADMIN = "admin";
-    const PASS_ADMIN = "SafeRun2026"; 
-    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
+<div class="menu-item" onclick="openPage('commandes')">
+<i class="fa fa-shopping-cart"></i>
+Commandes
+</div>
 
-    let clientActuel = null;
-    let rafraichissementEnCours = false;
-    let messageCountTotal = 0; 
+<div class="menu-item" onclick="openPage('chat')">
+<i class="fa fa-comments"></i>
+Chat Client
+</div>
 
-    // --- CONNEXION ---
-    // --- 1. CONNEXION MISE À JOUR ---
-function verifierConnexion() {
-    const user = document.getElementById('user').value;
-    const pass = document.getElementById('pass').value;
-    
-    if(user === USER_ADMIN && pass === PASS_ADMIN) {
-        // On cache le login et on affiche le panel avec le nouveau design
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'flex'; // Utilise Flex pour le layout Sidebar
-        
-        // Charger les données immédiatement
-        charger();
-        // Déclencher la demande de permission de notification au premier clic
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-    } else { 
-        document.getElementById('err-msg').style.display = 'block'; 
-    }
+<div class="menu-item">
+<i class="fa fa-box"></i>
+Produits
+</div>
+
+<div class="menu-item">
+<i class="fa fa-truck"></i>
+Livraisons
+</div>
+
+<div class="menu-item">
+<i class="fa fa-users"></i>
+Clients
+</div>
+
+</div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+<div class="topbar">
+
+<div class="search">
+
+<i class="fa fa-search"></i>
+Rechercher commande...
+
+</div>
+
+<div>
+
+<i class="fa fa-bell"></i>
+
+&nbsp;&nbsp;
+
+<i class="fa fa-user-circle"></i>
+
+</div>
+
+</div>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+
+<div id="dashboard">
+
+<div class="stats">
+
+<div class="card">
+
+<h3>Total Commandes</h3>
+
+<h1 id="stat-commandes">0</h1>
+
+</div>
+
+<div class="card">
+
+<h3>Chiffre d'affaires</h3>
+
+<h1 id="stat-ca">0 Ar</h1>
+
+</div>
+
+<div class="card">
+
+<h3>Clients</h3>
+
+<h1>542</h1>
+
+</div>
+
+<div class="card">
+
+<h3>Produits</h3>
+
+<h1>98</h1>
+
+</div>
+
+</div>
+
+<div class="chart">
+
+<canvas id="salesChart"></canvas>
+
+</div>
+
+</div>
+
+<!-- COMMANDES -->
+
+<div id="commandes" style="display:none">
+
+<h2>Liste commandes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+
+<th>Client</th>
+
+<th>Produit</th>
+
+<th>Total</th>
+
+<th>Statut</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="commandes-liste">
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- CHAT -->
+
+<div id="chat" style="display:none">
+
+<h2>Messagerie client</h2>
+
+<div id="chat-area">
+
+Votre système chat existant peut être collé ici.
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* API EXISTANTE */
+
+const API_URL="https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"
+
+/* NAVIGATION */
+
+function openPage(page){
+
+document.getElementById("dashboard").style.display="none"
+document.getElementById("commandes").style.display="none"
+document.getElementById("chat").style.display="none"
+
+document.getElementById(page).style.display="block"
+
 }
 
-// --- 2. NAVIGATION ENTRE LES ONGLETS (MODERNE) ---
-function switchTab(tab) {
-    // Gestion des vues (Pages)
-    const views = ['view-dashboard', 'view-commandes', 'view-chat'];
-    views.forEach(v => document.getElementById(v).classList.remove('active'));
-    document.getElementById('view-' + tab).classList.add('active');
+/* GRAPH */
 
-    // Gestion visuelle des boutons de la Sidebar
-    const btns = ['btn-tab-dashboard', 'btn-tab-cmd', 'btn-tab-chat'];
-    btns.forEach(b => document.getElementById(b).classList.remove('active'));
-    document.getElementById('btn-tab-' + (tab === 'dashboard' ? 'dashboard' : tab === 'commandes' ? 'cmd' : 'chat')).classList.add('active');
+const ctx=document.getElementById("salesChart")
 
-    // Mise à jour du titre dans la Top Bar
-    const titres = { 'dashboard': 'Tableau de Bord', 'commandes': 'Gestion des Commandes', 'chat': 'Messagerie Client' };
-    document.getElementById('page-title').innerText = titres[tab];
+new Chart(ctx,{
+type:"line",
+data:{
+labels:["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"],
+datasets:[{
+label:"Ventes",
+data:[120000,150000,90000,200000,170000,240000,300000],
+borderColor:"#ff6b00",
+backgroundColor:"rgba(255,107,0,0.1)",
+fill:true,
+tension:0.4
+}]
+}
+})
 
-    // Logique spécifique au Chat
-    if(tab === 'chat') {
-        const btnChat = document.getElementById('btn-tab-chat');
-        btnChat.style.background = ""; // Retire l'alerte rouge
-        btnChat.style.color = "";
-        btnChat.innerHTML = `<i class="fas fa-comment-dots"></i> Conversations`;
-        chargerConversations(); 
-    }
+/* CHARGER COMMANDES */
+
+async function charger(){
+
+const res=await fetch(API_URL+"?action=getCommandes")
+
+const data=await res.json()
+
+let total=0
+
+let html=""
+
+data.reverse().forEach(cmd=>{
+
+total+=Number(cmd["Montant"]||0)
+
+html+=`
+
+<tr>
+
+<td>${cmd["ID"]}</td>
+
+<td>${cmd["Client"]}</td>
+
+<td>${cmd["Produits"]}</td>
+
+<td>${cmd["Montant"]} Ar</td>
+
+<td><span class="status new">${cmd["Statut"]}</span></td>
+
+<td>
+
+<button onclick="modifierStatut('${cmd["ID"]}','SÉRIEUX')">
+
+PAYÉ
+
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("commandes-liste").innerHTML=html
+
+document.getElementById("stat-commandes").innerText=data.length
+
+document.getElementById("stat-ca").innerText=total.toLocaleString()+" Ar"
+
 }
 
-// --- 3. MISE À JOUR DES STATS DANS CHARGER() ---
-// Ajoutez ces lignes à l'intérieur de votre fonction charger(), 
-// juste après le calcul de totalCASH et nbCmd :
+/* STATUT */
 
-/* ... votre code actuel dans charger() ...
-   document.getElementById('stat-count').innerText = nbCmd; // Ancien ID
-   document.getElementById('stat-total').innerText = totalCASH.toLocaleString() + " Ar"; // Ancien ID
-*/
+async function modifierStatut(id,statut){
 
-// AJOUTER CECI POUR LE DASHBOARD :
-if(document.getElementById('stat-count-dash')) {
-    document.getElementById('stat-count-dash').innerText = nbCmd;
-    document.getElementById('stat-total-dash').innerText = totalCASH.toLocaleString() + " Ar";
+await fetch(API_URL,{
+method:"POST",
+mode:"no-cors",
+body:JSON.stringify({
+
+action:"updateStatut",
+idCommande:id,
+nouveauStatut:statut
+
+})
+})
+
+charger()
+
 }
 
-    // --- LOGIQUE COMMANDES (AVEC LIEU EXACT) ---
-    async function charger() {
-    const list = document.getElementById('commandes-liste');
-    list.innerHTML = "<p style='text-align:center;'>Chargement des données...</p>";
-    try {
-        const res = await fetch(API_URL + "?action=getCommandes");
-        const data = await res.json();
-        list.innerHTML = "";
-        
-        let totalCASH = 0;
-        let nbCmd = data.length;
+/* INITIALISATION */
 
-        data.reverse().forEach(cmd => {
-            // Calcul du total cumulé
-            totalCASH += Number(cmd["Montant"] || 0);
+charger()
 
-            const statut = (cmd["Statut"] || "NOUVEAU").toUpperCase();
-            const classeCard = statut === "SÉRIEUX" ? "status-serieux" : (statut === "PAS SÉRIEUX" ? "status-danger" : "");
-            const lieu = cmd["Lieu Exact"] || "Non précisé";
-            
-            const nomEscaped = (cmd["Client"] || "Anonyme").replace(/'/g, "\\'");
-            const prodEscaped = (cmd["Produits"] || "").replace(/'/g, "\\'");
-            const livEscaped = (cmd["Livraison"] || "").replace(/'/g, "\\'");
-            const lieuEscaped = lieu.replace(/'/g, "\\'");
-
-            list.innerHTML += `
-                <div class="order-card ${classeCard}" data-search="${nomEscaped.toLowerCase()} ${cmd["ID"]}">
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${cmd["Client"]}</b>
-                        <b style="color:var(--orange)">${Number(cmd["Montant"]).toLocaleString()} Ar</b>
-                    </div>
-                    <p style="font-size:0.85rem; color:#666; margin:5px 0;">ID: ${cmd["ID"]} | Tel: ${cmd["Téléphone"]}</p>
-                    
-                    <div style="background:#fff3e0; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:8px; border-left:4px solid var(--orange);">
-                        <i class="fas fa-map-marker-alt" style="color:var(--orange)"></i> <b>Lieu :</b> ${lieu}
-                    </div>
-
-                    <div style="background:#f9f9f9; padding:8px; border-radius:5px; font-size:0.85rem;">${cmd["Produits"]}</div>
-                    <p style="font-size:0.85rem; color:var(--whatsapp); font-weight:bold; margin-top:5px;"><i class="fas fa-truck"></i> ${cmd["Livraison"] || 'Standard'}</p>
-                    
-                    <div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap;">
-                        <button class="btn-action" style="background:var(--success); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'SÉRIEUX')">PAYÉ</button>
-                        <button class="btn-action" style="background:#e3f2fd; color:#1976d2;" onclick="voirFacture('${cmd["ID"]}', '${nomEscaped}', '${cmd["Montant"]}', '${prodEscaped}', '${livEscaped}', '${lieuEscaped}')">FACTURE</button>
-                        <button class="btn-action" style="background:var(--danger); color:white;" onclick="modifierStatut('${cmd["ID"]}', 'PAS SÉRIEUX')">BAN</button>
-                    </div>
-                </div>`;
-        });
-
-        // Mise à jour visuelle des compteurs
-        document.getElementById('stat-count').innerText = nbCmd;
-        document.getElementById('stat-total').innerText = totalCASH.toLocaleString() + " Ar";
-
-    } catch(e) { list.innerHTML = "Erreur de connexion."; }
-}
-
-    // --- LOGIQUE FACTURE ---
-    function voirFacture(id, nom, montant, produits, livraison, lieu) {
-        const modal = document.getElementById('modal-facture');
-        const details = document.getElementById('facture-details');
-        const qrcodeDiv = document.getElementById('admin-qrcode');
-        qrcodeDiv.innerHTML = "";
-        
-        details.innerHTML = `
-            <div style="text-align:left; font-size:0.9rem;">
-                <p><b>ID :</b> ${id}</p>
-                <p><b>Client :</b> ${nom}</p>
-                <p style="background:#fff3e0; padding:5px; border-radius:5px;"><b>📍 Lieu Exact :</b> ${lieu}</p>
-                <p><b>Total :</b> ${Number(montant).toLocaleString()} Ar</p>
-                <p><b>Livraison :</b> ${livraison}</p>
-                <p><b>Produits :</b> ${produits}</p>
-            </div>
-        `;
-        
-        new QRCode(qrcodeDiv, { text: `REF:${id}|TOTAL:${montant}`, width: 150, height: 150 });
-        modal.style.display = "flex";
-    }
-
-    // --- LOGIQUE STATUT ---
-    async function modifierStatut(id, statut) {
-        if(!confirm("Changer le statut de la commande " + id + " ?")) return;
-        document.getElementById('loading').style.display = "flex";
-        try {
-            await fetch(API_URL, { 
-                method: "POST", 
-                mode: "no-cors", 
-                body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) 
-            });
-            setTimeout(() => { 
-                document.getElementById('loading').style.display = "none"; 
-                charger(); 
-            }, 2000);
-        } catch(e) { 
-            alert("Erreur réseau");
-            document.getElementById('loading').style.display = "none";
-        }
-    }
-
-    // --- LOGIQUE CHAT ADMIN ---
-    async function chargerConversations() {
-    const list = document.getElementById('liste-clients-chat');
-    try {
-        const res = await fetch(API_URL + "?action=readAllChat");
-        const messages = await res.json();
-        list.innerHTML = "";
-        
-        // On récupère la liste unique des ID clients (Tel ou GUEST)
-        const clients = [...new Set(messages.map(m => m.idClient))];
-        
-        clients.forEach(id => {
-    // 1. On récupère tous les messages de ce client
-    const msgsClientTotal = messages.filter(m => m.idClient === id);
-    const msgsDuClientSeul = msgsClientTotal.filter(m => m.expediteur !== "Admin");
-    const dernierMsgClient = msgsDuClientSeul[msgsDuClientSeul.length - 1];
-
-    // 2. Calcul du Badge (Messages non lus)
-    // On compte combien de messages le client a envoyé DEPUIS le dernier message de l'Admin
-    let indexDernierAdmin = -1;
-    for (let i = msgsClientTotal.length - 1; i >= 0; i--) {
-        if (msgsClientTotal[i].expediteur === "Admin") {
-            indexDernierAdmin = i;
-            break;
-        }
-    }
-    
-    // Les messages non lus sont ceux après le dernier message de l'Admin
-    const messagesNonLus = msgsClientTotal.slice(indexDernierAdmin + 1).filter(m => m.expediteur !== "Admin").length;
-
-    // 3. Préparation du Nom et du Style
-    let nomAffichage = id;
-    if (dernierMsgClient && dernierMsgClient.expediteur !== id) {
-        nomAffichage = `${dernierMsgClient.expediteur} (${id})`;
-    }
-
-    const isGuest = id.toString().startsWith("GUEST-");
-    const estGras = messagesNonLus > 0 ? "font-weight:bold; color:#000;" : "font-weight:normal; color:#666;";
-    
-    const div = document.createElement('div');
-    div.className = "client-item " + (clientActuel === id ? 'active' : '');
-    div.style = `display:flex; justify-content:space-between; align-items:center; ${estGras}`;
-    
-    const icone = isGuest ? '<i class="fas fa-user-secret"></i>' : '<i class="fas fa-user-circle"></i>';
-    
-    // 4. HTML du Badge
-    const badgeHTML = messagesNonLus > 0 ? 
-        `<span style="background:var(--success); color:white; border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center; font-size:0.7rem;">${messagesNonLus}</span>` : '';
-
-    div.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-            ${icone} <span>${nomAffichage}</span>
-        </div>
-        ${badgeHTML}
-    `;
-
-    div.onclick = () => { 
-        clientActuel = id; 
-        document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
-        div.classList.add('active');
-        // Quand on clique, on rafraîchit l'affichage pour que le badge disparaisse (car clientActuel est défini)
-        afficherDiscussion(id, messages); 
-        div.style.fontWeight = "normal"; // On enlève le gras immédiatement au clic
-    };
-    list.appendChild(div);
-});
-        messageCountTotal = messages.length;
-    } catch(e) { list.innerHTML = "Erreur chat."; }
-}
-
-    function afficherDiscussion(id, tousLesMessages) {
-        document.getElementById('chat-admin-header').innerHTML = `<i class="fas fa-user"></i> ${id}`;
-        document.getElementById('chat-admin-input-area').style.display = "flex";
-        const area = document.getElementById('chat-admin-messages');
-        area.innerHTML = "";
-        tousLesMessages.filter(m => m.idClient === id).forEach(m => {
-            const estAdmin = m.expediteur === "Admin";
-            area.innerHTML += `
-                <div class="bubble ${estAdmin ? 'admin' : 'client'}">
-                    ${m.message}
-                    <div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${new Date(m.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                </div>`;
-        });
-        area.scrollTop = area.scrollHeight;
-    }
-
-    async function envoyerReponseAdmin() {
-        const input = document.getElementById('input-msg-admin');
-        const msg = input.value.trim();
-        const area = document.getElementById('chat-admin-messages');
-        if(!msg || !clientActuel) return;
-
-        const heure = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        area.innerHTML += `<div class="bubble admin">${msg}<div style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:3px;">${heure}</div></div>`;
-        input.value = ""; 
-        area.scrollTop = area.scrollHeight;
-
-        try {
-            await fetch(API_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({ action: "sendChatMessage", idClient: clientActuel, expediteur: "Admin", message: msg })
-            });
-            messageCountTotal++; 
-        } catch(e) { console.error("Erreur d'envoi", e); }
-    }
-    // Ajoute ceci juste après la fonction envoyerReponseAdmin()
-document.getElementById('input-msg-admin').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        envoyerReponseAdmin();
-    }
-});
-
-    // --- SYNC AUTO ET ALERTES ---
-    setInterval(async () => {
-        if (rafraichissementEnCours) return;
-        rafraichissementEnCours = true;
-        try {
-            const res = await fetch(API_URL + "?action=readAllChat");
-            const messages = await res.json();
-            
-            if (messages.length > messageCountTotal) {
-                if (messageCountTotal !== 0) {
-                    const dernierMsg = messages[messages.length - 1];
-                    if (dernierMsg.expediteur !== "Admin") {
-                        const audio = document.getElementById('notif-sound');
-                        if(audio) audio.play().catch(e => {});
-                        if (document.getElementById('section-chat-container').style.display !== 'flex') {
-                            alerterNouvelleConversation(dernierMsg.idClient);
-                        }
-                    }
-                }
-                messageCountTotal = messages.length;
-            }
-
-            if (document.getElementById('section-chat-container').style.display === 'flex' && clientActuel) {
-                const area = document.getElementById('chat-admin-messages');
-                const messagesFiltres = messages.filter(m => m.idClient === clientActuel);
-                if (area.children.length !== messagesFiltres.length) {
-                    afficherDiscussion(clientActuel, messages);
-                }
-            }
-        } catch (e) { } 
-        finally { rafraichissementEnCours = false; }
-    }, 1500);
-
-    function alerterNouvelleConversation(nomClient) {
-        const tabChat = document.getElementById('btn-tab-chat');
-        tabChat.style.background = "#e74c3c"; 
-        tabChat.style.color = "white";
-        tabChat.innerHTML = `<i class="fas fa-bell"></i> NOUVEAU MSG`;
-    }
-    function filtrerCommandes() {
-    const query = document.getElementById('admin-search').value.toLowerCase();
-    const cards = document.querySelectorAll('.order-card');
-    
-    cards.forEach(card => {
-        // On récupère le texte de recherche qu'on a mis dans l'attribut data-search
-        const text = card.getAttribute('data-search') || "";
-        card.style.display = text.includes(query) ? "block" : "none";
-    });
-}
-function nettoyerVueChat() {
-    if(!clientActuel) return;
-    if(confirm("Voulez-vous vider l'affichage de cette discussion ? (Cela n'efface pas les messages sur le serveur)")) {
-        document.getElementById('chat-admin-messages').innerHTML = "";
-    }
-}
 </script>
+
 </body>
+
 </html>
