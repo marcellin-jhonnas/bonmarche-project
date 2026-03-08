@@ -267,48 +267,50 @@
         const res = await fetch(CONFIG.API + "?action=readAllChat");
         const allMsgs = await res.json();
 
-        // Notification sonore
+        // Gestion de la notification sonore
         if(allMsgs.length > totalMessages && totalMessages !== 0) {
             document.getElementById('alert-sound').play();
-            if(document.getElementById('tab-chat').style.display === 'none') {
-                document.getElementById('chat-notif').style.display = 'inline-block';
-            }
         }
         totalMessages = allMsgs.length;
 
-        // --- CORRECTION ICI : m.idClient au lieu de m.ID_Client ---
+        // --- 1. LISTE DES CLIENTS (Correction minuscule idClient) ---
         const clients = [...new Set(allMsgs.map(m => m.idClient))];
         let clientListHtml = "";
         clients.forEach(c => {
-            if(!c) return; 
+            if(!c) return;
             const isSelected = (activeClient === c);
-            clientListHtml += `<div onclick="loadDiscussion('${c}')" style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; background:${isSelected?'#fff7ed':'white'}; font-weight:${isSelected?'bold':'normal'}; border-left:${isSelected?'4px solid var(--orange)':'none'}">
-                <i class="fas fa-user-circle"></i> ${c}
-            </div>`;
+            clientListHtml += `
+                <div onclick="loadDiscussion('${c}')" 
+                     style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; 
+                            background:${isSelected ? '#fff7ed' : 'white'}; 
+                            border-left: ${isSelected ? '4px solid var(--orange)' : '4px solid transparent'}">
+                    <strong><i class="fas fa-user"></i> ${c}</strong>
+                </div>`;
         });
         document.getElementById('client-list').innerHTML = clientListHtml;
 
-        // Affichage de la discussion
+        // --- 2. AFFICHAGE DU MESSAGE (Correction minuscule message) ---
         if(activeClient) {
-            // --- CORRECTION ICI : m.idClient ---
             const filtered = allMsgs.filter(m => m.idClient === activeClient);
             let msgHtml = "";
+            
             filtered.forEach(m => {
-                // --- CORRECTION ICI : m.message et m.expediteur (minuscules) ---
-                const texte = m.message || m.Message || "";
-                const exp = m.expediteur || m.Expediteur || "";
+                // On utilise les noms exacts renvoyés par ton GAS : message et expediteur
+                const texte = m.message || ""; 
+                const exp = m.expediteur || "";
+                const side = (exp === "Admin") ? "sent" : "received";
                 
-                const side = exp === "Admin" ? "sent" : "received";
                 if(texte) {
                     msgHtml += `<div class="msg ${side}">${texte}</div>`;
                 }
             });
+
             const container = document.getElementById('msg-container');
             container.innerHTML = msgHtml;
-            container.scrollTop = container.scrollHeight;
+            container.scrollTop = container.scrollHeight; // Toujours voir le dernier message
         }
-    } catch(e) {
-        console.error("Erreur d'affichage :", e);
+    } catch(e) { 
+        console.error("Erreur d'affichage :", e); 
     } finally { 
         isLocked = false; 
     }
@@ -321,34 +323,29 @@
         syncChat();
     }
 
-    async function sendMessage() {
+   async function sendMessage() {
     const input = document.getElementById('chat-input-field');
     const val = input.value.trim();
-
     if(!val || !activeClient) return;
 
     input.disabled = true;
+    const payload = { 
+        action: "sendChatMessage", 
+        idClient: activeClient, 
+        message: val, // On utilise "message" pour correspondre au GAS
+        expediteur: "Admin" 
+    };
 
-    try {
-        await fetch(CONFIG.API, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                action: "sendChatMessage",
-                idClient: activeClient,
-                message: val,
-                expediteur: "Admin"
-            })
-        });
+    await fetch(CONFIG.API, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+    });
 
-        input.value = "";
-    } catch (e) {
-        console.error("Erreur d'envoi :", e);
-    } finally {
-        input.disabled = false;
-        input.focus();
-        syncChat();
-    }
+    input.value = "";
+    input.disabled = false;
+    input.focus();
+    syncChat();
 }
 
    async function updateStatus(id) {
