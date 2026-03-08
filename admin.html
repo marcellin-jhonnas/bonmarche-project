@@ -260,37 +260,21 @@
     }
 
     // --- CHAT SYSTEM ---
-    async function syncChat() {
+   async function syncChat() {
     if(isLocked) return;
     isLocked = true;
-    
-    console.log("--- Début de la synchronisation du Chat ---");
-    
     try {
         const res = await fetch(CONFIG.API + "?action=readAllChat");
         const allMsgs = await res.json();
-
-        // LOG 1 : Voir ce que Google renvoie réellement
-        console.log("Données reçues de Google Sheets :", allMsgs);
-
-        if(!allMsgs || allMsgs.length === 0) {
-            console.warn("Attention : La liste des messages est vide !");
-        }
-
         totalMessages = allMsgs.length;
 
-        // --- LISTE DES CLIENTS ---
-        const clients = [...new Set(allMsgs.map(m => {
-            // LOG 2 : Vérifier les noms des colonnes pour chaque message
-            const id = m.idClient || m.ID_Client || m.id;
-            if(!id) console.error("Impossible de trouver l'ID du client dans ce message :", m);
-            return id;
-        }))];
+        // --- 1. LISTE DES CLIENTS (On force en String) ---
+        const clients = [...new Set(allMsgs.map(m => (m.idClient || m.ID_Client || "").toString()))];
         
         let clientListHtml = "";
         clients.forEach(c => {
             if(!c) return;
-            const isSelected = (activeClient === c);
+            const isSelected = (activeClient && activeClient.toString() === c.toString());
             clientListHtml += `
                 <div onclick="loadDiscussion('${c}')" 
                      style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; 
@@ -300,42 +284,32 @@
         });
         document.getElementById('client-list').innerHTML = clientListHtml;
 
-        // --- AFFICHAGE DES MESSAGES ---
+        // --- 2. AFFICHAGE DES MESSAGES (Comparaison forcée en String) ---
         if(activeClient) {
-            console.log("Discussion active pour le client :", activeClient);
-            
-            const filtered = allMsgs.filter(m => (m.idClient || m.ID_Client) === activeClient);
-            console.log("Messages filtrés pour ce client :", filtered);
-            
+            // Ici, on force .toString() sur les deux côtés pour que "3444" soit égal à 3444
+            const filtered = allMsgs.filter(m => {
+                const idMsg = (m.idClient || m.ID_Client || "").toString();
+                return idMsg === activeClient.toString();
+            });
+
             let msgHtml = "";
             filtered.forEach(m => {
-                // LOG 3 : Vérifier le contenu du message
-                const texte = m.message || m.Message || m.texte;
-                const exp = m.expediteur || m.Expediteur;
-                
-                console.log(`Message de ${exp}: "${texte}"`);
-
+                const texte = m.message || m.Message || m.texte || ""; 
+                const exp = m.expediteur || m.Expediteur || "";
                 const side = (exp === "Admin") ? "sent" : "received";
                 if(texte) {
                     msgHtml += `<div class="msg ${side}">${texte}</div>`;
-                } else {
-                    console.warn("Un message vide a été détecté et ignoré :", m);
                 }
             });
 
             const container = document.getElementById('msg-container');
-            if(container) {
-                container.innerHTML = msgHtml;
-                container.scrollTop = container.scrollHeight;
-            } else {
-                console.error("ERREUR : L'élément HTML 'msg-container' n'existe pas !");
-            }
+            container.innerHTML = msgHtml;
+            container.scrollTop = container.scrollHeight;
         }
     } catch(e) { 
-        console.error("ERREUR FATALE pendant la synchro :", e); 
+        console.error("Erreur :", e); 
     } finally { 
         isLocked = false; 
-        console.log("--- Fin de la synchronisation ---");
     }
 }
 
