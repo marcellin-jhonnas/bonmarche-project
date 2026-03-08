@@ -180,6 +180,9 @@
     let totalMessages = 0;
     let isLocked = false;
 
+    let lastMessageCount = 0;
+    let unreadByClient = {};
+
     // --- AUTHENTICATION ---
     function login() {
         const u = document.getElementById('admin-user').value;
@@ -266,22 +269,68 @@
     try {
         const res = await fetch(CONFIG.API + "?action=readAllChat");
         const allMsgs = await res.json();
-        totalMessages = allMsgs.length;
+
+// Détection nouveau message
+if(allMsgs.length > lastMessageCount){
+    const sound = document.getElementById("alert-sound");
+    if(sound) sound.play();
+const totalUnread = Object.values(unreadByClient).reduce((a,b)=>a+b,0);
+
+const notif = document.getElementById("chat-notif");
+
+if(notif){
+    if(totalUnread > 0){
+        notif.style.display = "inline-block";
+        notif.innerText = totalUnread;
+    }else{
+        notif.style.display = "none";
+    }
+}}
+
+lastMessageCount = allMsgs.length;
+totalMessages = allMsgs.length;
+
+unreadByClient = {};
+
+allMsgs.forEach(m => {
+
+    const id = (m.idClient || m.ID_Client || "").toString();
+    const exp = m.expediteur || m.Expediteur || "";
+
+    if(exp !== "Admin"){
+        if(!unreadByClient[id]){
+            unreadByClient[id] = 0;
+        }
+        unreadByClient[id]++;
+    }
+
+});
 
         // --- 1. LISTE DES CLIENTS (On force en String) ---
         const clients = [...new Set(allMsgs.map(m => (m.idClient || m.ID_Client || "").toString()))];
         
         let clientListHtml = "";
         clients.forEach(c => {
-            if(!c) return;
-            const isSelected = (activeClient && activeClient.toString() === c.toString());
-            clientListHtml += `
-                <div onclick="loadDiscussion('${c}')" 
-                     style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; 
-                            background:${isSelected ? '#fff7ed' : 'white'};">
-                    <strong>${c}</strong>
-                </div>`;
-        });
+
+    if(!c) return;
+
+    const unread = unreadByClient[c] || 0;
+
+    const isSelected = (activeClient && activeClient.toString() === c.toString());
+
+    clientListHtml += `
+    <div onclick="loadDiscussion('${c}')"
+         style="padding:15px;border-bottom:1px solid #e2e8f0;cursor:pointer;
+         display:flex;justify-content:space-between;
+         background:${isSelected ? '#fff7ed' : 'white'}">
+
+        <span><strong>${c}</strong></span>
+
+        ${unread > 0 ? `<span style="background:red;color:white;border-radius:12px;padding:2px 8px;font-size:12px">${unread}</span>` : ""}
+
+    </div>`;
+});
+
         document.getElementById('client-list').innerHTML = clientListHtml;
 
         // --- 2. AFFICHAGE DES MESSAGES (Comparaison forcée en String) ---
@@ -313,12 +362,18 @@
     }
 }
 
-    function loadDiscussion(id) {
-        activeClient = id;
-        document.getElementById('chat-header').innerText = "Client: " + id;
-        document.getElementById('input-zone').style.display = 'flex';
-        syncChat();
-    }
+   function loadDiscussion(id) {
+
+    activeClient = id;
+
+    // reset compteur non lu
+    unreadByClient[id] = 0;
+
+    document.getElementById('chat-header').innerText = "Client: " + id;
+    document.getElementById('input-zone').style.display = 'flex';
+
+    syncChat();
+}
 
    async function sendMessage() {
     const input = document.getElementById('chat-input-field');
