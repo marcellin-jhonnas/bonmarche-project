@@ -323,33 +323,31 @@
 
     async function sendMessage() {
     const input = document.getElementById('chat-input-field');
-    const val = input.value.trim(); // .trim() évite d'envoyer des espaces vides
+    const val = input.value.trim();
 
     if(!val || !activeClient) return;
 
-    input.disabled = true; // Empêche le double-clic pendant l'envoi
+    input.disabled = true;
 
     try {
         await fetch(CONFIG.API, {
             method: "POST",
-            mode: "no-cors", // Garder no-cors pour éviter les erreurs de sécurité navigateur
-            body: JSON.stringify({ 
-                action: "sendChat", 
-                idClient: activeClient, 
-                texte: val, // Ton script GS accepte maintenant "texte"
-                expediteur: "Admin" 
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "sendChatMessage",
+                idClient: activeClient,
+                message: val,
+                expediteur: "Admin"
             })
         });
 
-        // On vide le champ et on redonne la main
         input.value = "";
     } catch (e) {
         console.error("Erreur d'envoi :", e);
-        alert("Le message n'a pas pu être envoyé.");
     } finally {
         input.disabled = false;
-        input.focus(); // Replace le curseur dans le champ
-        syncChat(); // Rafraîchit la discussion pour voir ton message
+        input.focus();
+        syncChat();
     }
 }
 
