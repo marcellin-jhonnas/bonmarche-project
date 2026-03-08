@@ -1,549 +1,293 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>SafeRun Admin Pro</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-
-/* VARIABLES */
-
-:root{
-
---orange:#ff6b00;
---dark:#111827;
---light:#f5f7fa;
---success:#27ae60;
---danger:#e74c3c;
---gray:#777;
-
-}
-
-/* RESET */
-
-*{
-box-sizing:border-box;
-}
-
-body{
-
-margin:0;
-font-family:Segoe UI;
-background:var(--light);
-
-}
-
-/* LAYOUT */
-
-.admin{
-
-display:flex;
-height:100vh;
-
-}
-
-/* SIDEBAR */
-
-.sidebar{
-
-width:260px;
-background:var(--dark);
-color:white;
-display:flex;
-flex-direction:column;
-
-}
-
-.logo{
-
-padding:25px;
-font-size:22px;
-font-weight:bold;
-
-}
-
-.logo span{
-
-color:var(--orange);
-
-}
-
-.menu{
-
-flex:1;
-
-}
-
-.menu-item{
-
-padding:15px 25px;
-display:flex;
-gap:12px;
-cursor:pointer;
-align-items:center;
-opacity:0.8;
-
-}
-
-.menu-item:hover{
-
-background:#1f2937;
-opacity:1;
-
-}
-
-/* MAIN */
-
-.main{
-
-flex:1;
-display:flex;
-flex-direction:column;
-
-}
-
-/* TOPBAR */
-
-.topbar{
-
-height:65px;
-background:white;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 30px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-
-}
-
-.search{
-
-background:#f3f3f3;
-padding:8px 15px;
-border-radius:20px;
-
-}
-
-/* CONTENT */
-
-.content{
-
-padding:30px;
-overflow:auto;
-
-}
-
-/* STATS */
-
-.stats{
-
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:20px;
-margin-bottom:30px;
-
-}
-
-.card{
-
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 8px 20px rgba(0,0,0,0.05);
-
-}
-
-.card h3{
-
-margin:0;
-color:var(--gray);
-
-}
-
-.card h1{
-
-margin:10px 0 0;
-
-}
-
-/* CHART */
-
-.chart{
-
-background:white;
-padding:25px;
-border-radius:12px;
-box-shadow:0 8px 20px rgba(0,0,0,0.05);
-margin-bottom:30px;
-
-}
-
-/* TABLE */
-
-table{
-
-width:100%;
-border-collapse:collapse;
-background:white;
-
-}
-
-th,td{
-
-padding:12px;
-border-bottom:1px solid #eee;
-text-align:left;
-
-}
-
-th{
-
-background:#fafafa;
-
-}
-
-/* STATUS */
-
-.status{
-
-padding:5px 10px;
-border-radius:20px;
-font-size:12px;
-
-}
-
-.new{
-
-background:#e3f2fd;
-color:#1976d2;
-
-}
-
-.delivery{
-
-background:#fff3cd;
-color:#856404;
-
-}
-
-.done{
-
-background:#e6f7ee;
-color:#27ae60;
-
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRun Admin Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --orange: #ff6b00;
+            --dark: #111827;
+            --light: #f5f7fa;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --gray: #777;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--light); overflow: hidden; }
+
+        .admin { display: flex; height: 100vh; }
+
+        /* SIDEBAR */
+        .sidebar { width: 260px; background: var(--dark); color: white; display: flex; flex-direction: column; }
+        .logo { padding: 25px; font-size: 22px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo span { color: var(--orange); }
+        .menu { flex: 1; padding-top: 10px; }
+        .menu-item { padding: 15px 25px; display: flex; gap: 12px; cursor: pointer; align-items: center; transition: 0.3s; color: #9ca3af; }
+        .menu-item:hover, .menu-item.active { background: #1f2937; color: white; border-left: 4px solid var(--orange); }
+
+        /* MAIN */
+        .main { flex: 1; display: flex; flex-direction: column; height: 100vh; }
+        .topbar { height: 65px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); z-index: 10; }
+        .search { background: #f3f3f3; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; }
+        .search input { border: none; background: none; outline: none; width: 200px; }
+
+        /* CONTENT */
+        .content { padding: 30px; overflow-y: auto; flex: 1; }
+
+        /* STATS */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-bottom: 3px solid transparent; }
+        .card:hover { transform: translateY(-3px); transition: 0.3s; border-bottom-color: var(--orange); }
+        .card h3 { margin: 0; color: var(--gray); font-size: 14px; text-transform: uppercase; }
+        .card h1 { margin: 10px 0 0; font-size: 24px; }
+
+        /* CHAT SYSTEM SPECIFIC */
+        #chat-layout { display: flex; height: calc(100vh - 160px); background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .chat-list { width: 300px; border-right: 1px solid #eee; overflow-y: auto; background: #fafafa; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #fdfdfd; }
+        .chat-header { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; font-weight: bold; }
+        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 70%; padding: 10px 15px; border-radius: 15px; font-size: 14px; }
+        .msg.admin { align-self: flex-end; background: var(--orange); color: white; border-bottom-right-radius: 2px; }
+        .msg.client { align-self: flex-start; background: #e5e7eb; color: #1f2937; border-bottom-left-radius: 2px; }
+        .chat-input { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .chat-input input { flex: 1; padding: 10px 15px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
+        .chat-input button { background: var(--orange); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f9fafb; color: var(--gray); font-weight: 600; text-transform: uppercase; font-size: 12px; }
+        
+        .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status.new { background: #fff7ed; color: #c2410c; }
+        .status.paye { background: #f0fdf4; color: #15803d; }
+
+        /* NOTIF DOT */
+        .notif-dot { position: absolute; top: 12px; right: 20px; width: 10px; height: 10px; background: var(--danger); border-radius: 50%; display: none; border: 2px solid var(--dark); }
+    </style>
 </head>
-
 <body>
 
 <div class="admin">
+    <div class="sidebar">
+        <div class="logo"><span>Safe</span>Run Admin</div>
+        <div class="menu">
+            <div class="menu-item active" onclick="openPage('dashboard', this)"><i class="fa fa-chart-line"></i> Dashboard</div>
+            <div class="menu-item" onclick="openPage('commandes', this)"><i class="fa fa-shopping-cart"></i> Commandes</div>
+            <div class="menu-item" style="position:relative;" onclick="openPage('chat', this)">
+                <i class="fa fa-comments"></i> Chat Client
+                <span id="chat-alert" class="notif-dot"></span>
+            </div>
+            <div class="menu-item"><i class="fa fa-box"></i> Produits</div>
+            <div class="menu-item"><i class="fa fa-truck"></i> Livraisons</div>
+        </div>
+    </div>
 
-<!-- SIDEBAR -->
+    <div class="main">
+        <div class="topbar">
+            <div class="search">
+                <i class="fa fa-search"></i>
+                <input type="text" placeholder="Rechercher commande..." onkeyup="filtrerTable()">
+            </div>
+            <div>
+                <button onclick="charger()" style="background:none; border:none; cursor:pointer; margin-right:15px;"><i class="fa fa-sync-alt"></i></button>
+                <i class="fa fa-user-circle fa-lg"></i>
+            </div>
+        </div>
 
-<div class="sidebar">
+        <div class="content">
+            <div id="dashboard" class="page">
+                <div class="stats">
+                    <div class="card"><h3>Commandes</h3><h1 id="stat-commandes">0</h1></div>
+                    <div class="card"><h3>Chiffre d'affaires</h3><h1 id="stat-ca">0 Ar</h1></div>
+                    <div class="card"><h3>Visiteurs</h3><h1>1,284</h1></div>
+                    <div class="card"><h3>Conversion</h3><h1>4.2%</h1></div>
+                </div>
+                <div class="chart"><canvas id="salesChart" height="100"></canvas></div>
+            </div>
 
-<div class="logo">
+            <div id="commandes" class="page" style="display:none">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>Gestion des commandes</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>Client</th><th>Produits</th><th>Total</th><th>Statut</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="commandes-liste"></tbody>
+                </table>
+            </div>
 
-<span>Safe</span>Run Admin
-
+            <div id="chat" class="page" style="display:none">
+                <div id="chat-layout">
+                    <div class="chat-list" id="chat-clients-list"></div>
+                    <div class="chat-main">
+                        <div class="chat-header" id="current-chat-name">Sélectionnez une discussion</div>
+                        <div class="messages" id="chat-messages-container"></div>
+                        <div class="chat-input" id="chat-input-box" style="display:none">
+                            <input type="text" id="msg-input" placeholder="Écrire un message...">
+                            <button onclick="envoyerMessage()"><i class="fa fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="menu">
-
-<div class="menu-item" onclick="openPage('dashboard')">
-<i class="fa fa-chart-line"></i>
-Dashboard
-</div>
-
-<div class="menu-item" onclick="openPage('commandes')">
-<i class="fa fa-shopping-cart"></i>
-Commandes
-</div>
-
-<div class="menu-item" onclick="openPage('chat')">
-<i class="fa fa-comments"></i>
-Chat Client
-</div>
-
-<div class="menu-item">
-<i class="fa fa-box"></i>
-Produits
-</div>
-
-<div class="menu-item">
-<i class="fa fa-truck"></i>
-Livraisons
-</div>
-
-<div class="menu-item">
-<i class="fa fa-users"></i>
-Clients
-</div>
-
-</div>
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main">
-
-<div class="topbar">
-
-<div class="search">
-
-<i class="fa fa-search"></i>
-Rechercher commande...
-
-</div>
-
-<div>
-
-<i class="fa fa-bell"></i>
-
-&nbsp;&nbsp;
-
-<i class="fa fa-user-circle"></i>
-
-</div>
-
-</div>
-
-<div class="content">
-
-<!-- DASHBOARD -->
-
-<div id="dashboard">
-
-<div class="stats">
-
-<div class="card">
-
-<h3>Total Commandes</h3>
-
-<h1 id="stat-commandes">0</h1>
-
-</div>
-
-<div class="card">
-
-<h3>Chiffre d'affaires</h3>
-
-<h1 id="stat-ca">0 Ar</h1>
-
-</div>
-
-<div class="card">
-
-<h3>Clients</h3>
-
-<h1>542</h1>
-
-</div>
-
-<div class="card">
-
-<h3>Produits</h3>
-
-<h1>98</h1>
-
-</div>
-
-</div>
-
-<div class="chart">
-
-<canvas id="salesChart"></canvas>
-
-</div>
-
-</div>
-
-<!-- COMMANDES -->
-
-<div id="commandes" style="display:none">
-
-<h2>Liste commandes</h2>
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>ID</th>
-
-<th>Client</th>
-
-<th>Produit</th>
-
-<th>Total</th>
-
-<th>Statut</th>
-
-<th>Action</th>
-
-</tr>
-
-</thead>
-
-<tbody id="commandes-liste">
-
-</tbody>
-
-</table>
-
-</div>
-
-<!-- CHAT -->
-
-<div id="chat" style="display:none">
-
-<h2>Messagerie client</h2>
-
-<div id="chat-area">
-
-Votre système chat existant peut être collé ici.
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+    let clientActuel = null;
+    let messageCountTotal = 0;
+    let rafraichissementEnCours = false;
 
-/* API EXISTANTE */
+    // NAVIGATION
+    function openPage(page, el) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = "none");
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        document.getElementById(page).style.display = "block";
+        if(el) el.classList.add('active');
+        if(page === 'chat') {
+            document.getElementById('chat-alert').style.display = "none";
+            chargerChat();
+        }
+    }
 
-const API_URL="https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"
+    // GRAPH (Dynamique)
+    const ctx = document.getElementById("salesChart");
+    let monGraph = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+            datasets: [{
+                label: "Ventes (Ar)",
+                data: [0, 0, 0, 0, 0, 0, 0],
+                borderColor: "#ff6b00",
+                backgroundColor: "rgba(255,107,0,0.1)",
+                fill: true, tension: 0.4
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
 
-/* NAVIGATION */
+    // CHARGER COMMANDES & STATS
+    async function charger() {
+        try {
+            const res = await fetch(API_URL + "?action=getCommandes");
+            const data = await res.json();
+            let total = 0;
+            let html = "";
+            
+            data.reverse().forEach(cmd => {
+                total += Number(cmd["Montant"] || 0);
+                const statusClass = cmd["Statut"] === "PAYÉ" ? "paye" : "new";
+                html += `
+                    <tr>
+                        <td>#${cmd["ID"]}</td>
+                        <td><b>${cmd["Client"]}</b><br><small>${cmd["Telephone"] || ''}</small></td>
+                        <td>${cmd["Produits"]}</td>
+                        <td>${Number(cmd["Montant"]).toLocaleString()} Ar</td>
+                        <td><span class="status ${statusClass}">${cmd["Statut"]}</span></td>
+                        <td><button onclick="modifierStatut('${cmd["ID"]}','PAYÉ')" style="cursor:pointer; padding:5px; border-radius:5px; border:1px solid #ddd;">Valider</button></td>
+                    </tr>`;
+            });
 
-function openPage(page){
+            document.getElementById("commandes-liste").innerHTML = html;
+            document.getElementById("stat-commandes").innerText = data.length;
+            document.getElementById("stat-ca").innerText = total.toLocaleString() + " Ar";
+            
+            // Simuler mise à jour graphique avec données réelles (exemple simplifié)
+            monGraph.data.datasets[0].data = [total/7, total/5, total/8, total/4, total/6, total/3, total/2];
+            monGraph.update();
 
-document.getElementById("dashboard").style.display="none"
-document.getElementById("commandes").style.display="none"
-document.getElementById("chat").style.display="none"
+        } catch (e) { console.error("Erreur chargement:", e); }
+    }
 
-document.getElementById(page).style.display="block"
+    // CHAT SYSTEM
+    async function chargerChat() {
+        if (rafraichissementEnCours) return;
+        rafraichissementEnCours = true;
+        try {
+            const res = await fetch(API_URL + "?action=readAllChat");
+            const messages = await res.json();
+            
+            // Gérer l'alerte
+            if (messages.length > messageCountTotal && messageCountTotal !== 0) {
+                document.getElementById('chat-alert').style.display = "block";
+                document.getElementById('notif-sound').play();
+            }
+            messageCountTotal = messages.length;
 
-}
+            // Liste des clients uniques
+            const clients = [...new Set(messages.map(m => m.idClient))];
+            let listHtml = "";
+            clients.forEach(c => {
+                const dernierMsg = messages.filter(m => m.idClient === c).pop();
+                listHtml += `
+                    <div onclick="ouvrirDiscussion('${c}')" style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; background:${clientActuel === c ? '#fff7ed' : 'transparent'}">
+                        <b>${c}</b><br>
+                        <small style="color:#888">${dernierMsg.texte.substring(0, 30)}...</small>
+                    </div>`;
+            });
+            document.getElementById('chat-clients-list').innerHTML = listHtml;
 
-/* GRAPH */
+            if (clientActuel) {
+                const msgFiltres = messages.filter(m => m.idClient === clientActuel);
+                let msgHtml = "";
+                msgFiltres.forEach(m => {
+                    const type = m.expediteur === "Admin" ? "admin" : "client";
+                    msgHtml += `<div class="msg ${type}">${m.texte}</div>`;
+                });
+                document.getElementById('chat-messages-container').innerHTML = msgHtml;
+            }
+        } finally { rafraichissementEnCours = false; }
+    }
 
-const ctx=document.getElementById("salesChart")
+    function ouvrirDiscussion(id) {
+        clientActuel = id;
+        document.getElementById('current-chat-name').innerText = "Discussion avec : " + id;
+        document.getElementById('chat-input-box').style.display = "flex";
+        chargerChat();
+    }
 
-new Chart(ctx,{
-type:"line",
-data:{
-labels:["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"],
-datasets:[{
-label:"Ventes",
-data:[120000,150000,90000,200000,170000,240000,300000],
-borderColor:"#ff6b00",
-backgroundColor:"rgba(255,107,0,0.1)",
-fill:true,
-tension:0.4
-}]
-}
-})
+    async function envoyerMessage() {
+        const input = document.getElementById('msg-input');
+        const txt = input.value;
+        if (!txt || !clientActuel) return;
+        
+        input.value = "Envoi...";
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ action: "sendChat", idClient: clientActuel, texte: txt, expediteur: "Admin" })
+        });
+        input.value = "";
+        chargerChat();
+    }
 
-/* CHARGER COMMANDES */
+    async function modifierStatut(id, statut) {
+        if(!confirm("Passer la commande en PAYÉ ?")) return;
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "updateStatut", idCommande: id, nouveauStatut: statut }) });
+        charger();
+    }
 
-async function charger(){
+    function filtrerTable() {
+        const val = document.querySelector('.search input').value.toLowerCase();
+        const rows = document.querySelectorAll('#commandes-liste tr');
+        rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(val) ? "" : "none");
+    }
 
-const res=await fetch(API_URL+"?action=getCommandes")
-
-const data=await res.json()
-
-let total=0
-
-let html=""
-
-data.reverse().forEach(cmd=>{
-
-total+=Number(cmd["Montant"]||0)
-
-html+=`
-
-<tr>
-
-<td>${cmd["ID"]}</td>
-
-<td>${cmd["Client"]}</td>
-
-<td>${cmd["Produits"]}</td>
-
-<td>${cmd["Montant"]} Ar</td>
-
-<td><span class="status new">${cmd["Statut"]}</span></td>
-
-<td>
-
-<button onclick="modifierStatut('${cmd["ID"]}','SÉRIEUX')">
-
-PAYÉ
-
-</button>
-
-</td>
-
-</tr>
-
-`
-
-})
-
-document.getElementById("commandes-liste").innerHTML=html
-
-document.getElementById("stat-commandes").innerText=data.length
-
-document.getElementById("stat-ca").innerText=total.toLocaleString()+" Ar"
-
-}
-
-/* STATUT */
-
-async function modifierStatut(id,statut){
-
-await fetch(API_URL,{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify({
-
-action:"updateStatut",
-idCommande:id,
-nouveauStatut:statut
-
-})
-})
-
-charger()
-
-}
-
-/* INITIALISATION */
-
-charger()
-
+    // INIT & LOOP
+    charger();
+    setInterval(chargerChat, 3000);
 </script>
 
 </body>
-
 </html>
