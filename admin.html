@@ -344,6 +344,12 @@
     input.focus();
     syncChat();
 }
+// --- RACCOURCI CLAVIER : ENTRÉE POUR ENVOYER ---
+document.getElementById('chat-input-field').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
 
    async function updateStatus(id) {
     // Demande de confirmation
