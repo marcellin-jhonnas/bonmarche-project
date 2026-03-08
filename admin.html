@@ -263,18 +263,30 @@
     async function syncChat() {
     if(isLocked) return;
     isLocked = true;
+    
+    console.log("--- Début de la synchronisation du Chat ---");
+    
     try {
         const res = await fetch(CONFIG.API + "?action=readAllChat");
         const allMsgs = await res.json();
 
-        // Gestion de la notification sonore
-        if(allMsgs.length > totalMessages && totalMessages !== 0) {
-            document.getElementById('alert-sound').play();
+        // LOG 1 : Voir ce que Google renvoie réellement
+        console.log("Données reçues de Google Sheets :", allMsgs);
+
+        if(!allMsgs || allMsgs.length === 0) {
+            console.warn("Attention : La liste des messages est vide !");
         }
+
         totalMessages = allMsgs.length;
 
-        // --- 1. LISTE DES CLIENTS (Correction minuscule idClient) ---
-        const clients = [...new Set(allMsgs.map(m => m.idClient))];
+        // --- LISTE DES CLIENTS ---
+        const clients = [...new Set(allMsgs.map(m => {
+            // LOG 2 : Vérifier les noms des colonnes pour chaque message
+            const id = m.idClient || m.ID_Client || m.id;
+            if(!id) console.error("Impossible de trouver l'ID du client dans ce message :", m);
+            return id;
+        }))];
+        
         let clientListHtml = "";
         clients.forEach(c => {
             if(!c) return;
@@ -282,37 +294,48 @@
             clientListHtml += `
                 <div onclick="loadDiscussion('${c}')" 
                      style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; 
-                            background:${isSelected ? '#fff7ed' : 'white'}; 
-                            border-left: ${isSelected ? '4px solid var(--orange)' : '4px solid transparent'}">
-                    <strong><i class="fas fa-user"></i> ${c}</strong>
+                            background:${isSelected ? '#fff7ed' : 'white'};">
+                    <strong>${c}</strong>
                 </div>`;
         });
         document.getElementById('client-list').innerHTML = clientListHtml;
 
-        // --- 2. AFFICHAGE DU MESSAGE (Correction minuscule message) ---
+        // --- AFFICHAGE DES MESSAGES ---
         if(activeClient) {
-            const filtered = allMsgs.filter(m => m.idClient === activeClient);
-            let msgHtml = "";
+            console.log("Discussion active pour le client :", activeClient);
             
+            const filtered = allMsgs.filter(m => (m.idClient || m.ID_Client) === activeClient);
+            console.log("Messages filtrés pour ce client :", filtered);
+            
+            let msgHtml = "";
             filtered.forEach(m => {
-                // On utilise les noms exacts renvoyés par ton GAS : message et expediteur
-                const texte = m.message || ""; 
-                const exp = m.expediteur || "";
-                const side = (exp === "Admin") ? "sent" : "received";
+                // LOG 3 : Vérifier le contenu du message
+                const texte = m.message || m.Message || m.texte;
+                const exp = m.expediteur || m.Expediteur;
                 
+                console.log(`Message de ${exp}: "${texte}"`);
+
+                const side = (exp === "Admin") ? "sent" : "received";
                 if(texte) {
                     msgHtml += `<div class="msg ${side}">${texte}</div>`;
+                } else {
+                    console.warn("Un message vide a été détecté et ignoré :", m);
                 }
             });
 
             const container = document.getElementById('msg-container');
-            container.innerHTML = msgHtml;
-            container.scrollTop = container.scrollHeight; // Toujours voir le dernier message
+            if(container) {
+                container.innerHTML = msgHtml;
+                container.scrollTop = container.scrollHeight;
+            } else {
+                console.error("ERREUR : L'élément HTML 'msg-container' n'existe pas !");
+            }
         }
     } catch(e) { 
-        console.error("Erreur d'affichage :", e); 
+        console.error("ERREUR FATALE pendant la synchro :", e); 
     } finally { 
         isLocked = false; 
+        console.log("--- Fin de la synchronisation ---");
     }
 }
 
