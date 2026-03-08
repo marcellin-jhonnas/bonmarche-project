@@ -295,8 +295,8 @@
             let msgHtml = "";
             filtered.forEach(m => {
                 // --- CORRECTION ICI : m.message et m.expediteur (minuscules) ---
-                const texte = m.message || "";
-                const exp = m.expediteur || "";
+                const texte = m.message || m.Message || "";
+                const exp = m.expediteur || m.Expediteur || "";
                 
                 const side = exp === "Admin" ? "sent" : "received";
                 if(texte) {
