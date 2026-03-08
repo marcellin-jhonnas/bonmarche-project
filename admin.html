@@ -261,43 +261,56 @@
 
     // --- CHAT SYSTEM ---
     async function syncChat() {
-        if(isLocked) return;
-        isLocked = true;
-        try {
-            const res = await fetch(CONFIG.API + "?action=readAllChat");
-            const allMsgs = await res.json();
+    if(isLocked) return;
+    isLocked = true;
+    try {
+        const res = await fetch(CONFIG.API + "?action=readAllChat");
+        const allMsgs = await res.json();
 
-            // Sound Notification
-            if(allMsgs.length > totalMessages && totalMessages !== 0) {
-                document.getElementById('alert-sound').play();
-                if(document.getElementById('tab-chat').style.display === 'none') {
-                    document.getElementById('chat-notif').style.display = 'inline-block';
+        // Notification sonore si nouveau message
+        if(allMsgs.length > totalMessages && totalMessages !== 0) {
+            document.getElementById('alert-sound').play();
+            if(document.getElementById('tab-chat').style.display === 'none') {
+                document.getElementById('chat-notif').style.display = 'inline-block';
+            }
+        }
+        totalMessages = allMsgs.length;
+
+        // Liste des clients (Utilise ID_Client selon ton tableau)
+        const clients = [...new Set(allMsgs.map(m => m.ID_Client))];
+        let clientListHtml = "";
+        clients.forEach(c => {
+            if(!c) return; // Ignore les lignes vides
+            clientListHtml += `<div onclick="loadDiscussion('${c}')" style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; background:${activeClient===c?'#fff7ed':'white'}; font-weight:${activeClient===c?'bold':'normal'}">
+                <i class="fas fa-user-circle"></i> ${c}
+            </div>`;
+        });
+        document.getElementById('client-list').innerHTML = clientListHtml;
+
+        // Affichage de la discussion ouverte
+        if(activeClient) {
+            const filtered = allMsgs.filter(m => m.ID_Client === activeClient);
+            let msgHtml = "";
+            filtered.forEach(m => {
+                // IMPORTANT : On utilise m.Message et m.Expediteur (Majuscules !)
+                const texte = m.Message || "";
+                const expediteur = m.Expediteur || "";
+                
+                const side = expediteur === "Admin" ? "sent" : "received";
+                if(texte) {
+                    msgHtml += `<div class="msg ${side}">${texte}</div>`;
                 }
-            }
-            totalMessages = allMsgs.length;
-
-            // Update Client List
-            const clients = [...new Set(allMsgs.map(m => m.idClient))];
-            let clientListHtml = "";
-            clients.forEach(c => {
-                clientListHtml += `<div onclick="loadDiscussion('${c}')" style="padding:15px; border-bottom:1px solid #e2e8f0; cursor:pointer; background:${activeClient===c?'#fff7ed':''}">
-                    <strong>${c}</strong>
-                </div>`;
             });
-            document.getElementById('client-list').innerHTML = clientListHtml;
-
-            // Update Open Chat
-            if(activeClient) {
-                const filtered = allMsgs.filter(m => m.idClient === activeClient);
-                let msgHtml = "";
-                filtered.forEach(m => {
-                    const side = m.expediteur === "Admin" ? "sent" : "received";
-                    msgHtml += `<div class="msg ${side}">${m.texte}</div>`;
-                });
-                document.getElementById('msg-container').innerHTML = msgHtml;
-            }
-        } finally { isLocked = false; }
+            const container = document.getElementById('msg-container');
+            container.innerHTML = msgHtml;
+            container.scrollTop = container.scrollHeight; // Scroll automatique vers le bas
+        }
+    } catch(e) {
+        console.error("Erreur de lecture du chat:", e);
+    } finally { 
+        isLocked = false; 
     }
+}
 
     function loadDiscussion(id) {
         activeClient = id;
@@ -307,20 +320,36 @@
     }
 
     async function sendMessage() {
-        const input = document.getElementById('chat-input-field');
-        const val = input.value;
-        if(!val || !activeClient) return;
+    const input = document.getElementById('chat-input-field');
+    const val = input.value.trim(); // .trim() évite d'envoyer des espaces vides
 
-        input.disabled = true;
+    if(!val || !activeClient) return;
+
+    input.disabled = true; // Empêche le double-clic pendant l'envoi
+
+    try {
         await fetch(CONFIG.API, {
             method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ action: "sendChat", idClient: activeClient, texte: val, expediteur: "Admin" })
+            mode: "no-cors", // Garder no-cors pour éviter les erreurs de sécurité navigateur
+            body: JSON.stringify({ 
+                action: "sendChat", 
+                idClient: activeClient, 
+                texte: val, // Ton script GS accepte maintenant "texte"
+                expediteur: "Admin" 
+            })
         });
+
+        // On vide le champ et on redonne la main
         input.value = "";
+    } catch (e) {
+        console.error("Erreur d'envoi :", e);
+        alert("Le message n'a pas pu être envoyé.");
+    } finally {
         input.disabled = false;
-        syncChat();
+        input.focus(); // Replace le curseur dans le champ
+        syncChat(); // Rafraîchit la discussion pour voir ton message
     }
+}
 
    async function updateStatus(id) {
     // Demande de confirmation
