@@ -549,6 +549,53 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
         console.error("ERREUR FATALE Logistique :", e);
     }
 }
+function genererTableauLogistique(serieuses) {
+    console.log("LOG : Génération du tableau pour", serieuses.length, "commandes.");
+    const container = document.getElementById('logistique-container');
+
+    let html = `
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse: collapse; background:white; border-radius:8px; margin-top:10px;">
+            <thead>
+                <tr style="background:#334155; color:white; text-align:left;">
+                    <th style="padding:12px;">Client</th>
+                    <th style="padding:12px;">Destination</th>
+                    <th style="padding:12px;">Livreur</th>
+                    <th style="padding:12px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    serieuses.forEach(c => {
+        html += `
+            <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:12px;">
+                    <strong>${c.Client}</strong><br>
+                    <small style="color:#64748b;">ID: ${c.ID}</small>
+                </td>
+                <td style="padding:12px;">
+                    <i class="fas fa-map-marker-alt" style="color:#ef4444;"></i> 
+                    ${c.Livraison || c.Lieu_Exact || 'Non précisé'}
+                </td>
+                <td style="padding:12px;">
+                    <select id="select-livreur-${c.ID}" style="padding:5px; border-radius:4px; width:100%;">
+                        <option value="">-- Choisir --</option>
+                        ${listeLivreurs.map(l => `<option value="${l}">${l}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:12px;">
+                    <button onclick="modifierStatut('${c.ID}', 'LIVRÉ')" 
+                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
+                        <i class="fas fa-check"></i> Terminer
+                    </button>
+                </td>
+            </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+    console.log("LOG : Tableau logistique affiché avec succès.");
+}
 </script>
 </body>
 </html>
