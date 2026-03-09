@@ -627,7 +627,7 @@ function genererFactureLivreur(commande) {
     console.log("LOG : Génération de la facture pour " + commande.Client);
 
     // Création du lien Google Maps (si tu as les coordonnées ou l'adresse)
-    const lienMaps = "https://www.google.com/maps/search/" + encodeURIComponent(commande.Livraison || "");
+    const lienMaps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(commande.Livraison || "");
     // URL du QR Code (Taille 150x150)
     const qrCodeUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(lienMaps);
 
