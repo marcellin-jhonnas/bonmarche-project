@@ -566,6 +566,9 @@ function genererTableauLogistique(serieuses) {
     console.log("LOG : Génération du tableau pour", serieuses.length, "commandes.");
     const container = document.getElementById('logistique-container');
 
+    // On stocke les données dans une variable globale temporaire pour éviter les erreurs de syntaxe
+    window.currentSerieuses = serieuses;
+
     let html = `
     <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse: collapse; background:white; border-radius:8px; margin-top:10px;">
@@ -579,10 +582,7 @@ function genererTableauLogistique(serieuses) {
             </thead>
             <tbody>`;
 
-    serieuses.forEach(c => {
-        // Préparation de la ligne pour éviter les erreurs de guillemets
-        const commandeJson = JSON.stringify(c).replace(/'/g, "\\'");
-
+    serieuses.forEach((c, index) => {
         html += `
             <tr style="border-bottom:1px solid #e2e8f0;">
                 <td style="padding:12px;">
@@ -600,13 +600,13 @@ function genererTableauLogistique(serieuses) {
                     </select>
                 </td>
                 <td style="padding:12px; display:flex; gap:5px;">
-                    <button onclick="genererFactureLivreur(${commandeJson})" 
-                            style="background:#3b82f6; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;" title="Voir la facture">
+                    <button onclick="preparerFacture(${index})" 
+                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;" title="Voir la facture">
                         <i class="fas fa-file-invoice"></i>
                     </button>
 
                     <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
-                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;" title="Marquer comme livré">
+                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
                         <i class="fas fa-check"></i> OK
                     </button>
                 </td>
@@ -616,6 +616,12 @@ function genererTableauLogistique(serieuses) {
     html += `</tbody></table></div>`;
     container.innerHTML = html;
     console.log("LOG : Tableau logistique affiché avec succès.");
+}
+
+// Nouvelle petite fonction pour faire le lien proprement
+function preparerFacture(index) {
+    const commande = window.currentSerieuses[index];
+    genererFactureLivreur(commande);
 }
 function genererFactureLivreur(commande) {
     console.log("LOG : Génération de la facture pour " + commande.Client);
