@@ -251,13 +251,27 @@ afficherLivreurs();
 
     // --- NAVIGATION ---
     function showTab(id, el) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        el.classList.add('active');
-        document.getElementById('view-title').innerText = el.innerText;
-        if(id === 'tab-chat') document.getElementById('chat-notif').style.display = 'none';
+    // 1. Gestion de l'affichage (ton code existant)
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(id).style.display = 'block';
+    el.classList.add('active');
+    document.getElementById('view-title').innerText = el.innerText;
+
+    // 2. Logique spécifique aux notifications
+    if(id === 'tab-chat') document.getElementById('chat-notif').style.display = 'none';
+
+    // 3. NOUVEAU : Chargement automatique des données selon l'onglet
+    if (id === 'tab-logistique') {
+        // Charge uniquement les commandes "SERIEUX"
+        loadLogistique(); 
+    } 
+    else if (id === 'tab-livreurs') {
+        // Affiche la liste des livreurs enregistrés
+        afficherLivreurs(); 
     }
+}
 
     // --- DASHBOARD ---
     let salesChart;
