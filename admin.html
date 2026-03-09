@@ -110,10 +110,11 @@
             <div class="nav-link" onclick="showTab('tab-chat', this)">
                 <i class="fas fa-comment-alt"></i> Chat Client <span id="chat-notif" class="dot"></span>
             </div>
-            <div class="menu-item" onclick="showTab('tab-logistique')">
-    <i class="fas fa-truck"></i> Gestion Logistique
+            <div class="nav-link" onclick="showTab('tab-logistique', this)">
+    <i class="fas fa-truck"></i> Gestion de Commande
 </div>
-<div class="menu-item" onclick="showTab('tab-livreurs')">
+
+<div class="nav-link" onclick="showTab('tab-livreurs', this)">
     <i class="fas fa-motorcycle"></i> Livreurs
 </div>
         </nav>
@@ -251,25 +252,39 @@ afficherLivreurs();
 
     // --- NAVIGATION ---
     function showTab(id, el) {
-    // 1. Gestion de l'affichage (ton code existant)
+    console.log("--- Tentative d'affichage de l'onglet : " + id + " ---");
+    
+    // Diagnostic de l'élément reçu
+    if (!el) {
+        console.warn("LOG : L'argument 'el' est manquant. Vérifiez que vous avez mis ', this' dans le HTML.");
+    } else {
+        console.log("LOG : Élément 'el' bien reçu :", el.innerText);
+    }
+
+    // Cache tous les contenus
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    
+    // Gère les classes 'active' seulement si 'el' existe
     document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
     
-    document.getElementById(id).style.display = 'block';
-    el.classList.add('active');
-    document.getElementById('view-title').innerText = el.innerText;
+    if (el && el.classList) {
+        el.classList.add('active');
+        document.getElementById('view-title').innerText = el.innerText;
+    }
 
-    // 2. Logique spécifique aux notifications
-    if(id === 'tab-chat') document.getElementById('chat-notif').style.display = 'none';
+    // Affiche l'onglet
+    const tab = document.getElementById(id);
+    if (tab) {
+        tab.style.display = 'block';
+        console.log("LOG : Conteneur " + id + " affiché à l'écran.");
+    } else {
+        console.error("ERREUR : L'ID '" + id + "' n'existe pas dans votre HTML !");
+    }
 
-    // 3. NOUVEAU : Chargement automatique des données selon l'onglet
+    // Chargement des données
     if (id === 'tab-logistique') {
-        // Charge uniquement les commandes "SERIEUX"
+        console.log("LOG : Lancement du chargement Logistique...");
         loadLogistique(); 
-    } 
-    else if (id === 'tab-livreurs') {
-        // Affiche la liste des livreurs enregistrés
-        afficherLivreurs(); 
     }
 }
 
@@ -498,41 +513,41 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
     }
 
     async function loadLogistique() {
+    console.log("--- Début loadLogistique ---");
+    const container = document.getElementById('logistique-container');
+    
     try {
         const res = await fetch(CONFIG.API + "?action=getCommandes");
         const data = await res.json();
         
-        // FILTRE : On ne garde que le statut SERIEUX
-        const serieuses = data.filter(c => (c.Statut === "SERIEUX" || c.statut === "SERIEUX"));
-        
-        let html = `<table style="width:100%; border-collapse: collapse; background:white;">
-            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                <th style="padding:10px;">Client</th>
-                <th style="padding:10px;">Lieu de Livraison</th>
-                <th style="padding:10px;">Assigner Livreur</th>
-                <th style="padding:10px;">Action</th>
-            </tr>`;
+        console.log("LOG : Données brutes reçues de Google :", data);
 
-        serieuses.forEach(c => {
-            html += `
-            <tr style="border-bottom:1px solid #eee;">
-                <td style="padding:10px;"><strong>${c.Client}</strong></td>
-                <td style="padding:10px;">${c.Livraison || c.Lieu_Exact || 'Non spécifié'}</td>
-                <td style="padding:10px;">
-                    <select style="padding:5px;">
-                        <option>Choisir...</option>
-                        ${listeLivreurs.map(l => `<option>${l}</option>`).join('')}
-                    </select>
-                </td>
-                <td style="padding:10px;">
-                    <button onclick="modifierStatut('${c.ID}', 'LIVRÉ')" style="background:#22c55e; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
-                        C'est Livré !
-                    </button>
-                </td>
-            </tr>`;
+        // FILTRE : On logue chaque test pour comprendre pourquoi ça pourrait échouer
+        const serieuses = data.filter(c => {
+            const statutBrut = (c.Statut || c.statut || "").toString();
+            const statutClean = statutBrut.toUpperCase().trim();
+            
+            // Comparaison avec et sans accent
+            const match = (statutClean === "SÉRIEUX" || statutClean === "SERIEUX");
+            
+            if (match) console.log("LOG : Commande trouvée pour " + c.Client + " (Statut: " + statutBrut + ")");
+            return match;
         });
-        document.getElementById('logistique-container').innerHTML = html + "</table>";
-    } catch(e) { console.error("Erreur logistique:", e); }
+
+        console.log("LOG : Total commandes SÉRIEUX filtrées :", serieuses.length);
+
+        if (serieuses.length === 0) {
+            container.innerHTML = "<p style='padding:20px; color:orange;'>Aucune commande SÉRIEUX trouvée. Vérifiez l'orthographe dans Sheets.</p>";
+            return;
+        }
+
+        // ... (Le reste du code pour générer le tableau reste le même)
+        // N'oublie pas de fermer la fonction proprement
+        genererTableauLogistique(serieuses); // On appelle une sous-fonction ou on met le HTML ici
+
+    } catch (e) {
+        console.error("ERREUR FATALE Logistique :", e);
+    }
 }
 </script>
 </body>
