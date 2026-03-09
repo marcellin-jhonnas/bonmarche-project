@@ -485,26 +485,39 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
     }
 });
 
-   async function updateStatus(id) {
-    // Demande de confirmation
-    if(!confirm("Valider la commande #" + id + " en statut SÉRIEUX ?")) return;
+  async function updateStatus(id, nouveauStatut) {
+    console.log("--- DÉBUT updateStatus ---");
+    console.log("LOG : ID visé : " + id);
+    console.log("LOG : Nouveau statut demandé : " + nouveauStatut);
+
+    if(!confirm("Changer le statut de la commande #" + id + " en " + nouveauStatut + " ?")) return;
 
     try {
+        console.log("LOG : Envoi de la requête vers Google API...");
+        
         await fetch(CONFIG.API, { 
             method: "POST", 
             mode: "no-cors", 
             body: JSON.stringify({ 
-                action: "updateStatut", 
+                action: "updateStatut", // C'est l'action que ton script Google attend
                 idCommande: id, 
-                nouveauStatut: "SÉRIEUX" 
+                nouveauStatut: nouveauStatut 
             }) 
         });
         
-        // Rafraîchissement automatique après la mise à jour
-        setTimeout(refreshAll, 500);
+        console.log("LOG : Requête envoyée avec succès.");
+        alert("Statut mis à jour !");
+
+        // Rafraîchissement des deux tableaux
+        setTimeout(() => {
+            console.log("LOG : Rafraîchissement des listes...");
+            loadLogistique(); 
+            if(typeof loadCommandes === 'function') loadCommandes();
+        }, 1000);
+
     } catch(e) {
-        console.error("Erreur de mise à jour:", e);
-        alert("Erreur lors de la validation.");
+        console.error("ERREUR lors de l'updateStatus :", e);
+        alert("Erreur de connexion avec Google.");
     }
 }
 
@@ -584,10 +597,11 @@ function genererTableauLogistique(serieuses) {
                     </select>
                 </td>
                 <td style="padding:12px;">
-                    <button onclick="modifierStatut('${c.ID}', 'LIVRÉ')" 
-                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
-                        <i class="fas fa-check"></i> Terminer
-                    </button>
+                    // Remplace l'ancien bouton par celui-ci :
+<button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
+        style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
+    <i class="fas fa-check"></i> Terminer
+</button>
                 </td>
             </tr>`;
     });
