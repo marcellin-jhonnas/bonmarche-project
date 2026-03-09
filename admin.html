@@ -597,18 +597,79 @@ function genererTableauLogistique(serieuses) {
                     </select>
                 </td>
                 <td style="padding:12px;">
-                    // Remplace l'ancien bouton par celui-ci :
 <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
         style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
     <i class="fas fa-check"></i> Terminer
 </button>
                 </td>
             </tr>`;
+            // Dans ta boucle .forEach(c => { ... })
+<td style="padding:12px; display:flex; gap:5px;">
+    <button onclick='genererFactureLivreur(${JSON.stringify(c)})' 
+            style="background:#3b82f6; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
+        <i class="fas fa-file-invoice"></i> Détail
+    </button>
+
+    <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
+            style="background:#16a34a; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
+        <i class="fas fa-check"></i> OK
+    </button>
+</td>
     });
 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
     console.log("LOG : Tableau logistique affiché avec succès.");
+}
+function genererFactureLivreur(commande) {
+    console.log("LOG : Génération de la facture pour " + commande.Client);
+
+    // Création du lien Google Maps (si tu as les coordonnées ou l'adresse)
+    const lienMaps = "https://www.google.com/maps/search/" + encodeURIComponent(commande.Livraison || "");
+    // URL du QR Code (Taille 150x150)
+    const qrCodeUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(lienMaps);
+
+    const fenetreImpression = window.open('', '_blank');
+    fenetreImpression.document.write(`
+        <html>
+        <head>
+            <title>Facture - ${commande.Client}</title>
+            <style>
+                body { font-family: 'Courier New', Courier, monospace; padding: 20px; color: #000; }
+                .ticket { border: 2px dashed #000; padding: 15px; width: 300px; margin: auto; }
+                .header { text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
+                .qr-code { text-align: center; margin-top: 15px; }
+                .total { font-size: 1.4em; font-weight: bold; text-align: right; margin-top: 10px; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="ticket">
+                <div class="header">
+                    <h2>BON MARCHÉ</h2>
+                    <p>Bon de Livraison</p>
+                </div>
+                <p><strong>DATE:</strong> ${commande.Date || new Date().toLocaleDateString()}</p>
+                <p><strong>CLIENT:</strong> ${commande.Client}</p>
+                <p><strong>LIEU:</strong> ${commande.Livraison || 'À préciser'}</p>
+                <hr>
+                <p><strong>PRODUITS:</strong><br>${commande.Produits}</p>
+                <hr>
+                <div class="total">À PAYER: ${commande.Montant} Ar</div>
+                
+                <div class="qr-code">
+                    <p style="font-size: 10px;">Scanner pour la localisation :</p>
+                    <img src="${qrCodeUrl}" alt="QR Code Localisation">
+                </div>
+            </div>
+            <br>
+            <center class="no-print">
+                <button onclick="window.print()">Imprimer / Sauvegarder PDF</button>
+            </center>
+        </body>
+        </html>
+    `);
+    fenetreImpression.document.close();
 }
 </script>
 </body>
