@@ -110,6 +110,12 @@
             <div class="nav-link" onclick="showTab('tab-chat', this)">
                 <i class="fas fa-comment-alt"></i> Chat Client <span id="chat-notif" class="dot"></span>
             </div>
+            <div class="menu-item" onclick="showTab('tab-logistique')">
+    <i class="fas fa-truck"></i> Gestion Logistique
+</div>
+<div class="menu-item" onclick="showTab('tab-livreurs')">
+    <i class="fas fa-motorcycle"></i> Livreurs
+</div>
         </nav>
         <div style="padding: 20px;">
             <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -163,6 +169,24 @@
                     </div>
                 </div>
             </div>
+            <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
+    <h2><i class="fas fa-shipping-fast"></i> Commandes à Livrer (SÉRIEUX)</h2>
+    <p>Seules les commandes marquées comme "SERIEUX" apparaissent ici.</p>
+    <div id="logistique-container" style="margin-top:20px;">
+        </div>
+</div>
+
+<div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
+    <h2><i class="fas fa-user-plus"></i> Gestion des Livreurs</h2>
+    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
+        <input type="text" id="input-nom-livreur" placeholder="Nom du livreur" style="padding:10px; border:1px solid #ccc; border-radius:4px; width:200px;">
+        <button onclick="ajouterLivreur()" style="background:var(--orange); color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">
+            Ajouter le Livreur
+        </button>
+    </div>
+    <div id="liste-livreurs-affichage" style="margin-top:20px;">
+        </div>
+</div>
         </div>
     </main>
 </div>
@@ -170,6 +194,32 @@
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
+    // On récupère les livreurs enregistrés ou on crée une liste vide
+let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
+
+function ajouterLivreur() {
+    const nom = document.getElementById('input-nom-livreur').value.trim();
+    if(!nom) return;
+    
+    listeLivreurs.push(nom);
+    localStorage.setItem('safeRunLivreurs', JSON.stringify(listeLivreurs)); // Sauvegarde
+    document.getElementById('input-nom-livreur').value = ""; // Vide l'input
+    afficherLivreurs();
+}
+
+function afficherLivreurs() {
+    let html = "<h3>Mes Livreurs :</h3>";
+    listeLivreurs.forEach((l, index) => {
+        html += `<div style="padding:10px; background:white; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between;">
+            ${l} <button onclick="listeLivreurs.splice(${index},1); localStorage.setItem('safeRunLivreurs', JSON.stringify(listeLivreurs)); afficherLivreurs();" style="color:red; border:none; background:none; cursor:pointer;">Supprimer</button>
+        </div>`;
+    });
+    document.getElementById('liste-livreurs-affichage').innerHTML = html;
+}
+
+// Lancer l'affichage au démarrage
+afficherLivreurs();
+
     const CONFIG = {
         API: "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec",
         USER: "admin",
@@ -432,6 +482,44 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
     function startSync() {
         setInterval(syncChat, 3000);
     }
+
+    async function loadLogistique() {
+    try {
+        const res = await fetch(CONFIG.API + "?action=getCommandes");
+        const data = await res.json();
+        
+        // FILTRE : On ne garde que le statut SERIEUX
+        const serieuses = data.filter(c => (c.Statut === "SERIEUX" || c.statut === "SERIEUX"));
+        
+        let html = `<table style="width:100%; border-collapse: collapse; background:white;">
+            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:10px;">Client</th>
+                <th style="padding:10px;">Lieu de Livraison</th>
+                <th style="padding:10px;">Assigner Livreur</th>
+                <th style="padding:10px;">Action</th>
+            </tr>`;
+
+        serieuses.forEach(c => {
+            html += `
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:10px;"><strong>${c.Client}</strong></td>
+                <td style="padding:10px;">${c.Livraison || c.Lieu_Exact || 'Non spécifié'}</td>
+                <td style="padding:10px;">
+                    <select style="padding:5px;">
+                        <option>Choisir...</option>
+                        ${listeLivreurs.map(l => `<option>${l}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:10px;">
+                    <button onclick="modifierStatut('${c.ID}', 'LIVRÉ')" style="background:#22c55e; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">
+                        C'est Livré !
+                    </button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('logistique-container').innerHTML = html + "</table>";
+    } catch(e) { console.error("Erreur logistique:", e); }
+}
 </script>
 </body>
 </html>
