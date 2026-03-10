@@ -193,20 +193,27 @@
                 </div>
             </div>
            <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-shipping-fast"></i> Commandes à Livrer (SÉRIEUX)</h2>
-    <p>Seules les commandes marquées comme "SERIEUX" apparaissent ici.</p>
+    <h2><i class="fas fa-shipping-fast"></i> Gestion Logistique</h2>
+    
+    <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <label style="font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 8px; text-transform: uppercase;">
+            <i class="fas fa-filter"></i> Voir le planning de :
+        </label>
+        <select id="filtre-livreur-logistique" onchange="filtrerParLivreur()" 
+                style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white;">
+            <option value="TOUS">-- TOUS LES LIVREURS --</option>
+            </select>
+    </div>
 
     <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 100px; background: #eff6ff; border: 1px solid #3b82f6; padding: 10px; border-radius: 10px; text-align: center;">
             <div style="color: #3b82f6; font-size: 11px; font-weight: bold; text-transform: uppercase;">À Livrer</div>
             <div id="count-serieux" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
         </div>
-        
         <div style="flex: 1; min-width: 100px; background: #f8fafc; border: 1px solid #64748b; padding: 10px; border-radius: 10px; text-align: center;">
             <div style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Planning</div>
             <div id="count-planifie" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
         </div>
-
         <div style="flex: 1; min-width: 100px; background: #f0fdf4; border: 1px solid #22c55e; padding: 10px; border-radius: 10px; text-align: center;">
             <div style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase;">Total Flux</div>
             <div id="count-total" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
@@ -216,12 +223,11 @@
     <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <i class="fas fa-search" style="color: #64748b; margin-left: 10px;"></i>
         <input type="text" id="search-logistique" onkeyup="filtrerLogistique()" 
-               placeholder="Rechercher un client, un ID ou un lieu..." 
+               placeholder="Rechercher dans ce planning..." 
                style="padding: 10px; border: none; outline: none; width: 100%; font-size: 14px;">
     </div>
 
-    <div id="logistique-container" style="margin-top:20px;">
-    </div>
+    <div id="logistique-container" style="margin-top:20px;"></div>
 </div>
 
 <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
@@ -943,6 +949,30 @@ async function cloturerJournee() {
         console.error("Erreur clôture :", error);
         alert("Oups, impossible de clôturer. Vérifie ta connexion.");
     }
+}
+function filtrerParLivreur() {
+    const livreurSelectionne = document.getElementById("filtre-livreur-logistique").value.toUpperCase();
+    const table = document.querySelector("#logistique-container table");
+    
+    if (!table) return;
+    
+    const lignes = table.getElementsByTagName("tr");
+    let visibleCount = 0;
+
+    for (let i = 1; i < lignes.length; i++) {
+        // On récupère la valeur du SELECT dans la 3ème colonne (index 2)
+        const selectDansLigne = lignes[i].getElementsByTagName("select")[0];
+        const livreurAssigné = selectDansLigne ? selectDansLigne.value.toUpperCase() : "";
+
+        if (livreurSelectionne === "TOUS" || livreurAssigné === livreurSelectionne) {
+            lignes[i].style.display = "";
+            visibleCount++;
+        } else {
+            lignes[i].style.display = "none";
+        }
+    }
+    
+    console.log(`Filtrage terminé : ${visibleCount} commandes affichées pour ${livreurSelectionne}`);
 }
 </script>
 </body>
