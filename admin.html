@@ -173,6 +173,13 @@
             <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
     <h2><i class="fas fa-shipping-fast"></i> Commandes à Livrer (SÉRIEUX)</h2>
     <p>Seules les commandes marquées comme "SERIEUX" apparaissent ici.</p>
+
+    <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <i class="fas fa-search" style="color: #64748b; margin-left: 10px;"></i>
+        <input type="text" id="search-logistique" onkeyup="filtrerLogistique()" 
+               placeholder="Rechercher un client, un ID ou un lieu..." 
+               style="padding: 10px; border: none; outline: none; width: 100%; font-size: 14px;">
+    </div>
     <div id="logistique-container" style="margin-top:20px;">
         </div>
 </div>
@@ -726,6 +733,26 @@ async function assignerLivreur(idCommande, nomLivreur) {
         });
     } catch(e) {
         console.error("Erreur assignation :", e);
+    }
+}
+function filtrerLogistique() {
+    const input = document.getElementById("search-logistique");
+    const filter = input.value.toUpperCase();
+    const table = document.querySelector("#logistique-container table");
+    
+    if (!table) return; // Sécurité : on ne fait rien si le tableau n'est pas chargé
+    
+    const tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) { // On saute l'en-tête (i=0)
+        // On cherche dans toute la ligne (Client, ID, Lieu)
+        const texteLigne = tr[i].textContent || tr[i].innerText;
+        
+        if (texteLigne.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = ""; // On montre
+        } else {
+            tr[i].style.display = "none"; // On cache
+        }
     }
 }
 </script>
