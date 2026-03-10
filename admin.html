@@ -315,7 +315,8 @@ afficherLivreurs();
                 total += Number(cmd.Montant || 0);
                 
                 // Définition de la couleur du badge : Vert pour SÉRIEUX ou PAYÉ, Jaune pour le reste
-                const isValide = (cmd.Statut === "SÉRIEUX" || cmd.Statut === "PAYÉ");
+                // La commande est considérée comme traitée si elle est SÉRIEUX, PAYÉ ou LIVRÉ
+                const isValide = (cmd.Statut === "SÉRIEUX" || cmd.Statut === "PAYÉ" || cmd.Statut === "LIVRÉ");
                 const badgeClass = isValide ? "success" : "warning";
 
                 rows += `<tr>
