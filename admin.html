@@ -546,15 +546,20 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
 
         // FILTRE : On logue chaque test pour comprendre pourquoi ça pourrait échouer
         const serieuses = data.filter(c => {
-            const statutBrut = (c.Statut || c.statut || "").toString();
-            const statutClean = statutBrut.toUpperCase().trim();
-            
-            // Comparaison avec et sans accent
-            const match = (statutClean === "SÉRIEUX" || statutClean === "SERIEUX");
-            
-            if (match) console.log("LOG : Commande trouvée pour " + c.Client + " (Statut: " + statutBrut + ")");
-            return match;
-        });
+    const statutBrut = (c.Statut || c.statut || "").toString();
+    const statutClean = statutBrut.toUpperCase().trim();
+    
+    // On accepte maintenant SÉRIEUX ou PLANIFIÉ (avec ou sans accent)
+    const estSerieux = (statutClean === "SÉRIEUX" || statutClean === "SERIEUX");
+    const estPlanifie = (statutClean === "PLANIFIÉ" || statutClean === "PLANIFIE");
+    
+    const match = estSerieux || estPlanifie;
+    
+    if (match) {
+        console.log("LOG : Commande conservée - " + c.Client + " (Statut: " + statutBrut + ")");
+    }
+    return match;
+});
 
         console.log("LOG : Total commandes SÉRIEUX filtrées :", serieuses.length);
 
@@ -575,7 +580,6 @@ function genererTableauLogistique(serieuses) {
     console.log("LOG : Génération du tableau pour", serieuses.length, "commandes.");
     const container = document.getElementById('logistique-container');
 
-    // Sauvegarde pour l'accès via preparerFacture(index)
     window.currentSerieuses = serieuses;
 
     let html = `
@@ -592,13 +596,12 @@ function genererTableauLogistique(serieuses) {
             <tbody>`;
 
     serieuses.forEach((c, index) => {
-        // Sécurité : On utilise 'Téléphone' car c'est le nom de ta colonne Google Sheets
-        // On nettoie le numéro pour que le lien d'appel fonctionne (enlève espaces)
+        // Sécurité pour le numéro de téléphone (colonne 'Téléphone')
         const numBrut = c.Téléphone || "";
         const telNettoye = numBrut.toString().replace(/[^0-9+]/g, "");
 
         html += `
-            <tr style="border-bottom:1px solid #e2e8f0; hover:background:#f8fafc;">
+            <tr style="border-bottom:1px solid #e2e8f0;">
                 <td style="padding:12px;">
                     <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
                         <strong style="color:#1e293b;">${c.Client || 'Inconnu'}</strong>
@@ -620,20 +623,24 @@ function genererTableauLogistique(serieuses) {
                 <td style="padding:12px; display:flex; gap:6px; justify-content:center;">
                     
                     <a href="tel:${telNettoye}" 
-                       style="background:#334155; color:white; padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block; text-align:center;" 
-                       title="Appeler le client">
+                       style="background:#334155; color:white; padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block;" 
+                       title="Appeler">
                         <i class="fas fa-phone-alt"></i>
                     </a>
 
+                    <button onclick="updateStatus('${c.ID}', 'PLANIFIÉ')" 
+                            style="background:#64748b; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" 
+                            title="Mettre en planning">
+                        <i class="fas fa-calendar-alt"></i>
+                    </button>
+
                     <button onclick="preparerFacture(${index})" 
-                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" 
-                            title="Voir la facture">
+                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">
                         <i class="fas fa-file-invoice"></i>
                     </button>
 
                     <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
-                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;"
-                            title="Marquer comme livré">
+                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">
                         <i class="fas fa-check"></i>
                     </button>
 
@@ -643,7 +650,6 @@ function genererTableauLogistique(serieuses) {
 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
-    console.log("LOG : Tableau logistique mis à jour avec la colonne Téléphone.");
 }
 
 // Nouvelle petite fonction pour faire le lien proprement
