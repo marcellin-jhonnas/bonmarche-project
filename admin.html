@@ -566,48 +566,54 @@ function genererTableauLogistique(serieuses) {
     console.log("LOG : Génération du tableau pour", serieuses.length, "commandes.");
     const container = document.getElementById('logistique-container');
 
-    // On stocke les données dans une variable globale temporaire pour éviter les erreurs de syntaxe
+    // Sauvegarde pour l'accès via preparerFacture(index)
     window.currentSerieuses = serieuses;
 
     let html = `
     <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse: collapse; background:white; border-radius:8px; margin-top:10px;">
+        <table style="width:100%; border-collapse: collapse; background:white; border-radius:8px; margin-top:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <thead>
                 <tr style="background:#334155; color:white; text-align:left;">
-                    <th style="padding:12px;">Client</th>
-                    <th style="padding:12px;">Destination</th>
-                    <th style="padding:12px;">Livreur</th>
-                    <th style="padding:12px;">Actions</th>
+                    <th style="padding:12px; border-bottom:2px solid #1e293b;">Client & Statut</th>
+                    <th style="padding:12px; border-bottom:2px solid #1e293b;">Destination</th>
+                    <th style="padding:12px; border-bottom:2px solid #1e293b;">Livreur</th>
+                    <th style="padding:12px; border-bottom:2px solid #1e293b; text-align:center;">Actions</th>
                 </tr>
             </thead>
             <tbody>`;
 
     serieuses.forEach((c, index) => {
         html += `
-            <tr style="border-bottom:1px solid #e2e8f0;">
+            <tr style="border-bottom:1px solid #e2e8f0; hover:background:#f8fafc;">
                 <td style="padding:12px;">
-                    <strong>${c.Client || 'Inconnu'}</strong><br>
-                    <small style="color:#64748b;">ID: ${c.ID || 'N/A'}</small>
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                        <strong style="color:#1e293b;">${c.Client || 'Inconnu'}</strong>
+                        ${obtenirBadgeUrgence(c)}
+                    </div>
+                    <small style="color:#94a3b8; font-size:11px;">Réf: ${c.ID || '---'}</small>
                 </td>
-                <td style="padding:12px;">
-                    <i class="fas fa-map-marker-alt" style="color:#ef4444;"></i> 
+                <td style="padding:12px; color:#475569; font-size:13px;">
+                    <i class="fas fa-map-marker-alt" style="color:#ef4444; margin-right:5px;"></i> 
                     ${c.Livraison || c.Lieu_Exact || 'Non précisé'}
                 </td>
                 <td style="padding:12px;">
-                    <select onchange="assignerLivreur('${c.ID}', this.value)" style="padding:5px; border-radius:4px; width:100%;">
-                        <option value="">-- Choisir --</option>
+                    <select onchange="assignerLivreur('${c.ID}', this.value)" 
+                            style="padding:6px; border-radius:4px; width:100%; border:1px solid #cbd5e1; background:#f8fafc; font-size:13px;">
+                        <option value="">-- Assigner --</option>
                         ${listeLivreurs.map(l => `<option value="${l}">${l}</option>`).join('')}
                     </select>
                 </td>
-                <td style="padding:12px; display:flex; gap:5px;">
+                <td style="padding:12px; display:flex; gap:8px; justify-content:center;">
                     <button onclick="preparerFacture(${index})" 
-                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;" title="Voir la facture">
-                        <i class="fas fa-file-invoice"></i>
+                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s;" 
+                            title="Imprimer l'étiquette et facture">
+                        <i class="fas fa-file-invoice"></i> Détail
                     </button>
 
                     <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
-                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
-                        <i class="fas fa-check"></i> OK
+                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s;"
+                            title="Marquer comme livré">
+                        <i class="fas fa-check"></i> Terminer
                     </button>
                 </td>
             </tr>`;
@@ -615,7 +621,7 @@ function genererTableauLogistique(serieuses) {
 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
-    console.log("LOG : Tableau logistique affiché avec succès.");
+    console.log("LOG : Tableau logistique avec badges affiché.");
 }
 
 // Nouvelle petite fonction pour faire le lien proprement
@@ -678,6 +684,29 @@ function genererFactureLivreur(commande) {
         </html>
     `);
     fenetreImpression.document.close();
+}
+function obtenirBadgeUrgence(commande) {
+    if (!commande.Date) return "";
+    
+    const dateCmd = new Date(commande.Date);
+    const aujourdhui = new Date();
+    
+    // Calcul de la différence en jours
+    const diffTemps = aujourdhui.getTime() - dateCmd.getTime();
+    const diffJours = Math.floor(diffTemps / (1000 * 60 * 60 * 24));
+
+    // Styles communs pour les badges
+    const styleBase = "padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold; margin-left:5px; text-transform:uppercase;";
+
+    if (diffJours >= 2) {
+        return `<span style="${styleBase} background:#fee2e2; color:#ef4444; border:1px solid #ef4444;">DÉPASSÉ</span>`;
+    } else if (diffJours === 1) {
+        return `<span style="${styleBase} background:#ffedd5; color:#f97316; border:1px solid #f97316;">URGENT</span>`;
+    } else if (diffJours === 0) {
+        return `<span style="${styleBase} background:#dbeafe; color:#3b82f6; border:1px solid #3b82f6;">NOUVEAU</span>`;
+    } else {
+        return `<span style="${styleBase} background:#f1f5f9; color:#64748b; border:1px solid #64748b;">PLANIFIÉ</span>`;
+    }
 }
 </script>
 </body>
