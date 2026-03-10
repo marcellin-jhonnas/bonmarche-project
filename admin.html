@@ -592,8 +592,10 @@ function genererTableauLogistique(serieuses) {
             <tbody>`;
 
     serieuses.forEach((c, index) => {
-        // Sécurité : On nettoie le numéro de téléphone pour l'appel (enlève espaces et tirets)
-        const telNettoye = (c.Contact || "").toString().replace(/[^0-9+]/g, "");
+        // Sécurité : On utilise 'Téléphone' car c'est le nom de ta colonne Google Sheets
+        // On nettoie le numéro pour que le lien d'appel fonctionne (enlève espaces)
+        const numBrut = c.Téléphone || "";
+        const telNettoye = numBrut.toString().replace(/[^0-9+]/g, "");
 
         html += `
             <tr style="border-bottom:1px solid #e2e8f0; hover:background:#f8fafc;">
@@ -641,7 +643,7 @@ function genererTableauLogistique(serieuses) {
 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
-    console.log("LOG : Tableau logistique mis à jour avec bouton appel.");
+    console.log("LOG : Tableau logistique mis à jour avec la colonne Téléphone.");
 }
 
 // Nouvelle petite fonction pour faire le lien proprement
