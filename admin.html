@@ -101,29 +101,31 @@
 
 <div class="admin-container" id="admin-panel">
     <aside class="sidebar">
-        <div style="padding: 25px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #1e293b;">
-            <span style="color:var(--orange)">Safe</span>Run Admin
+    <div style="padding: 25px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #1e293b;">
+        <span style="color:var(--orange)">Safe</span>Run Admin
+    </div>
+    <nav style="flex:1; padding-top: 20px;">
+        <div class="nav-link active" onclick="showTab('tab-dash', this)"><i class="fas fa-chart-line"></i> Dashboard</div>
+        <div class="nav-link" onclick="showTab('tab-orders', this)"><i class="fas fa-shopping-bag"></i> Commandes</div>
+        <div class="nav-link" onclick="showTab('tab-chat', this)">
+            <i class="fas fa-comment-alt"></i> Chat Client <span id="chat-notif" class="dot"></span>
         </div>
-        <nav style="flex:1; padding-top: 20px;">
-            <div class="nav-link active" onclick="showTab('tab-dash', this)"><i class="fas fa-chart-line"></i> Dashboard</div>
-            <div class="nav-link" onclick="showTab('tab-orders', this)"><i class="fas fa-shopping-bag"></i> Commandes</div>
-            <div class="nav-link" onclick="showTab('tab-chat', this)">
-                <i class="fas fa-comment-alt"></i> Chat Client <span id="chat-notif" class="dot"></span>
-            </div>
-            <div class="nav-link" onclick="showTab('tab-logistique', this)">
-    <i class="fas fa-truck"></i> Gestion de Commande
-</div>
-
-<div class="nav-link" onclick="showTab('tab-livreurs', this)">
-    <i class="fas fa-motorcycle"></i> Livreurs
-</div>
-        </nav>
-        <div style="padding: 20px;">
-            <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
-                <i class="fas fa-sign-out-alt"></i> Quitter
-            </button>
+        <div class="nav-link" onclick="showTab('tab-logistique', this)">
+            <i class="fas fa-truck"></i> Gestion de Commande
         </div>
-    </aside>
+        <div class="nav-link" onclick="showTab('tab-livreurs', this)">
+            <i class="fas fa-motorcycle"></i> Livreurs
+        </div>
+        <div class="nav-link" onclick="showTab('tab-caisse', this)">
+            <i class="fas fa-wallet"></i> Ma Caisse
+        </div>
+    </nav>
+    <div style="padding: 20px;">
+        <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-sign-out-alt"></i> Quitter
+        </button>
+    </div>
+</aside>
 
     <main class="main">
         <header class="topbar">
@@ -145,7 +147,27 @@
                     <canvas id="mainChart"></canvas>
                 </div>
             </div>
+<div id="tab-caisse" class="tab-content" style="display:none; padding:20px;">
+    <h2><i class="fas fa-cash-register"></i> Ma Caisse du Jour</h2>
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #22c55e; padding: 20px; border-radius: 12px;">
+            <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Recettes à Encaisser</div>
+            <div id="caisse-total" style="font-size: 28px; font-weight: bold; color: #1e293b;">0 Ar</div>
+            <small style="color: #166534;">(Commandes livrées uniquement)</small>
+        </div>
 
+        <div style="flex: 1; min-width: 200px; background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+            <div style="color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase;">Colis Remis</div>
+            <div id="caisse-count" style="font-size: 28px; font-weight: bold; color: #1e293b;">0</div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:15px; background:white; border-radius:8px;">
+        <h3>Détails par Livreur</h3>
+        <div id="caisse-details-container"></div>
+    </div>
+</div>
             <div id="tab-orders" class="tab-content" style="display:none;">
                 <div class="card">
                     <table>
@@ -282,14 +304,12 @@ afficherLivreurs();
     // Diagnostic de l'élément reçu
     if (!el) {
         console.warn("LOG : L'argument 'el' est manquant. Vérifiez que vous avez mis ', this' dans le HTML.");
-    } else {
-        console.log("LOG : Élément 'el' bien reçu :", el.innerText);
     }
 
-    // Cache tous les contenus
+    // 1. Cache tous les contenus
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     
-    // Gère les classes 'active' seulement si 'el' existe
+    // 2. Gère les classes 'active'
     document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
     
     if (el && el.classList) {
@@ -297,19 +317,25 @@ afficherLivreurs();
         document.getElementById('view-title').innerText = el.innerText;
     }
 
-    // Affiche l'onglet
+    // 3. Affiche l'onglet
     const tab = document.getElementById(id);
     if (tab) {
         tab.style.display = 'block';
-        console.log("LOG : Conteneur " + id + " affiché à l'écran.");
     } else {
-        console.error("ERREUR : L'ID '" + id + "' n'existe pas dans votre HTML !");
+        console.error("ERREUR : L'ID '" + id + "' n'existe pas !");
     }
 
-    // Chargement des données
+    // --- 4. LANCEMENT DES CHARGEMENTS SPÉCIFIQUES ---
+    
     if (id === 'tab-logistique') {
         console.log("LOG : Lancement du chargement Logistique...");
         loadLogistique(); 
+    }
+
+    // AJOUT ICI : Lancement du calcul de la caisse quand on clique sur l'onglet
+    if (id === 'tab-caisse') {
+        console.log("LOG : Calcul des recettes en cours...");
+        genererJournalCaisse(); 
     }
 }
 
