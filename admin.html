@@ -901,6 +901,49 @@ function genererJournalCaisse() {
     document.getElementById('caisse-count').innerText = livrees.length;
     document.getElementById('caisse-details-container').innerHTML = (livrees.length > 0) ? tableHtml : "<p style='padding:20px; color:gray;'>Aucun encaissement aujourd'hui.</p>";
 }
+async function cloturerJournee() {
+    // 1. On vérifie s'il y a des choses à clôturer
+    const livrees = allData.filter(c => {
+        const s = (c.Statut || "").toUpperCase().trim();
+        return s === "LIVRÉ" || s === "LIVRE";
+    });
+
+    if (livrees.length === 0) {
+        alert("Rien à clôturer : Aucune commande n'est marquée 'LIVRÉ'.");
+        return;
+    }
+
+    const confirmation = confirm(`Voulez-vous clôturer la journée ?\n\nTotal à encaisser : ${document.getElementById('caisse-total').innerText}\nNombre de colis : ${livrees.length}\n\nCela archivera ces commandes.`);
+
+    if (!confirmation) return;
+
+    // 2. Envoi de l'ordre d'archivage au Google Apps Script
+    // Note : Ton script .gs doit avoir une action "archiverCommandes"
+    try {
+        const ids = livrees.map(c => c.ID);
+        
+        // On affiche un indicateur de chargement sur le bouton
+        console.log("LOG : Archivage des IDs :", ids);
+        
+        const response = await fetch(CONFIG.API, {
+            method: "POST",
+            mode: "no-cors", // Mode standard pour Apps Script
+            body: JSON.stringify({
+                action: "archiverCommandes",
+                ids: ids
+            })
+        });
+
+        alert("Bravo ! La journée est clôturée. Les commandes ont été déplacées vers l'historique.");
+        
+        // 3. Rafraîchissement automatique pour vider la caisse
+        refreshAll();
+        
+    } catch (error) {
+        console.error("Erreur clôture :", error);
+        alert("Oups, impossible de clôturer. Vérifie ta connexion.");
+    }
+}
 </script>
 </body>
 </html>
