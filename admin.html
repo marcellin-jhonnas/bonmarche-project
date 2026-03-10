@@ -592,6 +592,9 @@ function genererTableauLogistique(serieuses) {
             <tbody>`;
 
     serieuses.forEach((c, index) => {
+        // Sécurité : On nettoie le numéro de téléphone pour l'appel (enlève espaces et tirets)
+        const telNettoye = (c.Contact || "").toString().replace(/[^0-9+]/g, "");
+
         html += `
             <tr style="border-bottom:1px solid #e2e8f0; hover:background:#f8fafc;">
                 <td style="padding:12px;">
@@ -612,25 +615,33 @@ function genererTableauLogistique(serieuses) {
                         ${listeLivreurs.map(l => `<option value="${l}">${l}</option>`).join('')}
                     </select>
                 </td>
-                <td style="padding:12px; display:flex; gap:8px; justify-content:center;">
+                <td style="padding:12px; display:flex; gap:6px; justify-content:center;">
+                    
+                    <a href="tel:${telNettoye}" 
+                       style="background:#334155; color:white; padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block; text-align:center;" 
+                       title="Appeler le client">
+                        <i class="fas fa-phone-alt"></i>
+                    </a>
+
                     <button onclick="preparerFacture(${index})" 
-                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s;" 
-                            title="Imprimer l'étiquette et facture">
-                        <i class="fas fa-file-invoice"></i> Détail
+                            style="background:#3b82f6; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" 
+                            title="Voir la facture">
+                        <i class="fas fa-file-invoice"></i>
                     </button>
 
                     <button onclick="updateStatus('${c.ID}', 'LIVRÉ')" 
-                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s;"
+                            style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;"
                             title="Marquer comme livré">
-                        <i class="fas fa-check"></i> Terminer
+                        <i class="fas fa-check"></i>
                     </button>
+
                 </td>
             </tr>`;
     });
 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
-    console.log("LOG : Tableau logistique avec badges affiché.");
+    console.log("LOG : Tableau logistique mis à jour avec bouton appel.");
 }
 
 // Nouvelle petite fonction pour faire le lien proprement
