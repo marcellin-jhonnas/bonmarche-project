@@ -325,7 +325,7 @@ afficherLivreurs();
                     <td><span class="badge ${badgeClass}">${cmd.Statut}</span></td>
                     <td>
                         ${!isValide ? 
-                            `<button onclick="updateStatus('${cmd.ID}')" style="cursor:pointer; background:var(--orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold;">OK</button>` : 
+                            `<button onclick="updateStatus('${cmd.ID}', 'SÉRIEUX')" style="cursor:pointer; background:var(--orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold;">OK</button>` : 
                             `<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>`
                         }
                     </td>
@@ -485,41 +485,42 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
     }
 });
 
-  async function updateStatus(id, nouveauStatut) {
-    console.log("--- DÉBUT updateStatus ---");
-    console.log("LOG : ID visé : " + id);
-    console.log("LOG : Nouveau statut demandé : " + nouveauStatut);
+ async function updateStatus(id, nouveauStatut) {
+    // SÉCURITÉ : Si nouveauStatut est absent, on arrête tout
+    if (!nouveauStatut) {
+        alert("Erreur : Statut non défini pour la commande #" + id);
+        return;
+    }
+
+    console.log("LOG : Mise à jour ID : " + id + " vers " + nouveauStatut);
 
     if(!confirm("Changer le statut de la commande #" + id + " en " + nouveauStatut + " ?")) return;
 
     try {
-        console.log("LOG : Envoi de la requête vers Google API...");
-        
         await fetch(CONFIG.API, { 
             method: "POST", 
             mode: "no-cors", 
             body: JSON.stringify({ 
-                action: "updateStatut", // C'est l'action que ton script Google attend
+                action: "updateStatut", 
                 idCommande: id, 
                 nouveauStatut: nouveauStatut 
             }) 
         });
         
-        console.log("LOG : Requête envoyée avec succès.");
         alert("Statut mis à jour !");
 
-        // Rafraîchissement des deux tableaux
+        // Rafraîchissement des listes
         setTimeout(() => {
-            console.log("LOG : Rafraîchissement des listes...");
-            loadLogistique(); 
-            if(typeof loadCommandes === 'function') loadCommandes();
+            refreshAll(); // Recharge l'onglet Commandes
+            loadLogistique(); // Recharge l'onglet Logistique
         }, 1000);
 
     } catch(e) {
-        console.error("ERREUR lors de l'updateStatus :", e);
-        alert("Erreur de connexion avec Google.");
+        console.error("ERREUR :", e);
+        alert("Erreur de connexion.");
     }
 }
+
 
     function startSync() {
         setInterval(syncChat, 3000);
@@ -706,6 +707,24 @@ function obtenirBadgeUrgence(commande) {
         return `<span style="${styleBase} background:#dbeafe; color:#3b82f6; border:1px solid #3b82f6;">NOUVEAU</span>`;
     } else {
         return `<span style="${styleBase} background:#f1f5f9; color:#64748b; border:1px solid #64748b;">PLANIFIÉ</span>`;
+    }
+}
+async function assignerLivreur(idCommande, nomLivreur) {
+    if(!nomLivreur) return;
+    console.log("LOG : Assignation livreur " + nomLivreur + " à " + idCommande);
+
+    try {
+        await fetch(CONFIG.API, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "updateStatut", // On utilise la même action mais on peut adapter ton GAS
+                idCommande: idCommande,
+                livreur: nomLivreur // Assure-toi que ton script Google gère cette colonne
+            })
+        });
+    } catch(e) {
+        console.error("Erreur assignation :", e);
     }
 }
 </script>
