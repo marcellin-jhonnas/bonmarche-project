@@ -170,9 +170,26 @@
                     </div>
                 </div>
             </div>
-            <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
+           <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
     <h2><i class="fas fa-shipping-fast"></i> Commandes à Livrer (SÉRIEUX)</h2>
     <p>Seules les commandes marquées comme "SERIEUX" apparaissent ici.</p>
+
+    <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 100px; background: #eff6ff; border: 1px solid #3b82f6; padding: 10px; border-radius: 10px; text-align: center;">
+            <div style="color: #3b82f6; font-size: 11px; font-weight: bold; text-transform: uppercase;">À Livrer</div>
+            <div id="count-serieux" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+        </div>
+        
+        <div style="flex: 1; min-width: 100px; background: #f8fafc; border: 1px solid #64748b; padding: 10px; border-radius: 10px; text-align: center;">
+            <div style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Planning</div>
+            <div id="count-planifie" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+        </div>
+
+        <div style="flex: 1; min-width: 100px; background: #f0fdf4; border: 1px solid #22c55e; padding: 10px; border-radius: 10px; text-align: center;">
+            <div style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase;">Total Flux</div>
+            <div id="count-total" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+        </div>
+    </div>
 
     <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <i class="fas fa-search" style="color: #64748b; margin-left: 10px;"></i>
@@ -180,8 +197,9 @@
                placeholder="Rechercher un client, un ID ou un lieu..." 
                style="padding: 10px; border: none; outline: none; width: 100%; font-size: 14px;">
     </div>
+
     <div id="logistique-container" style="margin-top:20px;">
-        </div>
+    </div>
 </div>
 
 <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
@@ -577,9 +595,26 @@ document.getElementById('chat-input-field').addEventListener('keypress', functio
     }
 }
 function genererTableauLogistique(serieuses) {
-    console.log("LOG : Génération du tableau pour", serieuses.length, "commandes.");
+    console.log("LOG : Mise à jour des compteurs et du tableau.");
     const container = document.getElementById('logistique-container');
 
+    // --- 1. CALCUL DES COMPTEURS (POUR TES NOUVELLES BOITES) ---
+    const nbSerieux = serieuses.filter(c => {
+        const s = (c.Statut || "").toUpperCase().trim();
+        return s === "SERIEUX" || s === "SÉRIEUX";
+    }).length;
+
+    const nbPlanifie = serieuses.filter(c => {
+        const s = (c.Statut || "").toUpperCase().trim();
+        return s === "PLANIFIE" || s === "PLANIFIÉ";
+    }).length;
+
+    // Envoi des chiffres vers le HTML
+    if(document.getElementById('count-serieux')) document.getElementById('count-serieux').innerText = nbSerieux;
+    if(document.getElementById('count-planifie')) document.getElementById('count-planifie').innerText = nbPlanifie;
+    if(document.getElementById('count-total')) document.getElementById('count-total').innerText = serieuses.length;
+
+    // --- 2. PRÉPARATION DU TABLEAU ---
     window.currentSerieuses = serieuses;
 
     let html = `
@@ -596,9 +631,12 @@ function genererTableauLogistique(serieuses) {
             <tbody>`;
 
     serieuses.forEach((c, index) => {
-        // Sécurité pour le numéro de téléphone (colonne 'Téléphone')
+        // Sécurité pour le numéro (colonne 'Téléphone')
         const numBrut = c.Téléphone || "";
         const telNettoye = numBrut.toString().replace(/[^0-9+]/g, "");
+        
+        // Utilisation de la bonne colonne pour l'adresse
+        const adresse = c["Lieu Exact"] || c.Livraison || 'Non précisé';
 
         html += `
             <tr style="border-bottom:1px solid #e2e8f0;">
@@ -611,7 +649,7 @@ function genererTableauLogistique(serieuses) {
                 </td>
                 <td style="padding:12px; color:#475569; font-size:13px;">
                     <i class="fas fa-map-marker-alt" style="color:#ef4444; margin-right:5px;"></i> 
-                    ${c.Livraison || c.Lieu_Exact || 'Non précisé'}
+                    ${adresse}
                 </td>
                 <td style="padding:12px;">
                     <select onchange="assignerLivreur('${c.ID}', this.value)" 
