@@ -243,7 +243,8 @@
 
 <script>
     // On récupère les livreurs enregistrés ou on crée une liste vide
-let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
+    let allData = []; // Variable globale pour stocker les commandes
+    let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
 
 function ajouterLivreur() {
     const nom = document.getElementById('input-nom-livreur').value.trim();
@@ -356,12 +357,15 @@ afficherLivreurs();
 
     // --- DATA SYNC ---
     async function refreshAll() {
-        try {
-            const res = await fetch(CONFIG.API + "?action=getCommandes");
-            const data = await res.json();
-            let total = 0;
-            let rows = "";
+    try {
+        const res = await fetch(CONFIG.API + "?action=getCommandes");
+        const data = await res.json();
+        
+        allData = data; // <--- TRÈS IMPORTANT : On stocke les données ici !
 
+        let total = 0;
+        let rows = "";
+        // ... le reste de ta fonction refreshAll (data.reverse().forEach...) reste identique
             data.reverse().forEach(cmd => {
                 total += Number(cmd.Montant || 0);
                 
@@ -855,6 +859,47 @@ function filtrerLogistique() {
             tr[i].style.display = "none"; // On cache
         }
     }
+}
+function genererJournalCaisse() {
+    console.log("LOG : Calcul de la caisse avec " + allData.length + " lignes.");
+    
+    // 1. Filtrer uniquement les commandes LIVRÉES
+    const livrees = allData.filter(c => {
+        const s = (c.Statut || "").toUpperCase().trim();
+        return s === "LIVRÉ" || s === "LIVRE";
+    });
+
+    let totalRecettes = 0;
+    let tableHtml = `
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+                <tr style="border-bottom:2px solid #f1f5f9; text-align:left; color:#64748b;">
+                    <th style="padding:10px;">Client</th>
+                    <th style="padding:10px;">Livreur</th>
+                    <th style="padding:10px; text-align:right;">Montant</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    // 2. Calculer le total et préparer les lignes du tableau
+    livrees.forEach(c => {
+        const m = parseFloat(String(c.Montant).replace(/[^0-9]/g, "")) || 0;
+        totalRecettes += m;
+        
+        tableHtml += `
+            <tr style="border-bottom:1px solid #f8fafc;">
+                <td style="padding:10px;">${c.Client}</td>
+                <td style="padding:10px;">${c.Livreur || '---'}</td>
+                <td style="padding:10px; text-align:right; font-weight:bold;">${m.toLocaleString()} Ar</td>
+            </tr>`;
+    });
+
+    tableHtml += `</tbody></table>`;
+
+    // 3. Envoyer les résultats au HTML
+    document.getElementById('caisse-total').innerText = totalRecettes.toLocaleString() + " Ar";
+    document.getElementById('caisse-count').innerText = livrees.length;
+    document.getElementById('caisse-details-container').innerHTML = (livrees.length > 0) ? tableHtml : "<p style='padding:20px; color:gray;'>Aucun encaissement aujourd'hui.</p>";
 }
 </script>
 </body>
