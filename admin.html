@@ -119,6 +119,9 @@
         <div class="nav-link" onclick="showTab('tab-caisse', this)">
             <i class="fas fa-wallet"></i> Ma Caisse
         </div>
+        <div class="nav-link" onclick="showTab('tab-stats', this)">
+    <i class="fas fa-chart-line"></i> Performance
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -172,6 +175,35 @@
     <div class="card" style="padding:15px; background:white; border-radius:8px; border: 1px solid #e2e8f0;">
         <h3>Détails par Livreur</h3>
         <div id="caisse-details-container"></div>
+    </div>
+</div>
+<div id="tab-stats" class="tab-content" style="display:none; padding:20px;">
+    <h2><i class="fas fa-trophy"></i> Top Livreurs & Performance</h2>
+    
+    <div class="grid" style="margin-bottom: 20px;">
+        <div class="card" style="border-left: 5px solid var(--orange);">
+            <h3>Meilleur Livreur</h3>
+            <h2 id="top-livreur-nom">---</h2>
+        </div>
+        <div class="card" style="border-left: 5px solid var(--success);">
+            <h3>Moyenne par Colis</h3>
+            <h2 id="moyenne-colis">0 Ar</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr style="background:#f8fafc;">
+                    <th>Nom du Livreur</th>
+                    <th>Colis Livrés</th>
+                    <th>CA Généré</th>
+                    <th>Efficacité</th>
+                </tr>
+            </thead>
+            <tbody id="stats-rows">
+                </tbody>
+        </table>
     </div>
 </div>
             <div id="tab-orders" class="tab-content" style="display:none;">
@@ -366,6 +398,9 @@ afficherLivreurs();
         console.log("LOG : Calcul des recettes en cours...");
         genererJournalCaisse(); 
     }
+    if (id === 'tab-stats') {
+    genererStatsPerformance();
+}
 }
 
     // --- DASHBOARD ---
@@ -1015,6 +1050,51 @@ function assignerLivreur(idCommande, nomLivreur) {
             livreur: nomLivreur
         })
     });
+}
+function genererStatsPerformance() {
+    // On analyse toutes les commandes livrées
+    const livrees = allData.filter(c => {
+        const s = (c.Statut || "").toUpperCase().trim();
+        return s === "LIVRÉ" || s === "LIVRE";
+    });
+
+    let statsMap = {};
+    let totalArgent = 0;
+
+    livrees.forEach(c => {
+        const nom = c.Livreur || "Non Assigné";
+        const montant = parseFloat(c.Montant) || 0;
+        
+        if (!statsMap[nom]) {
+            statsMap[nom] = { colis: 0, ca: 0 };
+        }
+        statsMap[nom].colis++;
+        statsMap[nom].ca += montant;
+        totalArgent += montant;
+    });
+
+    // Remplissage du tableau
+    let html = "";
+    let meilleurLivreur = { nom: "---", score: 0 };
+
+    for (let nom in statsMap) {
+        if (statsMap[nom].colis > meilleurLivreur.score) {
+            meilleurLivreur = { nom: nom, score: statsMap[nom].colis };
+        }
+
+        html += `<tr>
+            <td><strong>${nom}</strong></td>
+            <td style="text-align:center;">${statsMap[nom].colis}</td>
+            <td style="font-weight:bold; color:var(--success);">${statsMap[nom].ca.toLocaleString()} Ar</td>
+            <td><progress value="${statsMap[nom].colis}" max="${livrees.length || 10}" style="width:100px;"></progress></td>
+        </tr>`;
+    }
+
+    document.getElementById('stats-rows').innerHTML = html || "<tr><td colspan='4'>Aucune livraison terminée.</td></tr>";
+    document.getElementById('top-livreur-nom').innerText = meilleurLivreur.nom;
+    
+    const moyenne = livrees.length > 0 ? (totalArgent / livrees.length) : 0;
+    document.getElementById('moyenne-colis').innerText = Math.round(moyenne).toLocaleString() + " Ar";
 }
 </script>
 </body>
