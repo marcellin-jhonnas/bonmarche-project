@@ -149,21 +149,27 @@
             </div>
 <div id="tab-caisse" class="tab-content" style="display:none; padding:20px;">
     <h2><i class="fas fa-cash-register"></i> Ma Caisse du Jour</h2>
+    
     <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-        
         <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #22c55e; padding: 20px; border-radius: 12px;">
             <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Recettes à Encaisser</div>
             <div id="caisse-total" style="font-size: 28px; font-weight: bold; color: #1e293b;">0 Ar</div>
             <small style="color: #166534;">(Commandes livrées uniquement)</small>
         </div>
-
         <div style="flex: 1; min-width: 200px; background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
             <div style="color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase;">Colis Remis</div>
             <div id="caisse-count" style="font-size: 28px; font-weight: bold; color: #1e293b;">0</div>
         </div>
     </div>
 
-    <div class="card" style="padding:15px; background:white; border-radius:8px;">
+    <div style="margin-bottom: 25px;">
+        <button onclick="cloturerJournee()" 
+                style="background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);">
+            <i class="fas fa-lock"></i> CLÔTURER LA JOURNÉE
+        </button>
+    </div>
+
+    <div class="card" style="padding:15px; background:white; border-radius:8px; border: 1px solid #e2e8f0;">
         <h3>Détails par Livreur</h3>
         <div id="caisse-details-container"></div>
     </div>
@@ -203,6 +209,12 @@
                 style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white;">
             <option value="TOUS">-- TOUS LES LIVREURS --</option>
             </select>
+            <div style="margin-top: 10px; margin-bottom: 20px;">
+        <button onclick="envoyerTrajetWhatsApp()" 
+                style="background: #25d366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <i class="fab fa-whatsapp"></i> ENVOYER LE TRAJET AU LIVREUR
+        </button>
+    </div>
     </div>
 
     <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
@@ -264,12 +276,22 @@ function ajouterLivreur() {
 
 function afficherLivreurs() {
     let html = "<h3>Mes Livreurs :</h3>";
+    let options = '<option value="TOUS">-- TOUS LES LIVREURS --</option>';
+
     listeLivreurs.forEach((l, index) => {
         html += `<div style="padding:10px; background:white; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between;">
             ${l} <button onclick="listeLivreurs.splice(${index},1); localStorage.setItem('safeRunLivreurs', JSON.stringify(listeLivreurs)); afficherLivreurs();" style="color:red; border:none; background:none; cursor:pointer;">Supprimer</button>
         </div>`;
+        
+        // On ajoute le livreur dans les options du filtre de l'onglet logistique
+        options += `<option value="${l.toUpperCase()}">${l}</option>`;
     });
+
     document.getElementById('liste-livreurs-affichage').innerHTML = html;
+    
+    // Mise à jour du menu déroulant dans l'onglet logistique
+    const selectFiltre = document.getElementById('filtre-livreur-logistique');
+    if(selectFiltre) selectFiltre.innerHTML = options;
 }
 
 // Lancer l'affichage au démarrage
@@ -973,6 +995,26 @@ function filtrerParLivreur() {
     }
     
     console.log(`Filtrage terminé : ${visibleCount} commandes affichées pour ${livreurSelectionne}`);
+}
+function assignerLivreur(idCommande, nomLivreur) {
+    console.log(`LOG : Assignation de ${nomLivreur} à la commande ${idCommande}`);
+
+    // 1. On met à jour la mémoire locale (allData)
+    const cmd = allData.find(c => c.ID.toString() === idCommande.toString());
+    if (cmd) {
+        cmd.Livreur = nomLivreur;
+    }
+
+    // 2. On informe le serveur Google Sheets du changement
+    fetch(CONFIG.API, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            action: "updateLivreur",
+            idCommande: idCommande,
+            livreur: nomLivreur
+        })
+    });
 }
 </script>
 </body>
