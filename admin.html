@@ -1194,17 +1194,25 @@ function genererConfigEquipe() {
 
 // Enregistre les numéros saisis dans le localStorage du navigateur
 function sauvegarderAnnuaire() {
+    // 1. On récupère à nouveau la liste des noms pour être sûr de ne rien oublier
     const nomsLivreurs = [...new Set(allData.map(c => c.Livreur).filter(n => n))];
     
     nomsLivreurs.forEach(nom => {
         const input = document.getElementById(`tel-${nom}`);
         if (input) {
+            // 2. On met à jour l'objet global 'annuaire'
             annuaire[nom] = input.value.trim();
         }
     });
 
+    // 3. On sauvegarde physiquement dans le navigateur
     localStorage.setItem('annuaire_livreurs', JSON.stringify(annuaire));
-    alert("✅ Annuaire enregistré ! Les boutons WhatsApp utiliseront désormais ces numéros.");
+    
+    // 4. CRITIQUE : On recharge l'objet 'annuaire' immédiatement pour que 
+    // les autres fonctions voient les changements sans avoir à rafraîchir la page
+    annuaire = JSON.parse(localStorage.getItem('annuaire_livreurs'));
+
+    alert("✅ Annuaire enregistré ! Vous pouvez maintenant envoyer les trajets.");
 }
 
 // La fonction corrigée pour envoyer le WhatsApp
