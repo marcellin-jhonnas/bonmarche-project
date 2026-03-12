@@ -1052,7 +1052,7 @@ function assignerLivreur(idCommande, nomLivreur) {
     });
 }
 function genererStatsPerformance() {
-    // On analyse toutes les commandes livrées
+    // 1. Filtrer uniquement les commandes livrées
     const livrees = allData.filter(c => {
         const s = (c.Statut || "").toUpperCase().trim();
         return s === "LIVRÉ" || s === "LIVRE";
@@ -1062,7 +1062,10 @@ function genererStatsPerformance() {
     let totalArgent = 0;
 
     livrees.forEach(c => {
-        const nom = c.Livreur || "Non Assigné";
+        // --- MODIFICATION ICI : On vérifie TOUTES les colonnes possibles ---
+        // On cherche dans "Livreur" (Col J), sinon dans "Livraison" (Col H)
+        const nom = c.Livreur || c.Livraison || "Non Assigné";
+        
         const montant = parseFloat(c.Montant) || 0;
         
         if (!statsMap[nom]) {
@@ -1073,12 +1076,13 @@ function genererStatsPerformance() {
         totalArgent += montant;
     });
 
-    // Remplissage du tableau
+    // 2. Préparation de l'affichage
     let html = "";
     let meilleurLivreur = { nom: "---", score: 0 };
 
     for (let nom in statsMap) {
-        if (statsMap[nom].colis > meilleurLivreur.score) {
+        // On ignore "Non Assigné" pour le titre de meilleur livreur
+        if (nom !== "Non Assigné" && statsMap[nom].colis > meilleurLivreur.score) {
             meilleurLivreur = { nom: nom, score: statsMap[nom].colis };
         }
 
@@ -1086,10 +1090,14 @@ function genererStatsPerformance() {
             <td><strong>${nom}</strong></td>
             <td style="text-align:center;">${statsMap[nom].colis}</td>
             <td style="font-weight:bold; color:var(--success);">${statsMap[nom].ca.toLocaleString()} Ar</td>
-            <td><progress value="${statsMap[nom].colis}" max="${livrees.length || 10}" style="width:100px;"></progress></td>
+            <td>
+                <div style="font-size:10px; color:gray;">Efficacité</div>
+                <progress value="${statsMap[nom].colis}" max="${livrees.length || 10}" style="width:100px;"></progress>
+            </td>
         </tr>`;
     }
 
+    // 3. Injection dans le HTML
     document.getElementById('stats-rows').innerHTML = html || "<tr><td colspan='4'>Aucune livraison terminée.</td></tr>";
     document.getElementById('top-livreur-nom').innerText = meilleurLivreur.nom;
     
