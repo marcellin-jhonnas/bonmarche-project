@@ -85,6 +85,8 @@
         /* Ajoute ceci pour gérer spécifiquement le statut SÉRIEUX avec le même vert que success */
         .badge.serieux { background: #dcfce7; color: #166534; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -125,6 +127,10 @@
 <div class="nav-link" onclick="showTab('tab-equipe', this)">
     <i class="fas fa-motorcycle"></i> Équipe & WhatsApp
 </div>
+<button onclick="genererPDFPlanning()" 
+        style="background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
+    <i class="fas fa-file-pdf"></i> GÉNÉRER LE PLANNING PDF
+</button>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -1248,6 +1254,66 @@ function ouvrirLienWhatsApp(nomLivreur, quartier, produits) {
     const message = `*SAFETRANS - TRAJET LIVREUR*\n\n🏍️ *Livreur :* ${nomLivreur}\n📍 *Lieu :* ${quartier}\n📦 *Colis :* ${produits}\n\n_Bonne route et prudence ! 🛡️_`;
     const url = `https://wa.me/${cleanTel}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
+}
+function genererPDFPlanning() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const nomLivreur = document.getElementById('filtre-livreur-logistique').value;
+    
+    if (nomLivreur === "TOUS") {
+        alert("⚠️ Sélectionnez un livreur spécifique pour générer son planning.");
+        return;
+    }
+
+    // 1. Titre du PDF
+    doc.setFontSize(18);
+    doc.setTextColor(44, 62, 80);
+    doc.text(`PLANNING DE LIVRAISON : ${nomLivreur.toUpperCase()}`, 14, 20);
+    
+    doc.setFontSize(11);
+    doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 30);
+    doc.text(`Société : SAFETRANS ADMIN`, 14, 37);
+
+    // 2. Récupérer les données du tableau logistique affiché
+    const rows = [];
+    const tableRows = document.querySelectorAll("#logistique-container tr");
+    
+    tableRows.forEach((tr, index) => {
+        if(index === 0) return; // Saute l'en-tête
+        const cols = tr.querySelectorAll("td");
+        if(cols.length > 0) {
+            rows.push([
+                cols[0].innerText, // ID
+                cols[1].innerText, // Quartier / Lieu
+                cols[2].innerText, // Produits
+                cols[3].innerText  // Statut
+            ]);
+        }
+    });
+
+    if(rows.length === 0) {
+        alert("Aucune commande dans le planning actuel.");
+        return;
+    }
+
+    // 3. Création du tableau dans le PDF
+    doc.autoTable({
+        startY: 45,
+        head: [['ID', 'DESTINATION / LIEU', 'PRODUITS', 'ÉTAT']],
+        body: rows,
+        theme: 'grid',
+        headStyles: { fillStyle: [243, 156, 18] }, // Couleur Orange SafeRun
+        styles: { fontSize: 9 }
+    });
+
+    // 4. Pied de page
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(10);
+    doc.text("Instructions : Merci de valider chaque livraison via le groupe WhatsApp.", 14, finalY);
+
+    // 5. Sauvegarde et Ouverture
+    doc.save(`Planning_${nomLivreur}_${new Date().getDate()}.pdf`);
 }
 </script>
 </body>
