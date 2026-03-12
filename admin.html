@@ -1104,6 +1104,17 @@ function genererStatsPerformance() {
     const moyenne = livrees.length > 0 ? (totalArgent / livrees.length) : 0;
     document.getElementById('moyenne-colis').innerText = Math.round(moyenne).toLocaleString() + " Ar";
 }
+function envoyerTrajetWhatsApp(tel, quartier, produits) {
+    if (!tel) {
+        alert("Pas de numéro de téléphone pour ce livreur.");
+        return;
+    }
+    // On nettoie le numéro (enlève les espaces ou le '+')
+    const cleanTel = tel.replace(/\D/g, '');
+    const message = `Salut, voici ton trajet :\nLieu : ${quartier}\nProduits : ${produits}`;
+    const url = `https://wa.me/${cleanTel}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+}
 </script>
 </body>
 </html>
