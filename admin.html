@@ -1154,15 +1154,29 @@ function envoyerTrajetWhatsApp(nomLivreur, quartier, produits) {
 }
 // Génère le tableau des livreurs avec les champs de saisie pour les numéros
 function genererConfigEquipe() {
-    // On récupère tous les noms de livreurs uniques présents dans vos données
-    const nomsLivreurs = [...new Set(allData.map(c => c.Livreur).filter(n => n && n !== "Non Assigné"))];
+    console.log("--- DEBUG ANNUAIRE ---");
+    console.log("Nombre de lignes dans allData :", allData.length);
     
+    // On essaie de voir à quoi ressemble une ligne de commande pour vérifier le nom de la colonne
+    if(allData.length > 0) {
+        console.log("Exemple d'une ligne de données :", allData[0]);
+    }
+
+    // On récupère les noms avec une sécurité sur la casse (Livreur ou livreur)
+    const nomsLivreurs = [...new Set(allData.map(c => {
+        // On teste toutes les variantes possibles
+        const nom = c.Livreur || c.livreur || c["Livreur "] || ""; 
+        return nom.toString().trim();
+    }).filter(n => n && n !== "" && n !== "Non Assigné" && n !== "undefined"))];
+    
+    console.log("Livreurs trouvés après filtrage :", nomsLivreurs);
+
     let html = `
     <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden;">
         <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
             <tr>
                 <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Livreur</th>
-                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Numéro WhatsApp (ex: 26134...)</th>
+                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Numéro WhatsApp</th>
             </tr>
         </thead>
         <tbody>`;
@@ -1174,7 +1188,7 @@ function genererConfigEquipe() {
                 <td style="padding: 15px;"><strong>${nom}</strong></td>
                 <td style="padding: 15px;">
                     <input type="text" id="tel-${nom}" value="${tel}" 
-                    placeholder="Entrez le numéro..." 
+                    placeholder="261..." 
                     style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
                 </td>
             </tr>`;
@@ -1183,15 +1197,16 @@ function genererConfigEquipe() {
     html += `</tbody></table>`;
     
     if (nomsLivreurs.length === 0) {
+        console.warn("ATTENTION : Aucun nom n'a été extrait de allData !");
         html = `<div style="text-align:center; padding: 40px; color: #64748b;">
                     <i class="fas fa-info-circle" style="font-size: 30px; margin-bottom: 10px;"></i>
-                    <p>Aucun livreur n'a été trouvé dans vos commandes. <br>Assignez d'abord des livreurs dans la section Logistique.</p>
+                    <p>Aucun livreur n'a été trouvé.<br>
+                    <button onclick="refreshAll()" style="margin-top:10px; padding:8px; cursor:pointer;">🔄 Forcer la Sync Google</button></p>
                 </div>`;
     }
     
     document.getElementById('liste-livreurs-config').innerHTML = html;
 }
-
 // Enregistre les numéros saisis dans le localStorage du navigateur
 function sauvegarderAnnuaire() {
     // 1. On récupère à nouveau la liste des noms pour être sûr de ne rien oublier
