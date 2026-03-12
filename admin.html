@@ -1109,15 +1109,16 @@ function genererStatsPerformance() {
     const moyenne = livrees.length > 0 ? (totalArgent / livrees.length) : 0;
     document.getElementById('moyenne-colis').innerText = Math.round(moyenne).toLocaleString() + " Ar";
 }
-function envoyerTrajetWhatsApp(tel, quartier, produits) {
+function envoyerTrajetWhatsApp(nomLivreur, quartier, produits) {
+    const tel = ANNUAIRE_LIVREURS[nomLivreur];
+    
     if (!tel) {
-        alert("Pas de numéro de téléphone pour ce livreur.");
+        alert("Le numéro de téléphone pour " + nomLivreur + " n'est pas enregistré dans l'annuaire.");
         return;
     }
-    // On nettoie le numéro (enlève les espaces ou le '+')
-    const cleanTel = tel.replace(/\D/g, '');
-    const message = `Salut, voici ton trajet :\nLieu : ${quartier}\nProduits : ${produits}`;
-    const url = `https://wa.me/${cleanTel}?text=${encodeURIComponent(message)}`;
+
+    const message = `*SAFETRANS - NOUVEAU TRAJET*\n\n📍 *Lieu :* ${quartier}\n📦 *Produits :* ${produits}`;
+    const url = `https://wa.me/${tel}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
 }
 </script>
