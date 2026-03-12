@@ -1283,41 +1283,47 @@ function genererPDFPlanning() {
     });
 
     dataFiltree.forEach(c => {
-        // Nettoyage strict des textes
         let client = (c.Client || "Inconnu").toUpperCase().trim();
         let tel = (c.Téléphone || "-").toString().trim();
         let lieu = (c["Lieu Exact"] || "Non précisé").split(" --")[0].trim();
         let produits = (c.Produits || "").split(" --")[0].trim();
-        let creneau = (c.Livraison || "").replace(/-- Assigner --/g, "").replace(nomLivreur, "").trim();
         
-        // Formatage du montant sans espaces bizarres
         let m = c.Montant ? c.Montant.toString().replace(/\s/g, '') : "0";
         let montantAffichage = parseInt(m).toLocaleString('fr-FR') + " Ar";
 
-        rows.push([c.ID || "", client, tel, lieu, produits, creneau, montantAffichage]);
+        // On ajoute une case vide ("") à la fin pour la signature
+        rows.push([
+            c.ID || "", 
+            client, 
+            tel, 
+            lieu, 
+            produits, 
+            montantAffichage, 
+            "" // Colonne Signature vide
+        ]);
     });
 
     // --- GÉNÉRATION DU TABLEAU ---
     doc.autoTable({
         startY: 30,
-        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS', 'CRÉNEAU', 'MONTANT']],
+        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS', 'MONTANT', 'SIGNATURE CLIENT']],
         body: rows,
         theme: 'grid',
         styles: { 
-            fontSize: 7.5, // Réduction légère pour gagner de la place
-            cellPadding: 2, 
+            fontSize: 7.5, 
+            cellPadding: 4, // Augmenté pour laisser de la place à la signature
             overflow: 'linebreak', 
             valign: 'middle' 
         },
-        headStyles: { fillColor: [30, 41, 59], fontSize: 8, fontStyle: 'bold' },
+        headStyles: { fillColor: [30, 41, 59], fontSize: 8, fontStyle: 'bold', halign: 'center' },
         columnStyles: {
-            0: { cellWidth: 15 }, // ID
-            1: { cellWidth: 25 }, // Client
-            2: { cellWidth: 25 }, // Tél
-            3: { cellWidth: 35 }, // Lieu
-            4: { cellWidth: 75 }, // Produits (plus de place ici)
-            5: { cellWidth: 40 }, // Créneau
-            6: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } // Montant bien aligné
+            0: { cellWidth: 15 },
+            1: { cellWidth: 25 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 35 },
+            4: { cellWidth: 80 },
+            5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
+            6: { cellWidth: 40 } // Espace large pour la signature
         },
         margin: { left: 10, right: 10 }
     });
@@ -1333,6 +1339,10 @@ function genererPDFPlanning() {
     doc.setTextColor(0);
     doc.setFont(undefined, 'bold');
     doc.text(`TOTAL À PERCEVOIR : ${total.toLocaleString('fr-FR')} Ar`, 14, finalY);
+
+    // --- ZONE DE VALIDATION FINALE ---
+    doc.setFontSize(9);
+    doc.text("Signature du Livreur : ____________________", 180, finalY);
 
     // --- SAUVEGARDE ---
     doc.save(`ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`);
