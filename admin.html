@@ -1064,7 +1064,7 @@ function genererStatsPerformance() {
     livrees.forEach(c => {
         // --- MODIFICATION ICI : On vérifie TOUTES les colonnes possibles ---
         // On cherche dans "Livreur" (Col J), sinon dans "Livraison" (Col H)
-        const nom = c.Livreur || c.Livraison || "Non Assigné";
+        const nom = c.Livreur || "Non Assigné";
         
         const montant = parseFloat(c.Montant) || 0;
         
