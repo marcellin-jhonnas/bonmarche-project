@@ -122,6 +122,9 @@
         <div class="nav-link" onclick="showTab('tab-stats', this)">
     <i class="fas fa-chart-line"></i> Performance
 </div>
+<div class="nav-link" onclick="showTab('tab-equipe', this)">
+    <i class="fas fa-motorcycle"></i> Équipe & WhatsApp
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -287,6 +290,27 @@
 </div>
         </div>
     </main>
+    <div id="tab-equipe" class="tab-content" style="display:none; padding:20px;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2><i class="fas fa-motorcycle"></i> Répertoire de l'Équipe</h2>
+            <button onclick="genererConfigEquipe()" style="background: var(--orange); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+        </div>
+        
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; background: #fff7ed; padding: 10px; border-left: 4px solid var(--orange); border-radius: 4px;">
+            <strong>Note :</strong> Entrez les numéros au format international (ex: 261340000000). Ces numéros sont enregistrés localement sur cet ordinateur.
+        </p>
+
+        <div id="liste-livreurs-config" style="margin-bottom: 20px;">
+            </div>
+
+        <button onclick="sauvegarderAnnuaire()" style="width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);">
+            <i class="fas fa-save"></i> ENREGISTRER TOUT L'ANNUAIRE
+        </button>
+    </div>
+</div>
 </div>
 
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
@@ -300,7 +324,8 @@
     // On récupère les livreurs enregistrés ou on crée une liste vide
     let allData = []; // Variable globale pour stocker les commandes
     let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
-
+    // Chargement de l'annuaire depuis la mémoire du navigateur
+    let annuaire = JSON.parse(localStorage.getItem('annuaire_livreurs')) || {};
 function ajouterLivreur() {
     const nom = document.getElementById('input-nom-livreur').value.trim();
     if(!nom) return;
@@ -398,14 +423,20 @@ afficherLivreurs();
         loadLogistique(); 
     }
 
-    // AJOUT ICI : Lancement du calcul de la caisse quand on clique sur l'onglet
     if (id === 'tab-caisse') {
         console.log("LOG : Calcul des recettes en cours...");
         genererJournalCaisse(); 
     }
+
     if (id === 'tab-stats') {
-    genererStatsPerformance();
-}
+        genererStatsPerformance();
+    }
+
+    // --- AJOUT POUR L'ÉQUIPE ---
+    if (id === 'tab-equipe') {
+        console.log("LOG : Chargement de l'annuaire...");
+        genererConfigEquipe(); 
+    }
 }
 
     // --- DASHBOARD ---
@@ -1119,6 +1150,96 @@ function envoyerTrajetWhatsApp(nomLivreur, quartier, produits) {
 
     const message = `*SAFETRANS - NOUVEAU TRAJET*\n\n📍 *Lieu :* ${quartier}\n📦 *Produits :* ${produits}`;
     const url = `https://wa.me/${tel}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+}
+// Génère le tableau des livreurs avec les champs de saisie pour les numéros
+function genererConfigEquipe() {
+    // On récupère tous les noms de livreurs uniques présents dans vos données
+    const nomsLivreurs = [...new Set(allData.map(c => c.Livreur).filter(n => n && n !== "Non Assigné"))];
+    
+    let html = `
+    <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden;">
+        <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+            <tr>
+                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Livreur</th>
+                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Numéro WhatsApp (ex: 26134...)</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    nomsLivreurs.forEach(nom => {
+        const tel = annuaire[nom] || "";
+        html += `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 15px;"><strong>${nom}</strong></td>
+                <td style="padding: 15px;">
+                    <input type="text" id="tel-${nom}" value="${tel}" 
+                    placeholder="Entrez le numéro..." 
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                </td>
+            </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    
+    if (nomsLivreurs.length === 0) {
+        html = `<div style="text-align:center; padding: 40px; color: #64748b;">
+                    <i class="fas fa-info-circle" style="font-size: 30px; margin-bottom: 10px;"></i>
+                    <p>Aucun livreur n'a été trouvé dans vos commandes. <br>Assignez d'abord des livreurs dans la section Logistique.</p>
+                </div>`;
+    }
+    
+    document.getElementById('liste-livreurs-config').innerHTML = html;
+}
+
+// Enregistre les numéros saisis dans le localStorage du navigateur
+function sauvegarderAnnuaire() {
+    const nomsLivreurs = [...new Set(allData.map(c => c.Livreur).filter(n => n))];
+    
+    nomsLivreurs.forEach(nom => {
+        const input = document.getElementById(`tel-${nom}`);
+        if (input) {
+            annuaire[nom] = input.value.trim();
+        }
+    });
+
+    localStorage.setItem('annuaire_livreurs', JSON.stringify(annuaire));
+    alert("✅ Annuaire enregistré ! Les boutons WhatsApp utiliseront désormais ces numéros.");
+}
+
+// La fonction corrigée pour envoyer le WhatsApp
+function envoyerTrajetWhatsApp(nomLivreur, quartier, produits) {
+    // Si la fonction est appelée sans paramètres (via le gros bouton vert)
+    if (!nomLivreur) {
+        // On récupère le livreur actuellement filtré dans le menu déroulant
+        nomLivreur = document.getElementById('filtre-livreur-logistique').value;
+        if (nomLivreur === "TOUS") {
+            alert("⚠️ Veuillez d'abord sélectionner un livreur spécifique dans le menu déroulant.");
+            return;
+        }
+        
+        // On récupère toutes les commandes affichées pour ce livreur pour faire un résumé
+        const quartierResumé = "Trajet groupé (voir liste)";
+        const produitsResumé = "Plusieurs colis";
+        
+        ouvrirLienWhatsApp(nomLivreur, quartierResumé, produitsResumé);
+    } else {
+        ouvrirLienWhatsApp(nomLivreur, quartier, produits);
+    }
+}
+
+function ouvrirLienWhatsApp(nomLivreur, quartier, produits) {
+    const tel = annuaire[nomLivreur];
+    
+    if (!tel || tel === "") {
+        alert("⚠️ Le numéro de " + nomLivreur + " n'est pas enregistré. Redirection vers l'onglet Équipe...");
+        showTab('tab-equipe');
+        return;
+    }
+
+    const cleanTel = tel.replace(/\D/g, ''); 
+    const message = `*SAFETRANS - TRAJET LIVREUR*\n\n🏍️ *Livreur :* ${nomLivreur}\n📍 *Lieu :* ${quartier}\n📦 *Colis :* ${produits}\n\n_Bonne route et prudence ! 🛡️_`;
+    const url = `https://wa.me/${cleanTel}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
 }
 </script>
