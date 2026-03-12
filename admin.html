@@ -1257,7 +1257,7 @@ function ouvrirLienWhatsApp(nomLivreur, quartier, produits) {
 }
 function genererPDFPlanning() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF('l', 'mm', 'a4'); // Mode Paysage pour plus de clarté
     
     const nomLivreur = document.getElementById('filtre-livreur-logistique').value;
     
@@ -1266,54 +1266,78 @@ function genererPDFPlanning() {
         return;
     }
 
-    // 1. Titre du PDF
-    doc.setFontSize(18);
-    doc.setTextColor(44, 62, 80);
-    doc.text(`PLANNING DE LIVRAISON : ${nomLivreur.toUpperCase()}`, 14, 20);
+    // --- EN-TÊTE ---
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text(`FEUILLE DE ROUTE : ${nomLivreur.toUpperCase()}`, 14, 15);
     
-    doc.setFontSize(11);
-    doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 30);
-    doc.text(`Société : SAFETRANS ADMIN`, 14, 37);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Document généré le : ${new Date().toLocaleString('fr-FR')}`, 14, 22);
+    doc.text(`Société : SAFETRANS LOGISTICS`, 14, 27);
 
-    // 2. Récupérer les données du tableau logistique affiché
+    // --- TRAITEMENT DES DONNÉES ---
     const rows = [];
-    const tableRows = document.querySelectorAll("#logistique-container tr");
     
-    tableRows.forEach((tr, index) => {
-        if(index === 0) return; // Saute l'en-tête
-        const cols = tr.querySelectorAll("td");
-        if(cols.length > 0) {
-            rows.push([
-                cols[0].innerText, // ID
-                cols[1].innerText, // Quartier / Lieu
-                cols[2].innerText, // Produits
-                cols[3].innerText  // Statut
-            ]);
-        }
+    // On filtre allData pour ne garder que ce qui appartient au livreur sélectionné
+    const dataFiltree = allData.filter(c => {
+        const livreurCmd = (c.Livreur || "").toString().toLowerCase().trim();
+        return livreurCmd === nomLivreur.toLowerCase().trim();
+    });
+
+    dataFiltree.forEach(c => {
+        // Nettoyage de la date de livraison (on enlève le surplus de texte)
+        let infoLivraison = (c.Livraison || "").replace(/-- Assigner --/g, "").replace(nomLivreur, "").trim();
+        
+        rows.push([
+            c.ID || "N/A",
+            (c.Client || "Inconnu").toUpperCase(),
+            c.Téléphone || "-",
+            c["Lieu Exact"] || "Non précisé",
+            c.Produits || "Contenu non spécifié",
+            infoLivraison, // Colonne dédiée au créneau horaire
+            c.Montant ? `${Number(c.Montant).toLocaleString()} Ar` : "0 Ar"
+        ]);
     });
 
     if(rows.length === 0) {
-        alert("Aucune commande dans le planning actuel.");
+        alert("Aucune donnée propre trouvée pour ce livreur.");
         return;
     }
 
-    // 3. Création du tableau dans le PDF
+    // --- CRÉATION DU TABLEAU ---
     doc.autoTable({
-        startY: 45,
-        head: [['ID', 'DESTINATION / LIEU', 'PRODUITS', 'ÉTAT']],
+        startY: 35,
+        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU / QUARTIER', 'PRODUITS', 'CRÉNEAU', 'À ENCAISSER']],
         body: rows,
         theme: 'grid',
-        headStyles: { fillStyle: [243, 156, 18] }, // Couleur Orange SafeRun
-        styles: { fontSize: 9 }
+        headStyles: { fillColor: [243, 156, 18], textColor: 255, fontSize: 10 },
+        styles: { fontSize: 9, cellPadding: 3, valign: 'middle' },
+        columnStyles: {
+            0: { cellWidth: 18 }, // ID
+            1: { cellWidth: 30 }, // Client
+            2: { cellWidth: 28 }, // Tél
+            3: { cellWidth: 40 }, // Lieu
+            4: { cellWidth: 55 }, // Produits
+            5: { cellWidth: 45 }, // Créneau
+            6: { cellWidth: 25, halign: 'right' } // Montant
+        },
+        alternateRowStyles: { fillColor: [250, 250, 250] }
     });
 
-    // 4. Pied de page
+    // --- TOTAL ET SIGNATURE ---
+    const total = dataFiltree.reduce((sum, c) => sum + (Number(c.Montant) || 0), 0);
     const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(10);
-    doc.text("Instructions : Merci de valider chaque livraison via le groupe WhatsApp.", 14, finalY);
 
-    // 5. Sauvegarde et Ouverture
-    doc.save(`Planning_${nomLivreur}_${new Date().getDate()}.pdf`);
+    doc.setFont(undefined, 'bold');
+    doc.text(`TOTAL RECETTES À PERCEVOIR : ${total.toLocaleString()} Ar`, 14, finalY);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.text("Notes : En cas d'absence du client, merci de contacter l'administration avant de quitter les lieux.", 14, finalY + 8);
+
+    // --- SAUVEGARDE ---
+    doc.save(`Planning_${nomLivreur}.pdf`);
 }
 </script>
 </body>
