@@ -292,6 +292,11 @@
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
+    const ANNUAIRE_LIVREURS = {
+    "Livreur 1": "261340000000", // Remplace par les vrais numéros
+    "Livreur 2": "261320000000",
+    "Jean": "261330000000"
+};
     // On récupère les livreurs enregistrés ou on crée une liste vide
     let allData = []; // Variable globale pour stocker les commandes
     let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
