@@ -1171,41 +1171,42 @@ function genererConfigEquipe() {
     
     console.log("Livreurs trouvés après filtrage :", nomsLivreurs);
 
+    // ... (début de ta fonction avec les logs)
+
     let html = `
-    <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden;">
+    <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
         <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
             <tr>
-                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Livreur</th>
-                <th style="padding: 12px; text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase;">Numéro WhatsApp</th>
+                <th style="padding: 12px; text-align: left; color: #64748b;">Livreur</th>
+                <th style="padding: 12px; text-align: left; color: #64748b;">Numéro WhatsApp</th>
             </tr>
         </thead>
         <tbody>`;
 
     nomsLivreurs.forEach(nom => {
         const tel = annuaire[nom] || "";
+        // Sécurité : on crée un ID d'input sans espace
+        const safeId = "tel-" + nom.replace(/\s+/g, '_'); 
+        
         html += `
             <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 15px;"><strong>${nom}</strong></td>
                 <td style="padding: 15px;">
-                    <input type="text" id="tel-${nom}" value="${tel}" 
-                    placeholder="261..." 
-                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                    <input type="text" id="${safeId}" data-nom="${nom}" value="${tel}" 
+                    placeholder="26134..." 
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 </td>
             </tr>`;
     });
 
     html += `</tbody></table>`;
     
-    if (nomsLivreurs.length === 0) {
-        console.warn("ATTENTION : Aucun nom n'a été extrait de allData !");
-        html = `<div style="text-align:center; padding: 40px; color: #64748b;">
-                    <i class="fas fa-info-circle" style="font-size: 30px; margin-bottom: 10px;"></i>
-                    <p>Aucun livreur n'a été trouvé.<br>
-                    <button onclick="refreshAll()" style="margin-top:10px; padding:8px; cursor:pointer;">🔄 Forcer la Sync Google</button></p>
-                </div>`;
+    // Si la liste n'est pas vide, on force l'affichage
+    if (nomsLivreurs.length > 0) {
+        document.getElementById('liste-livreurs-config').innerHTML = html;
+    } else {
+        document.getElementById('liste-livreurs-config').innerHTML = "<p>Aucun livreur trouvé.</p>";
     }
-    
-    document.getElementById('liste-livreurs-config').innerHTML = html;
 }
 // Enregistre les numéros saisis dans le localStorage du navigateur
 function sauvegarderAnnuaire() {
