@@ -290,25 +290,27 @@
     
     <div class="card" style="background: #fff7ed; border-left: 5px solid #f97316; padding: 20px; margin-bottom: 20px;">
         <h3 style="margin:0 0 10px 0; color: #c2410c;">1. Analyse du Stock à sortir</h3>
-        <p style="font-size: 14px; color: #9a3412;">Cliquez sur le bouton ci-dessous pour calculer le total des produits nécessaires pour toutes les commandes en attente (Sérieux & Planifié).</p>
+        <p style="font-size: 14px; color: #9a3412;">Cliquez pour calculer le total des produits et le montant grossiste.</p>
         
         <button onclick="genererAnalyseStock()" style="background: #f97316; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
             <i class="fas fa-sync-alt"></i> CALCULER LES TOTAUX
         </button>
+
+        <div id="finance-grossiste" style="display:none; background: #f0fdf4; border-left: 5px solid #22c55e; padding: 15px; margin-top: 15px; border-radius: 8px;">
+            <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Total à payer au Grossiste</div>
+            <div id="montant-grossiste-total" style="font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 5px;">0 Ar</div>
+        </div>
     </div>
 
     <div id="resultat-stock" class="card" style="display:none; padding:20px;">
         <h3 style="margin-top:0;">2. Récapitulatif de Picking</h3>
-        <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
-            </div>
+        <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;"></div>
         
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
         
-        <div style="display: flex; gap: 10px;">
-            <button onclick="imprimerBonSortie()" style="flex: 1; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                <i class="fas fa-file-pdf"></i> TÉLÉCHARGER LE BON DE SORTIE
-            </button>
-        </div>
+        <button onclick="imprimerBonSortie()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+            <i class="fas fa-file-pdf"></i> TÉLÉCHARGER LE BON DE SORTIE
+        </button>
     </div>
 </div>
 <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
