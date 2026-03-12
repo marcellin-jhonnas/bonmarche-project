@@ -1034,13 +1034,13 @@ function filtrerParLivreur() {
 function assignerLivreur(idCommande, nomLivreur) {
     console.log(`LOG : Assignation de ${nomLivreur} à la commande ${idCommande}`);
 
-    // 1. On met à jour la mémoire locale (allData)
+    // 1. On met à jour la mémoire locale (On utilise Livraison car c'est le nom de ta colonne H)
     const cmd = allData.find(c => c.ID.toString() === idCommande.toString());
     if (cmd) {
-        cmd.Livreur = nomLivreur;
+        cmd.Livraison = nomLivreur; // <-- On change "Livreur" en "Livraison"
     }
 
-    // 2. On informe le serveur Google Sheets du changement
+    // 2. On informe le serveur
     fetch(CONFIG.API, {
         method: "POST",
         mode: "no-cors",
