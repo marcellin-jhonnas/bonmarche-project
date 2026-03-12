@@ -131,6 +131,9 @@
         style="background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
     <i class="fas fa-file-pdf"></i> GÉNÉRER LE PLANNING PDF
 </button>
+<div class="nav-link" onclick="showTab('tab-stock', this)">
+    <i class="fas fa-boxes"></i> Préparation Stock
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -282,7 +285,32 @@
 
     <div id="logistique-container" style="margin-top:20px;"></div>
 </div>
+<div id="tab-stock" class="tab-content" style="display:none; padding:20px;">
+    <h2><i class="fas fa-boxes"></i> Sortie de Stock Journalière</h2>
+    
+    <div class="card" style="background: #fff7ed; border-left: 5px solid #f97316; padding: 20px; margin-bottom: 20px;">
+        <h3 style="margin:0 0 10px 0; color: #c2410c;">1. Analyse du Stock à sortir</h3>
+        <p style="font-size: 14px; color: #9a3412;">Cliquez sur le bouton ci-dessous pour calculer le total des produits nécessaires pour toutes les commandes en attente (Sérieux & Planifié).</p>
+        
+        <button onclick="genererAnalyseStock()" style="background: #f97316; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
+            <i class="fas fa-sync-alt"></i> CALCULER LES TOTAUX
+        </button>
+    </div>
 
+    <div id="resultat-stock" class="card" style="display:none; padding:20px;">
+        <h3 style="margin-top:0;">2. Récapitulatif de Picking</h3>
+        <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+            </div>
+        
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="imprimerBonSortie()" style="flex: 1; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-file-pdf"></i> TÉLÉCHARGER LE BON DE SORTIE
+            </button>
+        </div>
+    </div>
+</div>
 <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
     <h2><i class="fas fa-user-plus"></i> Gestion des Livreurs</h2>
     <div style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
@@ -1346,6 +1374,71 @@ function genererPDFPlanning() {
 
     // --- SAUVEGARDE ---
     doc.save(`ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`);
+}
+function genererAnalyseStock() {
+    const conteneur = document.getElementById('liste-cumul-stock');
+    const panelResultat = document.getElementById('resultat-stock');
+    let cumul = {};
+
+    // On parcourt TOUTES les données reçues de Google Sheets
+    allData.forEach(c => {
+        // On ne compte que les commandes qui doivent être livrées
+        if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            let produits = (c.Produits || "").split(/[,+]/);
+            
+            produits.forEach(p => {
+                let match = p.match(/(\d+)\s*[xX]\s*(.*)/);
+                if (match) {
+                    let qte = parseInt(match[1]);
+                    let nom = match[2].trim().toUpperCase();
+                    cumul[nom] = (cumul[nom] || 0) + qte;
+                } else if (p.trim() !== "") {
+                    let nom = p.trim().toUpperCase();
+                    cumul[nom] = (cumul[nom] || 0) + 1;
+                }
+            });
+        }
+    });
+
+    // Affichage des résultats
+    if (Object.keys(cumul).length > 0) {
+        panelResultat.style.display = 'block';
+        conteneur.innerHTML = Object.entries(cumul).map(([nom, qte]) => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #1e293b;">${nom}</span>
+                <span style="background: #f97316; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold;">${qte}</span>
+            </div>
+        `).join('');
+    } else {
+        alert("Aucune commande en statut SÉRIEUX ou PLANIFIÉ n'a été trouvée.");
+    }
+}
+
+function imprimerBonSortie() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text("BON DE SORTIE DE STOCK", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 28);
+
+    const rows = [];
+    document.querySelectorAll('#liste-cumul-stock div').forEach(div => {
+        const nom = div.querySelector('span:first-child').innerText;
+        const qte = div.querySelector('span:last-child').innerText;
+        rows.push([nom, qte, " "]);
+    });
+
+    doc.autoTable({
+        startY: 35,
+        head: [['DÉSIGNATION PRODUIT', 'QUANTITÉ TOTALE', 'VÉRIFIÉ']],
+        body: rows,
+        headStyles: { fillColor: [249, 115, 22] }, // Couleur Orange
+        styles: { cellPadding: 5 }
+    });
+
+    doc.save(`Bon_Sortie_${new Date().toLocaleDateString()}.pdf`);
 }
 </script>
 </body>
