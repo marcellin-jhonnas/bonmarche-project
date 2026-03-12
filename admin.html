@@ -1378,39 +1378,56 @@ function genererPDFPlanning() {
 function genererAnalyseStock() {
     const conteneur = document.getElementById('liste-cumul-stock');
     const panelResultat = document.getElementById('resultat-stock');
-    let cumul = {};
+    const panelFinance = document.getElementById('finance-grossiste');
+    const affichagePrix = document.getElementById('montant-grossiste-total');
+    
+    let cumulProduits = {};
+    let totalArgentAPayer = 0;
 
-    // On parcourt TOUTES les données reçues de Google Sheets
+    // On parcourt tes données réelles
     allData.forEach(c => {
-        // On ne compte que les commandes qui doivent être livrées
+        // On ne compte que les commandes à préparer
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
-            let produits = (c.Produits || "").split(/[,+]/);
             
-            produits.forEach(p => {
-                let match = p.match(/(\d+)\s*[xX]\s*(.*)/);
+            // 1. COMPTER LES PRODUITS
+            let produitsStr = (c.Produits || "");
+            let items = produitsStr.split(/[,+]/);
+            items.forEach(item => {
+                let match = item.match(/(\d+)\s*[xX]\s*(.*)/);
                 if (match) {
                     let qte = parseInt(match[1]);
                     let nom = match[2].trim().toUpperCase();
-                    cumul[nom] = (cumul[nom] || 0) + qte;
-                } else if (p.trim() !== "") {
-                    let nom = p.trim().toUpperCase();
-                    cumul[nom] = (cumul[nom] || 0) + 1;
+                    cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
+                } else if (item.trim() !== "") {
+                    let nom = item.trim().toUpperCase();
+                    cumulProduits[nom] = (cumulProduits[nom] || 0) + 1;
                 }
             });
+
+            // 2. ADDITIONNER LE PRIX (On utilise la colonne 'Montant' de ton Sheets)
+            // Remplace 'Montant' par le nom exact de ta colonne prix si c'est différent
+            let prixCommande = parseFloat(c.Montant) || 0; 
+            totalArgentAPayer += prixCommande;
         }
     });
 
-    // Affichage des résultats
-    if (Object.keys(cumul).length > 0) {
+    // Affichage
+    if (Object.keys(cumulProduits).length > 0) {
         panelResultat.style.display = 'block';
-        conteneur.innerHTML = Object.entries(cumul).map(([nom, qte]) => `
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 600; color: #1e293b;">${nom}</span>
-                <span style="background: #f97316; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold;">${qte}</span>
+        panelFinance.style.display = 'block';
+        
+        // Liste visuelle des produits
+        conteneur.innerHTML = Object.entries(cumulProduits).map(([nom, qte]) => `
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between;">
+                <span>${nom}</span>
+                <strong style="color:var(--orange)">x${qte}</strong>
             </div>
         `).join('');
+
+        // Affichage du TOTAL d'argent à prévoir
+        affichagePrix.innerText = new Intl.NumberFormat('fr-FR').format(totalArgentAPayer) + " Ar";
     } else {
-        alert("Aucune commande en statut SÉRIEUX ou PLANIFIÉ n'a été trouvée.");
+        alert("Aucune commande en attente pour le calcul.");
     }
 }
 
