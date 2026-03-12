@@ -1154,73 +1154,64 @@ function envoyerTrajetWhatsApp(nomLivreur, quartier, produits) {
 }
 // Génère le tableau des livreurs avec les champs de saisie pour les numéros
 function genererConfigEquipe() {
-    console.log("--- DEBUG ANNUAIRE ---");
-    console.log("Nombre de lignes dans allData :", allData.length);
+    console.log("--- GÉNÉRATION DE L'INTERFACE ANNUAIRE ---");
     
-    // On essaie de voir à quoi ressemble une ligne de commande pour vérifier le nom de la colonne
-    if(allData.length > 0) {
-        console.log("Exemple d'une ligne de données :", allData[0]);
+    // 1. Extraction propre des noms
+    const nomsLivreurs = [...new Set(allData.map(c => {
+        const n = c.Livreur || c.livreur || "";
+        return n.toString().trim();
+    }).filter(n => n !== "" && n !== "Non Assigné"))];
+
+    const container = document.getElementById('liste-livreurs-config');
+    
+    // 2. Si aucun livreur n'est trouvé
+    if (nomsLivreurs.length === 0) {
+        container.innerHTML = `
+            <div style="padding:30px; text-align:center; background:#f8fafc; border-radius:10px; border:2px dashed #cbd5e1;">
+                <p style="color:#64748b;">Aucun livreur assigné dans vos commandes.</p>
+                <button onclick="refreshAll()" style="margin-top:10px; padding:10px; cursor:pointer;">🔄 Synchroniser</button>
+            </div>`;
+        return;
     }
 
-    // On récupère les noms avec une sécurité sur la casse (Livreur ou livreur)
-    const nomsLivreurs = [...new Set(allData.map(c => {
-        // On teste toutes les variantes possibles
-        const nom = c.Livreur || c.livreur || c["Livreur "] || ""; 
-        return nom.toString().trim();
-    }).filter(n => n && n !== "" && n !== "Non Assigné" && n !== "undefined"))];
-    
-    console.log("Livreurs trouvés après filtrage :", nomsLivreurs);
-
-    // ... (début de ta fonction avec les logs)
-
+    // 3. Construction du tableau avec style intégré
     let html = `
-    <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
-        <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-            <tr>
-                <th style="padding: 12px; text-align: left; color: #64748b;">Livreur</th>
-                <th style="padding: 12px; text-align: left; color: #64748b;">Numéro WhatsApp</th>
-            </tr>
-        </thead>
-        <tbody>`;
+    <table style="width:100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <tr style="background: #f8fafc; text-align: left;">
+            <th style="padding: 12px; border-bottom: 2px solid #e2e8f0; color: #64748b;">NOM DU LIVREUR</th>
+            <th style="padding: 12px; border-bottom: 2px solid #e2e8f0; color: #64748b;">NUMÉRO WHATSAPP</th>
+        </tr>`;
 
     nomsLivreurs.forEach(nom => {
         const tel = annuaire[nom] || "";
-        // Sécurité : on crée un ID d'input sans espace
-        const safeId = "tel-" + nom.replace(/\s+/g, '_'); 
+        const safeId = "tel-" + nom.replace(/\s+/g, '_'); // Remplace espaces par _
         
         html += `
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 15px;"><strong>${nom}</strong></td>
-                <td style="padding: 15px;">
-                    <input type="text" id="${safeId}" data-nom="${nom}" value="${tel}" 
-                    placeholder="26134..." 
-                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
-                </td>
-            </tr>`;
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 12px;"><strong>${nom}</strong></td>
+            <td style="padding: 12px;">
+                <input type="text" id="${safeId}" data-nom="${nom}" value="${tel}" 
+                placeholder="Ex: 26134..." 
+                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            </td>
+        </tr>`;
     });
 
-    html += `</tbody></table>`;
+    html += `</table>`;
     
-    // Si la liste n'est pas vide, on force l'affichage
-    if (nomsLivreurs.length > 0) {
-        document.getElementById('liste-livreurs-config').innerHTML = html;
-    } else {
-        document.getElementById('liste-livreurs-config').innerHTML = "<p>Aucun livreur trouvé.</p>";
-    }
+    // 4. INJECTION FORCÉE DANS LE DOM
+    container.innerHTML = html;
+    console.log("LOG : Tableau injecté pour :", nomsLivreurs);
 }
 // Enregistre les numéros saisis dans le localStorage du navigateur
 function sauvegarderAnnuaire() {
-    // On cherche tous les inputs qui ont l'attribut data-nom
     const inputs = document.querySelectorAll('#liste-livreurs-config input[data-nom]');
-    
     inputs.forEach(input => {
         const nom = input.getAttribute('data-nom');
-        const val = input.value.trim();
-        annuaire[nom] = val;
+        annuaire[nom] = input.value.trim();
     });
-
     localStorage.setItem('annuaire_livreurs', JSON.stringify(annuaire));
-    alert("✅ Annuaire enregistré avec succès !");
+    alert("✅ Annuaire mis à jour !");
 }
 
 // La fonction corrigée pour envoyer le WhatsApp
