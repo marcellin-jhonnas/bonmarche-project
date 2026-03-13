@@ -1513,181 +1513,142 @@ function imprimerBonSortie() {
     doc.save(`Bon_Sortie_${dateJour.replace(/\//g, '-')}.pdf`);
 }
 // Fonction pour générer une image QR Code à partir d'un texte
+// --- UTILITAIRE : GÉNÉRATION DU QR CODE ---
 function genererQRCodeImage(texte) {
     return new Promise((resolve) => {
-        // Vérification de sécurité
         if (typeof QRCode === 'undefined') {
-            console.error("La bibliothèque QRCode n'est pas chargée.");
+            console.error("Bibliothèque QRCode manquante");
             resolve(null);
             return;
         }
-
         const qrDiv = document.createElement("div");
-        try {
-            new QRCode(qrDiv, {
-                text: texte,
-                width: 128,
-                height: 128,
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            // On attend que l'image soit prête
-            setTimeout(() => {
-                const img = qrDiv.querySelector("img");
-                if (img && img.src) {
-                    resolve(img.src);
-                } else {
-                    // Si l'image n'est pas encore là, on essaie le canvas
-                    const canvas = qrDiv.querySelector("canvas");
-                    resolve(canvas ? canvas.toDataURL("image/png") : null);
-                }
-            }, 100); 
-        } catch (e) {
-            console.error("Erreur lors de la création du QR Code:", e);
-            resolve(null);
-        }
+        new QRCode(qrDiv, {
+            text: texte,
+            width: 128,
+            height: 128,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        setTimeout(() => {
+            const img = qrDiv.querySelector("img");
+            if (img) resolve(img.src);
+            else {
+                const canvas = qrDiv.querySelector("canvas");
+                resolve(canvas ? canvas.toDataURL("image/png") : null);
+            }
+        }, 100);
     });
 }
 
+// --- FONCTION PRINCIPALE : ÉTIQUETTES COLIS ---
 async function genererEtiquettesColis() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     
-    // 1. Filtrer les commandes SÉRIEUX & PLANIFIÉ
+    // Filtrage des données
     const commandesAPreparer = allData.filter(c => c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ");
 
     if (commandesAPreparer.length === 0) {
-        alert("Aucune commande SÉRIEUX ou PLANIFIÉ pour générer des étiquettes.");
+        alert("Aucune commande SÉRIEUX ou PLANIFIÉ trouvée.");
         return;
     }
 
-    // Afficher un message de chargement (car la génération de QR code prend du temps)
+    // Indicateur de chargement sur le bouton
     const btn = document.querySelector("button[onclick='genererEtiquettesColis()']");
     const originalText = btn.innerHTML;
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Génération...";
     btn.disabled = true;
 
-    // 2. Configuration A4 pour 6 étiquettes
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    // Configuration de la grille (2 colonnes x 3 lignes)
     const margin = 10;
-    const labelWidth = (pageWidth - (margin * 3)) / 2;
-    const labelHeight = (pageHeight - (margin * 4)) / 3;
+    const labelWidth = (doc.internal.pageSize.getWidth() - (margin * 3)) / 2;
+    const labelHeight = (doc.internal.pageSize.getHeight() - (margin * 4)) / 3;
     
-    let labelsOnPage = 0;
-
-    // 3. Boucle sur les commandes (avec async/await pour les QR Codes)
     for (let i = 0; i < commandesAPreparer.length; i++) {
         const cmd = commandesAPreparer[i];
 
-        if (labelsOnPage > 0 && labelsOnPage % 6 === 0) {
-            doc.addPage();
-        }
+        if (i > 0 && i % 6 === 0) doc.addPage();
 
-        const currentColumn = labelsOnPage % 2;
-        const currentRow = Math.floor((labelsOnPage % 6) / 2);
+        const col = i % 2;
+        const row = Math.floor((i % 6) / 2);
+        const x = margin + (col * (labelWidth + margin));
+        const y = margin + (row * (labelHeight + margin));
 
-        const x = margin + (currentColumn * (labelWidth + margin));
-        const y = margin + (currentRow * (labelHeight + margin));
-
-        // --- DESSINER LE CADRE ---
+        // 1. Cadre de l'étiquette
         doc.setDrawColor(0);
-        doc.setLineWidth(0.2);
         doc.roundedRect(x, y, labelWidth, labelHeight, 3, 3);
 
-        // --- EN-TÊTE GRIS ---
+        // 2. En-tête
         doc.setFillColor(241, 245, 249);
         doc.rect(x + 1, y + 1, labelWidth - 2, 8, 'F');
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.setTextColor(30, 41, 59); // Bleu-gris foncé
-        doc.text(`COLIS - SAFERUN`, x + (labelWidth / 2), y + 6, { align: "center" });
-        doc.setTextColor(0); // Reset noir
+        doc.setFontSize(11);
+        doc.text("SAFERUN - LOGISTIQUE COLIS", x + (labelWidth / 2), y + 6.5, { align: "center" });
 
-        // --- ZONE QR CODE (En haut à droite) ---
-        const qrSize = 25;
-        const qrX = x + labelWidth - qrSize - 5;
+        // 3. QR Code (Positionné à droite)
+        const qrSize = 24;
+        const qrX = x + labelWidth - qrSize - 4;
         const qrY = y + 12;
-        
-        // Texte à encoder dans le QR Code (ID + Client)
-        const qrText = `ID:${cmd.IDLivraison || 'N/A'}|Client:${cmd.Client || 'Inconnu'}`;
-        const qrImageSrc = await genererQRCodeImage(qrText);
-        
-        if (qrImageSrc) {
-            doc.addImage(qrImageSrc, 'PNG', qrX, qrY, qrSize, qrSize);
-        }
-        
-        // Cadre autour du QR Code
-        doc.setDrawColor(200); // Gris clair
-        doc.rect(qrX, qrY, qrSize, qrSize);
-        doc.setDrawColor(0); // Reset noir
+        const qrTxt = `ID:${cmd.ID || 'N/A'}|Client:${cmd.Client || 'INV'}`;
+        const imgQR = await genererQRCodeImage(qrTxt);
+        if (imgQR) doc.addImage(imgQR, 'PNG', qrX, qrY, qrSize, qrSize);
 
-        // --- ZONE INFOS CLIENT (À gauche du QR Code) ---
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        let txtY = y + 16;
-        const infoLeftX = x + 5;
-        const infoMaxWidth = labelWidth - qrSize - 15; // Espace max à gauche du QR Code
+        // 4. Infos Client (À gauche du QR Code)
+        doc.setFontSize(9);
+        let curY = y + 16;
+        const leftX = x + 4;
 
         // ID & Date
-        doc.setFont(undefined, 'bold'); doc.text(`ID :`, infoLeftX, txtY); doc.setFont(undefined, 'normal');
-        doc.text(`${cmd.IDLivraison || 'N/A'}`, infoLeftX + 10, txtY);
-        txtY += 5;
-        doc.setFont(undefined, 'bold'); doc.text(`Date :`, infoLeftX, txtY); doc.setFont(undefined, 'normal');
-        doc.text(`${cmd.Date || 'N/A'}`, infoLeftX + 12, txtY);
-        txtY += 8;
+        doc.setFont(undefined, 'bold'); doc.text("ID :", leftX, curY);
+        doc.setFont(undefined, 'normal'); doc.text(`${cmd.ID || 'N/A'}`, leftX + 8, curY);
+        curY += 5;
+        
+        doc.setFont(undefined, 'bold'); doc.text("Date :", leftX, curY);
+        doc.setFont(undefined, 'normal'); 
+        let dStr = "N/A";
+        if (cmd.Date) dStr = new Date(cmd.Date).toLocaleDateString('fr-FR');
+        doc.text(dStr, leftX + 11, curY);
+        curY += 8;
 
-        // Client & Tél
+        // Nom & Téléphone
         doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
-        const splitClient = doc.splitTextToSize(`Client : ${cmd.Client || 'Inconnu'}`, infoMaxWidth);
-        doc.text(splitClient, infoLeftX, txtY);
-        txtY += (splitClient.length * 5);
-        
+        doc.text(`${cmd.Client || 'CLIENT INCONNU'}`, leftX, curY);
+        curY += 5;
+        doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
-        doc.text(`Tél : ${cmd.Téléphone || 'N/A'}`, infoLeftX, txtY);
-        txtY += 10;
+        doc.text(`Tél : ${cmd.Téléphone || 'N/A'}`, leftX, curY);
+        curY += 10;
 
-        // --- ZONE ADRESSE (Largeur complète) ---
+        // 5. Adresse (Lieu Exact)
+        doc.setFont(undefined, 'bold'); doc.text("ADRESSE DE LIVRAISON :", leftX, curY);
+        curY += 5;
+        doc.setFont(undefined, 'normal');
+        const adr = cmd["Lieu Exact"] || "Non spécifiée";
+        const splitAdr = doc.splitTextToSize(adr, labelWidth - 8);
+        doc.text(splitAdr, leftX, curY);
+        curY += (splitAdr.length * 4.5) + 4;
+
+        // 6. Contenu (Produits)
+        doc.setFont(undefined, 'bold'); doc.text("CONTENU :", leftX, curY);
+        curY += 4.5;
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        const prod = (cmd.Produits || "N/A").split(',').join('\n');
+        const splitProd = doc.splitTextToSize(prod, labelWidth - 8);
+        doc.text(splitProd, leftX, curY);
+
+        // 7. Pied de page (Livreur & Prix)
+        const footY = y + labelHeight - 6;
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
-        doc.text("ADRESSE DE LIVRAISON :", x + 5, txtY);
-        doc.setFont(undefined, 'normal');
-        txtY += 5;
+        doc.text(`LIVREUR : ${cmd.Livreur || '---'}`, leftX, footY);
         
-        const adresse = cmd["Lieu Exact"] || "Adresse non spécifiée";
-        const splitAdresse = doc.splitTextToSize(adresse, labelWidth - 10);
-        doc.text(splitAdresse, x + 5, txtY);
-        txtY += (splitAdresse.length * 5) + 5;
-
-        // --- ZONE CONTENU (Largeur complète) ---
-        doc.setFont(undefined, 'bold');
-        doc.text("CONTENU DU COLIS :", x + 5, txtY);
-        doc.setFont(undefined, 'normal');
-        txtY += 5;
-        
-        const produits = cmd.Produits || "Contenu non spécifié";
-        const splitProduits = doc.splitTextToSize(produits, labelWidth - 10);
-        doc.text(splitProduits, x + 5, txtY);
-
-        // --- ZONE LIVREUR & PRIX (Bas de l'étiquette) ---
-        const footerY = y + labelHeight - 8;
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text(`LIVREUR : ${cmd.Livreur || '---'}`, x + 5, footerY);
-        
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        const montantFinal = new Intl.NumberFormat('fr-FR').format(cmd.Montant || 0) + " Ar";
-        doc.text(montantFinal, x + labelWidth - 5, footerY, { align: "right" });
-
-        labelsOnPage++;
+        doc.setFontSize(13);
+        const prix = (cmd.Montant || "0").toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        doc.text(`${prix} Ar`, x + labelWidth - 4, footY, { align: "right" });
     }
 
-    // 4. Sauvegarder et restaurer le bouton
-    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
-    doc.save(`Etiquettes_Colis_SafeRun_${dateStr}.pdf`);
-    
+    doc.save(`Etiquettes_SafeRun_${new Date().getTime()}.pdf`);
     btn.innerHTML = originalText;
     btn.disabled = false;
 }
