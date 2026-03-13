@@ -1450,27 +1450,57 @@ function imprimerBonSortie() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
-    doc.text("BON DE SORTIE DE STOCK", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 28);
+    // 1. Récupération sécurisée du montant total affiché à l'écran
+    const totalAchat = document.getElementById('montant-grossiste-total')?.innerText || "0 Ar";
+    const dateJour = new Date().toLocaleDateString('fr-FR');
 
-    const rows = [];
-    document.querySelectorAll('#liste-cumul-stock div').forEach(div => {
-        const nom = div.querySelector('span:first-child').innerText;
-        const qte = div.querySelector('span:last-child').innerText;
-        rows.push([nom, qte, " "]);
+    // 2. Préparation des données pour le tableau
+    const tableRows = [];
+    // On sélectionne TOUS les blocs de produits générés par genererAnalyseStock
+    const items = document.querySelectorAll('.item-stock-prepare');
+
+    if (items.length === 0) {
+        alert("Erreur : Aucun produit détecté. Cliquez d'abord sur 'CALCULER LES TOTAUX'.");
+        return;
+    }
+
+    items.forEach(item => {
+        // Sécurité : on vérifie que l'élément existe AVANT de lire le innerText
+        const elNom = item.querySelector('.nom-produit-pdf');
+        const elQte = item.querySelector('.qte-produit-pdf');
+
+        if (elNom && elQte) {
+            tableRows.push([elNom.innerText, elQte.innerText]);
+        }
     });
 
-    doc.autoTable({
-        startY: 35,
-        head: [['DÉSIGNATION PRODUIT', 'QUANTITÉ TOTALE', 'VÉRIFIÉ']],
-        body: rows,
-        headStyles: { fillColor: [249, 115, 22] }, // Couleur Orange
-        styles: { cellPadding: 5 }
-    });
+    // 3. Construction du PDF
+    doc.setFontSize(18);
+    doc.text("BON DE SORTIE STOCK - SAFERUN", 105, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Date : ${dateJour}`, 20, 35);
+    doc.text(`Total Grossiste : ${totalAchat}`, 20, 42);
 
-    doc.save(`Bon_Sortie_${new Date().toLocaleDateString()}.pdf`);
+    // Utilisation de autoTable (assure-toi que le script est chargé dans le head)
+    if (typeof doc.autoTable === 'function') {
+        doc.autoTable({
+            head: [['Désignation Produit', 'Quantité']],
+            body: tableRows,
+            startY: 50,
+            theme: 'striped',
+            headStyles: { fillColor: [249, 115, 22] } // Orange SafeRun
+        });
+    } else {
+        // Version de secours si autoTable n'est pas chargé
+        let y = 55;
+        tableRows.forEach(row => {
+            doc.text(`${row[0]} : ${row[1]}`, 20, y);
+            y += 10;
+        });
+    }
+
+    doc.save(`Bon_Sortie_${dateJour.replace(/\//g, '-')}.pdf`);
 }
 </script>
 </body>
