@@ -32,19 +32,59 @@
             border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;
         }
 
-        /* --- LAYOUT --- */
-        .admin-container { display: none; height: 100vh; }
-        .sidebar { width: 260px; background: var(--dark); color: white; display: flex; flex-direction: column; }
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+     /* --- LAYOUT MODIFIÉ --- */
+        .admin-container { display: flex; height: 100vh; width: 100%; }
+        
+        .sidebar { 
+            width: 260px; 
+            background: var(--dark); 
+            color: white; 
+            display: flex; 
+            flex-direction: column;
+            height: 100vh;
+            position: sticky; /* Reste en place pendant que le contenu défile */
+            top: 0;
+            overflow-y: auto; /* Active le défilement si trop de liens */
+            flex-shrink: 0; /* Empêche la sidebar de s'écraser */
+        }
 
-        /* --- SIDEBAR --- */
+        /* Personnalisation de la barre de défilement de la sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        .main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            min-width: 0; /* Évite les bugs de débordement flex */
+            height: 100vh;
+        }
+
+        /* --- SIDEBAR LINKS --- */
         .nav-link {
-            padding: 15px 25px; display: flex; align-items: center; gap: 12px; color: #94a3b8;
-            cursor: pointer; transition: 0.3s; border-left: 4px solid transparent;
+            padding: 15px 25px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            color: #94a3b8;
+            cursor: pointer; 
+            transition: 0.3s; 
+            border-left: 4px solid transparent;
+            text-decoration: none; /* Si tu utilises des balises <a> */
         }
         .nav-link.active { background: #1e293b; color: white; border-left-color: var(--orange); }
         .nav-link:hover { color: white; background: #1e293b; }
-
+        
+        /* Espace en bas de la sidebar pour ne pas coller au bord */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+        }
         /* --- TOPBAR --- */
         .topbar {
             height: 65px; background: white; border-bottom: 1px solid #e2e8f0;
@@ -84,6 +124,10 @@
         .dot { height: 10px; width: 10px; background: var(--danger); border-radius: 50%; display: inline-block; margin-left: auto; display: none; }
         /* Ajoute ceci pour gérer spécifiquement le statut SÉRIEUX avec le même vert que success */
         .badge.serieux { background: #dcfce7; color: #166534; }
+        /* Ajoute un espace de sécurité à la fin de chaque onglet */
+        .tab-content {
+         padding-bottom: 50px; 
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
