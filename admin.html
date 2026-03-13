@@ -1383,53 +1383,66 @@ function genererAnalyseStock() {
     const panelFinance = document.getElementById('finance-grossiste');
     const affichagePrix = document.getElementById('montant-grossiste-total');
     
+    // Vérification de sécurité
+    if (!conteneur || !panelResultat || !panelFinance || !affichagePrix) {
+        console.error("Erreur : Un élément HTML est manquant dans l'onglet stock.");
+        return;
+    }
+
     let cumulProduits = {};
     let totalArgentAPayer = 0;
 
-    // On parcourt tes données réelles
     allData.forEach(c => {
-        // On ne compte que les commandes à préparer
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
             
-            // 1. COMPTER LES PRODUITS
-            let produitsStr = (c.Produits || "");
-            let items = produitsStr.split(/[,+]/);
-            items.forEach(item => {
-                let match = item.match(/(\d+)\s*[xX]\s*(.*)/);
-                if (match) {
-                    let qte = parseInt(match[1]);
-                    let nom = match[2].trim().toUpperCase();
-                    cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
-                } else if (item.trim() !== "") {
-                    let nom = item.trim().toUpperCase();
-                    cumulProduits[nom] = (cumulProduits[nom] || 0) + 1;
-                }
-            });
-
-            // 2. ADDITIONNER LE PRIX (On utilise la colonne 'Montant' de ton Sheets)
-            // Remplace 'Montant' par le nom exact de ta colonne prix si c'est différent
+            // 1. CALCUL DU MONTANT (GROSSISTE)
             let prixCommande = parseFloat(c.Montant) || 0; 
             totalArgentAPayer += prixCommande;
+
+            // 2. COMPTER LES PRODUITS
+            let produitsStr = (c.Produits || "");
+            // On sépare par virgule ou par le signe +
+            let items = produitsStr.split(/[,+]/);
+            
+            items.forEach(item => {
+                let txt = item.trim().toUpperCase();
+                if (txt === "") return;
+
+                // On cherche le format "2 x Produit" ou "2xProduit"
+                let match = txt.match(/(\d+)\s*[xX]\s*(.*)/);
+                
+                if (match) {
+                    let qte = parseInt(match[1]);
+                    let nom = match[2].trim();
+                    cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
+                } else {
+                    // Si pas de chiffre, on compte 1
+                    cumulProduits[txt] = (cumulProduits[txt] || 0) + 1;
+                }
+            });
         }
     });
 
-    // Affichage
+    // AFFICHAGE
     if (Object.keys(cumulProduits).length > 0) {
         panelResultat.style.display = 'block';
         panelFinance.style.display = 'block';
         
-        // Liste visuelle des produits
+        // On génère le HTML avec les CLASSES pour le PDF
         conteneur.innerHTML = Object.entries(cumulProduits).map(([nom, qte]) => `
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between;">
-                <span>${nom}</span>
-                <strong style="color:var(--orange)">x${qte}</strong>
+            <div class="item-stock-prepare" style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="nom-produit-pdf" style="font-weight:500;">${nom}</span>
+                <strong class="qte-produit-pdf" style="color:var(--orange); background:#fff7ed; padding:2px 8px; border-radius:4px;">x${qte}</strong>
             </div>
         `).join('');
 
-        // Affichage du TOTAL d'argent à prévoir
+        // Mise à jour du prix total
         affichagePrix.innerText = new Intl.NumberFormat('fr-FR').format(totalArgentAPayer) + " Ar";
+        
     } else {
-        alert("Aucune commande en attente pour le calcul.");
+        panelResultat.style.display = 'none';
+        panelFinance.style.display = 'none';
+        alert("Aucune commande SÉRIEUX ou PLANIFIÉ n'a été trouvée pour aujourd'hui.");
     }
 }
 
