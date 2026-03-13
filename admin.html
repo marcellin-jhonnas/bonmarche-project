@@ -87,6 +87,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -1514,20 +1515,37 @@ function imprimerBonSortie() {
 // Fonction pour générer une image QR Code à partir d'un texte
 function genererQRCodeImage(texte) {
     return new Promise((resolve) => {
-        // Crée un élément div invisible pour générer le QR Code
-        const qrDiv = document.createElement("div");
-        new QRCode(qrDiv, {
-            text: texte,
-            width: 128,
-            height: 128,
-            correctLevel: QRCode.CorrectLevel.H // Haute correction d'erreur
-        });
+        // Vérification de sécurité
+        if (typeof QRCode === 'undefined') {
+            console.error("La bibliothèque QRCode n'est pas chargée.");
+            resolve(null);
+            return;
+        }
 
-        // Attend que l'image soit générée dans la div
-        setTimeout(() => {
-            const img = qrDiv.querySelector("img");
-            resolve(img ? img.src : null);
-        }, 50); // Petit délai pour laisser le temps à la biblio de dessiner
+        const qrDiv = document.createElement("div");
+        try {
+            new QRCode(qrDiv, {
+                text: texte,
+                width: 128,
+                height: 128,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // On attend que l'image soit prête
+            setTimeout(() => {
+                const img = qrDiv.querySelector("img");
+                if (img && img.src) {
+                    resolve(img.src);
+                } else {
+                    // Si l'image n'est pas encore là, on essaie le canvas
+                    const canvas = qrDiv.querySelector("canvas");
+                    resolve(canvas ? canvas.toDataURL("image/png") : null);
+                }
+            }, 100); 
+        } catch (e) {
+            console.error("Erreur lors de la création du QR Code:", e);
+            resolve(null);
+        }
     });
 }
 
