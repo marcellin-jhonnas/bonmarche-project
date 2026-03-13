@@ -311,6 +311,15 @@
         <button onclick="imprimerBonSortie()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
             <i class="fas fa-file-pdf"></i> TÉLÉCHARGER LE BON DE SORTIE
         </button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="imprimerBonSortie()" style="flex: 1; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-file-pdf"></i> BON DE SORTIE
+            </button>
+            
+            <button onclick="genererEtiquettesColis()" style="flex: 1; background: #f97316; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-tags"></i> ÉTIQUETTES COLIS (6 par page)
+            </button>
+        </div>
     </div>
 </div>
 <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
@@ -1501,6 +1510,106 @@ function imprimerBonSortie() {
     }
 
     doc.save(`Bon_Sortie_${dateJour.replace(/\//g, '-')}.pdf`);
+}
+function genererEtiquettesColis() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4'); // Format A4 Vertical en Millimètres
+    
+    // 1. Filtrer les commandes à préparer (SÉRIEUX & PLANIFIÉ)
+    const commandesAPreparer = allData.filter(c => c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ");
+
+    if (commandesAPreparer.length === 0) {
+        alert("Aucune commande SÉRIEUX ou PLANIFIÉ pour générer des étiquettes.");
+        return;
+    }
+
+    // 2. Configuration de la page A4 pour 6 étiquettes (2 colonnes x 3 lignes)
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210 mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297 mm
+    
+    const margin = 10; // Marge extérieure de la page
+    const labelWidth = (pageWidth - (margin * 3)) / 2; // Largeur d'une étiquette (~90mm)
+    const labelHeight = (pageHeight - (margin * 4)) / 3; // Hauteur d'une étiquette (~85mm)
+    
+    let currentColumn = 0; // 0 ou 1
+    let currentRow = 0; // 0, 1 ou 2
+    let labelsOnPage = 0;
+
+    commandesAPreparer.forEach((cmd, index) => {
+        // Ajouter une nouvelle page si la précédente est pleine (6 étiquettes)
+        if (labelsOnPage > 0 && labelsOnPage % 6 === 0) {
+            doc.addPage();
+            currentColumn = 0;
+            currentRow = 0;
+        }
+
+        // Calcul des coordonnées X et Y du coin supérieur gauche de l'étiquette
+        const x = margin + (currentColumn * (labelWidth + margin));
+        const y = margin + (currentRow * (labelHeight + margin));
+
+        // --- DESSINER L'ÉTIQUETTE (Le cadre) ---
+        doc.setDrawColor(0); // Noir
+        doc.setLineWidth(0.2);
+        doc.roundedRect(x, y, labelWidth, labelHeight, 3, 3); // Rectangle arrondi
+
+        // --- REMPLIR L'ÉTIQUETTE (Les infos) ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        
+        // En-tête de l'étiquette
+        doc.setFillColor(241, 245, 249); // Fond gris clair
+        doc.rect(x + 1, y + 1, labelWidth - 2, 8, 'F');
+        doc.text("SAFERUN - COLIS", x + (labelWidth / 2), y + 6, { align: "center" });
+
+        // Contenu principal
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        let txtY = y + 15;
+
+        // ID & Destinataire
+        doc.setFont(undefined, 'bold'); doc.text(`ID Commande : ${cmd.ID || 'N/A'}`, x + 5, txtY); doc.setFont(undefined, 'normal');
+        txtY += 6;
+        doc.text(`Client : ${cmd.Client || 'Inconnu'}`, x + 5, txtY);
+        txtY += 6;
+        doc.text(`Tél : ${cmd.Telephone || 'N/A'}`, x + 5, txtY);
+        txtY += 8;
+
+        // Adresse (Gestion du texte long)
+        doc.setFont(undefined, 'bold'); doc.text("ADRESSE DE LIVRAISON :", x + 5, txtY); doc.setFont(undefined, 'normal');
+        txtY += 5;
+        const adresse = cmd.Adresse || "Non spécifiée";
+        const splitAdresse = doc.splitTextToSize(adresse, labelWidth - 10);
+        doc.text(splitAdresse, x + 5, txtY);
+        txtY += (splitAdresse.length * 5) + 3;
+
+        // Contenu du Colis
+        doc.setFont(undefined, 'bold'); doc.text("CONTENU :", x + 5, txtY); doc.setFont(undefined, 'normal');
+        txtY += 5;
+        const produits = (cmd.Produits || "N/A").replace(/\+/g, '\n'); // Remplace + par retour ligne
+        const splitProduits = doc.splitTextToSize(produits, labelWidth - 10);
+        doc.text(splitProduits, x + 5, txtY);
+
+        // Zone Livreur (Bas de l'étiquette)
+        doc.setFontSize(10);
+        doc.text(`Livreur : ${cmd.Livreur || '---'}`, x + 5, y + labelHeight - 8);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${cmd.Montant || '0'} Ar`, x + labelWidth - 5, y + labelHeight - 8, { align: "right" });
+
+        // --- GESTION DES POSITIONS POUR LA PROCHAINE ÉTIQUETTE ---
+        labelsOnPage++;
+        currentColumn++;
+        
+        // Si on a fini la colonne 1, on passe à la colonne 0 de la ligne suivante
+        if (currentColumn > 1) {
+            currentColumn = 0;
+            currentRow++;
+        }
+    });
+
+    // 3. Sauvegarder le PDF
+    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+    doc.save(`Etiquettes_Colis_${dateStr}.pdf`);
 }
 </script>
 </body>
