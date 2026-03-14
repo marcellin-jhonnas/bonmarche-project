@@ -1721,7 +1721,9 @@ async function genererEtiquettesColis() {
 }
 // 1. Détecter les livreurs qui ont des colis SÉRIEUX ou PLANIFIÉ
 function rafraichirLivreursActifs() {
+    console.log("Données disponibles :", allData); // <--- AJOUTE ÇA
     const conteneur = document.getElementById('liste-livreurs-actifs');
+    // ... reste du code
     if (!conteneur) return;
     conteneur.innerHTML = ""; 
 
