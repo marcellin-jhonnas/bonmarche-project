@@ -191,6 +191,9 @@
 <div class="nav-link" onclick="showTab('tab-archive', this)">
     <i class="fas fa-database"></i> Archive & Storage
 </div>
+<div class="nav-link" id="menu-users" onclick="showTab('tab-users', this)">
+    <i class="fas fa-user-shield"></i> Gérer les Accès
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -486,7 +489,36 @@
         </button>
     </div>
 </div>
+<div id="tab-users" class="tab-content" style="display:none; padding:20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="margin:0;"><i class="fas fa-users-cog"></i> Gestion des Comptes & Droits</h2>
+            <p style="color: var(--gray);">Créez des accès limités pour vos employés.</p>
+        </div>
+    </div>
 
+    <div class="card" style="background: #f8fafc; border-left: 5px solid var(--orange); margin-bottom: 20px;">
+        <h3 style="margin-top:0;">Nouveau Compte</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px;">
+            <input type="text" id="new-user-name" placeholder="Nom d'utilisateur" style="padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
+            <input type="password" id="new-user-pass" placeholder="Mot de passe" style="padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
+            <select id="new-user-role" style="padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-weight:bold;">
+                <option value="ADMIN">ADMIN (Accès Total)</option>
+                <option value="VENDEUR">VENDEUR (Ventes + Chat)</option>
+                <option value="LOGISTIQUE">LOGISTIQUE (Stock + Trajet)</option>
+            </select>
+            <button onclick="creerCompte()" style="background: var(--orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-user-plus"></i> CRÉER L'ACCÈS
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Comptes enregistrés sur ce navigateur</h3>
+        <div id="liste-comptes-actifs" style="margin-top: 15px;">
+            </div>
+    </div>
+</div>
 </div> </main> 
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
@@ -626,6 +658,9 @@ afficherLivreurs();
 }
 if (id === 'tab-archive') {
     rafraichirStorage();
+}
+if (id === 'tab-users') {
+    afficherComptes();
 }
 }
 
@@ -2107,6 +2142,87 @@ function viderToutLeStorage() {
         localStorage.clear();
         location.reload(); // Recharge la page car tout est effacé
     }
+}
+// 1. AFFICHER LES COMPTES
+function afficherComptes() {
+    const conteneur = document.getElementById('liste-comptes-actifs');
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    conteneur.innerHTML = "";
+
+    comptes.forEach((c, index) => {
+        const div = document.createElement('div');
+        div.style = "display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;";
+        div.innerHTML = `
+            <div>
+                <strong>${c.user}</strong> <span class="badge" style="background:#e2e8f0; padding:3px 8px; border-radius:12px; font-size:10px; margin-left:10px;">${c.role}</span>
+            </div>
+            <button onclick="supprimerCompte(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        conteneur.appendChild(div);
+    });
+}
+
+// 2. CRÉER UN COMPTE
+function creerCompte() {
+    const user = document.getElementById('new-user-name').value.trim();
+    const pass = document.getElementById('new-user-pass').value.trim();
+    const role = document.getElementById('new-user-role').value;
+
+    if(!user || !pass) return alert("Veuillez remplir tous les champs !");
+
+    let comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    comptes.push({ user, pass, role });
+    localStorage.setItem('comptes_plateforme', JSON.stringify(comptes));
+    
+    document.getElementById('new-user-name').value = "";
+    document.getElementById('new-user-pass').value = "";
+    afficherComptes();
+    alert("Accès créé avec succès !");
+}
+
+// 3. SUPPRIMER UN COMPTE
+function supprimerCompte(index) {
+    if(confirm("Supprimer cet accès ?")) {
+        let comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+        comptes.splice(index, 1);
+        localStorage.setItem('comptes_plateforme', JSON.stringify(comptes));
+        afficherComptes();
+    }
+}
+
+// 4. LA SÉCURITÉ : CACHER LES ONGLETS SELON LE RÔLE
+function appliquerDroits(role) {
+    console.log("Restriction des accès pour : " + role);
+    
+    // Définition des accès (ID des onglets autorisés)
+    const autorisations = {
+        'ADMIN': ['tab-dash', 'tab-caisse', 'tab-stats', 'tab-orders', 'tab-chat', 'tab-logistique', 'tab-stock', 'tab-itineraire', 'tab-livreurs', 'tab-equipe', 'tab-intelligence', 'tab-sav', 'tab-archive', 'tab-users'],
+        'VENDEUR': ['tab-dash', 'tab-orders', 'tab-chat', 'tab-intelligence', 'tab-sav'],
+        'LOGISTIQUE': ['tab-dash', 'tab-logistique', 'tab-stock', 'tab-itineraire', 'tab-equipe']
+    };
+
+    const mesDroits = autorisations[role] || [];
+
+    // On parcourt tous les liens de la navigation pour cacher ceux non autorisés
+    document.querySelectorAll('.nav-link').forEach(link => {
+        // On récupère l'ID de l'onglet dans le onclick="showTab('ID', this)"
+        const onclickAttr = link.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/'([^']+)'/);
+            const tabId = match ? match[1] : null;
+
+            if (tabId && !mesDroits.includes(tabId)) {
+                link.style.display = 'none'; // Cache le menu
+            } else {
+                link.style.display = 'flex'; // Montre le menu
+            }
+        }
+    });
+
+    // Rediriger vers le dashboard par sécurité
+    showTab('tab-dash', document.querySelector('.nav-link'));
 }
 </script>
 </body>
