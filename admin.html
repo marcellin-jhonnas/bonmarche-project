@@ -179,7 +179,7 @@
 <div class="nav-link" onclick="showTab('tab-stock', this)">
     <i class="fas fa-boxes"></i> Préparation Stock
 </div>
-<div class="nav-link" onclick="showTab('tab-itineraire')">
+<div class="nav-link" onclick="showTab('tab-itineraire', this)">
     <i class="fas fa-map-marked-alt"></i> Plan de Trajet
 </div>
     </nav>
@@ -497,7 +497,7 @@ afficherLivreurs();
     function logout() { location.reload(); }
 
     // --- NAVIGATION ---
-    function showTab(id, el) {
+   function showTab(id, el) {
     console.log("--- Tentative d'affichage de l'onglet : " + id + " ---");
     
     // Diagnostic de l'élément reçu
@@ -540,10 +540,15 @@ afficherLivreurs();
         genererStatsPerformance();
     }
 
-    // --- AJOUT POUR L'ÉQUIPE ---
     if (id === 'tab-equipe') {
         console.log("LOG : Chargement de l'annuaire...");
         genererConfigEquipe(); 
+    }
+
+    // --- AJOUT POUR LE PLAN DE TRAJET ---
+    if (id === 'tab-itineraire') {
+        console.log("LOG : Chargement des livreurs actifs pour le trajet...");
+        rafraichirLivreursActifs(); 
     }
 }
 
