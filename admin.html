@@ -188,6 +188,9 @@
 <div class="nav-link" onclick="showTab('tab-sav', this)" style="color: #ef4444;">
     <i class="fas fa-exclamation-circle"></i> Anomalies & Retours
 </div>
+<div class="nav-link" onclick="showTab('tab-archive', this)">
+    <i class="fas fa-database"></i> Archive & Storage
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -449,6 +452,38 @@
             </thead>
             <tbody id="table-incidents"></tbody>
         </table>
+    </div>
+</div>
+
+</div>
+<div id="tab-archive" class="tab-content" style="display:none; padding:20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="margin:0;"><i class="fas fa-hdd"></i> Mémoire Locale & Archives</h2>
+            <p style="color: var(--gray);">Gérez les données enregistrées sur ce navigateur.</p>
+        </div>
+        <button onclick="rafraichirStorage()" style="background: var(--orange); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-sync-alt"></i> ACTUALISER
+        </button>
+    </div>
+
+    <div class="card" style="border-left: 5px solid #64748b;">
+        <h3><i class="fas fa-info-circle"></i> État du Stockage</h3>
+        <p id="storage-usage" style="font-size: 14px; margin-top: 10px;">Calcul de l'utilisation...</p>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Données enregistrées</h3>
+        <div id="storage-list" style="margin-top: 15px;">
+            </div>
+    </div>
+
+    <div style="margin-top: 30px; padding: 15px; background: #fff1f2; border-radius: 10px; border: 1px dashed #ef4444;">
+        <h3 style="color: #be123c; margin-top: 0;">Zone de Danger</h3>
+        <p style="font-size: 13px; color: #9f1239;">Action irréversible : Supprime toutes les configurations locales (Annuaire, Login, etc.)</p>
+        <button onclick="viderToutLeStorage()" style="background: #be123c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px;">
+            <i class="fas fa-trash-alt"></i> RÉINITIALISER TOUT LE SYSTÈME
+        </button>
     </div>
 </div>
 
@@ -2018,6 +2053,56 @@ function analyserAnomalies() {
             `;
             listeNoireDiv.appendChild(item);
         });
+    }
+}
+function rafraichirStorage() {
+    const listConteneur = document.getElementById('storage-list');
+    const usageText = document.getElementById('storage-usage');
+    listConteneur.innerHTML = "";
+
+    if (localStorage.length === 0) {
+        listConteneur.innerHTML = "<p style='color:gray; font-style:italic;'>Aucune donnée en mémoire locale.</p>";
+        usageText.innerText = "Utilisation : 0 octets";
+        return;
+    }
+
+    let totalSize = 0;
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        const size = (key.length + value.length) * 2; // Approximation en octets
+        totalSize += size;
+
+        const item = document.createElement('div');
+        item.style = "display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; background: #fff;";
+        item.innerHTML = `
+            <div>
+                <strong style="color:var(--orange)">${key}</strong> 
+                <small style="color:gray; margin-left:10px;">(${size} octets)</small>
+            </div>
+            <button onclick="supprimerCleStorage('${key}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px;">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        `;
+        listConteneur.appendChild(item);
+    }
+
+    usageText.innerText = `Utilisation totale : ${(totalSize / 1024).toFixed(2)} Ko sur ce navigateur.`;
+}
+
+function supprimerCleStorage(key) {
+    if (confirm(`Voulez-vous vraiment supprimer la donnée "${key}" ?`)) {
+        localStorage.removeItem(key);
+        rafraichirStorage();
+        alert("Donnée supprimée. Rechargez la page pour appliquer les changements.");
+    }
+}
+
+function viderToutLeStorage() {
+    if (confirm("ATTENTION ! Cela va supprimer TOUTES vos données (annuaire, accès, historique). Continuer ?")) {
+        localStorage.clear();
+        location.reload(); // Recharge la page car tout est effacé
     }
 }
 </script>
