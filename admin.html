@@ -420,36 +420,46 @@
         </button>
     </div>
 
-    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
         <div class="card" style="border-top: 5px solid #ef4444;">
             <h3>Taux d'échec de livraison</h3>
-            <div id="stats-sav" style="font-size: 24px; font-weight: bold; margin: 15px 0;">0%</div>
+            <div id="stats-sav" style="font-size: 28px; font-weight: bold; margin: 15px 0; color: #ef4444;">0%</div>
             <p id="details-sav" style="font-size: 13px; color: var(--gray);">0 colis en anomalie sur le total.</p>
         </div>
 
-        <div class="card">
-            <h3>Causes principales</h3>
-            <div id="liste-causes-echec" style="margin-top: 15px;">
-                </div>
+        <div class="card" style="border-top: 5px solid #334155; background: #fff1f2;">
+            <h3 style="color: #b91c1c;"><i class="fas fa-user-slash"></i> Clients à Risque</h3>
+            <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">Récurrence d'échecs (2+ fois).</p>
+            <div id="liste-clients-problemes" style="max-height: 200px; overflow-y: auto;">
+                <p style="font-size: 12px; color: gray; font-style: italic;">Lancez l'analyse pour voir les profils.</p>
+            </div>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 20px;">
-        <h3>Journal des incidents</h3>
-        <table style="width:100%; margin-top: 15px; border-collapse: collapse;">
+    <div class="card" style="margin-top: 20px; overflow-x: auto;">
+        <h3><i class="fas fa-list"></i> Journal des incidents récents</h3>
+        <table style="width:100%; margin-top: 15px; border-collapse: collapse; min-width: 500px;">
             <thead>
-                <tr style="background: #fff1f2; text-align: left;">
-                    <th style="padding: 10px;">Date</th>
+                <tr style="background: #f8fafc; text-align: left; border-bottom: 2px solid #eee;">
+                    <th style="padding: 12px;">Date</th>
                     <th>Client</th>
                     <th>Livreur</th>
-                    <th>Motif</th>
+                    <th>Motif détecté</th>
                 </tr>
             </thead>
             <tbody id="table-incidents"></tbody>
         </table>
     </div>
 </div>
-</div> </main>
+
+</div> </main> ```
+
+### Ce qui a été ajouté/corrigé :
+1.  **Section "Clients à Risque" :** Juste à côté du taux d'échec, tu as maintenant la zone pour lister les clients qui abusent des annulations.
+2.  **Scrollable :** La liste des clients à risque a un `max-height` pour ne pas déformer ton écran si la liste devient longue.
+3.  **Nettoyage final :** J'ai bien fermé la `div` "content" et le `main` pour éviter que ton footer ou tes scripts ne se cassent.
+
+**N'oublie pas de mettre à jour ta fonction JavaScript `analyserAnomalies()` avec la version que je t'ai donnée précédemment pour qu'elle puisse remplir la liste des "Clients à Risque" !**
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
@@ -1948,21 +1958,37 @@ function analyserAnomalies() {
     const tableBody = document.getElementById('table-incidents');
     const statsDiv = document.getElementById('stats-sav');
     const detailsDiv = document.getElementById('details-sav');
+    const listeNoireDiv = document.getElementById('liste-clients-problemes');
     
     if (!allData || allData.length === 0) return;
 
     tableBody.innerHTML = "";
+    listeNoireDiv.innerHTML = "";
+    
     let incidents = 0;
+    const clientErrors = {}; // Pour compter les erreurs par client
 
     allData.forEach(c => {
         const statut = (c.Statut || "").toUpperCase();
-        // On définit ce qu'est une anomalie
-        if (statut === "ANNULÉ" || statut === "REPORTÉ" || statut === "ERREUR" || statut === "ABSENT") {
+        const nomClient = c.Client || "Inconnu";
+        const telClient = c.Telephone || "---";
+
+        // Détection des anomalies
+        if (["ANNULÉ", "REPORTÉ", "ERREUR", "ABSENT", "RETOUR"].includes(statut)) {
             incidents++;
+            
+            // Compter pour la liste noire
+            if (!clientErrors[nomClient]) {
+                clientErrors[nomClient] = { count: 0, tel: telClient, motifs: [] };
+            }
+            clientErrors[nomClient].count++;
+            clientErrors[nomClient].motifs.push(statut);
+
+            // Ajouter au journal des incidents (le tableau)
             const row = `
                 <tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 10px;">${c.Date || '---'}</td>
-                    <td><strong>${c.Client || 'Inconnu'}</strong></td>
+                    <td><strong>${nomClient}</strong></td>
                     <td>${c.Livreur || '---'}</td>
                     <td><span style="color: #ef4444; font-weight: bold;">${statut}</span></td>
                 </tr>
@@ -1971,15 +1997,34 @@ function analyserAnomalies() {
         }
     });
 
-    // Calcul du taux d'échec
+    // 1. Mise à jour des compteurs généraux
     const taux = ((incidents / allData.length) * 100).toFixed(1);
     statsDiv.innerText = taux + "%";
     detailsDiv.innerText = `${incidents} incident(s) sur ${allData.length} commandes totales.`;
-    
-    if (taux > 15) {
-        statsDiv.style.color = "#ef4444"; // Alerte rouge si trop d'échecs
+    statsDiv.style.color = taux > 15 ? "#ef4444" : "#22c55e";
+
+    // 2. Génération de la "Liste Noire"
+    const clientsACritiquer = Object.entries(clientErrors)
+        .filter(([nom, data]) => data.count >= 2) // On affiche seulement si au moins 2 erreurs
+        .sort((a, b) => b[1].count - a[1].count);
+
+    if (clientsACritiquer.length === 0) {
+        listeNoireDiv.innerHTML = "<p style='color:gray; font-style:italic;'>Aucun client problématique récurrent détecté.</p>";
     } else {
-        statsDiv.style.color = "#22c55e"; // Vert si c'est gérable
+        clientsACritiquer.forEach(([nom, data]) => {
+            const item = document.createElement('div');
+            item.style = "display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid #fee2e2;";
+            item.innerHTML = `
+                <div>
+                    <b style="color:#b91c1c;">${nom}</b> <small>(${data.tel})</small><br>
+                    <span style="font-size:11px; color:#ef4444;">${data.count} ÉCHECS : ${[...new Set(data.motifs)].join(', ')}</span>
+                </div>
+                <button onclick="window.open('https://wa.me/${data.tel.replace(/\s/g,'')}')" style="background:#475569; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">
+                    Contacter
+                </button>
+            `;
+            listeNoireDiv.appendChild(item);
+        });
     }
 }
 </script>
