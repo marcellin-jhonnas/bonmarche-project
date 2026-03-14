@@ -182,6 +182,9 @@
 <div class="nav-link" onclick="showTab('tab-itineraire', this)">
     <i class="fas fa-map-marked-alt"></i> Plan de Trajet
 </div>
+<div class="nav-link" onclick="showTab('tab-intelligence', this)">
+    <i class="fas fa-brain"></i> Intelligence Client
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -377,6 +380,32 @@
             </button>
         </div>
     </div>
+    <div id="tab-intelligence" class="tab-content" style="display:none; padding:20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="margin:0;"><i class="fas fa-brain"></i> Radar de Réachat</h2>
+            <p style="color: var(--gray);">Anticipez les besoins de vos clients avant la concurrence.</p>
+        </div>
+        <button onclick="genererRadarIntelligence()" style="background: var(--orange); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            <i class="fas fa-sync-alt"></i> ANALYSER LES BESOINS
+        </button>
+    </div>
+
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="card">
+            <h3><i class="fas fa-bell" style="color: var(--danger);"></i> Alertes de Réachat (J+25)</h3>
+            <div id="liste-alertes-achat" style="margin-top: 15px;">
+                <p style="font-size: 13px; color: var(--gray);">Cliquez sur "Analyser" pour voir les clients à relancer.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-crown" style="color: #f59e0b;"></i> Top 5 Clients Fidèles</h3>
+            <div id="liste-top-fidelite" style="margin-top: 15px;">
+                </div>
+        </div>
+    </div>
+</div>
 </div> </main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
@@ -1787,6 +1816,83 @@ async function genererFeuilleRoute(nomLivreur) {
     });
 
     doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
+}
+function genererRadarIntelligence() {
+    const conteneurAlertes = document.getElementById('liste-alertes-achat');
+    const conteneurFidelite = document.getElementById('liste-top-fidelite');
+    if (!allData || allData.length === 0) return;
+
+    conteneurAlertes.innerHTML = "";
+    conteneurFidelite.innerHTML = "";
+
+    const aujourdhui = new Date();
+    const statsClients = {};
+
+    allData.forEach(c => {
+        const nom = c.Client;
+        if (!nom) return;
+
+        // On calcule les stats par client
+        if (!statsClients[nom]) {
+            statsClients[nom] = { 
+                dernierAchat: new Date(c.Date), 
+                produit: c.Produit || "Produit habituel",
+                commandesCount: 0,
+                totalDepense: 0,
+                tel: c.Telephone || "" 
+            };
+        }
+        
+        const dateC = new Date(c.Date);
+        if (dateC > statsClients[nom].dernierAchat) {
+            statsClients[nom].dernierAchat = dateC;
+            statsClients[nom].produit = c.Produit || statsClients[nom].produit;
+        }
+        statsClients[nom].commandesCount++;
+        statsClients[nom].totalDepense += parseFloat(c.Montant || 0);
+    });
+
+    // 1. Logique Radar (Clients qui n'ont pas commandé depuis 25-35 jours)
+    Object.keys(statsClients).forEach(nom => {
+        const client = statsClients[nom];
+        const diffJours = Math.floor((aujourdhui - client.dernierAchat) / (1000 * 60 * 60 * 24));
+
+        if (diffJours >= 25 && diffJours <= 40) {
+            const div = document.createElement('div');
+            div.style = "padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff5f5; border-radius: 8px; margin-bottom: 10px;";
+            div.innerHTML = `
+                <div>
+                    <strong>${nom}</strong> <br>
+                    <small>Dernier achat : il y a ${diffJours} jours (${client.produit})</small>
+                </div>
+                <button onclick="envoyerRelanceFidelite('${client.tel}', '${nom}', '${client.produit}')" style="background:#25d366; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">
+                    <i class="fab fa-whatsapp"></i> Relancer
+                </button>
+            `;
+            conteneurAlertes.appendChild(div);
+        }
+    });
+
+    // 2. Logique Fidélité (Top 5 par montant)
+    const topClients = Object.entries(statsClients)
+        .sort((a, b) => b[1].totalDepense - a[1].totalDepense)
+        .slice(0, 5);
+
+    topClients.forEach(([nom, data]) => {
+        const div = document.createElement('div');
+        div.style = "padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;";
+        div.innerHTML = `
+            <span>${nom}</span>
+            <strong style="color: var(--success);">${data.totalDepense.toLocaleString()} Ar</strong>
+        `;
+        conteneurFidelite.appendChild(div);
+    });
+}
+
+function envoyerRelanceFidelite(tel, nom, produit) {
+    const msg = `Bonjour ${nom}, c'est l'équipe SafeRun ! 😊 Nous avons remarqué que votre stock de "${produit}" arrive bientôt à sa fin. Souhaitez-vous être livré demain ?`;
+    const lien = `https://wa.me/${tel.replace(/\s/g, '')}?text=${encodeURIComponent(msg)}`;
+    window.open(lien, '_blank');
 }
 </script>
 </body>
