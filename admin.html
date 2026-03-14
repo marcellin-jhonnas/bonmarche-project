@@ -185,6 +185,9 @@
 <div class="nav-link" onclick="showTab('tab-intelligence', this)">
     <i class="fas fa-brain"></i> Intelligence Client
 </div>
+<div class="nav-link" onclick="showTab('tab-sav', this)" style="color: #ef4444;">
+    <i class="fas fa-exclamation-circle"></i> Anomalies & Retours
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -406,6 +409,46 @@
         </div>
     </div>
 </div>
+<div id="tab-sav" class="tab-content" style="display:none; padding:20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="margin:0; color: #ef4444;"><i class="fas fa-history"></i> Rapport d'Anomalies</h2>
+            <p style="color: var(--gray);">Suivez les colis annulés, reportés ou perdus.</p>
+        </div>
+        <button onclick="analyserAnomalies()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            <i class="fas fa-search"></i> ANALYSER LES ÉCHECS
+        </button>
+    </div>
+
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="card" style="border-top: 5px solid #ef4444;">
+            <h3>Taux d'échec de livraison</h3>
+            <div id="stats-sav" style="font-size: 24px; font-weight: bold; margin: 15px 0;">0%</div>
+            <p id="details-sav" style="font-size: 13px; color: var(--gray);">0 colis en anomalie sur le total.</p>
+        </div>
+
+        <div class="card">
+            <h3>Causes principales</h3>
+            <div id="liste-causes-echec" style="margin-top: 15px;">
+                </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Journal des incidents</h3>
+        <table style="width:100%; margin-top: 15px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #fff1f2; text-align: left;">
+                    <th style="padding: 10px;">Date</th>
+                    <th>Client</th>
+                    <th>Livreur</th>
+                    <th>Motif</th>
+                </tr>
+            </thead>
+            <tbody id="table-incidents"></tbody>
+        </table>
+    </div>
+</div>
 </div> </main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
@@ -540,6 +583,7 @@ afficherLivreurs();
         console.log("LOG : Analyse du radar de réachat...");
         genererRadarIntelligence(); 
     }
+    
 }
 
     // --- DASHBOARD ---
@@ -1897,6 +1941,44 @@ function envoyerRelanceFidelite(tel, nom, produit) {
     const msg = `Bonjour ${nom}, c'est l'équipe SafeRun ! 😊 Nous avons remarqué que votre stock de "${produit}" arrive bientôt à sa fin. Souhaitez-vous être livré demain ?`;
     const lien = `https://wa.me/${tel.replace(/\s/g, '')}?text=${encodeURIComponent(msg)}`;
     window.open(lien, '_blank');
+}
+function analyserAnomalies() {
+    const tableBody = document.getElementById('table-incidents');
+    const statsDiv = document.getElementById('stats-sav');
+    const detailsDiv = document.getElementById('details-sav');
+    
+    if (!allData || allData.length === 0) return;
+
+    tableBody.innerHTML = "";
+    let incidents = 0;
+
+    allData.forEach(c => {
+        const statut = (c.Statut || "").toUpperCase();
+        // On définit ce qu'est une anomalie
+        if (statut === "ANNULÉ" || statut === "REPORTÉ" || statut === "ERREUR" || statut === "ABSENT") {
+            incidents++;
+            const row = `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">${c.Date || '---'}</td>
+                    <td><strong>${c.Client || 'Inconnu'}</strong></td>
+                    <td>${c.Livreur || '---'}</td>
+                    <td><span style="color: #ef4444; font-weight: bold;">${statut}</span></td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', row);
+        }
+    });
+
+    // Calcul du taux d'échec
+    const taux = ((incidents / allData.length) * 100).toFixed(1);
+    statsDiv.innerText = taux + "%";
+    detailsDiv.innerText = `${incidents} incident(s) sur ${allData.length} commandes totales.`;
+    
+    if (taux > 15) {
+        statsDiv.style.color = "#ef4444"; // Alerte rouge si trop d'échecs
+    } else {
+        statsDiv.style.color = "#22c55e"; // Vert si c'est gérable
+    }
 }
 </script>
 </body>
