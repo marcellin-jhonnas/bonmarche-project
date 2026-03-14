@@ -572,28 +572,50 @@ afficherLivreurs();
         PASS: "1234"
     };
 
-    let activeClient = null;
-    let totalMessages = 0;
-    let isLocked = false;
-
-    let lastMessageCount = 0;
-    let unreadByClient = {};
-
-    // --- AUTHENTICATION ---
+    // --- AUTHENTICATION MISE À JOUR (SÉCURISÉE) ---
     function login() {
-        const u = document.getElementById('admin-user').value;
-        const p = document.getElementById('admin-pass').value;
+        const u = document.getElementById('admin-user').value.trim();
+        const p = document.getElementById('admin-pass').value.trim();
+        const err = document.getElementById('auth-err');
+
+        // A. Vérification de l'accès Maître (CONFIG)
         if(u === CONFIG.USER && p === CONFIG.PASS) {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'flex';
-            initDashboard();
-            startSync();
+            entrerDansApplication("ADMIN");
+            return;
+        }
+
+        // B. Vérification des comptes créés (LocalStorage)
+        const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+        const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+        if(compteTrouve) {
+            entrerDansApplication(compteTrouve.role);
         } else {
-            document.getElementById('auth-err').style.display = 'block';
+            err.style.display = 'block';
+            err.innerText = "Identifiants incorrects";
         }
     }
 
-    function logout() { location.reload(); }
+    // Fonction interne pour ne pas répéter le code de démarrage
+    function entrerDansApplication(role) {
+        document.getElementById('auth-screen').style.display = 'none';
+        // Vérifie bien que ton ID est 'admin-panel', c'est celui de ton code actuel
+        document.getElementById('admin-panel').style.display = 'flex';
+        
+        // On applique les restrictions de menu selon le rôle
+        appliquerDroits(role);
+        
+        // On mémorise la session
+        localStorage.setItem('current_user', JSON.stringify({user: "Connecté", role: role}));
+
+        initDashboard();
+        startSync();
+    }
+
+    function logout() { 
+        localStorage.removeItem('current_user');
+        location.reload(); 
+    }
 
     // --- NAVIGATION ---
    function showTab(id, el) {
