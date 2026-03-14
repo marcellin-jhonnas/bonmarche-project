@@ -1721,30 +1721,48 @@ async function genererEtiquettesColis() {
 }
 // 1. Détecter les livreurs qui ont des colis SÉRIEUX ou PLANIFIÉ
 function rafraichirLivreursActifs() {
-    console.log("Données disponibles :", allData); // <--- AJOUTE ÇA
     const conteneur = document.getElementById('liste-livreurs-actifs');
-    // ... reste du code
-    if (!conteneur) return;
+    if (!conteneur) {
+        console.error("ERREUR : L'ID 'liste-livreurs-actifs' est introuvable dans le HTML.");
+        return;
+    }
+    
     conteneur.innerHTML = ""; 
 
-    // Extraire les noms uniques des livreurs assignés aux colis confirmés
+    console.log("Analyse des statuts dans allData...");
+
+    // Filtre ultra-flexible (ignore les accents, les espaces et les majuscules)
     const livreurs = [...new Set(allData
-        .filter(c => c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ")
-        .map(c => c.Livreur)
-    )].filter(l => l && l.trim() !== ""); 
+        .filter(c => {
+            if (!c.Statut || !c.Livreur) return false;
+            
+            // Nettoyage : on enlève les accents et on met en majuscules
+            const statutNettoye = c.Statut.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+            const livreurNom = c.Livreur.trim();
+
+            const estValide = (statutNettoye === "SERIEUX" || statutNettoye === "PLANIFIE");
+            
+            if (estValide) console.log("Livreur trouvé : " + livreurNom + " pour le statut " + statutNettoye);
+            return estValide;
+        })
+        .map(c => c.Livreur.trim())
+    )].filter(l => l !== ""); 
 
     if (livreurs.length === 0) {
-        conteneur.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; background: white; border-radius: 15px; border: 1px dashed #cbd5e1; color: var(--gray);">
-            <i class="fas fa-motorcycle" style="font-size: 30px; margin-bottom: 10px;"></i>
-            <p>Aucun livreur n'est actuellement assigné à des commandes "SÉRIEUX".</p>
-        </div>`;
+        conteneur.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: white; border-radius: 15px; border: 1px dashed #cbd5e1; color: var(--gray);">
+                <i class="fas fa-motorcycle" style="font-size: 30px; margin-bottom: 10px;"></i>
+                <p>Aucun livreur n'a de colis <b>SÉRIEUX</b> ou <b>PLANIFIÉ</b> aujourd'hui.</p>
+                <small>Vérifiez les statuts dans votre Google Sheets.</small>
+            </div>`;
         return;
     }
 
+    // Création des cartes
     livreurs.forEach(nom => {
         const div = document.createElement('div');
         div.className = "card";
-        div.style = "cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; border-left: 5px solid var(--orange);";
+        div.style = "cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; border-left: 5px solid var(--orange); background:white; padding:20px;";
         div.onclick = () => genererFeuilleRoute(nom);
         div.innerHTML = `
             <div style="background: #fff7ed; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
@@ -1752,7 +1770,7 @@ function rafraichirLivreursActifs() {
             </div>
             <div style="flex: 1;">
                 <div style="font-weight: bold; font-size: 16px;">${nom}</div>
-                <div style="font-size: 12px; color: var(--gray);">Cliquez pour générer le guide</div>
+                <div style="font-size: 12px; color: var(--gray);">Cliquer pour le guide PDF</div>
             </div>
         `;
         conteneur.appendChild(div);
