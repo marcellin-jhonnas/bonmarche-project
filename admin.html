@@ -179,6 +179,9 @@
 <div class="nav-link" onclick="showTab('tab-stock', this)">
     <i class="fas fa-boxes"></i> Préparation Stock
 </div>
+<div class="nav-link" onclick="showTab('tab-itineraire')">
+    <i class="fas fa-map-marked-alt"></i> Plan de Trajet
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -346,7 +349,22 @@
             <div id="montant-grossiste-total" style="font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 5px;">0 Ar</div>
         </div>
     </div>
+<div id="tab-itineraire" class="tab-content" style="display:none; padding:30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="margin:0;"><i class="fas fa-map-marked-alt"></i> Planification des Tournées</h2>
+            <p style="color: var(--gray); margin-top: 5px;">Générez les guides de trajet PDF pour vos livreurs actifs.</p>
+        </div>
+        <button onclick="rafraichirLivreursActifs()" style="background: white; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-sync-alt"></i> Actualiser la liste
+        </button>
+    </div>
 
+    <div id="liste-livreurs-actifs" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+        </div>
+
+    <div style="height: 100px;"></div>
+</div>
     <div id="resultat-stock" class="card" style="display:none; padding:20px;">
         <h3 style="margin-top:0;">2. Récapitulatif de Picking</h3>
         <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;"></div>
@@ -379,7 +397,7 @@
         </div>
 </div>
         </div>
-    </main>
+   
     <div id="tab-equipe" class="tab-content" style="display:none; padding:20px;">
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -402,7 +420,7 @@
     </div>
 </div>
 </div>
-
+ </main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
@@ -1695,6 +1713,98 @@ async function genererEtiquettesColis() {
     doc.save(`Etiquettes_SafeRun_${new Date().getTime()}.pdf`);
     btn.innerHTML = originalText;
     btn.disabled = false;
+}
+// 1. Détecter les livreurs qui ont des colis SÉRIEUX ou PLANIFIÉ
+function rafraichirLivreursActifs() {
+    const conteneur = document.getElementById('liste-livreurs-actifs');
+    if (!conteneur) return;
+    conteneur.innerHTML = ""; 
+
+    // Extraire les noms uniques des livreurs assignés aux colis confirmés
+    const livreurs = [...new Set(allData
+        .filter(c => c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ")
+        .map(c => c.Livreur)
+    )].filter(l => l && l.trim() !== ""); 
+
+    if (livreurs.length === 0) {
+        conteneur.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; background: white; border-radius: 15px; border: 1px dashed #cbd5e1; color: var(--gray);">
+            <i class="fas fa-motorcycle" style="font-size: 30px; margin-bottom: 10px;"></i>
+            <p>Aucun livreur n'est actuellement assigné à des commandes "SÉRIEUX".</p>
+        </div>`;
+        return;
+    }
+
+    livreurs.forEach(nom => {
+        const div = document.createElement('div');
+        div.className = "card";
+        div.style = "cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; border-left: 5px solid var(--orange);";
+        div.onclick = () => genererFeuilleRoute(nom);
+        div.innerHTML = `
+            <div style="background: #fff7ed; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-map-location-dot" style="color: var(--orange); font-size: 20px;"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; font-size: 16px;">${nom}</div>
+                <div style="font-size: 12px; color: var(--gray);">Cliquez pour générer le guide</div>
+            </div>
+        `;
+        conteneur.appendChild(div);
+    });
+}
+
+// 2. Générer le PDF "Guide de Trajet"
+async function genererFeuilleRoute(nomLivreur) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const commandes = allData.filter(c => c.Livreur === nomLivreur && (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ"));
+
+    // BANDEAU NOIR
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(22);
+    doc.text(`GUIDE DE TRAJET : ${nomLivreur}`, 15, 20);
+    doc.setFontSize(11);
+    doc.text(`SafeRun Logistique - ${commandes.length} livraisons à faire aujourd'hui`, 15, 32);
+
+    // QR CODE GPS TOURNÉE COMPLÈTE
+    let urlGPS = "https://www.google.com/maps/dir/";
+    commandes.forEach(c => { if (c["Lieu Exact"]) urlGPS += encodeURIComponent(c["Lieu Exact"]) + "/"; });
+    const qrImg = await genererQRCodeImage(urlGPS);
+    if (qrImg) {
+        doc.addImage(qrImg, 'PNG', 165, 5, 30, 30);
+        doc.setFontSize(7);
+        doc.text("SCANNER LE TRAJET", 180, 38, {align: "center"});
+    }
+
+    // LISTE DES CLIENTS
+    doc.setTextColor(30, 41, 59);
+    let y = 60;
+    commandes.forEach((c, i) => {
+        if (y > 250) { doc.addPage(); y = 25; }
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(10, y - 5, 190, 35, 3, 3);
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text(`${i + 1}. CLIENT : ${c.Client}`, 15, y + 4);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(`Tél : ${c.Téléphone || 'N/A'}`, 15, y + 10);
+        const splitAdr = doc.splitTextToSize(`Lieu : ${c["Lieu Exact"] || 'N/A'}`, 120);
+        doc.text(splitAdr, 15, y + 16);
+
+        // BOX SIGNATURE ET PRIX
+        doc.setDrawColor(15, 23, 42);
+        doc.rect(140, y - 2, 55, 28);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${c.Montant} Ar`, 167.5, y + 6, {align: "center"});
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text("Signature Client :", 143, y + 14);
+        y += 42;
+    });
+
+    doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
 }
 </script>
 </body>
