@@ -200,227 +200,184 @@
         </header>
 
         <div class="content">
-            <div id="tab-dash" class="tab-content">
-                <div class="grid">
-                    <div class="card"><h3>Ventes Totales</h3><h2 id="dash-ca">0 Ar</h2></div>
-                    <div class="card"><h3>Commandes</h3><h2 id="dash-count">0</h2></div>
-                    <div class="card"><h3>Nouveaux Clients</h3><h2>12</h2></div>
-                </div>
-                <div class="card" style="height: 350px;">
-                    <canvas id="mainChart"></canvas>
+    <div id="tab-dash" class="tab-content">
+        <div class="grid">
+            <div class="card"><h3>Ventes Totales</h3><h2 id="dash-ca">0 Ar</h2></div>
+            <div class="card"><h3>Commandes</h3><h2 id="dash-count">0</h2></div>
+            <div class="card"><h3>Nouveaux Clients</h3><h2>12</h2></div>
+        </div>
+        <div class="card" style="height: 350px;">
+            <canvas id="mainChart"></canvas>
+        </div>
+    </div>
+
+    <div id="tab-caisse" class="tab-content" style="display:none; padding:20px;">
+        <h2><i class="fas fa-cash-register"></i> Ma Caisse du Jour</h2>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #22c55e; padding: 20px; border-radius: 12px;">
+                <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Recettes à Encaisser</div>
+                <div id="caisse-total" style="font-size: 28px; font-weight: bold; color: #1e293b;">0 Ar</div>
+                <small style="color: #166534;">(Commandes livrées uniquement)</small>
+            </div>
+            <div style="flex: 1; min-width: 200px; background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                <div style="color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase;">Colis Remis</div>
+                <div id="caisse-count" style="font-size: 28px; font-weight: bold; color: #1e293b;">0</div>
+            </div>
+        </div>
+        <div style="margin-bottom: 25px;">
+            <button onclick="cloturerJournee()" style="background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);">
+                <i class="fas fa-lock"></i> CLÔTURER LA JOURNÉE
+            </button>
+        </div>
+        <div class="card" style="padding:15px; background:white; border-radius:8px; border: 1px solid #e2e8f0;">
+            <h3>Détails par Livreur</h3>
+            <div id="caisse-details-container"></div>
+        </div>
+    </div>
+
+    <div id="tab-stats" class="tab-content" style="display:none; padding:20px;">
+        <h2><i class="fas fa-trophy"></i> Top Livreurs & Performance</h2>
+        <div class="grid" style="margin-bottom: 20px;">
+            <div class="card" style="border-left: 5px solid var(--orange);">
+                <h3>Meilleur Livreur</h3>
+                <h2 id="top-livreur-nom">---</h2>
+            </div>
+            <div class="card" style="border-left: 5px solid var(--success);">
+                <h3>Moyenne par Colis</h3>
+                <h2 id="moyenne-colis">0 Ar</h2>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th>Nom du Livreur</th>
+                        <th>Colis Livrés</th>
+                        <th>CA Généré</th>
+                        <th>Efficacité</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-orders" class="tab-content" style="display:none;">
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Client</th><th>Montant</th><th>Statut</th><th>Action</th></tr>
+                </thead>
+                <tbody id="order-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-chat" class="tab-content" style="display:none;">
+        <div class="chat-box">
+            <div class="chat-sidebar" id="client-list"></div>
+            <div class="chat-content">
+                <div id="chat-header" style="padding:15px; background:white; font-weight:bold; border-bottom:1px solid #e2e8f0;">Sélectionnez un client</div>
+                <div class="msg-list" id="msg-container"></div>
+                <div class="chat-input" id="input-zone" style="display:none;">
+                    <input type="text" id="chat-input-field" placeholder="Répondre au client...">
+                    <button onclick="sendMessage()" style="background:var(--orange); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
-<div id="tab-caisse" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-cash-register"></i> Ma Caisse du Jour</h2>
-    
-    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #22c55e; padding: 20px; border-radius: 12px;">
-            <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Recettes à Encaisser</div>
-            <div id="caisse-total" style="font-size: 28px; font-weight: bold; color: #1e293b;">0 Ar</div>
-            <small style="color: #166534;">(Commandes livrées uniquement)</small>
-        </div>
-        <div style="flex: 1; min-width: 200px; background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
-            <div style="color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase;">Colis Remis</div>
-            <div id="caisse-count" style="font-size: 28px; font-weight: bold; color: #1e293b;">0</div>
         </div>
     </div>
 
-    <div style="margin-bottom: 25px;">
-        <button onclick="cloturerJournee()" 
-                style="background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);">
-            <i class="fas fa-lock"></i> CLÔTURER LA JOURNÉE
-        </button>
-    </div>
-
-    <div class="card" style="padding:15px; background:white; border-radius:8px; border: 1px solid #e2e8f0;">
-        <h3>Détails par Livreur</h3>
-        <div id="caisse-details-container"></div>
-    </div>
-</div>
-<div id="tab-stats" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-trophy"></i> Top Livreurs & Performance</h2>
-    
-    <div class="grid" style="margin-bottom: 20px;">
-        <div class="card" style="border-left: 5px solid var(--orange);">
-            <h3>Meilleur Livreur</h3>
-            <h2 id="top-livreur-nom">---</h2>
-        </div>
-        <div class="card" style="border-left: 5px solid var(--success);">
-            <h3>Moyenne par Colis</h3>
-            <h2 id="moyenne-colis">0 Ar</h2>
-        </div>
-    </div>
-
-    <div class="card">
-        <table>
-            <thead>
-                <tr style="background:#f8fafc;">
-                    <th>Nom du Livreur</th>
-                    <th>Colis Livrés</th>
-                    <th>CA Généré</th>
-                    <th>Efficacité</th>
-                </tr>
-            </thead>
-            <tbody id="stats-rows">
-                </tbody>
-        </table>
-    </div>
-</div>
-            <div id="tab-orders" class="tab-content" style="display:none;">
-                <div class="card">
-                    <table>
-                        <thead>
-                            <tr><th>ID</th><th>Client</th><th>Montant</th><th>Statut</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="order-rows"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="tab-chat" class="tab-content" style="display:none;">
-                <div class="chat-box">
-                    <div class="chat-sidebar" id="client-list"></div>
-                    <div class="chat-content">
-                        <div id="chat-header" style="padding:15px; background:white; font-weight:bold; border-bottom:1px solid #e2e8f0;">Sélectionnez un client</div>
-                        <div class="msg-list" id="msg-container"></div>
-                        <div class="chat-input" id="input-zone" style="display:none;">
-                            <input type="text" id="chat-input-field" placeholder="Répondre au client...">
-                            <button onclick="sendMessage()" style="background:var(--orange); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-           <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-shipping-fast"></i> Gestion Logistique</h2>
-    
-    <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <label style="font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 8px; text-transform: uppercase;">
-            <i class="fas fa-filter"></i> Voir le planning de :
-        </label>
-        <select id="filtre-livreur-logistique" onchange="filtrerParLivreur()" 
-                style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white;">
-            <option value="TOUS">-- TOUS LES LIVREURS --</option>
+    <div id="tab-logistique" class="tab-content" style="display:none; padding:20px;">
+        <h2><i class="fas fa-shipping-fast"></i> Gestion Logistique</h2>
+        <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <label style="font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 8px; text-transform: uppercase;"><i class="fas fa-filter"></i> Voir le planning de :</label>
+            <select id="filtre-livreur-logistique" onchange="filtrerParLivreur()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white;">
+                <option value="TOUS">-- TOUS LES LIVREURS --</option>
             </select>
             <div style="margin-top: 10px; margin-bottom: 20px;">
-        <button onclick="envoyerTrajetWhatsApp()" 
-                style="background: #25d366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <i class="fab fa-whatsapp"></i> ENVOYER LE TRAJET AU LIVREUR
-        </button>
-    </div>
-    </div>
-
-    <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 100px; background: #eff6ff; border: 1px solid #3b82f6; padding: 10px; border-radius: 10px; text-align: center;">
-            <div style="color: #3b82f6; font-size: 11px; font-weight: bold; text-transform: uppercase;">À Livrer</div>
-            <div id="count-serieux" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
-        </div>
-        <div style="flex: 1; min-width: 100px; background: #f8fafc; border: 1px solid #64748b; padding: 10px; border-radius: 10px; text-align: center;">
-            <div style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Planning</div>
-            <div id="count-planifie" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
-        </div>
-        <div style="flex: 1; min-width: 100px; background: #f0fdf4; border: 1px solid #22c55e; padding: 10px; border-radius: 10px; text-align: center;">
-            <div style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase;">Total Flux</div>
-            <div id="count-total" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
-        </div>
-    </div>
-
-    <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <i class="fas fa-search" style="color: #64748b; margin-left: 10px;"></i>
-        <input type="text" id="search-logistique" onkeyup="filtrerLogistique()" 
-               placeholder="Rechercher dans ce planning..." 
-               style="padding: 10px; border: none; outline: none; width: 100%; font-size: 14px;">
-    </div>
-
-    <div id="logistique-container" style="margin-top:20px;"></div>
-</div>
-<div id="tab-stock" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-boxes"></i> Sortie de Stock Journalière</h2>
-    
-    <div class="card" style="background: #fff7ed; border-left: 5px solid #f97316; padding: 20px; margin-bottom: 20px;">
-        <h3 style="margin:0 0 10px 0; color: #c2410c;">1. Analyse du Stock à sortir</h3>
-        <p style="font-size: 14px; color: #9a3412;">Cliquez pour calculer le total des produits et le montant grossiste.</p>
-        
-        <button onclick="genererAnalyseStock()" style="background: #f97316; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
-            <i class="fas fa-sync-alt"></i> CALCULER LES TOTAUX
-        </button>
-
-        <div id="finance-grossiste" style="display:none; background: #f0fdf4; border-left: 5px solid #22c55e; padding: 15px; margin-top: 15px; border-radius: 8px;">
-            <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Total à payer au Grossiste</div>
-            <div id="montant-grossiste-total" style="font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 5px;">0 Ar</div>
-        </div>
-    </div>
-<div id="tab-itineraire" class="tab-content" style="display:none; padding:30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-        <div>
-            <h2 style="margin:0;"><i class="fas fa-map-marked-alt"></i> Planification des Tournées</h2>
-            <p style="color: var(--gray); margin-top: 5px;">Générez les guides de trajet PDF pour vos livreurs actifs.</p>
-        </div>
-        <button onclick="rafraichirLivreursActifs()" style="background: white; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; cursor: pointer;">
-            <i class="fas fa-sync-alt"></i> Actualiser la liste
-        </button>
-    </div>
-
-    <div id="liste-livreurs-actifs" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-        </div>
-
-    <div style="height: 100px;"></div>
-</div>
-    <div id="resultat-stock" class="card" style="display:none; padding:20px;">
-        <h3 style="margin-top:0;">2. Récapitulatif de Picking</h3>
-        <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;"></div>
-        
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        
-        <button onclick="imprimerBonSortie()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-            <i class="fas fa-file-pdf"></i> TÉLÉCHARGER LE BON DE SORTIE
-        </button>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="imprimerBonSortie()" style="flex: 1; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                <i class="fas fa-file-pdf"></i> BON DE SORTIE
-            </button>
-            
-            <button onclick="genererEtiquettesColis()" style="flex: 1; background: #f97316; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                <i class="fas fa-tags"></i> ÉTIQUETTES COLIS (6 par page)
-            </button>
-        </div>
-    </div>
-</div>
-<div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
-    <h2><i class="fas fa-user-plus"></i> Gestion des Livreurs</h2>
-    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
-        <input type="text" id="input-nom-livreur" placeholder="Nom du livreur" style="padding:10px; border:1px solid #ccc; border-radius:4px; width:200px;">
-        <button onclick="ajouterLivreur()" style="background:var(--orange); color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">
-            Ajouter le Livreur
-        </button>
-    </div>
-    <div id="liste-livreurs-affichage" style="margin-top:20px;">
-        </div>
-</div>
-        </div>
-   
-    <div id="tab-equipe" class="tab-content" style="display:none; padding:20px;">
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2><i class="fas fa-motorcycle"></i> Répertoire de l'Équipe</h2>
-            <button onclick="genererConfigEquipe()" style="background: var(--orange); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">
-                <i class="fas fa-sync-alt"></i> Actualiser
-            </button>
-        </div>
-        
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; background: #fff7ed; padding: 10px; border-left: 4px solid var(--orange); border-radius: 4px;">
-            <strong>Note :</strong> Entrez les numéros au format international (ex: 261340000000). Ces numéros sont enregistrés localement sur cet ordinateur.
-        </p>
-
-        <div id="liste-livreurs-config" style="margin-bottom: 20px;">
+                <button onclick="envoyerTrajetWhatsApp()" style="background: #25d366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;"><i class="fab fa-whatsapp"></i> ENVOYER LE TRAJET AU LIVREUR</button>
             </div>
-
-        <button onclick="sauvegarderAnnuaire()" style="width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);">
-            <i class="fas fa-save"></i> ENREGISTRER TOUT L'ANNUAIRE
-        </button>
+        </div>
+        <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 100px; background: #eff6ff; border: 1px solid #3b82f6; padding: 10px; border-radius: 10px; text-align: center;">
+                <div style="color: #3b82f6; font-size: 11px; font-weight: bold; text-transform: uppercase;">À Livrer</div>
+                <div id="count-serieux" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: #f8fafc; border: 1px solid #64748b; padding: 10px; border-radius: 10px; text-align: center;">
+                <div style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Planning</div>
+                <div id="count-planifie" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: #f0fdf4; border: 1px solid #22c55e; padding: 10px; border-radius: 10px; text-align: center;">
+                <div style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase;">Total Flux</div>
+                <div id="count-total" style="font-size: 22px; font-weight: bold; color: #1e293b;">0</div>
+            </div>
+        </div>
+        <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <i class="fas fa-search" style="color: #64748b; margin-left: 10px;"></i>
+            <input type="text" id="search-logistique" onkeyup="filtrerLogistique()" placeholder="Rechercher dans ce planning..." style="padding: 10px; border: none; outline: none; width: 100%; font-size: 14px;">
+        </div>
+        <div id="logistique-container" style="margin-top:20px;"></div>
     </div>
-</div>
-</div>
- </main>
+
+    <div id="tab-stock" class="tab-content" style="display:none; padding:20px;">
+        <h2><i class="fas fa-boxes"></i> Sortie de Stock Journalière</h2>
+        <div class="card" style="background: #fff7ed; border-left: 5px solid #f97316; padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin:0 0 10px 0; color: #c2410c;">1. Analyse du Stock à sortir</h3>
+            <p style="font-size: 14px; color: #9a3412;">Cliquez pour calculer le total des produits et le montant grossiste.</p>
+            <button onclick="genererAnalyseStock()" style="background: #f97316; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
+                <i class="fas fa-sync-alt"></i> CALCULER LES TOTAUX
+            </button>
+            <div id="finance-grossiste" style="display:none; background: #f0fdf4; border-left: 5px solid #22c55e; padding: 15px; margin-top: 15px; border-radius: 8px;">
+                <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Total à payer au Grossiste</div>
+                <div id="montant-grossiste-total" style="font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 5px;">0 Ar</div>
+            </div>
+        </div>
+        <div id="resultat-stock" class="card" style="display:none; padding:20px;">
+            <h3 style="margin-top:0;">2. Récapitulatif de Picking</h3>
+            <div id="liste-cumul-stock" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;"></div>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="imprimerBonSortie()" style="flex: 1; background: #1e293b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;"><i class="fas fa-file-pdf"></i> BON DE SORTIE</button>
+                <button onclick="genererEtiquettesColis()" style="flex: 1; background: #f97316; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;"><i class="fas fa-tags"></i> ÉTIQUETTES COLIS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-itineraire" class="tab-content" style="display:none; padding:30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div>
+                <h2 style="margin:0;"><i class="fas fa-map-marked-alt"></i> Planification des Tournées</h2>
+                <p style="color: var(--gray); margin-top: 5px;">Générez les guides de trajet PDF pour vos livreurs actifs.</p>
+            </div>
+            <button onclick="rafraichirLivreursActifs()" style="background: white; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; cursor: pointer;"><i class="fas fa-sync-alt"></i> Actualiser la liste</button>
+        </div>
+        <div id="liste-livreurs-actifs" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;"></div>
+        <div style="height: 100px;"></div>
+    </div>
+
+    <div id="tab-livreurs" class="tab-content" style="display:none; padding:20px;">
+        <h2><i class="fas fa-user-plus"></i> Gestion des Livreurs</h2>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
+            <input type="text" id="input-nom-livreur" placeholder="Nom du livreur" style="padding:10px; border:1px solid #ccc; border-radius:4px; width:200px;">
+            <button onclick="ajouterLivreur()" style="background:var(--orange); color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">Ajouter le Livreur</button>
+        </div>
+        <div id="liste-livreurs-affichage" style="margin-top:20px;"></div>
+    </div>
+
+    <div id="tab-equipe" class="tab-content" style="display:none; padding:20px;">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2><i class="fas fa-motorcycle"></i> Répertoire de l'Équipe</h2>
+                <button onclick="genererConfigEquipe()" style="background: var(--orange); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;"><i class="fas fa-sync-alt"></i> Actualiser</button>
+            </div>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; background: #fff7ed; padding: 10px; border-left: 4px solid var(--orange); border-radius: 4px;"><strong>Note :</strong> Format international (ex: 261340000000).</p>
+            <div id="liste-livreurs-config" style="margin-bottom: 20px;"></div>
+            <button onclick="sauvegarderAnnuaire()" style="width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
+                <i class="fas fa-save"></i> ENREGISTRER TOUT L'ANNUAIRE
+            </button>
+        </div>
+    </div>
+</div> </main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
