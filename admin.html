@@ -528,6 +528,9 @@
     "Livreur 2": "261320000000",
     "Jean": "261330000000"
 };
+    let activeClient = null;
+    let totalMessages = 0;
+    let isLocked = false; // <--- AJOUTE CETTE LIGNE ICI
     // On récupère les livreurs enregistrés ou on crée une liste vide
     let allData = []; // Variable globale pour stocker les commandes
     let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
