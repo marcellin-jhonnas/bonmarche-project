@@ -614,16 +614,36 @@ function declencherPopup(id, nb, texte) {
 function fermerNotif() { document.getElementById('notif-popup').style.display = 'none'; }
 
 // FONCTIONS DE COMMUNICATION API
-async function marquerLu(id) { fetch(CONFIG.API + "?action=markAsRead&idClient=" + id); }
+async function marquerLu(id) { 
+    // On utilise l'URL avec l'action markAsRead que nous avons ajoutée au doGet
+    try {
+        await fetch(CONFIG.API + "?action=markAsRead&idClient=" + id);
+        console.log("Statut mis à jour sur le Sheet pour : " + id);
+    } catch (e) {
+        console.error("Erreur marquerLu:", e);
+    }
+}
 async function supprimerDuSheet(id) { fetch(CONFIG.API + "?action=deleteClientMessages&idClient=" + id); }
 async function envoyerReponseRapide(id, msg) {
-    const params = new URLSearchParams();
-    params.append('action', 'sendMessage');
-    params.append('idClient', id);
-    params.append('message', msg);
-    params.append('expediteur', 'Admin');
-    fetch(CONFIG.API, { method: 'POST', body: params });
+    // On crée l'objet JSON propre
+    const payload = {
+        action: "sendChatMessage", // Doit correspondre au nom dans ton doPost
+        idClient: id.toString(),
+        message: msg,
+        expediteur: "Admin" // <--- Identité forcée
+    };
+
+    fetch(CONFIG.API, { 
+        method: 'POST', 
+        body: JSON.stringify(payload) 
+    })
+    .then(() => {
+        console.log("Réponse envoyée et marquée comme Lu par défaut");
+        if(typeof syncChat === "function") syncChat(); // Rafraîchit l'affichage
+    })
+    .catch(err => console.error("Erreur envoi rapide:", err));
 }
+
     // --- AJOUTE CES DEUX LIGNES ICI ---
     let lastMessageCount = 0; 
     let unreadByClient = {}; 
