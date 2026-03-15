@@ -2366,6 +2366,16 @@ function appliquerDroits(role) {
     // Rediriger vers le dashboard par sécurité
     showTab('tab-dash', document.querySelector('.nav-link'));
 }
+// --- DÉBUT DE LA SURVEILLANCE AUTOMATIQUE ---
+// On crée un intervalle qui s'exécute toutes les 5000 millisecondes (5 sec)
+setInterval(function() {
+    // On vérifie si on est bien connecté (si l'utilisateur a déjà passé le login)
+    // et si le système n'est pas déjà en train de charger (isLocked)
+    if (typeof activeClient !== 'undefined' && !isLocked) {
+        syncChat();
+    }
+}, 5000); 
+// --- FIN DE LA SURVEILLANCE AUTOMATIQUE ---
 </script>
 </body>
 </html>
