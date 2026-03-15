@@ -520,6 +520,20 @@
     </div>
 </div>
 </div> </main> 
+
+<div id="notif-popup" style="display:none; position:fixed; top:20px; right:20px; width:330px; background:white; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.25); z-index:10000; border-left:6px solid #ff6b00; overflow:hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="background:#f1f5f9; padding:12px 15px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:bold; color:#334155; font-size:14px;"><i class="fas fa-bell" style="color:#ff6b00;"></i> NOUVEAU MESSAGE</span>
+        <button onclick="fermerNotif()" style="border:none; background:none; cursor:pointer; color:#94a3b8; font-size:18px;">&times;</button>
+    </div>
+    <div id="notif-body" style="padding:15px;">
+        </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; padding:10px; background:#f8fafc;">
+        <button id="btn-rejoindre" class="notif-btn" style="background:#334155; color:white; border:none; padding:8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">VOIR</button>
+        <button id="btn-repondre" class="notif-btn" style="background:#ff6b00; color:white; border:none; padding:8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">RÉPONDRE</button>
+        <button id="btn-effacer" class="notif-btn" style="background:#ef4444; color:white; border:none; padding:8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">EFFACER</button>
+    </div>
+</div>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
@@ -532,6 +546,84 @@
     let totalMessages = 0;
     let isLocked = false; 
     
+    let derniereNotifID = null; 
+
+function surveillerNouveauxMessages(allMsgs) {
+    // 1. Filtrer les messages "Non lu" venant des clients
+    const messagesNonLus = allMsgs.filter(m => 
+        (m.expediteur || m.Expediteur) !== "Admin" && 
+        (m.Statut || m.statut) === "Non lu"
+    );
+
+    if (messagesNonLus.length === 0) {
+        document.getElementById('notif-popup').style.display = 'none';
+        return;
+    }
+
+    // 2. Prendre le dernier client qui a écrit
+    const dernierMsg = messagesNonLus[messagesNonLus.length - 1];
+    const clientID = (dernierMsg.idClient || dernierMsg.ID_Client || "").toString();
+    const nombrePourCeClient = messagesNonLus.filter(m => (m.idClient || m.ID_Client || "").toString() === clientID).length;
+
+    // 3. Afficher la popup seulement s'il y a du nouveau
+    const uniqueID = clientID + "_" + nombrePourCeClient;
+    if (derniereNotifID !== uniqueID) {
+        derniereNotifID = uniqueID;
+        declencherPopup(clientID, nombrePourCeClient, dernierMsg.message || dernierMsg.Message || "...");
+    }
+}
+
+function declencherPopup(id, nb, texte) {
+    const popup = document.getElementById('notif-popup');
+    const body = document.getElementById('notif-body');
+    
+    popup.style.display = 'block';
+    body.innerHTML = `
+        <div style="font-size:13px; color:#64748b;">De : <strong>${id}</strong></div>
+        <div style="font-size:15px; font-weight:800; color:#1e293b; margin:4px 0;">${nb} nouveau(x) message(s)</div>
+        <div style="font-style:italic; font-size:12px; color:#94a3b8; background:#f8fafc; padding:5px; border-radius:4px; margin-top:5px; border-left:3px solid #cbd5e1;">
+            "${texte.substring(0, 60)}${texte.length > 60 ? '...' : ''}"
+        </div>
+    `;
+
+    // CONFIGURATION DES BOUTONS
+    document.getElementById('btn-rejoindre').onclick = function() {
+        marquerLu(id);
+        showTab('tab-chat', document.querySelector('.nav-link[onclick*="tab-chat"]'));
+        loadDiscussion(id);
+        fermerNotif();
+    };
+
+    document.getElementById('btn-repondre').onclick = function() {
+        const rep = prompt("Réponse rapide pour " + id + " :");
+        if(rep) {
+            envoyerReponseRapide(id, rep);
+            marquerLu(id);
+            fermerNotif();
+        }
+    };
+
+    document.getElementById('btn-effacer').onclick = function() {
+        if(confirm("Supprimer définitivement ces messages de la base de données ?")) {
+            supprimerDuSheet(id);
+            fermerNotif();
+        }
+    };
+}
+
+function fermerNotif() { document.getElementById('notif-popup').style.display = 'none'; }
+
+// FONCTIONS DE COMMUNICATION API
+async function marquerLu(id) { fetch(CONFIG.API + "?action=markAsRead&idClient=" + id); }
+async function supprimerDuSheet(id) { fetch(CONFIG.API + "?action=deleteClientMessages&idClient=" + id); }
+async function envoyerReponseRapide(id, msg) {
+    const params = new URLSearchParams();
+    params.append('action', 'sendMessage');
+    params.append('idClient', id);
+    params.append('message', msg);
+    params.append('expediteur', 'Admin');
+    fetch(CONFIG.API, { method: 'POST', body: params });
+}
     // --- AJOUTE CES DEUX LIGNES ICI ---
     let lastMessageCount = 0; 
     let unreadByClient = {}; 
@@ -757,8 +849,9 @@ if (id === 'tab-users') {
     try {
         const res = await fetch(CONFIG.API + "?action=readAllChat");
         const allMsgs = await res.json();
+        surveillerNouveauxMessages(allMsgs); // Active la surveillance des notifications
 
-// Détection nouveau message
+        // Détection nouveau message
 if(allMsgs.length > lastMessageCount){
     const sound = document.getElementById("alert-sound");
     if(sound) sound.play();
