@@ -128,6 +128,34 @@
         .tab-content {
          padding-bottom: 50px; 
         }
+        /* --- BOUTONS FLOTTANTS SAFE RUN --- */
+.fab-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    display: flex;
+    flex-direction: column-reverse; /* Met les boutons les uns sur les autres */
+    gap: 12px;
+    z-index: 9999;
+}
+.fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 28px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+.fab:active { transform: scale(0.9); }
+.fab-pay { background: #27ae60; }     /* Vert MVola */
+.fab-refresh { background: #3498db; }  /* Bleu */
+.fab-msg { background: #0084ff; }      /* Bleu Messenger */
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -533,6 +561,20 @@
         <button id="btn-repondre" class="notif-btn" style="background:#ff6b00; color:white; border:none; padding:8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">RÉPONDRE</button>
         <button id="btn-effacer" class="notif-btn" style="background:#ef4444; color:white; border:none; padding:8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">EFFACER</button>
     </div>
+</div>
+<div class="fab-container">
+    <button class="fab fab-pay" onclick="ouvrirModalPaiement()" title="Enregistrer Paiement">💰</button>
+    
+    <button class="fab fab-refresh" onclick="location.reload()" title="Actualiser la page">🔄</button>
+    
+    <button class="fab fab-msg" onclick="window.open('https://m.me/SafeRunMadagascar', '_blank')" title="Ouvrir Messenger">💬</button>
+</div>
+<div class="fab-container">
+    <button class="fab fab-pay" onclick="ouvrirModalPaiement()" title="Enregistrer Paiement">💰</button>
+    
+    <button class="fab fab-refresh" onclick="location.reload()" title="Actualiser la page">🔄</button>
+    
+    <button class="fab fab-msg" onclick="window.open('https://m.me/SafeRunMadagascar', '_blank')" title="Ouvrir Messenger">💬</button>
 </div></main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
@@ -2376,6 +2418,52 @@ setInterval(function() {
     }
 }, 5000); 
 // --- FIN DE LA SURVEILLANCE AUTOMATIQUE ---
+// --- FONCTION DE PAIEMENT RAPIDE (Saisie SMS) ---
+async function ouvrirModalPaiement() {
+    // 1. Demander le numéro de téléphone (Format 034... ou 34...)
+    const tel = prompt("📱 Numéro de l'expéditeur (SMS MVola) :");
+    if (!tel || tel.trim() === "") return;
+    
+    // 2. Demander la référence de la transaction
+    const ref = prompt("🔑 Référence de la transaction (ex: 7AB45...) :");
+    if (!ref || ref.trim() === "") return;
+
+    // Optionnel : Afficher un petit indicateur de chargement dans la console
+    console.log("Validation en cours pour le numéro : " + tel);
+
+    try {
+        // Envoi de la requête POST au script Google
+        const response = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "ajouterPaiementRapide",
+                tel: tel,
+                ref: ref
+            })
+        });
+        
+        const res = await response.json();
+        
+        // 3. Afficher le résultat du serveur
+        if (res.status === "success") {
+            alert("✅ " + res.message);
+            
+            // 4. Actualiser l'affichage automatiquement pour voir le statut "PAYÉ"
+            // On appelle tes fonctions existantes de rafraîchissement
+            if (typeof refreshAll === "function") {
+                refreshAll(); 
+            } else {
+                location.reload(); // Solution de secours si refreshAll n'est pas dispo
+            }
+        } else {
+            alert("❌ Erreur : " + res.message);
+        }
+        
+    } catch (e) {
+        console.error("Erreur de connexion :", e);
+        alert("⚠️ Problème de connexion avec le serveur SafeRun.");
+    }
+}
 </script>
 </body>
 </html>
