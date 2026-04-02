@@ -868,41 +868,50 @@ if (id === 'tab-users') {
         const res = await fetch(CONFIG.API + "?action=getCommandes");
         const data = await res.json();
         
-        allData = data; // <--- TRÈS IMPORTANT : On stocke les données ici !
+        allData = data; // Stockage global
 
         let total = 0;
         let rows = "";
-        // ... le reste de ta fonction refreshAll (data.reverse().forEach...) reste identique
-            data.reverse().forEach(cmd => {
-                total += Number(cmd.Montant || 0);
-                
-                // Définition de la couleur du badge : Vert pour SÉRIEUX ou PAYÉ, Jaune pour le reste
-                // La commande est considérée comme traitée si elle est SÉRIEUX, PAYÉ ou LIVRÉ
-                const isValide = (cmd.Statut === "SÉRIEUX" || cmd.Statut === "PAYÉ" || cmd.Statut === "LIVRÉ");
-                const badgeClass = isValide ? "success" : "warning";
 
-                rows += `<tr>
-                    <td>#${cmd.ID}</td>
-                    <td><strong>${cmd.Client}</strong></td>
-                    <td>${Number(cmd.Montant).toLocaleString()} Ar</td>
-                    <td><span class="badge ${badgeClass}">${cmd.Statut}</span></td>
-                    <td>
-                        ${!isValide ? 
-                            `<button onclick="updateStatus('${cmd.ID}', 'SÉRIEUX')" style="cursor:pointer; background:var(--orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold;">OK</button>` : 
-                            `<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>`
-                        }
-                    </td>
-                </tr>`;
-            });
-
-            document.getElementById('order-rows').innerHTML = rows;
-            document.getElementById('dash-ca').innerText = total.toLocaleString() + " Ar";
-            document.getElementById('dash-count').innerText = data.length;
+        // On inverse pour avoir les plus récentes en haut
+        data.slice().reverse().forEach(cmd => {
+            const montant = Number(cmd.Montant || 0);
+            total += montant;
             
+            // Logique de badge polyvalente
+            const isValide = (cmd.Statut === "SÉRIEUX" || cmd.Statut === "PAYÉ" || cmd.Statut === "LIVRÉ");
+            const badgeClass = isValide ? "success" : "warning";
+
+            rows += `<tr>
+                <td>#${cmd.ID}</td>
+                <td><strong>${cmd.Client}</strong></td>
+                <td>${montant.toLocaleString()} Ar</td>
+                <td><span class="badge ${badgeClass}">${cmd.Statut}</span></td>
+                <td>
+                    ${!isValide ? 
+                        `<button onclick="updateStatus('${cmd.ID}', 'SÉRIEUX')" style="cursor:pointer; background:var(--orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold;">OK</button>` : 
+                        `<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>`
+                    }
+                </td>
+            </tr>`;
+        });
+
+        // Mise à jour sécurisée des éléments HTML
+        if(document.getElementById('order-rows')) document.getElementById('order-rows').innerHTML = rows;
+        if(document.getElementById('dash-ca')) document.getElementById('dash-ca').innerText = total.toLocaleString() + " Ar";
+        if(document.getElementById('dash-count')) document.getElementById('dash-count').innerText = data.length;
+        
+        // --- SÉCURITÉ GRAPHIQUE (POLYVALENCE MOBILE) ---
+        // On vérifie que salesChart existe et a été initialisé avant de tenter l'update
+        if (typeof salesChart !== 'undefined' && salesChart !== null && salesChart.data) {
             salesChart.data.datasets[0].data = [total/5, total/3, total/6, total/2, total/4, total/5, total/1.5];
             salesChart.update();
-        } catch(e) { console.error(e); }
+        }
+
+    } catch(e) { 
+        console.error("Erreur refreshAll :", e); 
     }
+}
 
     // --- CHAT SYSTEM ---
    async function syncChat() {
