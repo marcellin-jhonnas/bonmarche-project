@@ -461,6 +461,19 @@ function fermerRdv() {
         setTimeout(() => modal.style.display = "none", 300);
     }
 }
+// Correction de l'erreur ReferenceError: fermerPopup is not defined
+function fermerPopup() {
+    // 1. On cible la popup de bienvenue/inscription
+    const popup = document.getElementById('welcome-popup');
+    if (popup) {
+        popup.classList.remove('show');
+        console.log("Popup SafeRun fermée");
+    }
+    
+    // 2. Par sécurité, on ferme aussi l'overlay si tu en as un
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
 
 function envoyerRdv() {
     const nom = document.getElementById('rdv-nom').value;
