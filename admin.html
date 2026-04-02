@@ -2420,7 +2420,7 @@ setInterval(function() {
 // --- FIN DE LA SURVEILLANCE AUTOMATIQUE ---
 // --- FONCTION DE PAIEMENT RAPIDE (Saisie SMS) ---
 async function ouvrirModalPaiement() {
-    // 1. Demander le numéro de téléphone (Format 034... ou 34...)
+    // 1. Demander le numéro de téléphone
     const tel = prompt("📱 Numéro de l'expéditeur (SMS MVola) :");
     if (!tel || tel.trim() === "") return;
     
@@ -2428,32 +2428,33 @@ async function ouvrirModalPaiement() {
     const ref = prompt("🔑 Référence de la transaction (ex: 7AB45...) :");
     if (!ref || ref.trim() === "") return;
 
-    // Optionnel : Afficher un petit indicateur de chargement dans la console
-    console.log("Validation en cours pour le numéro : " + tel);
+    // --- NOUVEAU : 3. Demander le montant reçu ---
+    const montant = prompt("💰 Montant reçu (Ar) :", "0");
+    if (montant === null) return; // Si on clique sur "Annuler"
+
+    console.log("Validation en cours pour le numéro : " + tel + " | Montant : " + montant);
 
     try {
-        // Envoi de la requête POST au script Google
         const response = await fetch(CONFIG.API, {
             method: "POST",
             body: JSON.stringify({
                 action: "ajouterPaiementRapide",
                 tel: tel,
-                ref: ref
+                ref: ref,
+                montant: montant // On ajoute le montant ici pour le GAS
             })
         });
         
         const res = await response.json();
         
-        // 3. Afficher le résultat du serveur
         if (res.status === "success") {
             alert("✅ " + res.message);
             
-            // 4. Actualiser l'affichage automatiquement pour voir le statut "PAYÉ"
-            // On appelle tes fonctions existantes de rafraîchissement
+            // Actualiser l'affichage
             if (typeof refreshAll === "function") {
                 refreshAll(); 
             } else {
-                location.reload(); // Solution de secours si refreshAll n'est pas dispo
+                location.reload();
             }
         } else {
             alert("❌ Erreur : " + res.message);
