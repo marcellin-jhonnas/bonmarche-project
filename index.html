@@ -207,13 +207,29 @@
 
     <script>
         let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        function nextSlide() {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
-        }
-        setInterval(nextSlide, 5000); // Change toutes les 5 secondes
+
+function nextSlide() {
+    const slides = document.querySelectorAll('.slide');
+    
+    // SÉCURITÉ : Si la liste est vide (0 images), on ne fait rien au lieu de crasher
+    if (!slides || slides.length === 0) return;
+
+    // SÉCURITÉ : On vérifie que l'élément actuel existe avant de toucher à classList
+    if (slides[currentSlide]) {
+        slides[currentSlide].classList.remove('active');
+    }
+
+    // Calcul de la suivante
+    currentSlide = (currentSlide + 1) % slides.length;
+
+    // SÉCURITÉ : On vérifie que la nouvelle image existe
+    if (slides[currentSlide]) {
+        slides[currentSlide].classList.add('active');
+    }
+}
+
+// On ne lance l'intervalle que si nécessaire
+setInterval(nextSlide, 5000);
     </script>
     
     <div id="welcome-popup" class="welcome-popup">

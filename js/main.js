@@ -427,28 +427,6 @@ function lancerPayUnit(id, montant) {
     // On utilisera tes identifiants Sandbox ici
     alert("Redirection sécurisée vers PayUnit pour la commande " + id);
 }
-async function validerCommandeFinale() {
-    const total = window.dernierTotalCalcule || 0;
-    const idCmd = "SR-" + Math.floor(Math.random() * 100000);
-
-    // 1. Envoyer les données au Sheet
-    const payload = {
-        action: "commande",
-        id: idCmd,
-        montant: total,
-        tel: localStorage.getItem('saferun_tel')
-    };
-    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-
-    // 2. VIDER LE PANIER IMMÉDIATEMENT
-    console.log("Succès : Panier vidé.");
-    panier = [];
-    localStorage.removeItem('panier_saferun');
-    if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
-
-    // 3. Afficher directement les instructions MVola
-    afficherInstructionsMvola(total, idCmd);
-}
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
