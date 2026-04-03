@@ -1480,7 +1480,7 @@ function obtenirIdentiteChat() {
 // 1. CONFIGURATION GLOBALE (En haut du fichier)
 const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 let dernierNombreMessages = 0;
-let indexMsg = 0;
+indexMsg = 0;
 
 // 2. GESTION DU BOUTON ET DES SECTIONS
 function toggleChat() {
