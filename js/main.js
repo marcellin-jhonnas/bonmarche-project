@@ -421,12 +421,12 @@ function afficherInstructionsMvola(montant, idCommande) {
         </div>
     `;
 }
-
 function lancerPayUnit(id, montant) {
     // Redirection vers ton API PayUnit
     // On utilisera tes identifiants Sandbox ici
     alert("Redirection sécurisée vers PayUnit pour la commande " + id);
 }
+
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
@@ -1482,7 +1482,7 @@ function obtenirIdentiteChat() {
 // 1. CONFIGURATION GLOBALE (En haut du fichier)
 const scriptURL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 let dernierNombreMessages = 0;
-indexMsg = 0;
+let indexMsg = 0;
 
 // 2. GESTION DU BOUTON ET DES SECTIONS
 function toggleChat() {
