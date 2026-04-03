@@ -399,31 +399,55 @@ function afficherChoixPaiementLuxe(id, montant) {
 }
 
 // Fonction pour l'option MVola (On garde ton ancienne logique de facture)
-function afficherInstructionsMvola(montant, id) {
-    const modal = document.getElementById('modal-choix-paiement');
-    modal.innerHTML = `
-        <div style="background:white; padding:25px; border-radius:20px; text-align:center; width:100%;">
-            <h3>Paiement MVola</h3>
-            <p>Envoyez <b>${montant.toLocaleString()} Ar</b> au :</p>
-            <p style="font-size:1.1rem; font-weight:bold;">038 24 536 10</p>
-            <p>(JHONNAS MARCELLIN)</p>
-            <div style="background:#f4f4f4; padding:10px; border-radius:10px; margin:15px 0;">
-                <code>#111*1*2*0382453610*${montant}#</code>
-            </div>
-            <button id="btn-fini" style="width:100%; background:#27ae60; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;">J'AI EFFECTUÉ LE TRANSFERT ✅</button>
+function afficherInstructionsMvola(montant, idCommande) {
+    // On crée la modale dynamiquement pour être sûr qu'elle n'est pas "null"
+    let modalPay = document.getElementById('temp-modal-pay');
+    if (!modalPay) {
+        modalPay = document.createElement('div');
+        modalPay.id = 'temp-modal-pay';
+        document.body.appendChild(modalPay);
+    }
+
+    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;padding:20px;";
+    
+    modalPay.innerHTML = `
+        <div style="background:white;padding:25px;border-radius:20px;max-width:350px;text-align:center;position:relative;">
+            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:10px;right:10px;border:none;background:none;font-size:20px;cursor:pointer;">&times;</button>
+            <h3 style="color:#ffcc00;">Paiement MVola</h3>
+            <p>Envoyez <b>${montant.toLocaleString()} Ar</b></p>
+            <p>Au numéro : <b>034 XX XX XX XX</b></p>
+            <p style="font-size:0.8rem;background:#eee;padding:10px;border-radius:10px;">Référence à indiquer : <br><b>${idCommande}</b></p>
+            <button onclick="window.location.reload()" style="width:100%;padding:12px;background:#27ae60;color:white;border:none;border-radius:10px;margin-top:15px;font-weight:bold;">J'AI EFFECTUÉ LE TRANSFERT</button>
         </div>
     `;
-    document.getElementById('btn-fini').onclick = function() {
-        alert("Merci ! L'admin valide votre commande dès réception du SMS.");
-        localStorage.removeItem('panier_saferun');
-        location.reload();
-    };
 }
 
 function lancerPayUnit(id, montant) {
     // Redirection vers ton API PayUnit
     // On utilisera tes identifiants Sandbox ici
     alert("Redirection sécurisée vers PayUnit pour la commande " + id);
+}
+async function validerCommandeFinale() {
+    const total = window.dernierTotalCalcule || 0;
+    const idCmd = "SR-" + Math.floor(Math.random() * 100000);
+
+    // 1. Envoyer les données au Sheet
+    const payload = {
+        action: "commande",
+        id: idCmd,
+        montant: total,
+        tel: localStorage.getItem('saferun_tel')
+    };
+    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+
+    // 2. VIDER LE PANIER IMMÉDIATEMENT
+    console.log("Succès : Panier vidé.");
+    panier = [];
+    localStorage.removeItem('panier_saferun');
+    if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
+
+    // 3. Afficher directement les instructions MVola
+    afficherInstructionsMvola(total, idCmd);
 }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
