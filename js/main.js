@@ -327,10 +327,9 @@ async function envoyerDonneesAuSheet() {
         return;
     }
 
-    // 1. GENERATION DE L'ID PRO
     const idCommande = "SR" + Date.now().toString().slice(-6);
 
-    // 2. ENVOI IMMEDIAT AU SHEETS (On sécurise la commande)
+    // --- CORRECTION : Préparation des données ---
     const payload = {
         action: "nouvelleCommande",
         nom: nomClient,
@@ -339,46 +338,35 @@ async function envoyerDonneesAuSheet() {
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         correlationId: idCommande,
         quartier: adresseClient,
-        livraison: "Attente Paiement"
+        livraison: "Attente"
     };
 
-    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+    console.log("Tentative d'envoi vers :", SCRIPT_PAYS_URL);
 
-    // 3. AFFICHAGE DE LA POPUP DE CHOIX PRO
-    if (typeof fermerModal === "function") { fermerModal(); }
+    try {
+        // --- CORRECTION : Utilisation de 'no-cors' pour éviter les blocages de sécurité ---
+        await fetch(SCRIPT_PAYS_URL, {
+            method: "POST",
+            mode: "no-cors", 
+            cache: "no-cache",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-    const modalChoice = document.createElement('div');
-    modalChoice.id = "modal-choix-paiement";
-    modalChoice.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:15px; font-family:sans-serif;";
-    
-    modalChoice.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center;">
-            <h3 style="margin-top:0;">Commande #${idCommande}</h3>
-            <p style="font-size:1.2rem; font-weight:bold; color:#27ae60;">${montantFinal.toLocaleString()} Ar</p>
-            
-            <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">Comment souhaitez-vous régler ?</p>
+        // Si on arrive ici, on considère que c'est envoyé (mode no-cors ne donne pas de réponse)
+        console.log("Commande envoyée au Cloud !");
+        
+        // --- ÉTAPE : ON VIDE LE PANIER ICI ---
+        panier = []; // On vide la variable
+        localStorage.removeItem('panier_saferun'); // On vide le stockage local
+        
+        // Affichage du choix de paiement
+        afficherInterfacePaiementPro(idCommande, montantFinal);
 
-            <button id="btn-visa" style="width:100%; background:#0056b3; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
-                <i class="fab fa-cc-visa" style="font-size:1.4rem; margin-right:10px;"></i> Carte VISA / Mastercard
-            </button>
-
-            <button id="btn-mvola" style="width:100%; background:#ffcc00; color:#333; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                <span style="margin-right:10px; font-size:1.2rem;">📱</span> Mobile Money (MVola)
-            </button>
-
-            <p style="font-size:0.7rem; color:#bbb; margin-top:20px;">🛡️ Paiement sécurisé SSL • SafeRun Market</p>
-        </div>
-    `;
-    document.body.appendChild(modalChoice);
-
-    // ACTION DES BOUTONS
-    document.getElementById('btn-visa').onclick = function() {
-        lancerPayUnit(idCommande, montantFinal);
-    };
-
-    document.getElementById('btn-mvola').onclick = function() {
-        afficherInstructionsMvola(montantFinal, idCommande);
-    };
+    } catch (error) {
+        console.error("Erreur critique d'envoi :", error);
+        alert("Problème de connexion. La commande n'a pas pu être envoyée.");
+    }
 }
 
 // Fonction pour l'option MVola (On garde ton ancienne logique de facture)
