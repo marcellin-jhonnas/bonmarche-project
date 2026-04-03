@@ -318,81 +318,61 @@ function ouvrirTicketAutomatique() {
 
 async function envoyerDonneesAuSheet() {
     const montantFinal = window.dernierTotalCalcule || 0;
-    const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
-    const adresseClient = localStorage.getItem('saferun_quartier') || "Tana";
-
+    
     if (!telClient || montantFinal <= 0) {
-        alert("⚠️ Panier vide ou profil non rempli !");
+        alert("Panier vide !");
         return;
     }
 
-    const idCmd = "SR-" + Math.floor(100000 + Math.random() * 900000);
+    const idCmd = "SR-" + Math.floor(Math.random() * 100000);
 
-    // --- LOGIQUE D'ENVOI AU SHEET (SÉCURISÉE) ---
+    // 1. ON VIDE LE PANIER DÉJÀ ICI (SÉCURITÉ)
+    panier = []; 
+    localStorage.removeItem('panier_saferun');
+    if(typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
+
+    // 2. ENVOI AU SHEET
     const payload = {
         action: "nouvelleCommande",
-        nom: nomClient,
+        nom: localStorage.getItem('saferun_nom'),
         telClient: telClient,
         montant: montantFinal,
-        produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-        correlationId: idCmd,
-        quartier: adresseClient
+        correlationId: idCmd
     };
 
-    // On envoie d'abord les données
-    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+    // Mode no-cors pour éviter les erreurs de blocage que tu vois en rouge
+    fetch(SCRIPT_PAYS_URL, { 
+        method: "POST", 
+        mode: "no-cors", 
+        body: JSON.stringify(payload) 
+    });
 
-    // --- DESIGN IMPRESSIONNANT (INTERFACE) ---
-    if (typeof fermerModal === "function") { fermerModal(); }
+    // 3. AFFICHAGE DU DESIGN (On crée l'élément AVANT d'y accéder)
+    afficherInterfaceDesignPaiement(idCmd, montantFinal);
+}
 
-    const modalOverlay = document.createElement('div');
-    modalOverlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,20,30,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);font-family:'Poppins',sans-serif;";
+function afficherInterfaceDesignPaiement(id, montant) {
+    // Supprimer l'ancienne modale si elle existe
+    const old = document.getElementById('modal-paiement-luxe');
+    if(old) old.remove();
+
+    const div = document.createElement('div');
+    div.id = 'modal-paiement-luxe';
+    div.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);";
     
-    modalOverlay.innerHTML = `
-        <div style="background:white;width:90%;max-width:400px;border-radius:30px;overflow:hidden;animation:slideUp 0.4s ease-out;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
-            <div style="background:#0056b3;padding:40px 20px;text-align:center;color:white;">
-                <div style="background:rgba(255,255,255,0.2);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;font-size:2rem;animation:pulse 2s infinite;">✅</div>
-                <h2 style="margin:0;font-size:1.4rem;">Commande Enregistrée</h2>
-                <p style="opacity:0.8;margin:5px 0;">Réf : ${idCmd}</p>
-            </div>
+    div.innerHTML = `
+        <div style="background:white;padding:30px;border-radius:25px;width:90%;max-width:380px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.4);">
+            <div style="color:#0056b3;font-size:3rem;margin-bottom:10px;">💳</div>
+            <h2 style="margin:0;color:#333;">Paiement</h2>
+            <p style="color:#666;">Commande : <b>${id}</b></p>
+            <div style="font-size:1.8rem;font-weight:bold;margin:20px 0;color:#27ae60;">${montant.toLocaleString()} Ar</div>
             
-            <div style="padding:30px;text-align:center;">
-                <p style="color:#666;margin-bottom:5px;">Montant à régler</p>
-                <h3 style="font-size:2rem;margin:0 0 25px;color:#333;">${montantFinal.toLocaleString()} <small style="font-size:1rem;">Ar</small></h3>
-
-                <button id="btn-pay-visa" style="width:100%;padding:18px;border:none;border-radius:15px;background:#1a1f71;color:white;font-weight:bold;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px rgba(26,31,113,0.3);margin-bottom:15px;transition:0.3s;">
-                    <i class="fab fa-cc-visa" style="font-size:1.8rem;margin-right:12px;"></i> Payer par Carte VISA
-                </button>
-
-                <button id="btn-pay-mvola" style="width:100%;padding:18px;border:2px solid #ffcc00;border-radius:15px;background:white;color:#333;font-weight:bold;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.3s;">
-                    <span style="font-size:1.5rem;margin-right:12px;">📱</span> Mobile Money (MVola)
-                </button>
-            </div>
-            <div style="background:#f8f9fa;padding:15px;text-align:center;font-size:0.8rem;color:#999;">
-                🛡️ Transactions sécurisées par SafeRun Market
-            </div>
+            <button onclick="lancerPayUnit()" style="width:100%;padding:15px;background:#1a1f71;color:white;border:none;border-radius:12px;font-weight:bold;margin-bottom:10px;cursor:pointer;">CARTE VISA (Automatique)</button>
+            <button onclick="afficherInstructionsMvola('${montant}', '${id}')" style="width:100%;padding:15px;background:#ffcc00;color:black;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">MVOLA (Manuel)</button>
         </div>
-        <style>
-            @keyframes slideUp { from { transform:translateY(50px);opacity:0; } to { transform:translateY(0);opacity:1; } }
-            @keyframes pulse { 0% { transform:scale(1); } 50% { transform:scale(1.1); } 100% { transform:scale(1); } }
-            button:active { transform:scale(0.98); }
-        </style>
     `;
-    document.body.appendChild(modalOverlay);
-
-    // --- ACTIONS FINALES ---
-    document.getElementById('btn-pay-visa').onclick = () => {
-        alert("Lancement de l'interface PayUnit sécurisée...");
-        // Ici on appellera l'init PayUnit
-    };
-
-    document.getElementById('btn-pay-mvola').onclick = () => {
-        // Vider le panier avant de montrer les instructions MVola pour être sûr
-        panier = [];
-        localStorage.removeItem('panier_saferun');
-        afficherInstructionsMvola(montantFinal, idCmd);
-    };
+    document.body.appendChild(div);
 }
 
 // Fonction pour l'option MVola (On garde ton ancienne logique de facture)
