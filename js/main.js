@@ -320,53 +320,79 @@ async function envoyerDonneesAuSheet() {
     const montantFinal = window.dernierTotalCalcule || 0;
     const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
-    const adresseClient = localStorage.getItem('saferun_quartier') || "Non précisé";
+    const adresseClient = localStorage.getItem('saferun_quartier') || "Tana";
 
     if (!telClient || montantFinal <= 0) {
-        alert("Profil incomplet ou panier vide !");
+        alert("⚠️ Panier vide ou profil non rempli !");
         return;
     }
 
-    const idCommande = "SR" + Date.now().toString().slice(-6);
+    const idCmd = "SR-" + Math.floor(100000 + Math.random() * 900000);
 
-    // --- CORRECTION : Préparation des données ---
+    // --- LOGIQUE D'ENVOI AU SHEET (SÉCURISÉE) ---
     const payload = {
         action: "nouvelleCommande",
         nom: nomClient,
         telClient: telClient,
         montant: montantFinal,
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
-        correlationId: idCommande,
-        quartier: adresseClient,
-        livraison: "Attente"
+        correlationId: idCmd,
+        quartier: adresseClient
     };
 
-    console.log("Tentative d'envoi vers :", SCRIPT_PAYS_URL);
+    // On envoie d'abord les données
+    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
 
-    try {
-        // --- CORRECTION : Utilisation de 'no-cors' pour éviter les blocages de sécurité ---
-        await fetch(SCRIPT_PAYS_URL, {
-            method: "POST",
-            mode: "no-cors", 
-            cache: "no-cache",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+    // --- DESIGN IMPRESSIONNANT (INTERFACE) ---
+    if (typeof fermerModal === "function") { fermerModal(); }
 
-        // Si on arrive ici, on considère que c'est envoyé (mode no-cors ne donne pas de réponse)
-        console.log("Commande envoyée au Cloud !");
-        
-        // --- ÉTAPE : ON VIDE LE PANIER ICI ---
-        panier = []; // On vide la variable
-        localStorage.removeItem('panier_saferun'); // On vide le stockage local
-        
-        // Affichage du choix de paiement
-        afficherInterfacePaiementPro(idCommande, montantFinal);
+    const modalOverlay = document.createElement('div');
+    modalOverlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,20,30,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);font-family:'Poppins',sans-serif;";
+    
+    modalOverlay.innerHTML = `
+        <div style="background:white;width:90%;max-width:400px;border-radius:30px;overflow:hidden;animation:slideUp 0.4s ease-out;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div style="background:#0056b3;padding:40px 20px;text-align:center;color:white;">
+                <div style="background:rgba(255,255,255,0.2);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;font-size:2rem;animation:pulse 2s infinite;">✅</div>
+                <h2 style="margin:0;font-size:1.4rem;">Commande Enregistrée</h2>
+                <p style="opacity:0.8;margin:5px 0;">Réf : ${idCmd}</p>
+            </div>
+            
+            <div style="padding:30px;text-align:center;">
+                <p style="color:#666;margin-bottom:5px;">Montant à régler</p>
+                <h3 style="font-size:2rem;margin:0 0 25px;color:#333;">${montantFinal.toLocaleString()} <small style="font-size:1rem;">Ar</small></h3>
 
-    } catch (error) {
-        console.error("Erreur critique d'envoi :", error);
-        alert("Problème de connexion. La commande n'a pas pu être envoyée.");
-    }
+                <button id="btn-pay-visa" style="width:100%;padding:18px;border:none;border-radius:15px;background:#1a1f71;color:white;font-weight:bold;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px rgba(26,31,113,0.3);margin-bottom:15px;transition:0.3s;">
+                    <i class="fab fa-cc-visa" style="font-size:1.8rem;margin-right:12px;"></i> Payer par Carte VISA
+                </button>
+
+                <button id="btn-pay-mvola" style="width:100%;padding:18px;border:2px solid #ffcc00;border-radius:15px;background:white;color:#333;font-weight:bold;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.3s;">
+                    <span style="font-size:1.5rem;margin-right:12px;">📱</span> Mobile Money (MVola)
+                </button>
+            </div>
+            <div style="background:#f8f9fa;padding:15px;text-align:center;font-size:0.8rem;color:#999;">
+                🛡️ Transactions sécurisées par SafeRun Market
+            </div>
+        </div>
+        <style>
+            @keyframes slideUp { from { transform:translateY(50px);opacity:0; } to { transform:translateY(0);opacity:1; } }
+            @keyframes pulse { 0% { transform:scale(1); } 50% { transform:scale(1.1); } 100% { transform:scale(1); } }
+            button:active { transform:scale(0.98); }
+        </style>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    // --- ACTIONS FINALES ---
+    document.getElementById('btn-pay-visa').onclick = () => {
+        alert("Lancement de l'interface PayUnit sécurisée...");
+        // Ici on appellera l'init PayUnit
+    };
+
+    document.getElementById('btn-pay-mvola').onclick = () => {
+        // Vider le panier avant de montrer les instructions MVola pour être sûr
+        panier = [];
+        localStorage.removeItem('panier_saferun');
+        afficherInstructionsMvola(montantFinal, idCmd);
+    };
 }
 
 // Fonction pour l'option MVola (On garde ton ancienne logique de facture)
