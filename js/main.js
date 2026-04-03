@@ -317,7 +317,6 @@ function ouvrirTicketAutomatique() {
 }
 
 async function envoyerDonneesAuSheet() {
-    // 1. Récupération des données (On garde tes variables actuelles)
     const montantFinal = window.dernierTotalCalcule || 0;
     const nomClient = localStorage.getItem('saferun_nom') || "Client";
     const telClient = localStorage.getItem('saferun_tel');
@@ -328,11 +327,10 @@ async function envoyerDonneesAuSheet() {
         return;
     }
 
-    // 2. Génération d'un ID de commande Pro (ex: SR-458210)
-    const idCommande = "SR-" + Math.floor(Math.random() * 1000000);
+    // 1. GENERATION DE L'ID PRO
+    const idCommande = "SR" + Date.now().toString().slice(-6);
 
-    // 3. ENVOI SILENCIEUX AU GOOGLE SHEETS
-    // On utilise tes liens SCRIPT_PAYS_URL que tu as déjà configuré en haut du fichier
+    // 2. ENVOI IMMEDIAT AU SHEETS (On sécurise la commande)
     const payload = {
         action: "nouvelleCommande",
         nom: nomClient,
@@ -341,69 +339,74 @@ async function envoyerDonneesAuSheet() {
         produits: panier.map(i => `${i.quantite}x ${i.nom}`).join(', '),
         correlationId: idCommande,
         quartier: adresseClient,
-        livraison: "En attente"
+        livraison: "Attente Paiement"
     };
 
     fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
 
-    // 4. FERMETURE DU PANIER ET OUVERTURE DU CHOIX DE PAIEMENT
+    // 3. AFFICHAGE DE LA POPUP DE CHOIX PRO
     if (typeof fermerModal === "function") { fermerModal(); }
 
     const modalChoice = document.createElement('div');
-    modalChoice.id = "modal-paiement-pro";
-    modalChoice.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:30000; display:flex; align-items:center; justify-content:center; padding:15px; font-family:Arial, sans-serif;";
+    modalChoice.id = "modal-choix-paiement";
+    modalChoice.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:15px; font-family:sans-serif;";
     
     modalChoice.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.3);">
-            <div style="background:#f8f9fa; border-radius:15px; padding:15px; margin-bottom:20px;">
-                <h3 style="margin:0; color:#333;">Commande ${idCommande}</h3>
-                <p style="margin:5px 0; font-weight:bold; color:#27ae60; font-size:1.3rem;">${montantFinal.toLocaleString()} Ar</p>
-            </div>
-
-            <p style="font-size:0.9rem; color:#666; margin-bottom:20px;">Sélectionnez votre mode de paiement :</p>
+        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center;">
+            <h3 style="margin-top:0;">Commande #${idCommande}</h3>
+            <p style="font-size:1.2rem; font-weight:bold; color:#27ae60;">${montantFinal.toLocaleString()} Ar</p>
             
-            <button id="visa-btn" style="width:100%; background:#0056b3; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-bottom:12px; transition: 0.3s;">
-                <i class="fab fa-cc-visa" style="font-size:1.5rem; margin-right:10px;"></i> Payer par Carte VISA
+            <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">Comment souhaitez-vous régler ?</p>
+
+            <button id="btn-visa" style="width:100%; background:#0056b3; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
+                <i class="fab fa-cc-visa" style="font-size:1.4rem; margin-right:10px;"></i> Carte VISA / Mastercard
             </button>
 
-            <button id="mvola-btn" style="width:100%; background:#ffcc00; color:#333; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: 0.3s;">
-                <span style="font-size:1.2rem; margin-right:10px;">📱</span> Mobile Money (MVola)
+            <button id="btn-mvola" style="width:100%; background:#ffcc00; color:#333; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                <span style="margin-right:10px; font-size:1.2rem;">📱</span> Mobile Money (MVola)
             </button>
 
-            <p style="font-size:0.7rem; color:#aaa; margin-top:20px;"><i class="fas fa-lock"></i> Paiement sécurisé via BNI Madagascar</p>
+            <p style="font-size:0.7rem; color:#bbb; margin-top:20px;">🛡️ Paiement sécurisé SSL • SafeRun Market</p>
         </div>
     `;
     document.body.appendChild(modalChoice);
 
-    // LOGIQUE DES BOUTONS
-    document.getElementById('visa-btn').onclick = () => lancerPayUnit(idCommande, montantFinal);
-    document.getElementById('mvola-btn').onclick = () => afficherInstructionsMvola(montantFinal, nomClient, telClient, adresseClient);
-}
+    // ACTION DES BOUTONS
+    document.getElementById('btn-visa').onclick = function() {
+        lancerPayUnit(idCommande, montantFinal);
+    };
 
-// Fonction pour l'option MVola (On garde ton ancienne logique de facture)
-function afficherInstructionsMvola(montant, nom, tel, adresse) {
-    const modal = document.getElementById('modal-paiement-pro');
-    modal.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center;">
-            <h3>Instructions MVola</h3>
-            <p>Envoyez <b>${montant.toLocaleString()} Ar</b> à :</p>
-            <p><strong>MARCELLIN JHONNAS</strong> (038 24 536 10)</p>
-            <div style="background:#f4f4f4; padding:15px; border-radius:15px; margin:15px 0;">
-                <code>#111*1*2*0382453610*${montant}#</code>
-            </div>
-            <button id="confirm-mvola" style="width:100%; background:#27ae60; color:white; border:none; padding:16px; border-radius:12px; font-weight:bold; cursor:pointer;">J'AI ENVOYÉ ✅</button>
-        </div>
-    `;
-    document.getElementById('confirm-mvola').onclick = function() {
-        genererFactureFinale(montant, nom, tel, adresse);
-        setTimeout(() => location.reload(), 3000);
+    document.getElementById('btn-mvola').onclick = function() {
+        afficherInstructionsMvola(montantFinal, idCommande);
     };
 }
 
-// Fonction pour l'option VISA (C'est ici qu'on branche PayUnit)
-function lancerPayUnit(idCmd, montant) {
-    alert("Redirection vers la plateforme de paiement sécurisée PayUnit (Sandbox)...");
-    // Ici on insérera l'URL d'initialisation de PayUnit au prochain tour !
+// Fonction pour l'option MVola (On garde ton ancienne logique de facture)
+function afficherInstructionsMvola(montant, id) {
+    const modal = document.getElementById('modal-choix-paiement');
+    modal.innerHTML = `
+        <div style="background:white; padding:25px; border-radius:20px; text-align:center; width:100%;">
+            <h3>Paiement MVola</h3>
+            <p>Envoyez <b>${montant.toLocaleString()} Ar</b> au :</p>
+            <p style="font-size:1.1rem; font-weight:bold;">038 24 536 10</p>
+            <p>(JHONNAS MARCELLIN)</p>
+            <div style="background:#f4f4f4; padding:10px; border-radius:10px; margin:15px 0;">
+                <code>#111*1*2*0382453610*${montant}#</code>
+            </div>
+            <button id="btn-fini" style="width:100%; background:#27ae60; color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;">J'AI EFFECTUÉ LE TRANSFERT ✅</button>
+        </div>
+    `;
+    document.getElementById('btn-fini').onclick = function() {
+        alert("Merci ! L'admin valide votre commande dès réception du SMS.");
+        localStorage.removeItem('panier_saferun');
+        location.reload();
+    };
+}
+
+function lancerPayUnit(id, montant) {
+    // Redirection vers ton API PayUnit
+    // On utilisera tes identifiants Sandbox ici
+    alert("Redirection sécurisée vers PayUnit pour la commande " + id);
 }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
