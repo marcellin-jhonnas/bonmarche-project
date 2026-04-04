@@ -357,42 +357,31 @@ async function envoyerDonneesAuSheet() {
         body: JSON.stringify(payload) 
     });
 
-    // --- ENREGISTREMENT LOCAL STRICT POUR LE SUIVI ---
-    let historique = [];
-    try {
-        // On récupère l'existant
-        historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    } catch (e) {
-        historique = [];
-    }
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
 
-    // On crée l'objet exactement comme ton menu de suivi l'aime
-    const nouvelleCommande = {
+    const nouvelleCommandeLocale = {
         id: idCommande,
         date: new Date().toLocaleDateString('fr-FR'),
-        produits: payload.produits, // Le texte des produits
-        montant: montantTotal,
+        produits: payload.produits,
+        total: montantTotal, // <--- C'EST CETTE LIGNE QUI RÉPARE L'ERREUR "cmd.total"
         statut: "EN ATTENTE",
         livraison: infoLivraison,
         quartier: quartier || "Non précisé"
     };
 
-    // On ajoute au début et on sauvegarde
-    historique.unshift(nouvelleCommande);
+    historique.unshift(nouvelleCommandeLocale); 
     localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-    
-    // On réinitialise le badge
-    localStorage.setItem('livraison_vue', 'false');
+    localStorage.setItem('livraison_vue', 'false'); // Badge rouge
+
+    // 3. MISES À JOUR VISUELLES
     if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
-
-    // --- FIN DE LA RÉPARATION ---
-
-    // On termine par le nettoyage et l'affichage du paiement
+    
+    // Nettoyage panier
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
     
-    // On affiche enfin le paiement de Marcellin
+    // Affichage de la modale de paiement Marcellin
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
