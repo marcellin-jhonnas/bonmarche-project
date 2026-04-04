@@ -325,19 +325,18 @@ async function envoyerDonneesAuSheet() {
         return;
     }
 
-    // --- ÉTAPE 1 : GÉNÉRATION DE L'ID UNIQUE ---
     const idCommande = "SR-" + Date.now().toString().slice(-6);
 
-    // --- ÉTAPE 2 : PRÉPARATION DES DONNÉES MANQUANTES ---
+    // --- RÉCUPÉRATION DES DONNÉES RECTIFIÉES ---
     
-    // Pour la Colonne D : On transforme le panier en texte lisible
-    const listeProduits = panier.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+    // 1. Colonne D : Liste des produits
+    const detailProduits = panier.map(item => `${item.nom} (x${item.quantite})`).join(", ");
 
-    // Pour la Colonne H : On récupère la date planifiée (variable globale dans ton code)
-    const dateLivraison = window.datePlanifiee || "Dès que possible";
+    // 2. Colonne H : Appel de ta fonction de calcul de date
+    const infoLivraison = calculerLivraison(); 
 
-    // Pour la Colonne I : On récupère l'adresse exacte du profil
-    const lieuExact = localStorage.getItem('saferun_adresse') || "Non précisé";
+    // 3. Colonne I : Utilisation de la clé "saferun_quartier"
+    const quartierClient = localStorage.getItem('saferun_quartier') || "Quartier non précisé";
 
     const payload = {
         action: "nouvelleCommande",
@@ -345,21 +344,24 @@ async function envoyerDonneesAuSheet() {
         telClient: tel,
         montant: montantTotal,
         correlationId: idCommande,
-        produits: listeProduits,    // Donnée pour Colonne D
-        livraison: dateLivraison,   // Donnée pour Colonne H
-        lieu: lieuExact,            // Donnée pour Colonne I
+        produits: detailProduits, // Ira en D
+        livraison: infoLivraison,  // Ira en H
+        lieu: quartierClient,     // Ira en I
         statut: "EN ATTENTE PAIEMENT"
     };
 
-    // Envoi au Sheet via l'URL qui fonctionne (API_URL)
-    fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+    // Envoi via l'URL qui fonctionne (API_URL)
+    fetch(API_URL, { 
+        method: "POST", 
+        mode: "no-cors", 
+        body: JSON.stringify(payload) 
+    });
 
-    // --- ÉTAPE 3 : VIDER LE PANIER IMMÉDIATEMENT ---
+    // --- VIDAGE ET INTERFACE ---
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
-
-    // --- ÉTAPE 4 : AFFICHER L'INTERFACE ---
+    
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
