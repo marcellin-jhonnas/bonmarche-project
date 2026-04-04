@@ -412,7 +412,10 @@ function afficherChoixPaiementLuxe(id, montant) {
 
 // Fonction pour l'option MVola (On garde ton ancienne logique de facture)
 function afficherInstructionsMvola(montant, idCommande) {
-    // On crée la modale dynamiquement pour être sûr qu'elle n'est pas "null"
+    const quartier = localStorage.getItem('saferun_quartier') || "Non précisé";
+    const infoLivraison = calculerLivraison(); 
+    const numeroMarcellin = "038 24 536 10";
+
     let modalPay = document.getElementById('temp-modal-pay');
     if (!modalPay) {
         modalPay = document.createElement('div');
@@ -420,16 +423,50 @@ function afficherInstructionsMvola(montant, idCommande) {
         document.body.appendChild(modalPay);
     }
 
-    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;padding:20px;";
+    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;padding:15px;backdrop-filter:blur(5px);";
     
     modalPay.innerHTML = `
-        <div style="background:white;padding:25px;border-radius:20px;max-width:350px;text-align:center;position:relative;">
-            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:10px;right:10px;border:none;background:none;font-size:20px;cursor:pointer;">&times;</button>
-            <h3 style="color:#ffcc00;">Paiement MVola</h3>
-            <p>Envoyez <b>${montant.toLocaleString()} Ar</b></p>
-            <p>Au numéro : <b>034 XX XX XX XX</b></p>
-            <p style="font-size:0.8rem;background:#eee;padding:10px;border-radius:10px;">Référence à indiquer : <br><b>${idCommande}</b></p>
-            <button onclick="window.location.reload()" style="width:100%;padding:12px;background:#27ae60;color:white;border:none;border-radius:10px;margin-top:15px;font-weight:bold;">J'AI EFFECTUÉ LE TRANSFERT</button>
+        <div style="background:white;padding:25px;border-radius:25px;max-width:400px;width:100%;text-align:center;position:relative;box-shadow:0 15px 40px rgba(0,0,0,0.4);overflow-y:auto;max-height:90vh;">
+            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:#eee;width:30px;height:30px;border-radius:50%;cursor:pointer;">&times;</button>
+            
+            <h3 style="color:#333;margin-top:10px;">Paiement MVola</h3>
+            
+            <div style="background:#f1f2f6;padding:12px;border-radius:12px;text-align:left;margin-bottom:15px;font-size:0.85rem;">
+                <p style="margin:5px 0;">📍 <b>Quartier :</b> ${quartier}</p>
+                <p style="margin:5px 0;">📅 <b>Date :</b> ${infoLivraison}</p>
+            </div>
+
+            <div style="background:#fff9e6;padding:15px;border-radius:15px;border:1px dashed #ffcc00;margin-bottom:15px;">
+                <p style="margin:0;font-size:0.9rem;">Montant à envoyer :</p>
+                <h2 style="margin:5px 0;color:#e67e22;">${montant.toLocaleString()} Ar</h2>
+                <p style="margin:10px 0 5px 0;font-size:0.85rem;">Au numéro de <b>Marcellin</b> :</p>
+                <b style="font-size:1.2rem;color:#2c3e50;">${numeroMarcellin}</b>
+                <p style="margin:10px 0 5px 0;font-size:0.8rem;color:#7f8c8d;">Référence à indiquer :</p>
+                <b style="font-size:1rem;color:#c0392b;background:#ffeaa7;padding:2px 8px;border-radius:5px;">${idCommande}</b>
+            </div>
+
+            <div style="text-align:left;background:#fdfdfd;border:1px solid #eee;padding:12px;border-radius:12px;margin-bottom:15px;">
+                <p style="margin:0 0 10px 0;font-weight:bold;font-size:0.85rem;color:#27ae60;text-align:center;">--- NOS ENGAGEMENTS ---</p>
+                
+                <div style="display:flex;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:1.2rem;margin-right:10px;">💬</span>
+                    <p style="margin:0;font-size:0.8rem;">Dès réception du message, nous vous renverrons un <b>SMS de confirmation</b>.</p>
+                </div>
+                
+                <div style="display:flex;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:1.2rem;margin-right:10px;">✅</span>
+                    <p style="margin:0;font-size:0.8rem;">Votre achat passera en statut <b>"Validé"</b> sur votre espace client.</p>
+                </div>
+                
+                <div style="display:flex;align-items:center;">
+                    <span style="font-size:1.2rem;margin-right:10px;">📞</span>
+                    <p style="margin:0;font-size:0.8rem;">Le livreur vous <b>appellera</b> lorsqu'il sera proche de votre quartier.</p>
+                </div>
+            </div>
+
+            <button onclick="window.location.reload()" style="width:100%;padding:15px;background:#27ae60;color:white;border:none;border-radius:12px;font-weight:bold;font-size:0.95rem;cursor:pointer;">
+                J'AI EFFECTUÉ LE TRANSFERT
+            </button>
         </div>
     `;
 }
