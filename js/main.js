@@ -336,7 +336,7 @@ async function envoyerDonneesAuSheet() {
     const infoLivraison = calculerLivraison(); 
 
     // 3. Colonne I : Utilisation de la clé "saferun_quartier"
-    const quartierClient = localStorage.getItem('saferun_quartier') || "Quartier non précisé";
+    const quartierClient = localStorage.getItem('saferun_quartier');
 
     const payload = {
         action: "nouvelleCommande",
