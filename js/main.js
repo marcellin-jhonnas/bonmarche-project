@@ -319,49 +319,49 @@ function ouvrirTicketAutomatique() {
 async function envoyerDonneesAuSheet() {
     const montantTotal = window.dernierTotalCalcule || 0;
     const tel = localStorage.getItem('saferun_tel');
-    
+    const nom = localStorage.getItem('saferun_nom');
+    const quartier = localStorage.getItem('saferun_quartier'); // Ta clé en minuscules
+
+    // --- LOGS DE DIAGNOSTIC (F12 dans ton navigateur) ---
+    console.log("--- DIAGNOSTIC ENVOI ---");
+    console.log("Nom trouvé :", nom);
+    console.log("Tel trouvé :", tel);
+    console.log("Quartier trouvé :", quartier);
+    console.log("Panier actuel :", panier);
+
     if (!tel || montantTotal <= 0) {
-        alert("Action impossible : Panier vide ou profil non configuré.");
+        alert("Action impossible : Profil incomplet ou panier vide.");
         return;
     }
 
     const idCommande = "SR-" + Date.now().toString().slice(-6);
-
-    // --- RÉCUPÉRATION DES DONNÉES RECTIFIÉES ---
-    
-    // 1. Colonne D : Liste des produits
-    const detailProduits = panier.map(item => `${item.nom} (x${item.quantite})`).join(", ");
-
-    // 2. Colonne H : Appel de ta fonction de calcul de date
     const infoLivraison = calculerLivraison(); 
-
-    // 3. Colonne I : Utilisation de la clé "saferun_quartier"
-    const quartierClient = localStorage.getItem('saferun_quartier');
-
+    
+    // On prépare le payload avec des messages clairs si c'est vide
     const payload = {
         action: "nouvelleCommande",
-        nom: localStorage.getItem('saferun_nom') || "Client",
-        telClient: tel,
+        nom: nom || "NOM_MANQUANT",
+        telClient: tel || "TEL_MANQUANT",
+        id: idCommande,
         montant: montantTotal,
-        correlationId: idCommande,
-        produits: detailProduits, // Ira en D
-        livraison: infoLivraison,  // Ira en H
-        lieu: quartierClient,     // Ira en I
-        statut: "EN ATTENTE PAIEMENT"
+        produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE",
+        livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
+        quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE", // Si tu vois ça dans le Sheet, le bug est sur ton site
+        statut: "EN ATTENTE"
     };
 
-    // Envoi via l'URL qui fonctionne (API_URL)
+    console.log("Payload envoyé au Sheet :", payload);
+
     fetch(API_URL, { 
         method: "POST", 
         mode: "no-cors", 
         body: JSON.stringify(payload) 
     });
 
-    // --- VIDAGE ET INTERFACE ---
+    // Nettoyage et suite
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
-    
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
