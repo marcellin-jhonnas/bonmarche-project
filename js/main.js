@@ -357,25 +357,43 @@ async function envoyerDonneesAuSheet() {
         body: JSON.stringify(payload) 
     });
 
-    // --- LIGNES AJOUTÉES POUR RÉPARER LE SUIVI ET LE BADGE ---
-    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    historique.unshift(payload); // On ajoute la commande en haut de la liste
-    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
-    localStorage.setItem('livraison_vue', 'false'); // Pour que le badge soit ROUGE
-    
-    if (typeof mettreAJourBadgeLivraison === "function") {
-        mettreAJourBadgeLivraison(); // Allume le badge immédiatement
+    // --- ENREGISTREMENT LOCAL STRICT POUR LE SUIVI ---
+    let historique = [];
+    try {
+        // On récupère l'existant
+        historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    } catch (e) {
+        historique = [];
     }
-    // -------------------------------------------------------
 
-    // Nettoyage et suite
+    // On crée l'objet exactement comme ton menu de suivi l'aime
+    const nouvelleCommande = {
+        id: idCommande,
+        date: new Date().toLocaleDateString('fr-FR'),
+        produits: payload.produits, // Le texte des produits
+        montant: montantTotal,
+        statut: "EN ATTENTE",
+        livraison: infoLivraison,
+        quartier: quartier || "Non précisé"
+    };
+
+    // On ajoute au début et on sauvegarde
+    historique.unshift(nouvelleCommande);
+    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    
+    // On réinitialise le badge
+    localStorage.setItem('livraison_vue', 'false');
+    if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
+
+    // --- FIN DE LA RÉPARATION ---
+
+    // On termine par le nettoyage et l'affichage du paiement
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
     
-    // Affichage de la modale de paiement
+    // On affiche enfin le paiement de Marcellin
     afficherChoixPaiementLuxe(idCommande, montantTotal);
-}
 
 function afficherChoixPaiementLuxe(id, montant) {
     // Supprimer toute ancienne modale
