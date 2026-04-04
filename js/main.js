@@ -345,7 +345,7 @@ async function envoyerDonneesAuSheet() {
     // --- ÉTAPE 3 : VIDER LE PANIER IMMÉDIATEMENT ---
     // Même si le client ferme l'onglet après, la commande est déjà partie !
     panier = []; 
-    localStorage.removeItem('panier_saferun');
+    localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
 
     // --- ÉTAPE 4 : AFFICHER L'INTERFACE DE CHOIX ---
@@ -766,7 +766,7 @@ async function traiterPaiement(montant, telClient, livraison, adresse) {
         console.log("Données envoyées au Sheet :", payload);
 
         // On utilise await pour s'assurer que l'envoi est initié avant de continuer
-        await fetch(SCRIPT_PAYS_URL, {
+            fetch(SCRIPT_PAYS_URL, {
             method: "POST",
             mode: "no-cors", 
             cache: "no-cache",
