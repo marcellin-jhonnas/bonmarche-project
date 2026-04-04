@@ -394,6 +394,7 @@ async function envoyerDonneesAuSheet() {
     
     // On affiche enfin le paiement de Marcellin
     afficherChoixPaiementLuxe(idCommande, montantTotal);
+}
 
 function afficherChoixPaiementLuxe(id, montant) {
     // Supprimer toute ancienne modale
