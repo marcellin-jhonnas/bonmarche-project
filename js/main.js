@@ -340,7 +340,7 @@ async function envoyerDonneesAuSheet() {
     };
 
     // L'envoi se fait ici, on ne met pas 'await' pour ne pas bloquer l'utilisateur
-    fetch(SCRIPT_PAYS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+    fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
 
     // --- ÉTAPE 3 : VIDER LE PANIER IMMÉDIATEMENT ---
     // Même si le client ferme l'onglet après, la commande est déjà partie !
