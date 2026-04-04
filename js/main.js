@@ -490,10 +490,30 @@ function afficherInstructionsMvola(montant, idCommande) {
         </div>
     `;
 }
-function lancerPayUnit(id, montant) {
-    // Redirection vers ton API PayUnit
-    // On utilisera tes identifiants Sandbox ici
-    alert("Redirection sécurisée vers PayUnit pour la commande " + id);
+async function lancerPayUnit(id, montant) {
+    // L'URL du NOUVEAU script de paiement que tu viens de créer
+    const SCRIPT_PAIEMENT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
+
+    try {
+        const response = await fetch(SCRIPT_PAIEMENT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                id: id,
+                montant: montant
+            })
+        });
+
+        const resultat = await response.json();
+
+        if (resultat.status === "success") {
+            // Le script nous donne le lien, on y va !
+            window.location.href = resultat.url;
+        } else {
+            alert("Erreur lors de la préparation du paiement.");
+        }
+    } catch (error) {
+        console.error("Erreur de connexion au service de paiement", error);
+    }
 }
 
 // 5. SIDEBAR ET POPUP
