@@ -320,9 +320,8 @@ async function envoyerDonneesAuSheet() {
     const montantTotal = window.dernierTotalCalcule || 0;
     const tel = localStorage.getItem('saferun_tel');
     const nom = localStorage.getItem('saferun_nom');
-    const quartier = localStorage.getItem('saferun_quartier'); // Ta clé en minuscules
+    const quartier = localStorage.getItem('saferun_quartier'); 
 
-    // --- LOGS DE DIAGNOSTIC (F12 dans ton navigateur) ---
     console.log("--- DIAGNOSTIC ENVOI ---");
     console.log("Nom trouvé :", nom);
     console.log("Tel trouvé :", tel);
@@ -337,7 +336,6 @@ async function envoyerDonneesAuSheet() {
     const idCommande = "SR-" + Date.now().toString().slice(-6);
     const infoLivraison = calculerLivraison(); 
     
-    // On prépare le payload avec des messages clairs si c'est vide
     const payload = {
         action: "nouvelleCommande",
         nom: nom || "NOM_MANQUANT",
@@ -346,22 +344,36 @@ async function envoyerDonneesAuSheet() {
         montant: montantTotal,
         produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE",
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
-        quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE", // Si tu vois ça dans le Sheet, le bug est sur ton site
+        quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
         statut: "EN ATTENTE"
     };
 
     console.log("Payload envoyé au Sheet :", payload);
 
+    // 1. Envoi au Google Sheet
     fetch(API_URL, { 
         method: "POST", 
         mode: "no-cors", 
         body: JSON.stringify(payload) 
     });
 
+    // --- LIGNES AJOUTÉES POUR RÉPARER LE SUIVI ET LE BADGE ---
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+    historique.unshift(payload); // On ajoute la commande en haut de la liste
+    localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    localStorage.setItem('livraison_vue', 'false'); // Pour que le badge soit ROUGE
+    
+    if (typeof mettreAJourBadgeLivraison === "function") {
+        mettreAJourBadgeLivraison(); // Allume le badge immédiatement
+    }
+    // -------------------------------------------------------
+
     // Nettoyage et suite
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
+    
+    // Affichage de la modale de paiement
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
