@@ -328,28 +328,38 @@ async function envoyerDonneesAuSheet() {
     // --- ÉTAPE 1 : GÉNÉRATION DE L'ID UNIQUE ---
     const idCommande = "SR-" + Date.now().toString().slice(-6);
 
-    // --- ÉTAPE 2 : ENVOI IMMÉDIAT (SANS ATTENDRE) ---
-    // On utilise une petite astuce pour envoyer en arrière-plan
+    // --- ÉTAPE 2 : PRÉPARATION DES DONNÉES MANQUANTES ---
+    
+    // Pour la Colonne D : On transforme le panier en texte lisible
+    const listeProduits = panier.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+
+    // Pour la Colonne H : On récupère la date planifiée (variable globale dans ton code)
+    const dateLivraison = window.datePlanifiee || "Dès que possible";
+
+    // Pour la Colonne I : On récupère l'adresse exacte du profil
+    const lieuExact = localStorage.getItem('saferun_adresse') || "Non précisé";
+
     const payload = {
         action: "nouvelleCommande",
         nom: localStorage.getItem('saferun_nom') || "Client",
         telClient: tel,
         montant: montantTotal,
         correlationId: idCommande,
+        produits: listeProduits,    // Donnée pour Colonne D
+        livraison: dateLivraison,   // Donnée pour Colonne H
+        lieu: lieuExact,            // Donnée pour Colonne I
         statut: "EN ATTENTE PAIEMENT"
     };
 
-    // L'envoi se fait ici, on ne met pas 'await' pour ne pas bloquer l'utilisateur
+    // Envoi au Sheet via l'URL qui fonctionne (API_URL)
     fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
 
     // --- ÉTAPE 3 : VIDER LE PANIER IMMÉDIATEMENT ---
-    // Même si le client ferme l'onglet après, la commande est déjà partie !
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
 
-    // --- ÉTAPE 4 : AFFICHER L'INTERFACE DE CHOIX ---
-    // On appelle la fonction de design que nous avons créée
+    // --- ÉTAPE 4 : AFFICHER L'INTERFACE ---
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
