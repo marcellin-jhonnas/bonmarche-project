@@ -491,28 +491,34 @@ function afficherInstructionsMvola(montant, idCommande) {
     `;
 }
 async function lancerPayUnit(id, montant) {
-    // L'URL du NOUVEAU script de paiement que tu viens de créer
     const SCRIPT_PAIEMENT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
 
     try {
+        // Ajout de 'follow' pour suivre la redirection de Google
         const response = await fetch(SCRIPT_PAIEMENT_URL, {
             method: "POST",
+            mode: "cors", 
+            redirect: "follow", 
             body: JSON.stringify({
                 id: id,
                 montant: montant
             })
         });
 
+        // On vérifie si la réponse est bien arrivée
         const resultat = await response.json();
 
-        if (resultat.status === "success") {
-            // Le script nous donne le lien, on y va !
+        if (resultat && resultat.status === "success" && resultat.url) {
+            console.log("URL PayUnit générée : ", resultat.url);
+            // REDIRECTION immédiate dans le même onglet pour éviter les bloqueurs de pub
             window.location.href = resultat.url;
         } else {
-            alert("Erreur lors de la préparation du paiement.");
+            console.error("Erreur retournée par le GAS :", resultat);
+            alert("Erreur de préparation PayUnit.");
         }
     } catch (error) {
-        console.error("Erreur de connexion au service de paiement", error);
+        console.error("Erreur de connexion au service de paiement :", error);
+        alert("Impossible de joindre le service PayUnit. Vérifiez votre connexion.");
     }
 }
 
