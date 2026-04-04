@@ -418,15 +418,26 @@ function afficherChoixPaiementLuxe(id, montant) {
     `;
     document.body.appendChild(overlay);
 
-    // Actions des boutons
+    // --- ACTIONS DES BOUTONS (À MODIFIER ICI) ---
     document.getElementById('go-visa').onclick = () => {
-        alert("Redirection vers la plateforme VISA sécurisée...");
-        // Ici, insère ton lien de paiement PayUnit
+        // 1. On change l'apparence du bouton pour montrer le chargement
+        const btn = document.getElementById('go-visa');
+        btn.innerHTML = "⌛ Connexion sécurisée...";
+        btn.style.opacity = "0.7";
+        btn.disabled = true;
+
+        // 2. ON APPELLE LE NOUVEAU GAS (C'est ici que la magie opère)
+        lancerPayUnit(id, montant); 
     };
 
     document.getElementById('go-mvola').onclick = () => {
-        // Affiche les instructions MVola (le numéro 038...)
-        afficherInstructionsMvola(montant, id);
+        // On ferme la modale actuelle avant d'afficher MVola
+        const modale = document.getElementById('modale-saferun-pay');
+        if(modale) modale.remove();
+        
+        if (typeof afficherInstructionsMvola === "function") {
+            afficherInstructionsMvola(montant, id);
+        }
     };
 }
 
