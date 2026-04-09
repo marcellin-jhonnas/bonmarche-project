@@ -88,25 +88,33 @@ function rendreProduits(liste) {
         const likesAleatoires = Math.floor(Math.random() * 37) + 12;
         const prixFormatte = Number(p.Prix).toLocaleString();
 
-        // --- GÉNÉRATION DE LA CARTE AVEC STRUCTURE PREMIUM ---
         const carteHTML = `
         <div class="carte-produit">
             <div class="prix-badge">${prixFormatte} Ar</div>
             
-            // DANS TA FONCTION rendreProduits, REMPLACE LA LIGNE DE L'IMAGE PAR CELLE-CI :
-
-<div class="img-container">
-    <img src="${p.Image_URL}" 
-         alt="${p.Nom}" 
-         loading="lazy" 
-         onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
-         onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')"
-         style="cursor:zoom-in;">
-</div>
+            <div class="img-container">
+                <img src="${p.Image_URL}" 
+                     alt="${p.Nom}" 
+                     loading="lazy" 
+                     onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
+                     onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')"
+                     style="cursor:zoom-in;">
+            </div>
 
             <div style="padding:12px;">
-                <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
-                <h3>${p.Nom}</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
+                    
+                    <div style="color:#ffcc00; font-size:0.75rem; display:flex; gap:2px;">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                </div>
+
+                <h3 style="margin:5px 0; font-size:0.95rem; min-height:38px;">${p.Nom}</h3>
                 
                 <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin: 8px 0;">
                     <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.75rem;">
@@ -114,7 +122,10 @@ function rendreProduits(liste) {
                         <span class="nb-likes">${likesAleatoires}</span>
                     </div>
                     <div style="color:#eee;">|</div>
-                    <div style="font-size:0.75rem; color:#999;">Top Vente</div>
+                    
+                    <div style="font-size:0.75rem; color:#27ae60; font-weight:bold; display:flex; align-items:center; gap:3px;">
+                        ${(Math.random() * (4.9 - 4.6) + 4.6).toFixed(1)} <i class="fas fa-check-circle" style="font-size:0.65rem;"></i>
+                    </div>
                 </div>
 
                 <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a; font-size:0.8rem;">
@@ -123,9 +134,8 @@ function rendreProduits(liste) {
             </div>
         </div>`;
 
-        // --- TRI INTELLIGENT ---
+        // --- TRI INTELLIGENT (NE PAS TOUCHER) ---
         const categorie = (p.Categorie || "").toUpperCase();
-        
         if (categorie === 'PPN' && containerScroll) {
             containerScroll.insertAdjacentHTML('beforeend', carteHTML);
         } else {

@@ -1472,3 +1472,49 @@ body.sidebar-open .sidebar-overlay {
     50% { opacity: 0; }
 }
 
+/* --- STYLE DES ÉTOILES ET NOTES --- */
+.rating-stars {
+    color: #ffcc00; /* Jaune or SafeRun */
+    display: flex;
+    gap: 2px;
+}
+
+/* --- STYLE DU ZOOM PRODUIT (MODAL) --- */
+#modal-zoom-produit {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Optimisation de l'image dans le zoom pour mobile */
+#modal-zoom-produit img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+}
+
+/* Effet sur les boutons plus/moins du zoom */
+#modal-zoom-produit button:active {
+    transform: scale(0.95);
+    background-color: #eee !important;
+}
+
+/* --- ALIGNEMENT DES CARTES PRODUITS --- */
+/* --- ALIGNEMENT DES CARTES PRODUITS --- */
+.carte-produit h3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* Version pour Chrome/Safari/Edge */
+    line-clamp: 2;         /* Version standard (pour corriger ton erreur) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
