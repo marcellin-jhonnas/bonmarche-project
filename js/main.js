@@ -1745,8 +1745,21 @@ function ouvrirZoomProduit(nom, prix, image) {
         <div style="background:white;width:100%;max-width:400px;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);animation: zoomIn 0.3s ease;">
             <button onclick="this.parentElement.parentElement.style.display='none'" style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;">&times;</button>
             
-            <img src="${image}" style="width:100%;height:280px;object-fit:cover;">
-            
+           <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 280px; background: #f0f0f0;">
+    <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1;">
+    
+    <div style="
+        position: absolute; 
+        top: 0; 
+        left: -100%; 
+        width: 50%; 
+        height: 100%; 
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-15deg);
+        animation: refletBrillant 2s infinite;
+        z-index: 2;
+    "></div>
+</div>
             <div style="padding:25px;text-align:center;">
                 <h2 style="margin:0;font-size:1.5rem;color:#2c3e50;">${nom}</h2>
                 <h3 style="color:#e67e22;margin:10px 0;font-size:1.3rem;">${Number(prix).toLocaleString()} Ar</h3>
@@ -1789,7 +1802,7 @@ function validerAjoutZoom(nom, prix) {
 
 function discuterDepuisZoom(nom) {
     document.getElementById('modal-zoom-produit').style.display = 'none';
-    if(typeof ouvrirChat === "function") ouvrirChat();
+    if(typeof ouvrirChat === "function") envoyerMessageChat();
     const inputChat = document.querySelector('.chat-input');
     if(inputChat) {
         inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;

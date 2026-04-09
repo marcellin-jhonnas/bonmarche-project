@@ -1518,3 +1518,39 @@ body.sidebar-open .sidebar-overlay {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+/* --- ANIMATION POUR L'IMAGE AGRANDIE (EFFET LUMINEUX) --- */
+
+/* 1. Définition du mouvement de balayage */
+@keyframes refletBrillant {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 150%;
+    }
+}
+
+/* 2. Conteneur de l'image dans le Modal */
+.img-zoom-container {
+    position: relative;
+    overflow: hidden; /* Important pour cacher le reflet quand il sort de l'image */
+    width: 100%;
+    height: 280px;
+    background: #f0f0f0; /* Couleur de fond en attendant le chargement */
+}
+
+/* 3. L'image elle-même */
+.img-zoom-animated {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: relative;
+    z-index: 1; /* L'image est en dessous du reflet */
+}
+
+/* 4. Effet de zoom léger à l'apparition du modal */
+@keyframes zoomInModal {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
