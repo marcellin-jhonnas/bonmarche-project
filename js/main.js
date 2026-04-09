@@ -1706,7 +1706,7 @@ async function envoyerMessageChat() {
     const container = document.getElementById('chat-messages');
     container.innerHTML += `
         <div class="message client" style="background: #dcf8c6; align-self: flex-end; padding: 8px 12px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; font-size: 0.9rem; margin-bottom:5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-            ${message}
+            ${formaterMessage(message)}
         </div>
     `;
     input.value = "";
@@ -1771,6 +1771,22 @@ async function envoyerPhotoChat() {
         }
     };
 }
+function formaterMessage(texte) {
+  // Détection des liens Google Drive ou Google User Content
+  const estLienImage = texte.includes("drive.google.com") || 
+                       texte.includes("docs.google.com") || 
+                       texte.includes("googleusercontent.com");
+
+  if (estLienImage) {
+    return `<div class="chat-image-container">
+              <img src="${texte}" alt="Image" class="chat-img-render" 
+                   style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
+                   onclick="window.open('${texte}')"
+                   onerror="this.onerror=null; this.src='https://placehold.co/200x150?text=Image+en+attente...'">
+            </div>`;
+  }
+  return texte; // Retourne le texte normal
+}
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
     const idClient = obtenirIdentiteChat(); 
@@ -1799,9 +1815,8 @@ async function chargerMessagesChat() {
                 // Si le message est un lien Google Drive (contenant "google.com") ou finit par une extension image
                 const estLienImage = msg.message.includes("drive.google.com") || msg.message.includes("googleusercontent.com");
                 
-                const contenuMessage = estLienImage 
-                    ? `<img src="${msg.message}" style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onclick="window.open('${msg.message}')" title="Cliquez pour agrandir">`
-                    : msg.message;
+                // On utilise notre fonction intelligente pour décider quoi afficher
+                const contenuMessage = formaterMessage(msg.message);
                 // ---------------------------------------
 
                 container.innerHTML += `
