@@ -93,9 +93,16 @@ function rendreProduits(liste) {
         <div class="carte-produit">
             <div class="prix-badge">${prixFormatte} Ar</div>
             
-            <div class="img-container">
-                <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" onerror="this.src='https://via.placeholder.com/150?text=SafeRun'">
-            </div>
+            // DANS TA FONCTION rendreProduits, REMPLACE LA LIGNE DE L'IMAGE PAR CELLE-CI :
+
+<div class="img-container">
+    <img src="${p.Image_URL}" 
+         alt="${p.Nom}" 
+         loading="lazy" 
+         onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
+         onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')"
+         style="cursor:zoom-in;">
+</div>
 
             <div style="padding:12px;">
                 <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
@@ -1708,6 +1715,76 @@ function animerMessagePromo() {
         indexMsg = (indexMsg + 1) % messagesActuels.length;
         animerMessagePromo(); 
     });
+}
+
+let quantiteZoom = 1;
+
+function ouvrirZoomProduit(nom, prix, image) {
+    quantiteZoom = 1; // Réinitialise
+    
+    let modal = document.getElementById('modal-zoom-produit');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-zoom-produit';
+        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:15px;";
+        document.body.appendChild(modal);
+    }
+
+    modal.style.display = "flex";
+    modal.innerHTML = `
+        <div style="background:white;width:100%;max-width:400px;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);animation: zoomIn 0.3s ease;">
+            <button onclick="this.parentElement.parentElement.style.display='none'" style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;">&times;</button>
+            
+            <img src="${image}" style="width:100%;height:280px;object-fit:cover;">
+            
+            <div style="padding:25px;text-align:center;">
+                <h2 style="margin:0;font-size:1.5rem;color:#2c3e50;">${nom}</h2>
+                <h3 style="color:#e67e22;margin:10px 0;font-size:1.3rem;">${Number(prix).toLocaleString()} Ar</h3>
+                
+                <hr style="border:0;border-top:1px solid #eee;margin:15px 0;">
+                
+                <p style="font-size:0.85rem;color:#7f8c8d;margin-bottom:15px;">Quantité souhaitée :</p>
+                
+                <div style="display:flex;align-items:center;justify-content:center;gap:25px;margin-bottom:25px;">
+                    <button onclick="majQtyZoom(-1)" style="width:45px;height:45px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">-</button>
+                    <b id="val-qty-zoom" style="font-size:1.8rem;min-width:40px;">1</b>
+                    <button onclick="majQtyZoom(1)" style="width:45px;height:45px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                </div>
+
+                <button onclick="validerAjoutZoom('${nom.replace(/'/g, "\\'")}', ${prix})" style="width:100%;padding:18px;background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
+                    🛒 AJOUTER ${prix.toLocaleString()} Ar
+                </button>
+
+                <button onclick="discuterDepuisZoom('${nom.replace(/'/g, "\\'")}')" style="width:100%;padding:15px;background:#f1f2f6;color:#2c3e50;border:none;border-radius:15px;font-weight:bold;cursor:pointer;">
+                    💬 POSER UNE QUESTION
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function majQtyZoom(v) {
+    quantiteZoom += v;
+    if (quantiteZoom < 1) quantiteZoom = 1;
+    document.getElementById('val-qty-zoom').innerText = quantiteZoom;
+}
+
+function validerAjoutZoom(nom, prix) {
+    // On appelle ta fonction ajouterAuPanier autant de fois que la quantité choisie
+    for(let i=0; i < quantiteZoom; i++) {
+        ajouterAuPanier(nom, prix);
+    }
+    document.getElementById('modal-zoom-produit').style.display = 'none';
+}
+
+function discuterDepuisZoom(nom) {
+    document.getElementById('modal-zoom-produit').style.display = 'none';
+    if(typeof ouvrirChat === "function") ouvrirChat();
+    const inputChat = document.querySelector('.chat-input');
+    if(inputChat) {
+        inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
+        inputChat.focus();
+    }
 }
 // 4. ENVOI DE MESSAGE
 async function envoyerMessageChat() {
