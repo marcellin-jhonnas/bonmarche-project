@@ -1731,6 +1731,46 @@ async function envoyerMessageChat() {
     }
 }
 
+async function envoyerPhotoChat() {
+    const fileInput = document.getElementById('chat-file');
+    if (fileInput.files.length === 0) return;
+
+    const file = fileInput.files[0];
+    const idClient = obtenirIdentiteChat(); 
+    const nomClient = localStorage.getItem('saferun_nom');
+    const expediteurFinal = (nomClient && nomClient !== "Anonyme") ? nomClient : idClient;
+
+    // 1. On affiche un message temporaire pour dire que ça charge
+    const container = document.getElementById('chat-messages');
+    container.innerHTML += `<div class="message-bubble" style="align-self:flex-end; background:#dcf8c6; padding:8px; border-radius:10px; font-size:0.8rem; opacity:0.7;">Envoi de l'image...</div>`;
+    container.scrollTop = container.scrollHeight;
+
+    // 2. Lecture et envoi de l'image
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1]; // On récupère uniquement les données
+
+        try {
+            await fetch(scriptURL, {
+                method: "POST",
+                // Attention : on garde no-cors si ton GAS actuel utilise cette méthode
+                mode: "no-cors", 
+                body: JSON.stringify({ 
+                    action: "sendChatMessage", 
+                    idClient: idClient, 
+                    expediteur: expediteurFinal, 
+                    message: "IMAGE_SENT", // Mot-clé pour le GAS
+                    image: base64Data, 
+                    nomFichier: "Capture_" + idClient + "_" + Date.now() + ".jpg"
+                })
+            });
+            fileInput.value = ""; // On vide l'input
+        } catch (e) { 
+            console.error("Erreur d'envoi de la photo", e);
+        }
+    };
+}
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
     const idClient = obtenirIdentiteChat(); 
@@ -1740,8 +1780,6 @@ async function chargerMessagesChat() {
         const response = await fetch(`${scriptURL}?action=readChat&idClient=${idClient}`);
         const messages = await response.json();
 
-        // RECTIFICATION : On affiche si le nombre de messages a changé 
-        // OU si c'est le tout premier chargement (dernierNombreMessages === 0)
         if (messages.length !== dernierNombreMessages) {
             const container = document.getElementById('chat-messages');
             if (!container) return;
@@ -1757,25 +1795,31 @@ async function chargerMessagesChat() {
                 const dateMsg = new Date(msg.date);
                 const heure = dateMsg.getHours().toString().padStart(2, '0') + ":" + dateMsg.getMinutes().toString().padStart(2, '0');
 
+                // --- RECTIFICATION POUR LES IMAGES ---
+                // Si le message est un lien Google Drive (contenant "google.com") ou finit par une extension image
+                const estLienImage = msg.message.includes("drive.google.com") || msg.message.includes("googleusercontent.com");
+                
+                const contenuMessage = estLienImage 
+                    ? `<img src="${msg.message}" style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onclick="window.open('${msg.message}')" title="Cliquez pour agrandir">`
+                    : msg.message;
+                // ---------------------------------------
+
                 container.innerHTML += `
                     <div class="message-bubble" style="max-width:80%; padding:8px 12px; border-radius:15px; margin-bottom:8px; font-size:0.9rem; box-shadow:0 1px 2px rgba(0,0,0,0.1); display:flex; flex-direction:column; ${styleBulle}">
-                        ${msg.message}
+                        ${contenuMessage}
                         <div style="font-size:0.65rem; color:#888; text-align:right; margin-top:3px;">${heure}</div>
                     </div>
                 `;
             });
 
-            // Notification si nouveau message et chat fermé
             if (chatWindow && chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
                 const badge = document.getElementById('chat-notif');
                 if (badge) {
                     badge.style.display = "flex";
-                    // On affiche le nombre de nouveaux messages reçus
                     badge.innerText = messages.length - dernierNombreMessages;
                 }
             }
 
-            // Mise à jour du compteur global
             dernierNombreMessages = messages.length;
             container.scrollTop = container.scrollHeight;
         }

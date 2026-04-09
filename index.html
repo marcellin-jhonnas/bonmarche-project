@@ -451,11 +451,18 @@ setInterval(nextSlide, 5000);
         </div>
 
     <div style="padding: 10px; background: #f0f0f0; display: flex; gap: 8px; align-items: center;">
-        <input type="text" id="chat-input" placeholder="Taper un message..." style="flex:1; border:none; padding:10px; border-radius:20px; outline:none; font-size:0.9rem;">
-        <button onclick="envoyerMessageChat()" style="background:#075e54; color:white; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-            <i class="fas fa-paper-plane" style="font-size:14px;"></i>
-        </button>
-    </div>
+    <input type="file" id="chat-file" accept="image/*" style="display: none;" onchange="envoyerPhotoChat()">
+    
+    <button onclick="document.getElementById('chat-file').click()" style="background:none; border:none; color:#075e54; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+        <i class="fas fa-paperclip" style="font-size:18px;"></i>
+    </button>
+
+    <input type="text" id="chat-input" placeholder="Taper un message..." style="flex:1; border:none; padding:10px; border-radius:20px; outline:none; font-size:0.9rem;">
+    
+    <button onclick="envoyerMessageChat()" style="background:#075e54; color:white; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+        <i class="fas fa-paper-plane" style="font-size:14px;"></i>
+    </button>
+</div>
 </div>
 </body>
 </html>
