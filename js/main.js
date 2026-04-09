@@ -1827,13 +1827,8 @@ async function chargerMessagesChat() {
                 const dateMsg = new Date(msg.date);
                 const heure = dateMsg.getHours().toString().padStart(2, '0') + ":" + dateMsg.getMinutes().toString().padStart(2, '0');
 
-                // --- RECTIFICATION POUR LES IMAGES ---
-                // Si le message est un lien Google Drive (contenant "google.com") ou finit par une extension image
-                const estLienImage = msg.message.includes("drive.google.com") || msg.message.includes("googleusercontent.com");
-                
-                // On utilise notre fonction intelligente pour décider quoi afficher
+                // --- RENDU DU MESSAGE (TEXTE OU IMAGE VIA IMGBB/DRIVE) ---
                 const contenuMessage = formaterMessage(msg.message);
-                // ---------------------------------------
 
                 container.innerHTML += `
                     <div class="message-bubble" style="max-width:80%; padding:8px 12px; border-radius:15px; margin-bottom:8px; font-size:0.9rem; box-shadow:0 1px 2px rgba(0,0,0,0.1); display:flex; flex-direction:column; ${styleBulle}">
@@ -1843,6 +1838,7 @@ async function chargerMessagesChat() {
                 `;
             });
 
+            // Gestion du badge de notification
             if (chatWindow && chatWindow.style.display !== "flex" && dernierNombreMessages !== 0) {
                 const badge = document.getElementById('chat-notif');
                 if (badge) {
