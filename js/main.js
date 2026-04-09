@@ -1772,20 +1772,18 @@ async function envoyerPhotoChat() {
     };
 }
 function formaterMessage(texte) {
-  // Détection des liens Google Drive ou Google User Content
-  const estLienImage = texte.includes("drive.google.com") || 
-                       texte.includes("docs.google.com") || 
-                       texte.includes("googleusercontent.com");
+  const estLienImage = texte.includes("google.com") || texte.includes("googleusercontent.com");
 
   if (estLienImage) {
     return `<div class="chat-image-container">
               <img src="${texte}" alt="Image" class="chat-img-render" 
-                   style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
+                   style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px;"
                    onclick="window.open('${texte}')"
-                   onerror="this.onerror=null; this.src='https://placehold.co/200x150?text=Image+en+attente...'">
+                   onerror="setTimeout(() => { this.src = '${texte}?' + new Date().getTime(); }, 3000);"
+                   placeholder="Chargement...">
             </div>`;
   }
-  return texte; // Retourne le texte normal
+  return texte;
 }
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
