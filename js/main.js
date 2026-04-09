@@ -454,51 +454,72 @@ function afficherInstructionsMvola(montant, idCommande) {
         document.body.appendChild(modalPay);
     }
 
-    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;padding:15px;backdrop-filter:blur(5px);";
+    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);";
     
     modalPay.innerHTML = `
-        <div style="background:white;padding:25px;border-radius:25px;max-width:400px;width:100%;text-align:center;position:relative;box-shadow:0 15px 40px rgba(0,0,0,0.4);overflow-y:auto;max-height:90vh;">
-            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:#eee;width:30px;height:30px;border-radius:50%;cursor:pointer;">&times;</button>
+        <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;animation: slideUp 0.3s ease-out;">
             
-            <h3 style="color:#333;margin-top:10px;">Paiement MVola</h3>
-            
-            <div style="background:#f1f2f6;padding:12px;border-radius:12px;text-align:left;margin-bottom:15px;font-size:0.85rem;">
-                <p style="margin:5px 0;">📍 <b>Quartier :</b> ${quartier}</p>
-                <p style="margin:5px 0;">📅 <b>Date :</b> ${infoLivraison}</p>
+            <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button>
+                <img src="https://www.mvola.mg/wp-content/uploads/2021/03/Logo-MVola.png" style="height:40px;margin-bottom:10px;" alt="MVola">
+                <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Instructions de Paiement</h3>
             </div>
 
-            <div style="background:#fff9e6;padding:15px;border-radius:15px;border:1px dashed #ffcc00;margin-bottom:15px;">
-                <p style="margin:0;font-size:0.9rem;">Montant à envoyer :</p>
-                <h2 style="margin:5px 0;color:#e67e22;">${montant.toLocaleString()} Ar</h2>
-                <p style="margin:10px 0 5px 0;font-size:0.85rem;">Au numéro de <b>Marcellin</b> :</p>
-                <b style="font-size:1.2rem;color:#2c3e50;">${numeroMarcellin}</b>
-                <p style="margin:10px 0 5px 0;font-size:0.8rem;color:#7f8c8d;">Référence à indiquer :</p>
-                <b style="font-size:1rem;color:#c0392b;background:#ffeaa7;padding:2px 8px;border-radius:5px;">${idCommande}</b>
-            </div>
+            <div style="padding:20px; overflow-y:auto; max-height:75vh;">
+                
+                <div style="display:flex;justify-content:space-between;background:#f8f9fa;padding:12px;border-radius:15px;margin-bottom:20px;font-size:0.85rem;border:1px solid #eee;">
+                    <span>📍 <b>${quartier}</b></span>
+                    <span>📅 <b>${infoLivraison}</b></span>
+                </div>
 
-            <div style="text-align:left;background:#fdfdfd;border:1px solid #eee;padding:12px;border-radius:12px;margin-bottom:15px;">
-                <p style="margin:0 0 10px 0;font-weight:bold;font-size:0.85rem;color:#27ae60;text-align:center;">--- NOS ENGAGEMENTS ---</p>
-                
-                <div style="display:flex;align-items:center;margin-bottom:8px;">
-                    <span style="font-size:1.2rem;margin-right:10px;">💬</span>
-                    <p style="margin:0;font-size:0.8rem;">Dès réception du message, nous vous renverrons un <b>SMS de confirmation</b>.</p>
-                </div>
-                
-                <div style="display:flex;align-items:center;margin-bottom:8px;">
-                    <span style="font-size:1.2rem;margin-right:10px;">✅</span>
-                    <p style="margin:0;font-size:0.8rem;">Votre achat passera en statut <b>"Validé"</b> sur votre espace client.</p>
-                </div>
-                
-                <div style="display:flex;align-items:center;">
-                    <span style="font-size:1.2rem;margin-right:10px;">📞</span>
-                    <p style="margin:0;font-size:0.8rem;">Le livreur vous <b>appellera</b> lorsqu'il sera proche de votre quartier.</p>
-                </div>
-            </div>
+                <div style="background:#fffdf0;padding:20px;border-radius:20px;border:2px solid #ffcc00;margin-bottom:20px; position:relative;">
+                    <p style="margin:0;font-size:0.9rem;color:#666;">Montant exact à envoyer :</p>
+                    <h2 style="margin:5px 0;color:#d35400;font-size:1.8rem;">${montant.toLocaleString()} Ar</h2>
+                    
+                    <div style="margin:15px 0;padding:10px;background:white;border-radius:10px;border:1px solid #ffeaa7;">
+                        <p style="margin:0 0 5px 0;font-size:0.8rem;color:#7f8c8d;">Numéro MVola (Marcellin) :</p>
+                        <b style="font-size:1.3rem;color:#2c3e50;letter-spacing:1px;">${numeroMarcellin}</b>
+                    </div>
 
-            <button onclick="window.location.reload()" style="width:100%;padding:15px;background:#27ae60;color:white;border:none;border-radius:12px;font-weight:bold;font-size:0.95rem;cursor:pointer;">
-                J'AI EFFECTUÉ LE TRANSFERT
-            </button>
+                    <p style="margin:0;font-size:0.8rem;color:#7f8c8d;">Référence obligatoire :</p>
+                    <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:4px 12px;border-radius:8px;display:inline-block;margin-top:5px;border:1px solid #fab1a0;">${idCommande}</b>
+                </div>
+
+                <div style="background:#e3f2fd; padding:15px; border-radius:18px; margin-bottom:20px; border-left:5px solid #2196f3; text-align:left;">
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:1.5rem; margin-right:12px;">📸</span>
+                        <div>
+                            <p style="margin:0; font-size:0.85rem; font-weight:bold; color:#0d47a1;">Astuce Rapidité :</p>
+                            <p style="margin:2px 0 0 0; font-size:0.75rem; color:#1565c0;">Envoyez une <b>capture d'écran</b> du transfert dans le chat pour une validation instantanée !</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:left; padding:0 10px; margin-bottom:25px;">
+                    <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+                        <div style="background:#27ae60;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:0.7rem;">✓</div>
+                        <p style="margin:0;font-size:0.8rem;color:#444;">Confirmation par <b>SMS</b> après réception.</p>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;">
+                        <div style="background:#27ae60;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:0.7rem;">✓</div>
+                        <p style="margin:0;font-size:0.8rem;color:#444;">Suivi en temps réel sur votre <b>Espace Client</b>.</p>
+                    </div>
+                </div>
+
+                <button onclick="window.location.reload()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                    J'AI EFFECTUÉ LE TRANSFERT
+                </button>
+                
+                <p style="margin-top:15px; font-size:0.75rem; color:#95a5a6;">SafeRun Market - Livraison sécurisée</p>
+            </div>
         </div>
+        
+        <style>
+            @keyframes slideUp {
+                from { transform: translateY(50px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        </style>
     `;
 }
 async function lancerPayUnit(id, montant) {
