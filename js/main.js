@@ -1772,20 +1772,22 @@ async function envoyerPhotoChat() {
     };
 }
 function formaterMessage(texte) {
-  // Détection des liens Google Drive ou Google User Content
-  const estLienImage = texte.includes("drive.google.com") || 
-                       texte.includes("docs.google.com") || 
-                       texte.includes("googleusercontent.com");
+  const t = texte.toString().trim();
+  
+  if (t.includes("google.com") || t.includes("googleusercontent.com")) {
+    // On s'assure que le lien est bien en mode "download" pour l'affichage
+    const lienRendu = t.replace("view", "download").replace("open", "download");
 
-  if (estLienImage) {
     return `<div class="chat-image-container">
-              <img src="${texte}" alt="Image" class="chat-img-render" 
-                   style="max-width:100%; border-radius:10px; cursor:pointer; margin-top:5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
-                   onclick="window.open('${texte}')"
-                   onerror="this.onerror=null; this.src='https://placehold.co/200x150?text=Image+en+attente...'">
+              <img src="${lienRendu}" 
+                   style="max-width:100%; border-radius:10px; cursor:pointer; display:block;" 
+                   onclick="window.open('${t}')" 
+                   onload="console.log('Image chargée avec succès !')"
+                   onerror="this.src='https://placehold.co/200x150?text=Scan+Antivirus+Google...'">
+              <span style="font-size:0.7rem; color:#888;">Cliquez pour agrandir</span>
             </div>`;
   }
-  return texte; // Retourne le texte normal
+  return t;
 }
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
 async function chargerMessagesChat() {
