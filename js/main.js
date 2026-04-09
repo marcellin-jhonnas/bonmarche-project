@@ -1772,21 +1772,35 @@ async function envoyerPhotoChat() {
     };
 }
 function formaterMessage(texte) {
+  if (!texte) return "";
   const t = texte.toString().trim();
   
-  if (t.includes("google.com") || t.includes("googleusercontent.com")) {
-    // On s'assure que le lien est bien en mode "download" pour l'affichage
-    const lienRendu = t.replace("view", "download").replace("open", "download");
+  // 1. Détection des liens (ImgBB ou Google)
+  const estLien = t.startsWith("http");
+  const estGoogle = t.includes("google.com") || t.includes("googleusercontent.com");
 
-    return `<div class="chat-image-container">
-              <img src="${lienRendu}" 
-                   style="max-width:100%; border-radius:10px; cursor:pointer; display:block;" 
-                   onclick="window.open('${t}')" 
-                   onload="console.log('Image chargée avec succès !')"
-                   onerror="this.src='https://placehold.co/200x150?text=Scan+Antivirus+Google...'">
-              <span style="font-size:0.7rem; color:#888;">Cliquez pour agrandir</span>
-            </div>`;
+  if (estLien) {
+    let lienAffichage = t;
+
+    // Si c'est un ancien lien Google, on garde ta logique de conversion
+    if (estGoogle) {
+      lienAffichage = t.replace("view", "download").replace("open", "download");
+    }
+
+    return `
+      <div class="chat-image-container" style="margin-top: 5px;">
+        <img src="${lienAffichage}" 
+             alt="Photo jointe" 
+             style="max-width:100%; border-radius:10px; cursor:pointer; display:block; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" 
+             onclick="window.open('${t}')"
+             onerror="this.onerror=null; this.src='https://placehold.co/200x150?text=Image+en+chargement...'">
+        <span style="font-size:0.65rem; color:#888; display:block; margin-top:2px;">
+          <i class="fas fa-search-plus"></i> Cliquez pour agrandir
+        </span>
+      </div>`;
   }
+
+  // 2. Si c'est du texte normal, on le renvoie tel quel
   return t;
 }
 // 5. RÉCEPTION DES MESSAGES (Toutes les 5 secondes)
