@@ -1809,50 +1809,58 @@ function ouvrirZoomProduit(nom, prix, image) {
         document.body.appendChild(modal);
     }
 
+    const nomEchappe = nom.replace(/'/g, "\\'");
+
     modal.style.display = "flex";
     modal.innerHTML = `
         <div style="background:white;width:100%;max-width:400px;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);animation: zoomIn 0.3s ease;">
-            <button onclick="this.parentElement.parentElement.style.display='none'" style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;">&times;</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;z-index:10;">&times;</button>
             
-           <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 280px; background: #f0f0f0;">
-    <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1;">
-    
-    <div style="
-        position: absolute; 
-        top: 0; 
-        left: -100%; 
-        width: 50%; 
-        height: 100%; 
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-        transform: skewX(-15deg);
-        animation: refletBrillant 2s infinite;
-        z-index: 2;
-    "></div>
-</div>
+            <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 280px; background: #f0f0f0;">
+                <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1;">
+                <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); transform: skewX(-15deg); animation: refletBrillant 2s infinite; z-index: 2;"></div>
+            </div>
+
             <div style="padding:25px;text-align:center;">
                 <h2 style="margin:0;font-size:1.5rem;color:#2c3e50;">${nom}</h2>
                 <h3 style="color:#e67e22;margin:10px 0;font-size:1.3rem;">${Number(prix).toLocaleString()} Ar</h3>
                 
                 <hr style="border:0;border-top:1px solid #eee;margin:15px 0;">
                 
-                <p style="font-size:0.85rem;color:#7f8c8d;margin-bottom:15px;">Quantité souhaitée :</p>
-                
                 <div style="display:flex;align-items:center;justify-content:center;gap:25px;margin-bottom:25px;">
-                    <button onclick="majQtyZoom(-1)" style="width:45px;height:45px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">-</button>
-                    <b id="val-qty-zoom" style="font-size:1.8rem;min-width:40px;">1</b>
-                    <button onclick="majQtyZoom(1)" style="width:45px;height:45px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                    <button onclick="majQtyZoom(-1)" style="width:40px;height:40px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.2rem;cursor:pointer;">-</button>
+                    <b id="val-qty-zoom" style="font-size:1.6rem;min-width:40px;">1</b>
+                    <button onclick="majQtyZoom(1)" style="width:40px;height:40px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.2rem;cursor:pointer;">+</button>
                 </div>
 
-                <button onclick="validerAjoutZoom('${nom.replace(/'/g, "\\'")}', ${prix})" style="width:100%;padding:18px;background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
-                    🛒 AJOUTER ${prix.toLocaleString()} Ar
-                </button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="discuterWhatsApp('${nomEchappe}')" style="padding:12px;background:#25D366;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+                        <i class="fab fa-whatsapp"></i> WHATSAPP
+                    </button>
+                    <button onclick="discuterDepuisZoom('${nomEchappe}')" style="padding:12px;background:#3498db;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+                        <i class="fas fa-comment-dots"></i> CHAT
+                    </button>
+                </div>
 
-                <button onclick="discuterDepuisZoom('${nom.replace(/'/g, "\\'")}')" style="width:100%;padding:15px;background:#f1f2f6;color:#2c3e50;border:none;border-radius:15px;font-weight:bold;cursor:pointer;">
-                    💬 POSER UNE QUESTION
-                </button>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="validerAjoutZoom('${nomEchappe}', ${prix})" style="flex:2;padding:18px;background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.9rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
+                        🛒 AJOUTER
+                    </button>
+
+                    <button onclick="this.parentElement.parentElement.parentElement.parentElement.style.display='none'" style="flex:1;padding:18px;background:#f1f2f6;color:#666;border:none;border-radius:15px;font-weight:bold;font-size:0.8rem;cursor:pointer;">
+                        QUITTER
+                    </button>
+                </div>
             </div>
         </div>
     `;
+}
+
+// Fonction pour ouvrir WhatsApp avec un message automatique
+function discuterWhatsApp(produit) {
+    const numero = "261382453610"; // Remplace par ton vrai numéro Marcellin
+    const texte = encodeURIComponent(`Bonjour SafeRun ! Je souhaite commander : ${produit}. Pouvez-vous m'aider ?`);
+    window.open(`https://wa.me/${numero}?text=${texte}`, '_blank');
 }
 
 function majQtyZoom(v) {
@@ -1870,13 +1878,30 @@ function validerAjoutZoom(nom, prix) {
 }
 
 function discuterDepuisZoom(nom) {
-    document.getElementById('modal-zoom-produit').style.display = 'none';
-    if(typeof ouvrirChat === "function") envoyerMessageChat();
-    const inputChat = document.querySelector('.chat-input');
-    if(inputChat) {
-        inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
-        inputChat.focus();
+    // 1. Fermer proprement le zoom
+    const modalZoom = document.getElementById('modal-zoom-produit');
+    if (modalZoom) modalZoom.style.display = 'none';
+
+    // 2. Ouvrir ton interface de chat (si la fonction existe)
+    if (typeof ouvrirChat === "function") {
+        ouvrirChat(); 
+    } else {
+        // Si tu n'as pas de fonction ouvrirChat, on affiche juste le bloc chat
+        const fenetreChat = document.getElementById('chat-window'); // Vérifie ton ID
+        if (fenetreChat) fenetreChat.style.display = 'block';
     }
+
+    // 3. Cibler l'input et envoyer le texte du produit
+    setTimeout(() => {
+        const inputChat = document.querySelector('.chat-input');
+        if (inputChat) {
+            inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
+            inputChat.focus();
+            
+            // Optionnel : on peut même ajouter un petit effet visuel pour montrer que c'est prêt
+            inputChat.style.border = "2px solid #ffcc00";
+        }
+    }, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
 }
 // 4. ENVOI DE MESSAGE
 async function envoyerMessageChat() {
