@@ -1554,3 +1554,131 @@ body.sidebar-open .sidebar-overlay {
     from { transform: scale(0.9); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
+
+/* --- STYLE DU GUIDE VISUEL VIVANT --- */
+
+.sr-guide-vivant-container {
+    background: #ffffff;
+    margin: 30px 10px;
+    padding: 25px 15px;
+    border-radius: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+    border: 1px solid #f8f8f8;
+    position: relative;
+    overflow: hidden;
+}
+
+/* En-tête du guide */
+.sr-guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 25px;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pulse-icon {
+    color: #27ae60;
+    animation: pulse 1.5s infinite;
+}
+
+/* Conteneur des étapes */
+.sr-guide-steps {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.sr-step-item {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Les Cercles d'icônes */
+.sr-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+/* Couleurs des icônes SafeRun */
+.sr-icon-circle.yellow { background: #fff9e6; color: #ffcc00; }
+.sr-icon-circle.blue { background: #e3f2fd; color: #2196f3; }
+.sr-icon-circle.green { background: #e8f5e9; color: #27ae60; }
+
+/* Textes */
+.sr-step-item b {
+    display: block;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.sr-step-item p {
+    font-size: 0.7rem;
+    color: #95a5a6;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Flèches de connexion */
+.sr-arrow-connect {
+    color: #eee;
+    font-size: 0.9rem;
+    margin-top: 25px; /* Aligné avec les icônes */
+}
+
+/* --- DÉFINITION DES ANIMATIONS (LE CÔTÉ "VIVANT") --- */
+
+/* 1. Pulse (Pour le panier) */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.pulse-anim { animation: pulse 2s infinite ease-in-out; }
+
+/* 2. Float (Pour l'icône de choix) */
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0); }
+}
+.float-anim { animation: float 2.5s infinite ease-in-out; }
+
+/* 3. Shake (Pour l'icône de paiement/chat) */
+@keyframes shake {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(8deg); }
+    20% { transform: rotate(-8deg); }
+    30% { transform: rotate(8deg); }
+    40% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+}
+.shake-anim { animation: shake 3s infinite ease-in-out; }
+
+
+/* --- ADAPTATION MOBILE (TRES IMPORTANT POUR MADAGASCAR) --- */
+@media (max-width: 480px) {
+    .sr-icon-circle { width: 50px; height: 50px; border-radius: 18px; font-size: 1.3rem; }
+    .sr-step-item b { font-size: 0.8rem; }
+    .sr-step-item p { font-size: 0.65rem; display: none; /* Cache le texte long sur petit écran pour aérer */ }
+    .sr-arrow-connect { display: none; /* Cache les flèches sur mobile */ }
+    .sr-guide-vivant-container { padding: 20px 10px; }
+}
