@@ -8,7 +8,8 @@ if ('serviceWorker' in navigator) {
 // --- CONFIGURATION DES PONTS GOOGLE ---
 // Ce lien sert à LIRE tes produits
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
-
+let pageActuelle = 1;
+const produitsParPage = 8; // Affiche 8 produits par page pour un rendu propre sur mobile
 // Ce lien sert à ENVOYER la commande et PAYER (Ton dernier déploiement)
 const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
 const POURCENTAGE_LIVRAISON = 0.15; // 15% de frais de service
@@ -63,7 +64,31 @@ async function chargerBoutique() {
         }
     }
 }
+function genererHTMLProduit(p) {
+    const nomPropre = p.Nom.replace(/'/g, "\\'");
+    const prixFormatte = Number(p.Prix).toLocaleString();
+    const likesAleatoires = Math.floor(Math.random() * 37) + 12;
 
+    return `
+    <div class="carte-produit">
+        <div class="prix-badge">${prixFormatte} Ar</div>
+        <div class="img-container">
+            <img src="${p.Image_URL}" alt="${p.Nom}" onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')" style="cursor:zoom-in;">
+        </div>
+        <div style="padding:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
+                <div style="color:#ffcc00; font-size:0.7rem; display:flex; gap:2px;">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </div>
+            </div>
+            <h3 style="margin:5px 0 10px 0; font-size:0.95rem; min-height:40px;">${p.Nom}</h3>
+            <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a; font-size:0.8rem;">
+                <i class="fas fa-cart-plus"></i> AJOUTER
+            </button>
+        </div>
+    </div>`;
+}
 function rendreProduits(liste) {
     const containerGrille = document.getElementById('boutique');
     const containerScroll = document.getElementById('boutique-ppn'); 
@@ -83,65 +108,109 @@ function rendreProduits(liste) {
     containerGrille.innerHTML = "";
     if (containerScroll) containerScroll.innerHTML = "";
 
-    liste.forEach(p => {
-        const nomPropre = p.Nom.replace(/'/g, "\\'");
-        const likesAleatoires = Math.floor(Math.random() * 37) + 12;
-        const prixFormatte = Number(p.Prix).toLocaleString();
+    // --- ÉTAPE A : SÉPARATION DES PRODUITS ---
+    const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
+    const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
 
-        const carteHTML = `
-        <div class="carte-produit">
-            <div class="prix-badge">${prixFormatte} Ar</div>
-            
-            <div class="img-container">
-                <img src="${p.Image_URL}" 
-                     alt="${p.Nom}" 
-                     loading="lazy" 
-                     onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
-                     onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')"
-                     style="cursor:zoom-in;">
-            </div>
-
-            <div style="padding:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
-                    
-                    <div style="color:#ffcc00; font-size:0.75rem; display:flex; gap:2px;">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star-half-alt"></i>
-                    </div>
-                </div>
-
-                <h3 style="margin:5px 0; font-size:0.95rem; min-height:38px;">${p.Nom}</h3>
-                
-                <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin: 8px 0;">
-                    <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.75rem;">
-                        <i class="far fa-heart"></i> 
-                        <span class="nb-likes">${likesAleatoires}</span>
-                    </div>
-                    <div style="color:#eee;">|</div>
-                    
-                    <div style="font-size:0.75rem; color:#27ae60; font-weight:bold; display:flex; align-items:center; gap:3px;">
-                        ${(Math.random() * (4.9 - 4.6) + 4.6).toFixed(1)} <i class="fas fa-check-circle" style="font-size:0.65rem;"></i>
-                    </div>
-                </div>
-
-                <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a; font-size:0.8rem;">
-                    <i class="fas fa-cart-plus"></i> AJOUTER
-                </button>
-            </div>
-        </div>`;
-
-        // --- TRI INTELLIGENT (NE PAS TOUCHER) ---
-        const categorie = (p.Categorie || "").toUpperCase();
-        if (categorie === 'PPN' && containerScroll) {
-            containerScroll.insertAdjacentHTML('beforeend', carteHTML);
-        } else {
-            containerGrille.insertAdjacentHTML('beforeend', carteHTML);
-        }
+    // --- ÉTAPE B : AFFICHAGE DES PPN (Pas de pagination ici) ---
+    produitsPPN.forEach(p => {
+        containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
     });
+
+    // --- ÉTAPE C : PAGINATION POUR "TOUT LE MARCHÉ" ---
+    const totalProduitsMarche = produitsMarche.length;
+    const debut = (pageActuelle - 1) * produitsParPage;
+    const fin = debut + produitsParPage;
+    const produitsAPresenter = produitsMarche.slice(debut, fin);
+
+    produitsAPresenter.forEach(p => {
+        containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+    });
+
+    // --- ÉTAPE D : CRÉER LES BOUTONS 1, 2, 3... ---
+    creerBarrePagination(totalProduitsMarche);
+}
+
+// Fonction utilitaire pour garder ton design exact (Évite les erreurs de copier-coller)
+function genererCodeCarte(p) {
+    const nomPropre = p.Nom.replace(/'/g, "\\'");
+    const likesAleatoires = Math.floor(Math.random() * 37) + 12;
+    const prixFormatte = Number(p.Prix).toLocaleString();
+
+    return `
+    <div class="carte-produit">
+        <div class="prix-badge">${prixFormatte} Ar</div>
+        <div class="img-container">
+            <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
+                 onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
+                 onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}')"
+                 style="cursor:zoom-in;">
+        </div>
+        <div style="padding:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="cat-tag">${p.Categorie || 'Essentiel'}</span>
+                <div style="color:#ffcc00; font-size:0.75rem; display:flex; gap:2px;">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </div>
+            </div>
+            <h3 style="margin:5px 0; font-size:0.95rem; min-height:38px;">${p.Nom}</h3>
+            <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin: 8px 0;">
+                <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.75rem;">
+                    <i class="far fa-heart"></i> <span class="nb-likes">${likesAleatoires}</span>
+                </div>
+                <div style="color:#eee;">|</div>
+                <div style="font-size:0.75rem; color:#27ae60; font-weight:bold; display:flex; align-items:center; gap:3px;">
+                    ${(Math.random() * (4.9 - 4.6) + 4.6).toFixed(1)} <i class="fas fa-check-circle" style="font-size:0.65rem;"></i>
+                </div>
+            </div>
+            <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg, #ffcc00, #ff9900); border:none; font-weight:700; cursor:pointer; color:#1a1a1a; font-size:0.8rem;">
+                <i class="fas fa-cart-plus"></i> AJOUTER
+            </button>
+        </div>
+    </div>`;
+}
+function creerBarrePagination(total) {
+    let container = document.getElementById('pagination-container');
+    
+    // Si le container n'existe pas dans le HTML, on le crée sous la grille
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'pagination-container';
+        container.className = 'pagination-flex';
+        document.getElementById('boutique').after(container);
+    }
+
+    const nbPages = Math.ceil(total / produitsParPage);
+    let html = "";
+
+    // Bouton Précédent
+    if (pageActuelle > 1) {
+        html += `<button onclick="allerPage(${pageActuelle - 1})" class="btn-page"> <i class="fas fa-chevron-left"></i> </button>`;
+    }
+
+    // Numéros de pages
+    for (let i = 1; i <= nbPages; i++) {
+        if (i === 1 || i === nbPages || (i >= pageActuelle - 1 && i <= pageActuelle + 1)) {
+            html += `<button onclick="allerPage(${i})" class="btn-page ${i === pageActuelle ? 'active' : ''}">${i}</button>`;
+        } else if (i === pageActuelle - 2 || i === pageActuelle + 2) {
+            html += `<span style="color:#ccc;">...</span>`;
+        }
+    }
+
+    // Bouton Suivant
+    if (pageActuelle < nbPages) {
+        html += `<button onclick="allerPage(${pageActuelle + 1})" class="btn-page"> <i class="fas fa-chevron-right"></i> </button>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function allerPage(num) {
+    pageActuelle = num;
+    // On rappelle la fonction avec la liste globale (tousLesProduits)
+    rendreProduits(tousLesProduits); 
+    // Remonter en haut de la liste "Tout le Marché" proprement
+    document.getElementById('boutique').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // AJOUTE CES DEUX FONCTIONS TOUT EN BAS DE TON main.js

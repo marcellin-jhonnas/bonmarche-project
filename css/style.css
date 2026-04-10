@@ -1676,3 +1676,65 @@ body.sidebar-open .sidebar-overlay {
     .sr-premium-guide { padding: 15px 10px; margin: 20px 5px; }
     .payment-icons-mini { margin-top: 5px; font-size: 1rem; gap: 5px;}
 }
+/* --- STYLE DE LA PAGINATION SAFERUN --- */
+
+.pagination-flex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 40px 0;
+    padding-bottom: 20px;
+}
+
+.btn-page {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #eee;
+    background: #ffffff;
+    color: #333;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+/* Page active (Jaune SafeRun) */
+.btn-page.active {
+    background: linear-gradient(135deg, #ffcc00, #ff9900);
+    color: #1a1a1a;
+    border: none;
+    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
+    transform: scale(1.1);
+}
+
+/* Effet au survol */
+.btn-page:hover:not(.active) {
+    background: #f8f8f8;
+    border-color: #ffcc00;
+    transform: translateY(-3px);
+}
+
+/* Style pour les points de suspension (...) */
+.pagination-flex span {
+    font-weight: bold;
+    color: #ccc;
+    padding: 0 5px;
+}
+
+/* Adaptation Mobile */
+@media (max-width: 480px) {
+    .btn-page {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+        border-radius: 10px;
+    }
+    .pagination-flex {
+        gap: 6px;
+    }
+}
