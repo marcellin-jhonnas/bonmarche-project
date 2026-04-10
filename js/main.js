@@ -1903,6 +1903,66 @@ function discuterDepuisZoom(nom) {
         }
     }, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
 }
+// 1. Ouvrir/Fermer
+function ouvrirModalAvis() { document.getElementById('modal-avis').style.display = 'flex'; }
+function fermerModalAvis() { document.getElementById('modal-avis').style.display = 'none'; }
+
+// 2. Publier
+async function publierAvis() {
+    const texte = document.getElementById('comm-client').value;
+    const photo = document.getElementById('photo-client').files[0];
+    const nom = localStorage.getItem('nomUtilisateur') || "Client SafeRun";
+    const btn = document.getElementById('btn-publier');
+
+    if (!texte || !photo) {
+        alert("Veuillez ajouter un commentaire et votre photo !");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "⏳ Envoi...";
+
+    // Envoi photo vers ImgBB
+    const formData = new FormData();
+    formData.append("image", photo);
+
+    try {
+        const response = await fetch("https://api.imgbb.com/1/upload?key=TON_ID_IMGBB", {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        const finalPhotoUrl = data.data.url;
+
+        // Ici tu envoies l'objet à ta feuille de calcul (via Google Apps Script)
+        const avisData = { nom: nom, message: texte, photo: finalPhotoUrl, date: new Date().toLocaleDateString() };
+        console.log("Avis prêt à être envoyé à la Sheet :", avisData);
+
+        alert("Merci " + nom + " ! Votre avis est enregistré.");
+        fermerModalAvis();
+        // Optionnel: ajouter visuellement l'avis sans recharger
+        ajouterAvisAuFlux(avisData);
+
+    } catch (e) {
+        alert("Erreur de connexion");
+        btn.disabled = false;
+        btn.innerText = "Publier";
+    }
+}
+
+function ajouterAvisAuFlux(data) {
+    const container = document.getElementById('display-avis-footer');
+    const html = `
+        <div class="avis-card-footer">
+            <img src="${data.photo}" alt="user">
+            <div>
+                <b style="font-size:0.7rem; color:#ffcc00;">${data.nom}</b>
+                <p style="font-size:0.65rem; margin:0;">${data.message}</p>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('afterbegin', html);
+}
 // 4. ENVOI DE MESSAGE
 async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
