@@ -1903,67 +1903,137 @@ function discuterDepuisZoom(nom) {
         }
     }, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
 }
-// 1. Ouvrir/Fermer
-function ouvrirModalAvis() { document.getElementById('modal-avis').style.display = 'flex'; }
-function fermerModalAvis() { document.getElementById('modal-avis').style.display = 'none'; }
+// ==========================================
+// GESTION DES AVIS CLIENTS (SAFERUN MARKET)
+// ==========================================
 
-// 2. Publier
+// 1. Ouvrir/Fermer le modal d'avis
+function ouvrirModalAvis() { 
+    document.getElementById('modal-avis').style.display = 'flex'; 
+}
+
+function fermerModalAvis() { 
+    document.getElementById('modal-avis').style.display = 'none'; 
+}
+
+// 2. Publier l'avis sur ImgBB puis sur Google Sheets
 async function publierAvis() {
     const texte = document.getElementById('comm-client').value;
-    const photo = document.getElementById('photo-client').files[0];
-    const nom = localStorage.getItem('nomUtilisateur') || "Client SafeRun";
+    const photoInput = document.getElementById('photo-client');
+    const photo = photoInput.files[0];
+    
+    // Utilisation de ta clé de stockage exacte
+    const nom = localStorage.getItem('saferun_nom') || "Client SafeRun";
     const btn = document.getElementById('btn-publier');
 
+    // Vérification de sécurité
     if (!texte || !photo) {
-        alert("Veuillez ajouter un commentaire et votre photo !");
+        alert("Marcellin dit : N'oubliez pas le commentaire et la photo !");
         return;
     }
 
+    // Blocage du bouton pour éviter les doubles clics
     btn.disabled = true;
-    btn.innerText = "⏳ Envoi...";
-
-    // Envoi photo vers ImgBB
-    const formData = new FormData();
-    formData.append("image", photo);
+    btn.innerText = "⏳ Publication...";
 
     try {
-        const response = await fetch("https://api.imgbb.com/1/upload?key=TON_ID_IMGBB", {
+        // --- ÉTAPE A : Envoi de la photo vers ImgBB ---
+        const formData = new FormData();
+        formData.append("image", photo);
+        
+        const responseImg = await fetch("https://api.imgbb.com/1/upload?key=75ed3024736a6c38bb523b6226d2e933", {
             method: "POST",
             body: formData
         });
-        const data = await response.json();
-        const finalPhotoUrl = data.data.url;
+        
+        if (!responseImg.ok) throw new Error("Erreur ImgBB");
+        
+        const dataImg = await responseImg.json();
+        const finalPhotoUrl = dataImg.data.url;
 
-        // Ici tu envoies l'objet à ta feuille de calcul (via Google Apps Script)
-        const avisData = { nom: nom, message: texte, photo: finalPhotoUrl, date: new Date().toLocaleDateString() };
-        console.log("Avis prêt à être envoyé à la Sheet :", avisData);
+        // --- ÉTAPE B : Envoi des données vers ton Google Sheet ---
+        const avisPourGas = {
+            action: "publierAvis",
+            nom: nom,
+            message: texte,
+            photo: finalPhotoUrl
+        };
 
-        alert("Merci " + nom + " ! Votre avis est enregistré.");
-        fermerModalAvis();
-        // Optionnel: ajouter visuellement l'avis sans recharger
-        ajouterAvisAuFlux(avisData);
+        // Utilisation de ton API_URL déclarée en entête
+        const responseSheet = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(avisPourGas)
+        });
+
+        if (responseSheet.ok) {
+            alert("Merci " + nom + " ! Votre avis est bien enregistré.");
+            fermerModalAvis();
+            
+            // Mise à jour visuelle immédiate sans recharger
+            ajouterAvisAuFlux({
+                nom: nom,
+                message: texte,
+                photo: finalPhotoUrl
+            });
+            
+            // Réinitialisation du formulaire
+            document.getElementById('comm-client').value = "";
+            photoInput.value = "";
+        } else {
+            throw new Error("Erreur Google Sheet");
+        }
 
     } catch (e) {
-        alert("Erreur de connexion");
+        console.error("Erreur technique:", e);
+        alert("Erreur de connexion. Vérifiez votre connexion internet.");
+    } finally {
         btn.disabled = false;
         btn.innerText = "Publier";
     }
 }
 
+// 3. Charger les avis existants au démarrage du site
+async function chargerAvisDepuisSheet() {
+    const container = document.getElementById('display-avis-footer');
+    try {
+        // Appel à ton API avec l'action getAvis configurée dans ton GAS
+        const res = await fetch(API_URL + "?action=getAvis");
+        const avis = await res.json();
+        
+        if (avis && avis.length > 0) {
+            container.innerHTML = ""; // On retire le message "Chargement..."
+            // On affiche les 5 derniers avis
+            avis.slice(0, 5).forEach(item => {
+                ajouterAvisAuFlux(item);
+            });
+        } else {
+            container.innerHTML = "<p style='font-size:0.7rem; color:#888;'>Soyez le premier à donner votre avis !</p>";
+        }
+    } catch (err) {
+        console.log("Erreur chargement avis:", err);
+        container.innerHTML = ""; 
+    }
+}
+
+// 4. Ajouter l'avis visuellement dans le footer
 function ajouterAvisAuFlux(data) {
     const container = document.getElementById('display-avis-footer');
     const html = `
-        <div class="avis-card-footer">
-            <img src="${data.photo}" alt="user">
-            <div>
-                <b style="font-size:0.7rem; color:#ffcc00;">${data.nom}</b>
-                <p style="font-size:0.65rem; margin:0;">${data.message}</p>
+        <div class="avis-card-footer" style="display: flex; gap: 10px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; margin-bottom: 8px; border-left: 3px solid #ffcc00;">
+            <img src="${data.photo}" alt="user" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #ffcc00;">
+            <div style="text-align: left;">
+                <b style="font-size:0.75rem; color:#ffcc00; display: block;">${data.nom}</b>
+                <p style="font-size:0.7rem; margin:0; color: #fff; line-height: 1.2;">${data.message}</p>
             </div>
         </div>
     `;
     container.insertAdjacentHTML('afterbegin', html);
 }
+
+// Lancer le chargement automatique
+document.addEventListener('DOMContentLoaded', chargerAvisDepuisSheet);
 // 4. ENVOI DE MESSAGE
+
 async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();

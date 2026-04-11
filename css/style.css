@@ -1791,3 +1791,118 @@ body.sidebar-open .sidebar-overlay {
     display: block; padding: 12px; background: #f8f9fa; border: 2px dashed #ffcc00;
     border-radius: 15px; cursor: pointer; margin-bottom: 15px;
 }
+/* --- SECTION ARGUMENTS SAFERUN --- */
+.arguments-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 15px;
+    text-align: center;
+}
+
+.arg-header h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.arg-underline {
+    width: 60px;
+    height: 4px;
+    background: #ffcc00; /* Ton jaune SafeRun */
+    margin: 0 auto 25px;
+    border-radius: 2px;
+}
+
+/* La bannière bleue animée */
+.arg-banner-blue {
+    position: relative;
+    background: linear-gradient(135deg, #0045ff, #002db3);
+    border-radius: 20px;
+    padding: 40px 20px;
+    color: white;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 69, 255, 0.3);
+}
+
+/* L'effet de lumière qui bouge (Vivant) */
+.arg-light-effect {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+    animation: rotateLight 12s linear infinite;
+}
+
+@keyframes rotateLight {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.arg-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.arg-text { text-align: left; }
+.arg-text h3 { font-size: 1.6rem; margin: 0; font-weight: 900; letter-spacing: 1px; }
+.arg-text .highlight { color: #ffcc00; } /* MVola/Visa en Jaune */
+.arg-text p { margin: 5px 0 0; opacity: 0.9; font-size: 1rem; }
+
+.btn-avis-top {
+    background: white;
+    color: #0045ff;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-avis-top:hover {
+    transform: scale(1.05);
+    background: #ffcc00;
+    color: #000;
+}
+
+/* Badges du bas */
+.arg-badges-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.badge-item {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-item i { color: #27ae60; font-size: 1.1rem; }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .arg-content { justify-content: center; text-align: center; }
+    .arg-text { text-align: center; }
+    .arg-text h3 { font-size: 1.2rem; }
+}
