@@ -1111,7 +1111,7 @@ const heroData = [
         desc: "L'essentiel pour vos cuissons au meilleur prix du marché."
     },
     {
-        img: 'https://images.unsplash.com/photo-1552829722-b5939e1f414f?q=80&w=2000',
+        img: 'https://images.unsplash.com/photo-1616118132534-381148898bb4?w=1200',
         badge: "💧 Hydratation",
         title: "CRISTALINE & EAU DE SOURCE",
         desc: "Restez hydraté ! Vos packs livrés directement à l'étage."
@@ -1129,7 +1129,7 @@ const heroData = [
         desc: "Tout votre stock de provisions livré en moins de 2h."
     },
     {
-        img: 'https://images.unsplash.com/photo-1488459711615-22823943807b?q=80&w=2000',
+        img: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=800',
         badge: "🍎 Fraîcheur",
         title: "FRUITS ET LÉGUMES FRAIS",
         desc: "Le goût du marché d'Anosibe, sans bouger de chez vous."
