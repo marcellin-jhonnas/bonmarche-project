@@ -1123,7 +1123,7 @@ const heroData = [
         desc: "La base de votre alimentation, sélectionnée avec soin."
     },
     {
-        img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000',
+        img: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1200',
         badge: "🥫 Épicerie",
         title: "CONSERVES ET PPN",
         desc: "Tout votre stock de provisions livré en moins de 2h."
