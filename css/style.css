@@ -1906,141 +1906,108 @@ body.sidebar-open .sidebar-overlay {
     .arg-text { text-align: center; }
     .arg-text h3 { font-size: 1.2rem; }
 }
-/* --- SECTION CTA CHAT FINAL --- */
+/* --- SECTION CTA CHAT (STYLE ÉPURÉ FOND BLANC) --- */
 .cta-saferun-visuel {
     position: relative;
-    background: #0a0e17; /* Noir bleuté profond */
-    padding: 100px 20px;
-    margin-top: 60px;
+    background: #ffffff; /* Fond blanc comme demandé */
+    padding: 80px 20px; /* Espace équilibré */
+    margin-top: 20px;
     overflow: hidden;
-    color: white;
-    border-top: 1px solid rgba(0, 69, 255, 0.3);
+    color: #000000; /* Texte noir par défaut */
+    border-top: 1px solid #eeeeee; /* Bordure très discrète */
 }
 
-/* Lueur de fond qui "respire" */
+/* --- SUPPRESSION DE LA LUEUR ANIMÉE (Glow disparu) --- */
 .cta-glow-visuel {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(0, 69, 255, 0.2) 0%, transparent 70%);
-    transform: translate(-50%, -50%);
-    filter: blur(60px);
-    animation: glowPulse 6s ease-in-out infinite;
-    z-index: 1;
-}
-
-@keyframes glowPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-    50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.9; }
+    display: none; /* Cache la lueur de fond */
 }
 
 .cta-visuel-container {
     position: relative; z-index: 2;
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: center;
     gap: 40px;
 }
 
-/* --- Style des Images --- */
+/* --- Style des Images Décoratives --- */
 .cta-img-wrapper {
-    flex: 1; max-width: 250px; text-align: center;
-    transition: all 0.4s ease;
+    flex: 1; max-width: 220px; text-align: center;
+    transition: all 0.3s ease;
 }
 
 .cta-visuel-img {
     width: 100%;
-    height: 180px;
-    border-radius: 20px;
+    height: 160px;
+    border-radius: 15px;
     object-fit: cover;
-    border: 3px solid rgba(0, 210, 255, 0.2);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 3px solid #eeeeee; /* Bordure grise claire */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* Ombre très douce */
+    transition: all 0.3s ease;
 }
 
+/* Effet au survol (Plus discret) */
 .cta-img-wrapper:hover .cta-visuel-img {
-    transform: scale(1.1) translateY(-10px);
+    transform: translateY(-5px);
     border-color: #00d2ff;
-    box-shadow: 0 20px 40px rgba(0, 69, 255, 0.6);
+    box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2);
 }
 
 .img-caption {
-    font-size: 0.8rem; color: #888; margin-top: 15px;
-    font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+    font-size: 0.75rem; color: #666; /* Gris plus sombre */
+    margin-top: 12px; font-weight: bold; text-transform: uppercase;
 }
 
-/* --- Contenu Texte --- */
-.cta-visuel-content { flex: 2; text-align: center; max-width: 550px; }
+/* --- Style du Contenu Central (Texte Noir) --- */
+.cta-visuel-content { flex: 2; text-align: center; max-width: 450px; }
 
 .cta-badge-live {
-    display: inline-block; background: rgba(0, 210, 255, 0.1);
-    color: #00d2ff; padding: 6px 18px; border-radius: 20px;
-    font-size: 0.75rem; font-weight: bold; border: 1px solid rgba(0, 210, 255, 0.3);
-    margin-bottom: 25px;
+    display: inline-block; background: rgba(0, 210, 255, 0.08);
+    color: #00d2ff; padding: 5px 15px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: bold;
+    border: 1px solid rgba(0, 210, 255, 0.2); margin-bottom: 20px;
 }
 
 .cta-visuel-title {
-    font-size: 2.4rem;
-    font-weight: 900;
-    margin-bottom: 20px;
-    background: linear-gradient(to bottom, #ffffff, #b0b0b0);
-    
-    /* Ajoute ces deux lignes ensemble */
-    -webkit-background-clip: text; 
-    background-clip: text; /* <--- La propriété standard demandée */
-    
-    -webkit-text-fill-color: transparent;
+    font-size: 2.2rem; font-weight: 900; margin-bottom: 15px;
+    color: #000000; /* Titre Noir pur */
     letter-spacing: -1px;
 }
 
-.cta-visuel-text { color: #a0a0a0; font-size: 1.05rem; line-height: 1.6; margin-bottom: 40px; }
+.cta-visuel-text { color: #333; /* Texte gris très sombre */ font-size: 0.95rem; margin-bottom: 30px; line-height: 1.5; }
 
-/* --- Bouton avec effet de brillance --- */
+/* --- Boutons (On garde le style vif) --- */
+.cta-visuel-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+
 .btn-visuel-chat {
-    position: relative; overflow: hidden;
     background: linear-gradient(90deg, #0045ff, #00d2ff);
-    color: white; border: none; padding: 18px 36px; border-radius: 12px;
-    font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 12px;
-    transition: 0.3s; box-shadow: 0 8px 25px rgba(0, 69, 255, 0.4);
+    color: white; border: none;
+    padding: 16px 32px; border-radius: 8px;
+    font-weight: bold; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    transition: 0.3s; box-shadow: 0 4px 15px rgba(0, 69, 255, 0.2);
 }
 
-.btn-visuel-chat::after {
-    content: ''; position: absolute; top: -50%; left: -150%;
-    width: 100%; height: 200%;
-    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.4), transparent);
-    transform: rotate(25deg);
-    animation: shine 4s infinite;
-}
-
-@keyframes shine {
-    0% { left: -150%; }
-    20% { left: 150%; }
-    100% { left: 150%; }
-}
-
-.btn-visuel-chat:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0, 69, 255, 0.6); }
+.btn-visuel-chat:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 69, 255, 0.4); }
 
 .btn-visuel-shop {
-    background: transparent; color: white; border: 2px solid rgba(255,255,255,0.15);
-    padding: 18px 36px; border-radius: 12px; font-weight: bold; text-decoration: none; transition: 0.3s;
+    background: transparent;
+    color: #000; /* Texte noir */
+    border: 2px solid #ddd; /* Bordure grise */
+    padding: 16px 32px; border-radius: 8px;
+    font-weight: bold; text-decoration: none; transition: 0.3s;
 }
 
-.btn-visuel-shop:hover { background: rgba(255,255,255,0.05); border-color: white; }
+.btn-visuel-shop:hover { background: #f5f5f5; border-color: #bbb; }
 
-/* Point Statut Live */
-.dot-online {
-    width: 11px; height: 11px; background: #2ecc71; border-radius: 50%;
-    box-shadow: 0 0 10px #2ecc71; animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.9); }
-}
+/* Point vert clignotant */
+.dot-online { width: 9px; height: 9px; background: #2ecc71; border-radius: 50%; box-shadow: 0 0 8px #2ecc71; animation: blinkOnline 1.5s infinite; }
+@keyframes blinkOnline { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 /* Responsive */
 @media (max-width: 900px) {
     .cta-visuel-container { flex-direction: column; text-align: center; }
-    .cta-img-wrapper { display: none; }
+    .cta-img-wrapper { display: none; /* Cacher sur mobile */ }
+    .cta-visuel-content { width: 100%; max-width: 100%; }
     .btn-visuel-chat, .btn-visuel-shop { width: 100%; justify-content: center; }
 }
