@@ -2192,3 +2192,13 @@ body.sidebar-open .sidebar-overlay {
     .chat-pro-wrapper { flex-direction: column; gap: 40px; }
     .chat-pro-card { display: none; }
 }
+/* Style de base pour les éléments du Hero */
+#hero-title, #hero-desc, #hero-badge {
+    opacity: var(--hero-opacity, 1);
+    transform: translateY(var(--hero-translate, 0px));
+    transition: opacity 0.6s ease-in-out, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* On donne un petit décalage pour que le titre et la desc ne bougent pas en même temps */
+#hero-title { transition-delay: 0.1s; }
+#hero-desc  { transition-delay: 0.2s; }

@@ -1136,6 +1136,7 @@ const heroData = [
     }
 ];
 
+// --- ANIMATION DU HERO SLIDER DYNAMIQUE ---
 function updateHeroAnimate() {
     const heroSection = document.getElementById('hero-slider');
     const title = document.getElementById('hero-title');
@@ -1144,29 +1145,50 @@ function updateHeroAnimate() {
 
     if (!heroSection || !title || !desc || !badge) return;
 
-    // 1. Sortie (disparition douce)
-    title.style.opacity = "0";
-    desc.style.opacity = "0";
-    badge.style.opacity = "0";
+    // 1. PHASE DE SORTIE : Les éléments glissent vers le bas et disparaissent
+    const elements = [badge, title, desc];
+    
+    elements.forEach((el, index) => {
+        el.style.transition = "all 0.5s ease-in-out";
+        el.style.opacity = "0";
+        el.style.transform = "translateY(20px)";
+        el.style.filter = "blur(5px)"; // Petit effet de flou pour le mouvement
+    });
 
     setTimeout(() => {
+        // Changement d'index
         currentHeroIdx = (currentHeroIdx + 1) % heroData.length;
         const current = heroData[currentHeroIdx];
 
-        // 2. Mise à jour du contenu
-        heroSection.style.setProperty('--bg-image', `url('${current.img}')`);
+        // 2. MISE À JOUR DU CONTENU ET DU FOND
+        // J'ajoute un dégradé noir pour que le texte blanc reste toujours lisible sur les images claires
+        heroSection.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('${current.img}')`;
+        
         badge.innerText = current.badge;
         title.innerText = current.title;
         desc.innerText = current.desc;
 
-        // 3. Entrée (apparition douce)
-        title.style.opacity = "1";
-        desc.style.opacity = "1";
-        badge.style.opacity = "1";
-    }, 600);
+        // Préparation des éléments en haut (invisible) pour l'effet d'entrée
+        elements.forEach(el => {
+            el.style.transition = "none"; // On coupe la transition pour le repositionnement
+            el.style.transform = "translateY(-20px)"; 
+        });
+
+        // 3. PHASE D'ENTRÉE : Les éléments redescendent à leur place avec un effet de cascade
+        setTimeout(() => {
+            elements.forEach((el, index) => {
+                // On rétablit la transition avec un délai différent pour chaque élément (cascade)
+                el.style.transition = `all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.15}s`;
+                el.style.opacity = "1";
+                el.style.transform = "translateY(0)";
+                el.style.filter = "blur(0)";
+            });
+        }, 50); // Petit délai pour laisser le navigateur enregistrer le changement de position
+
+    }, 600); // Temps correspondant à la phase de sortie
 }
 
-// Lancer l'animation toutes les 5 secondes
+// Lancer l'animation toutes les 5 secondes (5000ms)
 setInterval(updateHeroAnimate, 5000);
 
 function genererQRCodeClient() {
