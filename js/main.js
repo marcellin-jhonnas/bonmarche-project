@@ -1191,6 +1191,38 @@ function updateHeroAnimate() {
 // Lancer l'animation toutes les 5 secondes (5000ms)
 setInterval(updateHeroAnimate, 5000);
 
+let heroInterval; // Variable pour stocker le cycle
+
+function startHeroCycle() {
+    // Lance l'animation toutes les 5 secondes
+    heroInterval = setInterval(updateHeroAnimate, 5000);
+}
+
+function stopHeroCycle() {
+    // Arrête l'animation immédiatement
+    clearInterval(heroInterval);
+}
+
+// --- INITIALISATION DES ÉVÉNEMENTS ---
+const heroSlider = document.getElementById('hero-slider');
+
+if (heroSlider) {
+    // Quand la souris entre : on arrête
+    heroSlider.addEventListener('mouseenter', () => {
+        stopHeroCycle();
+        console.log("Slider en pause pour lecture...");
+    });
+
+    // Quand la souris sort : on relance
+    heroSlider.addEventListener('mouseleave', () => {
+        startHeroCycle();
+        console.log("Slider relancé.");
+    });
+}
+
+// Lancement initial au chargement de la page
+startHeroCycle();
+
 function genererQRCodeClient() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');

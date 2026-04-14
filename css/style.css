@@ -2202,3 +2202,20 @@ body.sidebar-open .sidebar-overlay {
 /* On donne un petit décalage pour que le titre et la desc ne bougent pas en même temps */
 #hero-title { transition-delay: 0.1s; }
 #hero-desc  { transition-delay: 0.2s; }
+#hero-slider {
+    overflow: hidden;
+    transition: background-size 0.5s ease;
+    background-size: 100% auto; /* Taille normale */
+}
+
+#hero-slider:hover {
+    /* L'image semble s'approcher de l'utilisateur quand il pose sa souris */
+    background-size: 110% auto; 
+    cursor: pointer;
+}
+
+/* Optionnel : Faire briller le titre quand on survole la section */
+#hero-slider:hover #hero-title {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    transform: scale(1.02);
+}
