@@ -2307,3 +2307,104 @@ body.sidebar-open .sidebar-overlay {
     padding: 3px 8px; border-radius: 8px;
     font-size: 0.65rem; font-weight: 900;
 }
+/* --- FORCE LE CENTRAGE SUR GRAND ÉCRAN --- */
+/* On utilise un sélecteur très long pour gagner la priorité sur tes 3000 lignes */
+div#boutique-section .category-filter-container {
+    display: flex !important; /* On s'assure que c'est bien du Flexbox */
+    justify-content: center !important; /* On force le centrage au milieu */
+    align-items: center;
+    flex-wrap: nowrap; /* Empêche les boutons de passer à la ligne */
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* --- SÉCURITÉ MOBILE --- */
+/* Si l'écran est petit (mobile), on annule le centrage pour permettre le scroll à gauche */
+@media screen and (max-width: 992px) {
+    div#boutique-section .category-filter-container {
+        justify-content: flex-start !important; /* Retour à gauche pour le défilement */
+        padding-left: 20px;
+    }
+}
+/* --- VERSION COMPACTE SECTION CHAT (ANTI-CONFLIT) --- */
+
+/* Réduction de l'espace global de la section */
+section.saferun-pro-chat {
+    padding: 20px 0 !important; /* Réduit l'espace en haut et en bas */
+    margin: 0 auto !important;
+}
+
+/* Réduction du titre */
+section.saferun-pro-chat .section-title {
+    margin-bottom: 15px !important;
+}
+
+section.saferun-pro-chat .section-title h2 {
+    font-size: 1.4rem !important; /* Titre un peu plus petit */
+}
+
+/* Alignement plus fin du wrapper */
+section.saferun-pro-chat .chat-pro-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px !important; /* Rapproche les éléments */
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+/* Rendre les images et cartes plus petites */
+section.saferun-pro-chat .chat-pro-card {
+    flex: 0 0 100px !important; /* Largeur fixe plus petite */
+    height: auto !important;
+}
+
+section.saferun-pro-chat .chat-img {
+    width: 80px !important; /* Image plus petite */
+    height: 80px !important;
+    border-radius: 12px !important;
+}
+
+section.saferun-pro-chat .chat-label {
+    font-size: 0.65rem !important; /* Texte sous image plus discret */
+    margin-top: 5px !important;
+}
+
+/* Ajustement du contenu central (Texte + Boutons) */
+section.saferun-pro-chat .chat-pro-content {
+    flex: 1;
+    text-align: center;
+}
+
+section.saferun-pro-chat .chat-pro-text {
+    font-size: 0.9rem !important; /* Texte plus fin */
+    margin-bottom: 10px !important;
+    line-height: 1.3 !important;
+}
+
+/* Boutons plus compacts */
+section.saferun-pro-chat .chat-pro-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+section.saferun-pro-chat .btn-chat-main, 
+section.saferun-pro-chat .btn-boutique-secondary {
+    padding: 8px 15px !important; /* Boutons moins hauts */
+    font-size: 0.75rem !important;
+    letter-spacing: 0.5px;
+}
+
+/* --- ADAPTATION MOBILE --- */
+@media (max-width: 768px) {
+    section.saferun-pro-chat .chat-pro-wrapper {
+        flex-direction: column; /* Empile seulement si vraiment nécessaire */
+        gap: 10px !important;
+    }
+    
+    /* On cache les images sur très petit mobile pour gagner de la place si tu veux */
+    /* section.saferun-pro-chat .chat-pro-card { display: none; } */
+}

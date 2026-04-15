@@ -1225,35 +1225,33 @@ startHeroCycle();
 
 const categorySlider = document.getElementById('category-slider');
 let isSliderPaused = false;
-let scrollStep = 0.8; // Une vitesse légèrement plus lente est souvent plus élégante
+let scrollStep = 1; 
 
-// Sécurité : Vérifier si le slider existe avant de lancer
 if (categorySlider) {
-    // Pause au survol ou au toucher
     categorySlider.addEventListener('mouseenter', () => isSliderPaused = true);
     categorySlider.addEventListener('mouseleave', () => isSliderPaused = false);
-    
-    // Ajout du paramètre passive pour la performance mobile
     categorySlider.addEventListener('touchstart', () => isSliderPaused = true, { passive: true });
-    categorySlider.addEventListener('touchend', () => {
-        // Relance après 2 secondes si l'utilisateur ne touche plus
-        setTimeout(() => isSliderPaused = false, 2000);
-    }, { passive: true });
+    categorySlider.addEventListener('touchend', () => isSliderPaused = false, { passive: true });
 
     function loopCategories() {
         if (!isSliderPaused) {
-            categorySlider.scrollLeft += scrollStep;
-            
-            // Calculer la fin du scroll (avec une marge d'erreur de 1px)
-            const maxScroll = categorySlider.scrollWidth - categorySlider.clientWidth;
-            if (categorySlider.scrollLeft >= maxScroll - 1) {
-                categorySlider.scrollLeft = 0; // Retour au début
+            // VERIFICATION : Est-ce que le contenu dépasse vraiment de l'écran ?
+            const hasOverflow = categorySlider.scrollWidth > categorySlider.clientWidth;
+
+            if (hasOverflow) {
+                // On ne fait défiler QUE si les boutons sont trop larges pour l'écran
+                categorySlider.scrollLeft += scrollStep;
+                
+                if (categorySlider.scrollLeft >= (categorySlider.scrollWidth - categorySlider.clientWidth - 1)) {
+                    categorySlider.scrollLeft = 0;
+                }
+            } else {
+                // Si tout est visible (comme sur ta capture), on force le scroll à 0
+                categorySlider.scrollLeft = 0;
             }
         }
         requestAnimationFrame(loopCategories);
     }
-
-    // Lancement propre
     requestAnimationFrame(loopCategories);
 }
 function genererQRCodeClient() {
