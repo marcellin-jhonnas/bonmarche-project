@@ -1225,28 +1225,37 @@ startHeroCycle();
 
 const categorySlider = document.getElementById('category-slider');
 let isSliderPaused = false;
-let scrollStep = 1; // Vitesse de défilement
+let scrollStep = 0.8; // Une vitesse légèrement plus lente est souvent plus élégante
 
-// Détection du survol pour mettre en pause
-categorySlider.addEventListener('mouseenter', () => isSliderPaused = true);
-categorySlider.addEventListener('mouseleave', () => isSliderPaused = false);
-categorySlider.addEventListener('touchstart', () => isSliderPaused = true); // Pause au toucher mobile
+// Sécurité : Vérifier si le slider existe avant de lancer
+if (categorySlider) {
+    // Pause au survol ou au toucher
+    categorySlider.addEventListener('mouseenter', () => isSliderPaused = true);
+    categorySlider.addEventListener('mouseleave', () => isSliderPaused = false);
+    
+    // Ajout du paramètre passive pour la performance mobile
+    categorySlider.addEventListener('touchstart', () => isSliderPaused = true, { passive: true });
+    categorySlider.addEventListener('touchend', () => {
+        // Relance après 2 secondes si l'utilisateur ne touche plus
+        setTimeout(() => isSliderPaused = false, 2000);
+    }, { passive: true });
 
-function loopCategories() {
-    if (!isSliderPaused) {
-        categorySlider.scrollLeft += scrollStep;
-        
-        // Si on atteint la fin du défilement à droite
-        if (categorySlider.scrollLeft >= (categorySlider.scrollWidth - categorySlider.clientWidth)) {
-            // On revient doucement au début pour recommencer la boucle
-            categorySlider.scrollLeft = 0;
+    function loopCategories() {
+        if (!isSliderPaused) {
+            categorySlider.scrollLeft += scrollStep;
+            
+            // Calculer la fin du scroll (avec une marge d'erreur de 1px)
+            const maxScroll = categorySlider.scrollWidth - categorySlider.clientWidth;
+            if (categorySlider.scrollLeft >= maxScroll - 1) {
+                categorySlider.scrollLeft = 0; // Retour au début
+            }
         }
+        requestAnimationFrame(loopCategories);
     }
+
+    // Lancement propre
     requestAnimationFrame(loopCategories);
 }
-
-// Lancement de l'animation
-loopCategories();
 function genererQRCodeClient() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');
