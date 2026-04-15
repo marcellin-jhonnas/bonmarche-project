@@ -2408,3 +2408,31 @@ section.saferun-pro-chat .btn-boutique-secondary {
     /* On cache les images sur très petit mobile pour gagner de la place si tu veux */
     /* section.saferun-pro-chat .chat-pro-card { display: none; } */
 }
+/* --- LE CORRECTIF DE CENTRAGE FINAL --- */
+
+/* 1. On s'assure que le parent ne bloque pas le centrage */
+#category-slider {
+    display: flex !important;
+    justify-content: center !important; /* Force le contenu au milieu */
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    float: none !important; /* Supprime d'éventuels vieux floats */
+    padding: 20px 10px !important;
+}
+
+/* 2. On s'assure que les boutons ne s'étirent pas et restent compacts */
+#category-slider .cat-btn {
+    flex: 0 0 auto !important; /* Empêche les boutons de prendre toute la largeur */
+    margin: 0 10px !important; /* Crée l'espace entre eux */
+}
+
+/* 3. SÉCURITÉ MOBILE (Très important) */
+/* Si l'écran est petit et que les boutons dépassent, on repasse en mode scroll */
+@media screen and (max-width: 1024px) {
+    #category-slider {
+        justify-content: flex-start !important; /* Aligne à gauche pour permettre le scroll */
+        overflow-x: auto !important;
+        display: flex !important;
+    }
+}
