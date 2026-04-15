@@ -129,15 +129,64 @@
             <span>Payez à la livraison</span>
         </div>
     </section>
-    <div class="category-filter-container">
-    <button class="cat-btn active" onclick="filtrerParCategorie('Tous')">🛒 Tous</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('PPN')">🍚 P.P.N <small style="background: #ff3b30; color: white; padding: 1px 5px; border-radius: 4px; font-size: 0.6rem; margin-left: 5px;">TOP</small></button>
-    <button class="cat-btn" onclick="filtrerParCategorie('Alimentaire')">🍎 Alimentaire</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('Conserves')">🥫 Conserves</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('Frais')">🥦 Frais</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('Hygiene')">🧼 Hygiène</button>
-    <button class="cat-btn" onclick="filtrerParCategorie('Energie')">🔋 Énergie</button>
-    </div>
+    <div class="category-filter-container" id="category-slider">
+    <button class="cat-btn active" onclick="filtrerParCategorie('Tous')">
+        <div class="icon-swap-wrapper">
+            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="img-normal" alt="Tous">
+            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170576.png" class="img-hover" alt="Tous Active">
+        </div>
+        <span>Tous</span>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('PPN')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/m1GEA1B.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/KI9UEXw.jpeg" class="img-hover">
+        </div>
+        <span>P.P.N</span>
+        <small class="badge-top-red">TOP</small>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('Alimentaire')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/FLJia2E.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/NV1WFXq.jpeg" class="img-hover">
+        </div>
+        <span>Alimentaire</span>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('Conserves')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/L8PBAy2.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/UiXVenX.jpeg" class="img-hover">
+        </div>
+        <span>Conserves</span>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('Frais')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/5fbaGGs.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/AqmpTaF.jpeg" class="img-hover">
+        </div>
+        <span>Frais</span>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('Hygiene')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/eTqbBhx.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/3buqRBX.jpeg" class="img-hover">
+        </div>
+        <span>Hygiène</span>
+    </button>
+
+    <button class="cat-btn" onclick="filtrerParCategorie('Energie')">
+        <div class="icon-swap-wrapper">
+            <img src="https://i.imgur.com/Xlc9aOx.jpeg" class="img-normal">
+            <img src="https://i.imgur.com/bbjMe8o.jpeg" class="img-hover">
+        </div>
+        <span>Énergie</span>
+    </button>
+</div>
     <div id="boutique-section">
     <div id="status-planif" style="display:none; background: #e8f4fd; color: #2980b9; padding: 15px; text-align: center; font-weight: bold; border-radius: 10px; margin: 10px auto; max-width: 90%;">
         <i class="fas fa-calendar-check"></i> Livraison prévue le : <span id="date-affichage"></span>

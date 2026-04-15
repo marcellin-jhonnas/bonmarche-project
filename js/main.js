@@ -1223,6 +1223,30 @@ if (heroSlider) {
 // Lancement initial au chargement de la page
 startHeroCycle();
 
+const categorySlider = document.getElementById('category-slider');
+let isSliderPaused = false;
+let scrollStep = 1; // Vitesse de défilement
+
+// Détection du survol pour mettre en pause
+categorySlider.addEventListener('mouseenter', () => isSliderPaused = true);
+categorySlider.addEventListener('mouseleave', () => isSliderPaused = false);
+categorySlider.addEventListener('touchstart', () => isSliderPaused = true); // Pause au toucher mobile
+
+function loopCategories() {
+    if (!isSliderPaused) {
+        categorySlider.scrollLeft += scrollStep;
+        
+        // Si on atteint la fin du défilement à droite
+        if (categorySlider.scrollLeft >= (categorySlider.scrollWidth - categorySlider.clientWidth)) {
+            // On revient doucement au début pour recommencer la boucle
+            categorySlider.scrollLeft = 0;
+        }
+    }
+    requestAnimationFrame(loopCategories);
+}
+
+// Lancement de l'animation
+loopCategories();
 function genererQRCodeClient() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');

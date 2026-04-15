@@ -2219,3 +2219,104 @@ body.sidebar-open .sidebar-overlay {
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
     transform: scale(1.02);
 }
+/* --- FILTRES CATÉGORIES PREMIUM SAFE RUN --- */
+.category-filter-container {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 25px 15px;
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+.category-filter-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.category-filter-container .cat-btn {
+    position: relative;
+    background: #ffffff !important;
+    border: 1px solid #f0f0f0 !important;
+    border-radius: 20px;
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+/* Wrapper d'icônes */
+.category-filter-container .icon-swap-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+    pointer-events: none;
+}
+
+.category-filter-container .img-normal, 
+.category-filter-container .img-hover {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    transition: all 0.4s ease-in-out;
+}
+
+/* Cacher l'image de survol au repos */
+.category-filter-container .img-hover {
+    opacity: 0;
+    transform: scale(0.4) rotate(-15deg);
+}
+
+/* --- INTERACTIONS --- */
+
+.category-filter-container .cat-btn:hover,
+.category-filter-container .cat-btn.active {
+    background: #ffffff !important;
+    border-color: #0045ff !important;
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0, 69, 255, 0.15);
+}
+
+/* Switch des images */
+.category-filter-container .cat-btn:hover .img-normal,
+.category-filter-container .cat-btn.active .img-normal {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.category-filter-container .cat-btn:hover .img-hover,
+.category-filter-container .cat-btn.active .img-hover {
+    opacity: 1;
+    transform: scale(1.25) rotate(0deg);
+}
+
+/* Animation "Vivante" permanente sur le bouton sélectionné */
+.category-filter-container .cat-btn.active .img-hover {
+    animation: iconBounce 2s infinite ease-in-out;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: scale(1.25) translateY(0); }
+    50% { transform: scale(1.25) translateY(-5px); }
+}
+
+/* Style Texte & Badges */
+.category-filter-container .cat-btn span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #444;
+    transition: color 0.3s;
+}
+.category-filter-container .cat-btn.active span { color: #0045ff; }
+
+.badge-top-red {
+    position: absolute;
+    top: -10px; right: 5px;
+    background: #ff3b30; color: white;
+    padding: 3px 7px; border-radius: 6px;
+    font-size: 0.6rem; font-weight: 900;
+    box-shadow: 0 4px 10px rgba(255,59,48,0.4);
+}
