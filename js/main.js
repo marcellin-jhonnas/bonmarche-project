@@ -1506,27 +1506,39 @@ function fermerModal() {
         }
     });
 }
-function calculerLivraison() {
+/* --- TA FONCTION MISE À JOUR (Garde le même nom pour la facture) --- */
+/* --- RÉCUPÉRATION DES JOURS FERMÉS --- */
+async function fetchExceptions() {
+    try {
+        const response = await fetch(API_URL + "?action=getDatesFermees");
+        return await response.json(); 
+    } catch (e) {
+        return []; // En cas d'erreur, renvoie une liste vide
+    }
+}
+async function calculerLivraison() {
+    // Étape A : On récupère les jours interdits depuis le Sheet
+    const joursInterdits = await fetchExceptions();
+
     const maintenant = new Date();
-    const jourSemaine = maintenant.getDay(); // 0 = Dimanche
+    const jourSemaine = maintenant.getDay(); 
     const heure = maintenant.getHours();
     const tempsActuel = heure + (maintenant.getMinutes() / 60);
-
     let dateLivraison = new Date();
     let creneau = "";
 
-    // Règle Dimanche ou Samedi après 11h
+    // --- TON CODE D'ORIGINE (STRICTEMENT IDENTIQUE) ---
     if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
         let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
         dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
         creneau = "Lundi matin (entre 9h et 11h)";
-    } 
+    }
     else {
         if (tempsActuel >= 5 && tempsActuel <= 11) {
             creneau = "cet après-midi (entre 14h et 17h)";
         } else {
             dateLivraison.setDate(maintenant.getDate() + 1);
-            if (dateLivraison.getDay() === 0) { // Si demain est dimanche
+            if (dateLivraison.getDay() === 0) { 
                 dateLivraison.setDate(dateLivraison.getDate() + 1);
                 creneau = "Lundi matin (entre 9h et 11h)";
             } else {
@@ -1535,10 +1547,28 @@ function calculerLivraison() {
         }
     }
 
+    // --- Étape B : BOUCLE DE SÉCURITÉ (Ajoutée à la fin) ---
+    const formatISO = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
+    // Si la date calculée est dans le Sheet, on décale
+    while (joursInterdits.includes(formatISO(dateLivraison))) {
+        dateLivraison.setDate(dateLivraison.getDate() + 1);
+        if (dateLivraison.getDay() === 0) dateLivraison.setDate(dateLivraison.getDate() + 1);
+        creneau = (dateLivraison.getDay() === 1) ? "Lundi matin (entre 9h et 11h)" : "au matin (entre 9h et 11h)";
+    }
+
+    // --- TON FORMATAGE DE SORTIE (GARDÉ) ---
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     let dateFormatee = dateLivraison.toLocaleDateString('fr-FR', options);
+    
     return `LIVRAISON : ${dateFormatee.charAt(0).toUpperCase() + dateFormatee.slice(1)}, ${creneau}`;
 }
+
 function genererFactureFinale(montant, nom) {
     const container = document.getElementById('facture-container');
     const ref = "SR-" + Date.now().toString().slice(-6);
