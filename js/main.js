@@ -1284,7 +1284,7 @@ if (categorySlider) {
         
         const mgEl = document.getElementById('sr-date-mg');
         const frEl = document.getElementById('sr-date-fr');
-        if(mgEl) mgEl.innerText = `Fanatitra: ${dateStr}, ${labelMg}`;
+        if(mgEl) mgEl.innerText = `Livraison manaraka: ${dateStr}, ${labelMg}`;
         if(frEl) frEl.innerText = `Prévu le ${dateStr}, ${labelFr}`;
     }
 
