@@ -1254,6 +1254,27 @@ if (categorySlider) {
     }
     requestAnimationFrame(loopCategories);
 }
+// Animation du bandeau publicitaire SafeRun
+(function() {
+    const pubSlides = document.querySelectorAll('.sr-pub-slide');
+    if (pubSlides.length === 0) return;
+
+    let pubIndex = 0;
+
+    function nextPub() {
+        // Retirer la classe active
+        pubSlides[pubIndex].classList.remove('active');
+        
+        // Calculer l'index suivant
+        pubIndex = (pubIndex + 1) % pubSlides.length;
+        
+        // Ajouter la classe active au nouveau slide
+        pubSlides[pubIndex].classList.add('active');
+    }
+
+    // Intervalle de 5 secondes
+    setInterval(nextPub, 5000);
+})();
 function genererQRCodeClient() {
     const nom = localStorage.getItem('saferun_nom');
     const tel = localStorage.getItem('saferun_tel');
