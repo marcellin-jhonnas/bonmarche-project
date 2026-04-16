@@ -1254,26 +1254,57 @@ if (categorySlider) {
     }
     requestAnimationFrame(loopCategories);
 }
-// Animation du bandeau publicitaire SafeRun
 (function() {
-    const pubSlides = document.querySelectorAll('.sr-pub-slide');
-    if (pubSlides.length === 0) return;
+    function getSafeRunDelivery() {
+        const now = new Date();
+        const day = now.getDay();
+        const hr = now.getHours() + (now.getMinutes() / 60);
+        let deliveryDate = new Date();
+        let labelFr = "";
+        let labelMg = "";
 
-    let pubIndex = 0;
+        if ((day === 6 && hr > 11) || day === 0) {
+            let offset = (day === 0) ? 1 : 2;
+            deliveryDate.setDate(now.getDate() + offset);
+            labelFr = "ce lundi matin (9h-11h)";
+            labelMg = "ny alatsinainy maraina";
+        } else if (hr >= 5 && hr <= 11) {
+            labelFr = "cet après-midi (14h-17h)";
+            labelMg = "anio tolakandro";
+        } else {
+            deliveryDate.setDate(now.getDate() + 1);
+            if (deliveryDate.getDay() === 0) deliveryDate.setDate(now.getDate() + 2);
+            
+            const isMon = deliveryDate.getDay() === 1;
+            labelFr = isMon ? "lundi matin (9h-11h)" : "demain matin (9h-11h)";
+            labelMg = isMon ? "ny alatsinainy maraina" : "rahampitso maraina";
+        }
 
-    function nextPub() {
-        // Retirer la classe active
-        pubSlides[pubIndex].classList.remove('active');
+        const dateStr = deliveryDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
         
-        // Calculer l'index suivant
-        pubIndex = (pubIndex + 1) % pubSlides.length;
-        
-        // Ajouter la classe active au nouveau slide
-        pubSlides[pubIndex].classList.add('active');
+        const mgEl = document.getElementById('sr-date-mg');
+        const frEl = document.getElementById('sr-date-fr');
+        if(mgEl) mgEl.innerText = `Fanatitra: ${dateStr}, ${labelMg}`;
+        if(frEl) frEl.innerText = `Prévu le ${dateStr}, ${labelFr}`;
     }
 
-    // Intervalle de 5 secondes
-    setInterval(nextPub, 5000);
+    document.addEventListener("DOMContentLoaded", () => {
+        getSafeRunDelivery();
+        const slides = document.querySelectorAll('.sr-slide-item');
+        const banner = document.getElementById('srBanner');
+        let current = 0;
+
+        if(!slides.length || !banner) return;
+
+        setInterval(() => {
+            slides[current].classList.remove('active');
+            current = (current + 1) % slides.length;
+            
+            // Transition de fond douce
+            banner.style.background = slides[current].getAttribute('data-bg');
+            slides[current].classList.add('active');
+        }, 5000);
+    });
 })();
 function genererQRCodeClient() {
     const nom = localStorage.getItem('saferun_nom');
