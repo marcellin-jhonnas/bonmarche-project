@@ -2436,22 +2436,28 @@ section.saferun-pro-chat .btn-boutique-secondary {
         display: flex !important;
     }
 }
-/* --- SR BANNER PREMIUM 90PX --- */
-.sr-banner-premium {
+/* --- SR BANNER LARGE & DYNAMIQUE --- */
+.sr-banner-large {
     width: 100% !important;
-    height: 95px !important;
+    height: 140px !important; /* Taille idéale : impactante mais pas envahissante */
     background: #ffffff;
-    transition: background 1.2s ease !important;
+    /* Cette transition permet au fond de changer en douceur (1 seconde) */
+    transition: background 1s ease-in-out !important; 
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 2px solid rgba(0, 123, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-.sr-container-inner { width: 100%; height: 100%; position: relative; }
+.sr-container-viewport { 
+    width: 100%; 
+    height: 100%; 
+    position: relative; 
+}
 
-.sr-slide-item {
+.sr-slide-unit {
     position: absolute;
     inset: 0;
     display: flex;
@@ -2459,67 +2465,77 @@ section.saferun-pro-chat .btn-boutique-secondary {
     justify-content: center;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.9s cubic-bezier(0.2, 1, 0.3, 1);
-    transform: translateX(20px);
+    /* Animation de montée fluide lors du changement de texte */
+    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    transform: translateY(15px);
 }
 
-.sr-slide-item.active {
+.sr-slide-unit.active {
     opacity: 1;
     visibility: visible;
-    transform: translateX(0);
+    transform: translateY(0);
 }
 
-.sr-flex-content {
+.sr-content-box {
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 0 15px;
-    max-width: 1000px;
+    gap: 30px; /* Plus d'espace entre l'image et le texte */
+    padding: 0 25px;
+    max-width: 1200px;
+    width: 100%;
 }
 
-/* Image avec bordure douce */
-.sr-img-wrapper img {
-    width: 65px !important;
-    height: 65px !important;
-    border-radius: 14px !important;
+/* Style de l'image publicitaire */
+.sr-frame-img img {
+    width: 100px !important; /* Image plus large pour remplir les 140px */
+    height: 100px !important;
+    border-radius: 22px !important; /* Coins arrondis style moderne App */
     object-fit: cover;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    border: 2px solid #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border: 4px solid #ffffff;
 }
 
-.sr-text-group { display: flex; flex-direction: column; }
+.sr-details { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+}
 
-/* Petit Badge Pro */
-.sr-tag {
-    font-size: 0.6rem !important;
+/* Petit badge de catégorie */
+.sr-badge-tag {
+    font-size: 0.75rem !important;
     font-weight: 800;
     background: #007bff;
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: 50px;
+    color: #ffffff;
+    padding: 4px 14px;
+    border-radius: 8px;
     width: fit-content;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.sr-main-mg {
+/* Texte principal en Malagasy */
+.sr-txt-mg {
+    font-size: 1.35rem !important; /* Très lisible */
+    font-weight: 900 !important;
+    color: #111111;
+    line-height: 1.2;
+}
+
+/* Texte secondaire en Français */
+.sr-txt-fr {
     font-size: 1.05rem !important;
-    font-weight: 700 !important;
-    color: #222;
-    line-height: 1.1;
+    color: #444444;
+    font-weight: 500;
+    font-style: italic;
 }
 
-.sr-sub-fr {
-    font-size: 0.8rem !important;
-    color: #666;
-    font-weight: 400;
-    margin-top: 2px;
-}
-
-/* Mobile */
-@media (max-width: 600px) {
-    .sr-banner-premium { height: 85px !important; }
-    .sr-img-wrapper img { width: 55px !important; height: 55px !important; }
-    .sr-main-mg { font-size: 0.85rem !important; }
-    .sr-sub-fr { font-size: 0.7rem !important; }
+/* Ajustements pour Mobile */
+@media (max-width: 768px) {
+    .sr-banner-large { height: 125px !important; }
+    .sr-content-box { gap: 15px; padding: 0 15px; }
+    .sr-frame-img img { width: 85px !important; height: 85px !important; }
+    .sr-txt-mg { font-size: 1.1rem !important; }
+    .sr-txt-fr { font-size: 0.85rem !important; }
 }
