@@ -2436,10 +2436,10 @@ section.saferun-pro-chat .btn-boutique-secondary {
         display: flex !important;
     }
 }
-/* --- SR BANNER FULL WIDTH (LARGEUR TOTALE) --- */
+/* --- SR BANNER PREMIUM FULL-WIDTH & CENTERED --- */
 .sr-banner-premium {
     width: 100% !important;
-    height: 105px !important; /* Hauteur légèrement ajustée pour l'équilibre */
+    height: 100px !important; /* Hauteur stable */
     background: #ffffff;
     transition: background 1.2s ease !important;
     position: relative;
@@ -2460,47 +2460,47 @@ section.saferun-pro-chat .btn-boutique-secondary {
     inset: 0;
     display: flex;
     align-items: center;
-    /* On justifie à gauche pour que ça remplisse bien depuis le début */
-    justify-content: flex-start; 
+    justify-content: center; /* CENTRE LE CONTENU HORIZONTALEMENT */
     opacity: 0;
     visibility: hidden;
     transition: all 0.9s cubic-bezier(0.2, 1, 0.3, 1);
-    transform: translateX(30px);
+    transform: translateY(10px); /* Animation de bas en haut plus douce */
 }
 
 .sr-slide-item.active {
     opacity: 1;
     visibility: visible;
-    transform: translateX(0);
+    transform: translateY(0);
 }
 
 .sr-flex-content {
     display: flex;
     align-items: center;
+    justify-content: center; /* ASSURE LE CENTRAGE DES ÉLÉMENTS INTERNES */
     gap: 25px;
-    padding: 0 40px; /* Plus de marge sur les côtés pour l'élégance */
-    width: 100% !important; /* Force le remplissage horizontal */
-    max-width: none !important; /* Supprime la limite de 1000px */
+    padding: 0 20px;
+    width: 100% !important;
+    max-width: none !important;
 }
 
-/* Image avec bordure douce - Taille optimisée */
+/* Image optimisée */
 .sr-img-wrapper img {
-    width: 75px !important;
-    height: 75px !important;
+    width: 70px !important;
+    height: 70px !important;
     border-radius: 16px !important;
     object-fit: cover;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     border: 2px solid #fff;
-    flex-shrink: 0; /* Empêche l'image de s'écraser */
+    flex-shrink: 0;
 }
 
 .sr-text-group { 
     display: flex; 
     flex-direction: column; 
-    flex-grow: 1; /* Permet au texte de prendre l'espace restant */
+    align-items: flex-start; /* Aligne le texte à gauche par rapport à lui-même */
 }
 
-/* Petit Badge Pro */
+/* Badge Pro */
 .sr-tag {
     font-size: 0.65rem !important;
     font-weight: 800;
@@ -2515,24 +2515,24 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 
 .sr-main-mg {
-    font-size: 1.25rem !important; /* Plus grand pour remplir l'espace */
+    font-size: 1.2rem !important;
     font-weight: 800 !important;
     color: #111;
     line-height: 1.2;
 }
 
 .sr-sub-fr {
-    font-size: 0.9rem !important;
-    color: #555;
+    font-size: 0.85rem !important;
+    color: #666;
     font-weight: 400;
     margin-top: 3px;
 }
 
-/* --- Adaptabilité Mobile --- */
+/* Adaptabilité Mobile */
 @media (max-width: 600px) {
     .sr-banner-premium { height: 95px !important; }
-    .sr-flex-content { padding: 0 15px; gap: 15px; }
-    .sr-img-wrapper img { width: 60px !important; height: 60px !important; }
-    .sr-main-mg { font-size: 0.95rem !important; }
-    .sr-sub-fr { font-size: 0.75rem !important; }
+    .sr-flex-content { gap: 15px; }
+    .sr-img-wrapper img { width: 55px !important; height: 55px !important; }
+    .sr-main-mg { font-size: 0.9rem !important; }
+    .sr-sub-fr { font-size: 0.7rem !important; }
 }
