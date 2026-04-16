@@ -2436,106 +2436,103 @@ section.saferun-pro-chat .btn-boutique-secondary {
         display: flex !important;
     }
 }
-/* --- SR BANNER LARGE & DYNAMIQUE --- */
-.sr-banner-large {
+/* --- SR BANNER FULL WIDTH (LARGEUR TOTALE) --- */
+.sr-banner-premium {
     width: 100% !important;
-    height: 140px !important; /* Taille idéale : impactante mais pas envahissante */
+    height: 105px !important; /* Hauteur légèrement ajustée pour l'équilibre */
     background: #ffffff;
-    /* Cette transition permet au fond de changer en douceur (1 seconde) */
-    transition: background 1s ease-in-out !important; 
+    transition: background 1.2s ease !important;
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
-    border-bottom: 2px solid rgba(0, 123, 255, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
-.sr-container-viewport { 
-    width: 100%; 
+.sr-container-inner { 
+    width: 100% !important; 
     height: 100%; 
     position: relative; 
 }
 
-.sr-slide-unit {
+.sr-slide-item {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* On justifie à gauche pour que ça remplisse bien depuis le début */
+    justify-content: flex-start; 
     opacity: 0;
     visibility: hidden;
-    /* Animation de montée fluide lors du changement de texte */
-    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    transform: translateY(15px);
+    transition: all 0.9s cubic-bezier(0.2, 1, 0.3, 1);
+    transform: translateX(30px);
 }
 
-.sr-slide-unit.active {
+.sr-slide-item.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateX(0);
 }
 
-.sr-content-box {
+.sr-flex-content {
     display: flex;
     align-items: center;
-    gap: 30px; /* Plus d'espace entre l'image et le texte */
-    padding: 0 25px;
-    max-width: 1200px;
-    width: 100%;
+    gap: 25px;
+    padding: 0 40px; /* Plus de marge sur les côtés pour l'élégance */
+    width: 100% !important; /* Force le remplissage horizontal */
+    max-width: none !important; /* Supprime la limite de 1000px */
 }
 
-/* Style de l'image publicitaire */
-.sr-frame-img img {
-    width: 100px !important; /* Image plus large pour remplir les 140px */
-    height: 100px !important;
-    border-radius: 22px !important; /* Coins arrondis style moderne App */
+/* Image avec bordure douce - Taille optimisée */
+.sr-img-wrapper img {
+    width: 75px !important;
+    height: 75px !important;
+    border-radius: 16px !important;
     object-fit: cover;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-    border: 4px solid #ffffff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 2px solid #fff;
+    flex-shrink: 0; /* Empêche l'image de s'écraser */
 }
 
-.sr-details { 
+.sr-text-group { 
     display: flex; 
     flex-direction: column; 
-    gap: 4px; 
+    flex-grow: 1; /* Permet au texte de prendre l'espace restant */
 }
 
-/* Petit badge de catégorie */
-.sr-badge-tag {
-    font-size: 0.75rem !important;
+/* Petit Badge Pro */
+.sr-tag {
+    font-size: 0.65rem !important;
     font-weight: 800;
     background: #007bff;
-    color: #ffffff;
-    padding: 4px 14px;
-    border-radius: 8px;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 50px;
     width: fit-content;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
-/* Texte principal en Malagasy */
-.sr-txt-mg {
-    font-size: 1.35rem !important; /* Très lisible */
-    font-weight: 900 !important;
-    color: #111111;
+.sr-main-mg {
+    font-size: 1.25rem !important; /* Plus grand pour remplir l'espace */
+    font-weight: 800 !important;
+    color: #111;
     line-height: 1.2;
 }
 
-/* Texte secondaire en Français */
-.sr-txt-fr {
-    font-size: 1.05rem !important;
-    color: #444444;
-    font-weight: 500;
-    font-style: italic;
+.sr-sub-fr {
+    font-size: 0.9rem !important;
+    color: #555;
+    font-weight: 400;
+    margin-top: 3px;
 }
 
-/* Ajustements pour Mobile */
-@media (max-width: 768px) {
-    .sr-banner-large { height: 125px !important; }
-    .sr-content-box { gap: 15px; padding: 0 15px; }
-    .sr-frame-img img { width: 85px !important; height: 85px !important; }
-    .sr-txt-mg { font-size: 1.1rem !important; }
-    .sr-txt-fr { font-size: 0.85rem !important; }
+/* --- Adaptabilité Mobile --- */
+@media (max-width: 600px) {
+    .sr-banner-premium { height: 95px !important; }
+    .sr-flex-content { padding: 0 15px; gap: 15px; }
+    .sr-img-wrapper img { width: 60px !important; height: 60px !important; }
+    .sr-main-mg { font-size: 0.95rem !important; }
+    .sr-sub-fr { font-size: 0.75rem !important; }
 }
