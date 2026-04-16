@@ -2436,17 +2436,18 @@ section.saferun-pro-chat .btn-boutique-secondary {
         display: flex !important;
     }
 }
-/* --- SR PUBLICITÉ ANIMÉE CSS --- */
+/* --- SR PUBLICITÉ ANIMÉE - VERSION LARGE --- */
 .sr-pub-banner {
     width: 100% !important;
-    height: 70px !important; /* Hauteur limitée pour un effet bandeau */
+    height: 100px !important; /* Hauteur augmentée pour plus d'impact */
     background: #ffffff !important;
-    border-top: 1px solid #e0e0e0;
-    border-bottom: 1px solid #e0e0e0;
+    border-top: 2px solid #007bff;
+    border-bottom: 2px solid #007bff;
     overflow: hidden;
     position: relative;
     display: flex;
     align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .sr-pub-container {
@@ -2464,30 +2465,30 @@ section.saferun-pro-chat .btn-boutique-secondary {
     justify-content: center;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.6s ease-in-out;
-    transform: translateY(10px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scale(0.95); /* Effet de zoom léger à l'apparition */
 }
 
 .sr-pub-slide.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 .sr-pub-flex {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 0 10px;
+    gap: 20px;
+    padding: 0 20px;
+    max-width: 1200px;
 }
 
 .sr-pub-img {
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 50% !important;
+    width: 70px !important; /* Image plus grande */
+    height: 70px !important;
+    border-radius: 15px !important; /* Bord arrondi style App */
     object-fit: cover;
-    border: 2px solid #007bff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 3px solid #007bff;
 }
 
 .sr-pub-text {
@@ -2496,23 +2497,25 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 
 .sr-pub-text .mg-text {
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
+    font-size: 1.15rem !important; /* Texte Malagasy plus imposant */
+    font-weight: 800 !important;
     color: #007bff;
-    line-height: 1.1;
+    line-height: 1.2;
+    text-transform: uppercase;
 }
 
 .sr-pub-text .fr-text {
-    font-size: 0.7rem !important;
-    color: #666;
-    font-style: italic;
-    margin-top: 2px;
+    font-size: 0.9rem !important;
+    color: #444;
+    font-weight: 500;
+    margin-top: 4px;
 }
 
-/* Optimisation Mobile */
+/* Optimisation Mobile (Plus équilibré) */
 @media (max-width: 600px) {
-    .sr-pub-banner { height: 65px !important; }
-    .sr-pub-text .mg-text { font-size: 0.75rem !important; }
-    .sr-pub-text .fr-text { font-size: 0.6rem !important; }
-    .sr-pub-img { width: 40px !important; height: 40px !important; }
+    .sr-pub-banner { height: 90px !important; }
+    .sr-pub-flex { gap: 12px; padding: 0 10px; }
+    .sr-pub-img { width: 60px !important; height: 60px !important; }
+    .sr-pub-text .mg-text { font-size: 0.95rem !important; }
+    .sr-pub-text .fr-text { font-size: 0.75rem !important; }
 }
