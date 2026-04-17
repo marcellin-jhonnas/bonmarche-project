@@ -1525,6 +1525,16 @@ function fermerModal() {
 /* --- TA FONCTION MISE À JOUR (Garde le même nom pour la facture) --- */
 
 function calculerLivraison() {
+    // --- PRIORITÉ 1 : SI LE CLIENT A CHOISI UNE DATE MANUELLE ---
+    // On vérifie si 'datePlanifiee' existe (choix via ouvrirPlanification)
+    if (datePlanifiee) {
+        const d = new Date(datePlanifiee);
+        const optionsPlanif = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+        let dateLisible = d.toLocaleString('fr-FR', optionsPlanif);
+        return `LIVRAISON : ${dateLisible.charAt(0).toUpperCase() + dateLisible.slice(1)}`;
+    }
+
+    // --- PRIORITÉ 2 : CALCUL AUTOMATIQUE (TON CODE D'ORIGINE) ---
     const maintenant = new Date();
     const jourSemaine = maintenant.getDay(); 
     const heure = maintenant.getHours();
@@ -1532,13 +1542,11 @@ function calculerLivraison() {
     let dateLivraison = new Date();
     let creneau = "";
 
-    // --- TA LOGIQUE DE PLANIFICATION (NON MODIFIÉE) ---
     if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
         let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
         dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
         creneau = "Lundi matin (entre 9h et 11h)";
-    }
-    else {
+    } else {
         if (tempsActuel >= 5 && tempsActuel <= 11) {
             creneau = "cet après-midi (entre 14h et 17h)";
         } else {
@@ -1552,7 +1560,7 @@ function calculerLivraison() {
         }
     }
 
-    // --- NOUVEL AJOUT : VÉRIFICATION DES JOURS DU SHEET ---
+    // --- PRIORITÉ 3 : FILTRE DE SÉCURITÉ (GOOGLE SHEET) ---
     const formatISO = (d) => {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1560,20 +1568,15 @@ function calculerLivraison() {
         return `${y}-${m}-${day}`;
     };
 
-    // Si la date calculée est dans la liste "Non Tolérable", on décale
-    let maxDecalage = 0;
-    while (joursFermesSafeRun.includes(formatISO(dateLivraison)) && maxDecalage < 15) {
+    let securite = 0;
+    // On décale si la date est dans le Sheet OU si c'est un dimanche
+    while ((joursFermesSafeRun.includes(formatISO(dateLivraison)) || dateLivraison.getDay() === 0) && securite < 15) {
         dateLivraison.setDate(dateLivraison.getDate() + 1);
-        
-        // Si on tombe sur un dimanche après décalage, on saute encore +1
-        if (dateLivraison.getDay() === 0) dateLivraison.setDate(dateLivraison.getDate() + 1);
-        
-        // On met un créneau par défaut pour les jours décalés
         creneau = (dateLivraison.getDay() === 1) ? "Lundi matin (entre 9h et 11h)" : "au matin (entre 9h et 11h)";
-        maxDecalage++;
+        securite++;
     }
 
-    // --- TON FORMATAGE DE SORTIE (STRICTEMENT LE MÊME) ---
+    // --- FORMATAGE FINAL ---
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     let dateFormatee = dateLivraison.toLocaleDateString('fr-FR', options);
     
