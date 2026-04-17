@@ -64,6 +64,18 @@ async function chargerBoutique() {
         }
     }
 }
+// --- 1. CHARGEMENT SILENCIEUX DES DATES ---
+let joursFermesSafeRun = []; // Variable globale pour stocker les exceptions
+
+(async function() {
+    try {
+        const response = await fetch(API_URL + "?action=getDatesFermees");
+        joursFermesSafeRun = await response.json();
+        console.log("Dates récupérées avec succès");
+    } catch (e) {
+        console.warn("Liaison Sheet impossible, calcul standard utilisé.");
+    }
+})();
 function genererHTMLProduit(p) {
     const nomPropre = p.Nom.replace(/'/g, "\\'");
     const prixFormatte = Number(p.Prix).toLocaleString();
@@ -1507,27 +1519,16 @@ function fermerModal() {
     });
 }
 /* --- TA FONCTION MISE À JOUR (Garde le même nom pour la facture) --- */
-/* --- RÉCUPÉRATION DES JOURS FERMÉS --- */
-async function fetchExceptions() {
-    try {
-        const response = await fetch(API_URL + "?action=getDatesFermees");
-        return await response.json(); 
-    } catch (e) {
-        return []; // En cas d'erreur, renvoie une liste vide
-    }
-}
-async function calculerLivraison() {
-    // Étape A : On récupère les jours interdits depuis le Sheet
-    const joursInterdits = await fetchExceptions();
 
+function calculerLivraison() {
     const maintenant = new Date();
-    const jourSemaine = maintenant.getDay(); 
+    const jourSemaine = maintenant.getDay(); // 0 = Dimanche
     const heure = maintenant.getHours();
     const tempsActuel = heure + (maintenant.getMinutes() / 60);
     let dateLivraison = new Date();
     let creneau = "";
 
-    // --- TON CODE D'ORIGINE (STRICTEMENT IDENTIQUE) ---
+    // --- TON CODE D'ORIGINE INTACT ---
     if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
         let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
         dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
@@ -1547,7 +1548,7 @@ async function calculerLivraison() {
         }
     }
 
-    // --- Étape B : BOUCLE DE SÉCURITÉ (Ajoutée à la fin) ---
+    // --- VÉRIFICATION DES JOURS FERMÉS (BOUCLE DE SÉCURITÉ) ---
     const formatISO = (d) => {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1555,14 +1556,16 @@ async function calculerLivraison() {
         return `${y}-${m}-${day}`;
     };
 
-    // Si la date calculée est dans le Sheet, on décale
-    while (joursInterdits.includes(formatISO(dateLivraison))) {
+    // On vérifie si la date est dans le Sheet OU si c'est un dimanche
+    let securite = 0;
+    while ((joursFermesSafeRun.includes(formatISO(dateLivraison)) || dateLivraison.getDay() === 0) && securite < 10) {
         dateLivraison.setDate(dateLivraison.getDate() + 1);
-        if (dateLivraison.getDay() === 0) dateLivraison.setDate(dateLivraison.getDate() + 1);
+        // On ajuste le créneau si on a dû décaler la date
         creneau = (dateLivraison.getDay() === 1) ? "Lundi matin (entre 9h et 11h)" : "au matin (entre 9h et 11h)";
+        securite++;
     }
 
-    // --- TON FORMATAGE DE SORTIE (GARDÉ) ---
+    // --- TON FORMATAGE FINAL (PRÉSERVÉ) ---
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     let dateFormatee = dateLivraison.toLocaleDateString('fr-FR', options);
     
