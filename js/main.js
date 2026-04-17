@@ -152,14 +152,17 @@ function genererCodeCarte(p) {
     const nomPropre = p.Nom.replace(/'/g, "\\'");
     const likesAleatoires = Math.floor(Math.random() * 37) + 12;
     const prixFormatte = Number(p.Prix).toLocaleString();
-    // On récupère la description pour l'envoyer au zoom
     const descEchappee = (p.Description || "Qualité SafeRun").replace(/'/g, "\\'");
 
     return `
     <div class="carte-produit" style="display: flex; flex-direction: column; height: 100%; border-radius: 20px; background: #fff; border: 1px solid #eee; overflow: hidden; transition: all 0.3s ease; position: relative;">
-        <div class="prix-badge" style="position: absolute; top: 10px; left: 10px; z-index: 5; background: #ffcc00; color: #1a1a1a; padding: 5px 10px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">${prixFormatte} Ar</div>
         
-        <div class="img-container" style="height: 160px; overflow: hidden;">
+        <div style="position: absolute; top: 10px; right: 10px; z-index: 5; background: #ffcc00; color: #1a1a1a; width: 65px; height: 65px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid #fff; line-height: 1;">
+            <span>${prixFormatte}</span>
+            <small style="font-size: 0.55rem; margin-top: 2px;">AR</small>
+        </div>
+        
+        <div class="img-container" style="height: 170px; overflow: hidden; background: #f8f9fa;">
             <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
                  onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
                  onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')"
@@ -167,28 +170,29 @@ function genererCodeCarte(p) {
         </div>
 
         <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span class="cat-tag" style="font-size: 0.65rem; background: #fff8e1; color: #ffa000; padding: 2px 6px; border-radius: 4px;">${p.Categorie || 'Essentiel'}</span>
-                <div style="color: #ffcc00; font-size: 0.7rem;"><i class="fas fa-star"></i> 4.7</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <span class="cat-tag" style="font-size: 0.65rem; color: #ffa000; font-weight: 700;">${p.Categorie || 'Market'}</span>
+                <div style="color: #ffcc00; font-size: 0.7rem;"><i class="fas fa-star"></i> 4.8</div>
             </div>
 
-            <h3 style="margin: 5px 0; font-size: 0.95rem; line-height: 1.2; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.Nom}</h3>
+            <h3 style="margin: 5px 0; font-size: 0.95rem; font-weight: 700; color: #2c3e50; line-height: 1.2; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.Nom}</h3>
             
-            <p style="font-size: 0.75rem; color: #777; margin: 5px 0; height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.Description || ""}</p>
+            <p style="font-size: 0.75rem; color: #7f8c8d; margin: 5px 0; line-height: 1.3; height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-grow: 1;">
+                ${p.Description || ""}
+            </p>
 
             <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin-top: auto;">
-                <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#666; font-size:0.75rem;">
+                <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#95a5a6; font-size:0.75rem;">
                     <i class="far fa-heart"></i> <span class="nb-likes">${likesAleatoires}</span>
                 </div>
-                <div style="color:#eee;">|</div>
                 <div style="font-size:0.75rem; color:#27ae60; font-weight:bold; display:flex; align-items:center; gap:3px;">
                     ${(Math.random() * (4.9 - 4.6) + 4.6).toFixed(1)} <i class="fas fa-check-circle" style="font-size:0.65rem;"></i>
                 </div>
             </div>
 
             <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})"
-                    style="width: 100%; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #ffcc00, #ff9900); border: none; font-weight: 700; cursor: pointer; color: #1a1a1a; font-size: 0.8rem; margin-top: 10px;">
-                <i class="fas fa-cart-plus"></i> AJOUTER
+                    style="width: 100%; padding: 12px; border-radius: 12px; background: #1a1a1a; border: none; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-shopping-basket" style="color: #ffcc00;"></i> AJOUTER
             </button>
         </div>
     </div>`;
@@ -2004,46 +2008,61 @@ function ouvrirZoomProduit(nom, prix, image, description) {
         <button onclick="this.parentElement.parentElement.style.display='none'"
                 style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;z-index:10;">&times;</button>
         
-        <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 250px; background: #f0f0f0;">
-            <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-            <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); transform: skewX(-15deg); animation: refletBrillant 2s infinite;"></div>
+        <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 280px; background: #f0f0f0;">
+            <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1;">
+            
+            <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); transform: skewX(-15deg); animation: refletBrillant 2s infinite; z-index: 2;"></div>
         </div>
 
-        <div style="padding:20px; text-align:center;">
-            <h2 style="margin:0;font-size:1.4rem;color:#2c3e50;">${nom}</h2>
-            <h3 style="color:#e67e22;margin:8px 0;font-size:1.2rem;">${Number(prix).toLocaleString()} Ar</h3>
+        <div style="padding:25px; text-align:center;">
+            <h2 style="margin:0;font-size:1.5rem;color:#2c3e50;font-weight:800;">${nom}</h2>
+            <h3 style="color:#e67e22;margin:10px 0;font-size:1.3rem;font-weight:700;">${Number(prix).toLocaleString()} Ar</h3>
             
-            <div style="background:#f9f9f9; padding:10px; border-radius:15px; margin:10px 0; text-align:left; max-height:80px; overflow-y:auto;">
-                <p style="margin:0; font-size:0.85rem; color:#555; line-height:1.4;">${description || "Produit SafeRun Market."}</p>
+            <div style="background:#f8f9fa; padding:12px; border-radius:15px; margin:10px 0; text-align:left; max-height:90px; overflow-y:auto; border: 1px solid #eee;">
+                <p style="margin:0; font-size:0.85rem; color:#555; line-height:1.4;">
+                    <i class="fas fa-info-circle" style="color:#3498db; margin-right:5px;"></i> ${description || "Qualité garantie SafeRun."}
+                </p>
             </div>
 
-            <hr style="border:0;border-top:1px solid #eee;margin:12px 0;">
+            <hr style="border:0;border-top:1px solid #eee;margin:15px 0;">
             
-            <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:20px;">
-                <button onclick="majQtyZoom(-1)" style="width:35px;height:35px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;cursor:pointer;">-</button>
-                <b id="val-qty-zoom" style="font-size:1.4rem;min-width:30px;">1</b>
-                <button onclick="majQtyZoom(1)" style="width:35px;height:35px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;cursor:pointer;">+</button>
+            <div style="display:flex;align-items:center;justify-content:center;gap:25px;margin-bottom:25px;">
+                <button onclick="majQtyZoom(-1)" style="width:40px;height:40px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.2rem;cursor:pointer;">-</button>
+                <b id="val-qty-zoom" style="font-size:1.6rem;min-width:40px;">1</b>
+                <button onclick="majQtyZoom(1)" style="width:40px;height:40px;border-radius:50%;border:1px solid #ddd;background:#f8f9fa;font-size:1.2rem;cursor:pointer;">+</button>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <button onclick="discuterWhatsApp('${nomEchappe}')" style="padding:10px;background:#25D366;color:white;border:none;border-radius:12px;font-weight:bold;font-size:0.7rem;cursor:pointer;">
+                <button onclick="discuterWhatsApp('${nomEchappe}')" style="padding:12px;background:#25D366;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;">
                     <i class="fab fa-whatsapp"></i> WHATSAPP
                 </button>
-                <button onclick="discuterDepuisZoom('${nomEchappe}')" style="padding:10px;background:#3498db;color:white;border:none;border-radius:12px;font-weight:bold;font-size:0.7rem;cursor:pointer;">
+                <button onclick="discuterDepuisZoom('${nomEchappe}')" style="padding:12px;background:#3498db;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;">
                     <i class="fas fa-comment-dots"></i> CHAT
                 </button>
             </div>
 
             <div style="display:flex; gap:10px;">
-                <button onclick="validerAjoutZoom('${nomEchappe}', ${prix})" style="flex:2;padding:15px;background:#27ae60;color:white;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">
+                <button onclick="validerAjoutZoom('${nomEchappe}', ${prix})" style="flex:2;padding:18px;background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.9rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
                     🛒 AJOUTER
                 </button>
-                <button onclick="document.getElementById('modal-zoom-produit').style.display='none'" style="flex:1;padding:15px;background:#eee;color:#666;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">
+                <button onclick="document.getElementById('modal-zoom-produit').style.display='none'" style="flex:1;padding:18px;background:#f1f2f6;color:#666;border:none;border-radius:15px;font-weight:bold;font-size:0.8rem;cursor:pointer;">
                     RETOUR
                 </button>
             </div>
         </div>
-    </div>`;
+    </div>
+    
+    <style>
+        @keyframes refletBrillant {
+            0% { left: -100%; }
+            100% { left: 150%; }
+        }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+    `;
 }
 
 // Fonction pour ouvrir WhatsApp avec un message automatique
