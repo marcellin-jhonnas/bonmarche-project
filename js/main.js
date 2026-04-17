@@ -190,8 +190,11 @@ function genererCodeCarte(p) {
                 </div>
             </div>
 
-            <button class="btn-commander" onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})"
-                    style="width: 100%; padding: 12px; border-radius: 12px; background: #1a1a1a; border: none; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <button class="btn-commander" 
+                    onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})"
+                    onmouseover="this.style.background='linear-gradient(135deg, #ffcc00, #ff9900)'; this.style.color='#1a1a1a'; this.style.transform='scale(1.02)';"
+                    onmouseout="this.style.background='#1a1a1a'; this.style.color='#fff'; this.style.transform='scale(1)';"
+                    style="width: 100%; padding: 12px; border-radius: 12px; background: #1a1a1a; border: none; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
                 <i class="fas fa-shopping-basket" style="color: #ffcc00;"></i> AJOUTER
             </button>
         </div>
@@ -2010,7 +2013,6 @@ function ouvrirZoomProduit(nom, prix, image, description) {
         
         <div class="img-zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 280px; background: #f0f0f0;">
             <img src="${image}" class="img-zoom-animated" style="width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1;">
-            
             <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); transform: skewX(-15deg); animation: refletBrillant 2s infinite; z-index: 2;"></div>
         </div>
 
@@ -2033,19 +2035,27 @@ function ouvrirZoomProduit(nom, prix, image, description) {
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <button onclick="discuterWhatsApp('${nomEchappe}')" style="padding:12px;background:#25D366;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;">
+                <button onclick="discuterWhatsApp('${nomEchappe}')" 
+                        onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"
+                        style="padding:12px;background:#25D366;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;transition:0.3s;">
                     <i class="fab fa-whatsapp"></i> WHATSAPP
                 </button>
-                <button onclick="discuterDepuisZoom('${nomEchappe}')" style="padding:12px;background:#3498db;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;">
+                <button onclick="discuterDepuisZoom('${nomEchappe}')" 
+                        onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"
+                        style="padding:12px;background:#3498db;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.75rem;cursor:pointer;transition:0.3s;">
                     <i class="fas fa-comment-dots"></i> CHAT
                 </button>
             </div>
 
             <div style="display:flex; gap:10px;">
-                <button onclick="validerAjoutZoom('${nomEchappe}', ${prix})" style="flex:2;padding:18px;background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.9rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
+                <button onclick="validerAjoutZoom('${nomEchappe}', ${prix})" 
+                        onmouseover="this.style.background='#ffcc00'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)';"
+                        onmouseout="this.style.background='#27ae60'; this.style.color='#fff'; this.style.transform='translateY(0)';"
+                        style="flex:2;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:0.9rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);transition:all 0.3s ease;">
                     🛒 AJOUTER
                 </button>
-                <button onclick="document.getElementById('modal-zoom-produit').style.display='none'" style="flex:1;padding:18px;background:#f1f2f6;color:#666;border:none;border-radius:15px;font-weight:bold;font-size:0.8rem;cursor:pointer;">
+                <button onclick="document.getElementById('modal-zoom-produit').style.display='none'" 
+                        style="flex:1;padding:18px;background:#f1f2f6;color:#666;border:none;border-radius:15px;font-weight:bold;font-size:0.8rem;cursor:pointer;">
                     RETOUR
                 </button>
             </div>
@@ -2053,14 +2063,8 @@ function ouvrirZoomProduit(nom, prix, image, description) {
     </div>
     
     <style>
-        @keyframes refletBrillant {
-            0% { left: -100%; }
-            100% { left: 150%; }
-        }
-        @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        @keyframes refletBrillant { 0% { left: -100%; } 100% { left: 150%; } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
     `;
 }
