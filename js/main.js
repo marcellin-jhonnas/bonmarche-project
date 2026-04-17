@@ -64,18 +64,22 @@ async function chargerBoutique() {
         }
     }
 }
-// --- 1. CHARGEMENT SILENCIEUX DES DATES ---
-let joursFermesSafeRun = []; // Variable globale pour stocker les exceptions
+// --- CHARGEMENT INITIAL DES EXCEPTIONS ---
+let joursFermesSafeRun = []; 
 
-(async function() {
+async function chargerExceptionsSheet() {
     try {
         const response = await fetch(API_URL + "?action=getDatesFermees");
         joursFermesSafeRun = await response.json();
-        console.log("Dates récupérées avec succès");
+        // Une fois les dates reçues, on rafraîchit l'affichage si besoin
+        if(document.getElementById('date-affichage')) {
+             // Optionnel : actualiser le texte ici
+        }
     } catch (e) {
-        console.warn("Liaison Sheet impossible, calcul standard utilisé.");
+        console.warn("Impossible de lire le Sheet, mode standard uniquement.");
     }
-})();
+}
+chargerExceptionsSheet();
 function genererHTMLProduit(p) {
     const nomPropre = p.Nom.replace(/'/g, "\\'");
     const prixFormatte = Number(p.Prix).toLocaleString();
@@ -1522,13 +1526,13 @@ function fermerModal() {
 
 function calculerLivraison() {
     const maintenant = new Date();
-    const jourSemaine = maintenant.getDay(); // 0 = Dimanche
+    const jourSemaine = maintenant.getDay(); 
     const heure = maintenant.getHours();
     const tempsActuel = heure + (maintenant.getMinutes() / 60);
     let dateLivraison = new Date();
     let creneau = "";
 
-    // --- TON CODE D'ORIGINE INTACT ---
+    // --- TA LOGIQUE DE PLANIFICATION (NON MODIFIÉE) ---
     if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
         let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
         dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
@@ -1548,7 +1552,7 @@ function calculerLivraison() {
         }
     }
 
-    // --- VÉRIFICATION DES JOURS FERMÉS (BOUCLE DE SÉCURITÉ) ---
+    // --- NOUVEL AJOUT : VÉRIFICATION DES JOURS DU SHEET ---
     const formatISO = (d) => {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1556,16 +1560,20 @@ function calculerLivraison() {
         return `${y}-${m}-${day}`;
     };
 
-    // On vérifie si la date est dans le Sheet OU si c'est un dimanche
-    let securite = 0;
-    while ((joursFermesSafeRun.includes(formatISO(dateLivraison)) || dateLivraison.getDay() === 0) && securite < 10) {
+    // Si la date calculée est dans la liste "Non Tolérable", on décale
+    let maxDecalage = 0;
+    while (joursFermesSafeRun.includes(formatISO(dateLivraison)) && maxDecalage < 15) {
         dateLivraison.setDate(dateLivraison.getDate() + 1);
-        // On ajuste le créneau si on a dû décaler la date
+        
+        // Si on tombe sur un dimanche après décalage, on saute encore +1
+        if (dateLivraison.getDay() === 0) dateLivraison.setDate(dateLivraison.getDate() + 1);
+        
+        // On met un créneau par défaut pour les jours décalés
         creneau = (dateLivraison.getDay() === 1) ? "Lundi matin (entre 9h et 11h)" : "au matin (entre 9h et 11h)";
-        securite++;
+        maxDecalage++;
     }
 
-    // --- TON FORMATAGE FINAL (PRÉSERVÉ) ---
+    // --- TON FORMATAGE DE SORTIE (STRICTEMENT LE MÊME) ---
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     let dateFormatee = dateLivraison.toLocaleDateString('fr-FR', options);
     
