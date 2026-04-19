@@ -2137,13 +2137,20 @@ function discuterDepuisZoom(nom) {
 async function piloterBanniereDynamique() {
     try {
         // 1. Vérifier si on doit afficher le panneau FERMÉ
+        // 1. SIGNALISATION FERMÉ (Slide 3)
         const resSign = await fetch(`${API_URL}?action=getSignalisation`);
         const signal = await resSign.json();
 
         if (signal.boutiqueOuverte === "NON") {
             const dateMg = document.getElementById('sr-date-mg');
             const dateFr = document.getElementById('sr-date-fr');
-            if (dateMg) dateMg.innerHTML = "⚠️ <span style='color:#e74c3c;'>MIKATONA NY FIVAROTANA</span>";
+            
+            if (dateMg) {
+                // On remplace le mot DATE par la vraie date reçue du Sheet
+                const dateAffichee = signal.dateFerme || "androany"; 
+                dateMg.innerHTML = `⚠️ <span style='color:#e74c3c;'>TSY MISY LIVRAISON NY ${dateAffichee}</span>`;
+            }
+            
             if (dateFr) dateFr.innerText = signal.message || "Réouverture prochaine";
         }
 
