@@ -2134,6 +2134,43 @@ function discuterDepuisZoom(nom) {
         }
     }, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
 }
+async function piloterBanniereDynamique() {
+    try {
+        // 1. Vérifier si on doit afficher le panneau FERMÉ
+        const resSign = await fetch(`${API_URL}?action=getSignalisation`);
+        const signal = await resSign.json();
+
+        if (signal.boutiqueOuverte === "NON") {
+            const dateMg = document.getElementById('sr-date-mg');
+            const dateFr = document.getElementById('sr-date-fr');
+            if (dateMg) dateMg.innerHTML = "⚠️ <span style='color:#e74c3c;'>MIKATONA NY FIVAROTANA</span>";
+            if (dateFr) dateFr.innerText = signal.message || "Réouverture prochaine";
+        }
+
+        // 2. Vérifier s'il y a une PUBLICITÉ à afficher sur le slide 1
+        const resPub = await fetch(`${API_URL}?action=getRemises`);
+        const pubs = await resPub.json();
+
+        if (pubs.length > 0) {
+            const premierePub = pubs[0];
+            const mainMg = document.querySelector('.sr-main-mg'); // Le texte Malgache du slide 1
+            const subFr = document.querySelector('.sr-sub-fr');   // Le texte Français du slide 1
+            const tag = document.querySelector('.sr-tag');
+
+            if (tag) {
+                tag.innerText = "PROMO";
+                tag.style.background = "#e74c3c";
+            }
+            if (mainMg) mainMg.innerText = premierePub.titre;
+            if (subFr) subFr.innerText = premierePub.desc;
+        }
+    } catch (e) {
+        console.error("Erreur bannière:", e);
+    }
+}
+
+// Lancement automatique
+window.addEventListener('load', piloterBanniereDynamique);
 // ==========================================
 // GESTION DES AVIS CLIENTS (SAFERUN MARKET)
 // ==========================================

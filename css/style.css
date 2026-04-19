@@ -2536,3 +2536,20 @@ section.saferun-pro-chat .btn-boutique-secondary {
     .sr-main-mg { font-size: 0.9rem !important; }
     .sr-sub-fr { font-size: 0.7rem !important; }
 }
+/* --- Styles de signalisation sécurisés --- */
+.sr-text-ferme {
+    color: #e74c3c !important; /* Rouge alerte */
+    font-weight: bold;
+}
+
+.sr-tag-promo {
+    background: #e74c3c !important; /* Rouge promo */
+    color: white !important;
+    animation: srPulseRed 2s infinite;
+}
+
+@keyframes srPulseRed {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
