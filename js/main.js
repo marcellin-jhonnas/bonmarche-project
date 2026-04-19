@@ -458,11 +458,12 @@ async function envoyerDonneesAuSheet() {
         nom: nom || "NOM_MANQUANT",
         telClient: tel || "TEL_MANQUANT",
         id: idCommande,
+        correlationId: idCommande,
         montant: montantTotal,
         produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE",
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
         quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
-        statut: "EN ATTENTE"
+        statut: "NOUVEAU"
     };
 
     console.log("Payload envoyé au Sheet :", payload);
@@ -478,10 +479,11 @@ async function envoyerDonneesAuSheet() {
 
     const nouvelleCommandeLocale = {
         id: idCommande,
+        ID: idCommande,
         date: new Date().toLocaleDateString('fr-FR'),
         produits: payload.produits,
         total: montantTotal, // <--- C'EST CETTE LIGNE QUI RÉPARE L'ERREUR "cmd.total"
-        statut: "EN ATTENTE",
+        statut: "NOUVEAU",
         livraison: infoLivraison,
         quartier: quartier || "Non précisé"
     };
@@ -1684,23 +1686,33 @@ async function synchroniserAchats() {
         let modification = false;
 
         historique.forEach(maCmd => {
-            // Nettoyage de l'ID du téléphone (ex: SR-523234 -> 523234)
-            const chiffresLocaux = String(maCmd.id).replace(/\D/g, "");
+            // 1. On prépare l'ID local (ex: SR-123456)
+            const idLocal = String(maCmd.id || maCmd.ID || "").trim();
+            const chiffresLocaux = idLocal.replace(/\D/g, "");
 
-            // On cherche dans le Sheet
+            // 2. Recherche dans les données du Sheet
             const match = commandesSheet.find(c => {
-                const chiffresSheet = String(c.ID || "").replace(/\D/g, "");
-                // On accepte si c'est identique OU s'il y a un décalage de moins de 5 (cas du Date.now())
-                return chiffresSheet === chiffresLocaux || Math.abs(parseInt(chiffresSheet) - parseInt(chiffresLocaux)) < 5;
+                const idSheet = String(c.ID || c.id || "").trim();
+                const chiffresSheet = idSheet.replace(/\D/g, "");
+                
+                // Correspondance exacte OU par chiffres (avec tolérance de 5 pour Date.now)
+                return idSheet === idLocal || 
+                       (chiffresSheet !== "" && (chiffresSheet === chiffresLocaux || Math.abs(parseInt(chiffresSheet) - parseInt(chiffresLocaux)) < 5));
             });
 
             if (match) {
-                const statut = String(match.Statut || "").toUpperCase();
-                if (statut.includes("SÉRIEUX") || statut.includes("VALIDE")) {
-                    if (maCmd.statut !== "Validé") {
-                        maCmd.statut = "Validé";
-                        // On met à jour l'ID local pour qu'il soit identique au reçu officiel
-                        maCmd.id = match.ID; 
+                // 3. On récupère le statut et on le nettoie (Majuscules + sans espaces)
+                const statutSheet = String(match.Statut || match.statut || "").toUpperCase().trim();
+
+                // 4. VERIFICATION : On ajoute "PAYÉ" à la liste des succès
+                if (statutSheet.includes("SÉRIEUX") || 
+                    statutSheet.includes("VALIDE") || 
+                    statutSheet.includes("PAYÉ")) {
+                    
+                    if (maCmd.statut !== "VALIDÉ") {
+                        maCmd.statut = "VALIDÉ"; // On harmonise en majuscules
+                        // On garde l'ID officiel du Sheet pour le reçu
+                        maCmd.id = match.ID || match.id || maCmd.id; 
                         modification = true;
                     }
                 }
@@ -1722,9 +1734,11 @@ async function ouvrirAchatsValides() {
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     const valides = historique.filter(cmd => {
-        const s = String(cmd.statut || "").toUpperCase();
-        return s === "VALIDÉ" || s === "SÉRIEUX";
-    });
+  // On harmonise le texte du statut
+  const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+  // On affiche le reçu si c'est l'un de ces 3 mots
+  return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ";
+});
 
     let html = `
         <div style="padding:15px; text-align:center;">
