@@ -2136,48 +2136,89 @@ function discuterDepuisZoom(nom) {
 }
 async function piloterBanniereDynamique() {
     try {
-        // 1. Vérifier si on doit afficher le panneau FERMÉ
-        // 1. SIGNALISATION FERMÉ (Slide 3)
-        const resSign = await fetch(`${API_URL}?action=getSignalisation`);
+        // --- 1. RÉCUPÉRATION DES DONNÉES (PARALLÈLE) ---
+        const [resSign, resPub] = await Promise.all([
+            fetch(`${API_URL}?action=getSignalisation`),
+            fetch(`${API_URL}?action=getRemises`)
+        ]);
+        
         const signal = await resSign.json();
+        const pubs = await resPub.json();
 
+        // --- 2. GESTION DE LA FERMETURE (SLIDE 3) ---
         if (signal.boutiqueOuverte === "NON") {
             const dateMg = document.getElementById('sr-date-mg');
             const dateFr = document.getElementById('sr-date-fr');
             
-            if (dateMg) {
-                // On remplace le mot DATE par la vraie date reçue du Sheet
-                const dateAffichee = signal.dateFerme || "androany"; 
-                dateMg.innerHTML = `⚠️ <span style='color:#e74c3c;'>TSY MISY LIVRAISON NY ${dateAffichee}</span>`;
-            }
+            const parts = signal.dateFerme.split('/');
+            const dateF = new Date(parts[2], parts[1] - 1, parts[0]);
+            const dateR = new Date(dateF);
+            dateR.setDate(dateF.getDate() + 1);
             
-            if (dateFr) dateFr.innerText = signal.message || "Réouverture prochaine";
+            const dR = dateR.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const dF = signal.dateFerme;
+
+            if (dateMg) {
+                dateMg.innerHTML = `
+                    <span style="color:#e74c3c; font-weight:bold; font-size:1.1em;">⚠️ TSY MISY LIVRAISON NY ${dF}</span><br>
+                    <span style="font-size:0.85em; color:#2c3e50; display:block; margin-top:5px;">
+                        Miverina manao livraison kosa ny <b>${dR}</b>. Afaka manao commande foana ary validé soamatsara mihintsy ny achat-nao. 
+                        Enregistré tsara ny vola ary azo arahina 24/7 eto amin'ny site. SafeRun Market: manome mihoatra ho anao!
+                    </span>`;
+            }
+            if (dateFr) {
+                dateFr.innerHTML = `
+                    <span style="font-weight:bold; color:#2c3e50;">LIVRAISONS SUSPENDUES LE ${dF}</span><br>
+                    <span style="font-size:0.85em; display:block; margin-top:5px;">
+                        Reprise normale des livraisons le <b>${dR}</b>. Vous pouvez commander en toute sérénité : 
+                        vos transactions sont sécurisées et enregistrées avec succès. Suivi disponible 24h/24 et 7j/7.
+                    </span>`;
+            }
         }
 
-        // 2. Vérifier s'il y a une PUBLICITÉ à afficher sur le slide 1
-        const resPub = await fetch(`${API_URL}?action=getRemises`);
-        const pubs = await resPub.json();
+        // --- 3. GESTION DE LA PROMO & IMAGE (SLIDE 1) ---
+        if (pubs && pubs.length > 0) {
+            const p = pubs[0];
+            
+            // SÉLECTEUR ULTRA-PRÉCIS : On cible l'image du premier slide, peu importe s'il est "active" ou non
+            const allSlides = document.querySelectorAll('.sr-slide-item');
+            const firstSlide = allSlides[0]; 
 
-        if (pubs.length > 0) {
-            const premierePub = pubs[0];
-            const mainMg = document.querySelector('.sr-main-mg'); // Le texte Malgache du slide 1
-            const subFr = document.querySelector('.sr-sub-fr');   // Le texte Français du slide 1
-            const tag = document.querySelector('.sr-tag');
+            if (firstSlide) {
+                const imgElement = firstSlide.querySelector('img');
+                const mainMg = firstSlide.querySelector('.sr-main-mg');
+                const subFr = firstSlide.querySelector('.sr-sub-fr');
+                const tag = firstSlide.querySelector('.sr-tag');
 
-            if (tag) {
-                tag.innerText = "PROMO";
-                tag.style.background = "#e74c3c";
+                if (mainMg) mainMg.innerText = p.titre;
+                if (subFr) subFr.innerText = p.dateFin ? `${p.desc} — Jusqu'au ${p.dateFin}` : p.desc;
+                if (tag) {
+                    tag.innerText = "PROMO";
+                    tag.style.background = "#e74c3c";
+                }
+
+                // FORCE LE CHANGEMENT D'IMAGE
+                if (imgElement && p.image) {
+                    // On ajoute un "timestamp" à la fin de l'URL pour forcer le navigateur à recharger l'image
+                    const cacheBuster = p.image.includes('?') ? '&' : '?';
+                    const finalImageUrl = p.image.trim() + cacheBuster + "t=" + new Date().getTime();
+                    
+                    imgElement.src = finalImageUrl;
+                    
+                    // Sécurité : si l'image imgur met du temps à charger
+                    imgElement.style.opacity = "0.5";
+                    imgElement.onload = () => { imgElement.style.opacity = "1"; };
+                }
             }
-            if (mainMg) mainMg.innerText = premierePub.titre;
-            if (subFr) subFr.innerText = premierePub.desc;
         }
     } catch (e) {
-        console.error("Erreur bannière:", e);
+        console.error("Erreur d'affichage :", e);
     }
 }
 
-// Lancement automatique
+// Lancement au chargement
 window.addEventListener('load', piloterBanniereDynamique);
+
 // ==========================================
 // GESTION DES AVIS CLIENTS (SAFERUN MARKET)
 // ==========================================
