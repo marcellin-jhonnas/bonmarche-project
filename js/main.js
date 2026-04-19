@@ -1862,7 +1862,11 @@ function mettreAJourSignalValidation() {
     if (!badge) return;
 
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    const nbValides = historique.filter(cmd => cmd.statut === "Validé").length;
+    // CHIRURGIE : Remplace la ligne de calcul du nombre par celle-ci
+const nbValides = historique.filter(cmd => {
+    const s = String(cmd.statut || "").toUpperCase();
+    return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ";
+}).length;
     
     if (nbValides > 0) {
         badge.innerText = nbValides;
