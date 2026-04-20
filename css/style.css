@@ -2439,51 +2439,62 @@ section.saferun-pro-chat .btn-boutique-secondary {
 /* --- SR BANNER PREMIUM FULL-WIDTH & CENTERED --- */
 .sr-banner-premium {
     width: 100% !important;
-    height: 100px !important; /* Hauteur stable */
+    /* CHANGEMENT : On enlève height: 100px pour laisser le texte respirer */
+    min-height: 100px !important; 
+    height: auto !important; 
     background: #ffffff;
-    transition: background 1.2s ease !important;
+    transition: background 1.2s ease !important; /* Garde ton changement de thème fluide */
     position: relative;
-    overflow: hidden;
+    /* CHANGEMENT : On met visible pour ne plus rien cacher */
+    overflow: visible !important; 
     display: flex;
     align-items: center;
     border-bottom: 1px solid rgba(0,0,0,0.08);
+    z-index: 1000 !important; /* Pour passer devant les catégories */
 }
 
 .sr-container-inner { 
     width: 100% !important; 
-    height: 100%; 
+    /* CHANGEMENT : Hauteur automatique pour l'élasticité */
+    height: auto !important; 
+    min-height: 100px;
     position: relative; 
 }
 
 .sr-slide-item {
+    /* On garde absolute pour ne pas casser tes transitions de thèmes */
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
-    justify-content: center; /* CENTRE LE CONTENU HORIZONTALEMENT */
+    justify-content: center;
     opacity: 0;
     visibility: hidden;
     transition: all 0.9s cubic-bezier(0.2, 1, 0.3, 1);
-    transform: translateY(10px); /* Animation de bas en haut plus douce */
+    transform: translateY(10px);
+    /* AJOUT : Sécurité pour que le contenu ne touche pas les bords */
+    padding: 10px 0; 
 }
 
 .sr-slide-item.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    /* AJOUT : En mode actif, il devient relatif pour "pousser" la hauteur de la bannière */
+    position: relative !important; 
 }
 
 .sr-flex-content {
     display: flex;
     align-items: center;
-    justify-content: center; /* ASSURE LE CENTRAGE DES ÉLÉMENTS INTERNES */
+    justify-content: center;
     gap: 25px;
-    padding: 0 20px;
+    padding: 15px 20px; /* Plus d'espace pour l'élasticité */
     width: 100% !important;
     max-width: none !important;
 }
 
-/* Image optimisée */
+/* Image optimisée - Inchangée pour ne pas casser le visuel */
 .sr-img-wrapper img {
     width: 70px !important;
     height: 70px !important;
