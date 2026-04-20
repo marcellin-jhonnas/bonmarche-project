@@ -156,6 +156,33 @@
 .fab-pay { background: #27ae60; }     /* Vert MVola */
 .fab-refresh { background: #3498db; }  /* Bleu */
 .fab-msg { background: #0084ff; }      /* Bleu Messenger */
+.btn-chat-main {
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-chat-main:hover {
+    opacity: 0.9;
+}
+
+.btn-boutique-secondary {
+    background: #e2e8f0;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -221,7 +248,43 @@
 </div>
 <div class="nav-link" id="menu-users" onclick="showTab('tab-users', this)">
     <i class="fas fa-user-shield"></i> Gérer les Accès
+</div><div class="nav-item" onclick="showSection('calendrier')">
+    <i class="fas fa-calendar-alt"></i> <span>Calendrier & Promos</span>
 </div>
+
+<section id="calendrier-section" class="admin-section" style="display:none;">
+    <div class="section-header">
+        <h2><i class="fas fa-calendar-check"></i> Gestion des Fermetures & Promos</h2>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Ajouter une information</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <input type="text" id="cal-titre" placeholder="Titre (ex: Lundi de Pâques)">
+                <input type="date" id="cal-date">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button onclick="envoyerVersFeuille('FERMETURE')" class="btn-chat-main" style="background:#ef4444;">
+                        <i class="fas fa-store-slash"></i> Fermeture
+                    </button>
+                    <button onclick="envoyerVersFeuille('PROMO')" class="btn-chat-main" style="background:#22c55e;">
+                        <i class="fas fa-tag"></i> Promotion
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Nettoyage des données</h3>
+            <p style="font-size: 0.8rem; color: var(--gray);">Effacer les anciennes données pour réinitialiser le site.</p>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="viderFeuille('FERMETURE')" class="btn-boutique-secondary">Vider Fermetures</button>
+                <button onclick="viderFeuille('PROMO')" class="btn-boutique-secondary">Vider Promos</button>
+            </div>
+        </div>
+    </div>
+</section>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -2472,6 +2535,48 @@ async function ouvrirModalPaiement() {
     } catch (e) {
         console.error("Erreur de connexion :", e);
         alert("⚠️ Problème de connexion avec le serveur SafeRun.");
+    }
+}
+// Fonction pour envoyer une Fermeture ou une Promotion au Google Sheet
+async function enregistrerCalendrier(typeCible) {
+    // Récupération des données du formulaire
+    const titre = document.getElementById('cal-titre').value;
+    const date = document.getElementById('cal-date').value;
+    
+    // Si c'est une promo, on peut aussi gérer une description ou une image
+    const desc = (typeCible === 'PROMO') ? prompt("Description de la promo :") : titre;
+
+    if (!titre || !date) {
+        alert("⚠️ Erreur : Le titre et la date sont obligatoires.");
+        return;
+    }
+
+    try {
+        // On envoie la requête POST au GAS
+        const response = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "gestionCalendrier",
+                type: typeCible, // "FERMETURE" ou "PROMO"
+                titre: titre,
+                description: desc,
+                date: date
+            })
+        });
+
+        const res = await response.json();
+
+        if (res.status === "success") {
+            alert("✅ Enregistré avec succès dans la feuille " + typeCible);
+            // On vide les champs après succès
+            document.getElementById('cal-titre').value = "";
+            document.getElementById('cal-date').value = "";
+        } else {
+            alert("❌ Erreur : " + res.message);
+        }
+    } catch (error) {
+        console.error("Erreur d'envoi :", error);
+        alert("❌ Impossible de contacter le serveur.");
     }
 }
 </script>
