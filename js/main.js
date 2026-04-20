@@ -2145,11 +2145,20 @@ async function piloterBanniereDynamique() {
         const signal = await resSign.json();
         const pubs = await resPub.json();
 
+        // Fonction interne pour nettoyer les dates bizarres (ISO) en format simple dd/mm/yyyy
+        const nettoyerDate = (dStr) => {
+            if (!dStr) return "";
+            const d = new Date(dStr);
+            if (isNaN(d.getTime())) return dStr; // Si ce n'est pas une date ISO, on garde le texte original
+            return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+
         // --- 2. GESTION DE LA FERMETURE (SLIDE 3) ---
         if (signal.boutiqueOuverte === "NON") {
             const dateMg = document.getElementById('sr-date-mg');
             const dateFr = document.getElementById('sr-date-fr');
             
+            // Calcul automatique de la réouverture
             const parts = signal.dateFerme.split('/');
             const dateF = new Date(parts[2], parts[1] - 1, parts[0]);
             const dateR = new Date(dateF);
@@ -2158,29 +2167,37 @@ async function piloterBanniereDynamique() {
             const dR = dateR.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const dF = signal.dateFerme;
 
+            // Design Compact & Professionnel Malgache
             if (dateMg) {
                 dateMg.innerHTML = `
-                    <span style="color:#e74c3c; font-weight:bold; font-size:1.1em;">⚠️ TSY MISY LIVRAISON NY ${dF}</span><br>
-                    <span style="font-size:0.85em; color:#2c3e50; display:block; margin-top:5px;">
-                        Miverina manao livraison kosa ny <b>${dR}</b>. Afaka manao commande foana ary validé soamatsara mihintsy ny achat-nao. 
-                        Enregistré tsara ny vola ary azo arahina 24/7 eto amin'ny site. SafeRun Market: manome mihoatra ho anao!
-                    </span>`;
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                    <span style="background:#e74c3c; color:#fff; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:0.8em;">LIVRAISON : PAUSE</span>
+                    <span style="font-weight:bold; color:#2c3e50;">${dF}</span>
+                    <span style="background:#27ae60; color:#fff; font-size:0.7em; padding:2px 8px; border-radius:15px; font-weight:bold;">✔ 24/7</span>
+                </div>
+                <div style="font-size:0.85em; color:#34495e; line-height:1.4;">
+                    Miverina ny <b>${dR}</b>. Afaka <b>mividy foana</b> ianao izao, voaray tsara ny commande-nao.
+                    <br><b style="color:#27ae60;">👉 Tohizo ny shopping-nao</b>
+                </div>`;
             }
+            // Design Compact & Professionnel Français
             if (dateFr) {
                 dateFr.innerHTML = `
-                    <span style="font-weight:bold; color:#2c3e50;">LIVRAISONS SUSPENDUES LE ${dF}</span><br>
-                    <span style="font-size:0.85em; display:block; margin-top:5px;">
-                        Reprise normale des livraisons le <b>${dR}</b>. Vous pouvez commander en toute sérénité : 
-                        vos transactions sont sécurisées et enregistrées avec succès. Suivi disponible 24h/24 et 7j/7.
-                    </span>`;
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                    <span style="background:#e74c3c; color:#fff; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:0.8em;">LIVRAISON : PAUSE</span>
+                    <span style="font-weight:bold; color:#2c3e50;">${dF}</span>
+                    <span style="background:#27ae60; color:#fff; font-size:0.7em; padding:2px 8px; border-radius:15px; font-weight:bold;">✔ 24/7</span>
+                </div>
+                <div style="font-size:0.85em; color:#34495e; line-height:1.4;">
+                    Reprise le <b>${dR}</b>. Les commandes restent <b>ouvertes 24h/7</b> : achat sécurisé.
+                    <br><b style="color:#2980b9;">👉 Commandez en toute sérénité</b>
+                </div>`;
             }
         }
 
         // --- 3. GESTION DE LA PROMO & IMAGE (SLIDE 1) ---
         if (pubs && pubs.length > 0) {
             const p = pubs[0];
-            
-            // SÉLECTEUR ULTRA-PRÉCIS : On cible l'image du premier slide, peu importe s'il est "active" ou non
             const allSlides = document.querySelectorAll('.sr-slide-item');
             const firstSlide = allSlides[0]; 
 
@@ -2191,7 +2208,13 @@ async function piloterBanniereDynamique() {
                 const tag = firstSlide.querySelector('.sr-tag');
 
                 if (mainMg) mainMg.innerText = p.titre;
-                if (subFr) subFr.innerText = p.dateFin ? `${p.desc} — Jusqu'au ${p.dateFin}` : p.desc;
+                
+                // Nettoyage de la date de fin pour éviter le format ISO (2026-04-19T21...)
+                if (subFr) {
+                    const dateFinPropre = nettoyerDate(p.dateFin);
+                    subFr.innerText = dateFinPropre ? `${p.desc} — Jusqu'au ${dateFinPropre}` : p.desc;
+                }
+
                 if (tag) {
                     tag.innerText = "PROMO";
                     tag.style.background = "#e74c3c";
@@ -2199,13 +2222,10 @@ async function piloterBanniereDynamique() {
 
                 // FORCE LE CHANGEMENT D'IMAGE
                 if (imgElement && p.image) {
-                    // On ajoute un "timestamp" à la fin de l'URL pour forcer le navigateur à recharger l'image
                     const cacheBuster = p.image.includes('?') ? '&' : '?';
                     const finalImageUrl = p.image.trim() + cacheBuster + "t=" + new Date().getTime();
                     
                     imgElement.src = finalImageUrl;
-                    
-                    // Sécurité : si l'image imgur met du temps à charger
                     imgElement.style.opacity = "0.5";
                     imgElement.onload = () => { imgElement.style.opacity = "1"; };
                 }
@@ -2218,7 +2238,6 @@ async function piloterBanniereDynamique() {
 
 // Lancement au chargement
 window.addEventListener('load', piloterBanniereDynamique);
-
 // ==========================================
 // GESTION DES AVIS CLIENTS (SAFERUN MARKET)
 // ==========================================
