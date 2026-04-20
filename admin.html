@@ -183,6 +183,10 @@
     cursor: pointer;
     font-size: 0.85rem;
 }
+#calendrier-section {
+    position: relative;
+    z-index: 10; /* Pour être sûr qu'il soit au-dessus du fond */
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -2577,6 +2581,30 @@ async function enregistrerCalendrier(typeCible) {
     } catch (error) {
         console.error("Erreur d'envoi :", error);
         alert("❌ Impossible de contacter le serveur.");
+    }
+}
+function showSection(id) {
+    // 1. On cache toutes les sections qui ont la classe 'admin-section'
+    const sections = document.querySelectorAll('.admin-section');
+    sections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // 2. On affiche la section demandée (ex: calendrier-section)
+    const target = document.getElementById(id + '-section');
+    if (target) {
+        target.style.display = 'block';
+    } else {
+        console.error("La section " + id + "-section n'existe pas dans le HTML");
+    }
+
+    // 3. On gère le style du menu
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => item.classList.remove('active'));
+    
+    // On ajoute 'active' à l'élément sur lequel on a cliqué
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
     }
 }
 </script>
