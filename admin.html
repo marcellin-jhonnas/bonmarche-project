@@ -252,43 +252,10 @@
 </div>
 <div class="nav-link" id="menu-users" onclick="showTab('tab-users', this)">
     <i class="fas fa-user-shield"></i> Gérer les Accès
-</div><div class="nav-item" onclick="showSection('calendrier')">
+</div>
+<div class="nav-item" onclick="showSection('calendrier')">
     <i class="fas fa-calendar-alt"></i> <span>Calendrier & Promos</span>
 </div>
-
-<section id="calendrier-section" class="admin-section" style="display:none;">
-    <div class="section-header">
-        <h2><i class="fas fa-calendar-check"></i> Gestion des Fermetures & Promos</h2>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h3>Ajouter une information</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                <input type="text" id="cal-titre" placeholder="Titre (ex: Lundi de Pâques)">
-                <input type="date" id="cal-date">
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button onclick="envoyerVersFeuille('FERMETURE')" class="btn-chat-main" style="background:#ef4444;">
-                        <i class="fas fa-store-slash"></i> Fermeture
-                    </button>
-                    <button onclick="envoyerVersFeuille('PROMO')" class="btn-chat-main" style="background:#22c55e;">
-                        <i class="fas fa-tag"></i> Promotion
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>Nettoyage des données</h3>
-            <p style="font-size: 0.8rem; color: var(--gray);">Effacer les anciennes données pour réinitialiser le site.</p>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="viderFeuille('FERMETURE')" class="btn-boutique-secondary">Vider Fermetures</button>
-                <button onclick="viderFeuille('PROMO')" class="btn-boutique-secondary">Vider Promos</button>
-            </div>
-        </div>
-    </div>
-</section>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -642,7 +609,40 @@
     <button class="fab fab-refresh" onclick="location.reload()" title="Actualiser la page">🔄</button>
     
     <button class="fab fab-msg" onclick="window.open('https://m.me/SafeRunMadagascar', '_blank')" title="Ouvrir Messenger">💬</button>
-</div></main>
+</div>
+<section id="calendrier-section" class="admin-section" style="display:none;">
+    <div class="section-header">
+        <h2><i class="fas fa-calendar-check"></i> Gestion des Fermetures & Promos</h2>
+    </div>
+
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;">
+        <div class="card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>Ajouter une information</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                <input type="text" id="cal-titre" placeholder="Titre (ex: Lundi de Pâques)" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                <input type="date" id="cal-date" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button onclick="enregistrerCalendrier('FERMETURE')" style="background:#ef4444; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">
+                        <i class="fas fa-store-slash"></i> Fermeture
+                    </button>
+                    <button onclick="enregistrerCalendrier('PROMO')" style="background:#22c55e; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">
+                        <i class="fas fa-tag"></i> Promotion
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>Nettoyage</h3>
+            <p style="font-size: 0.8rem; color: #666;">Effacer les données pour réinitialiser le site.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button onclick="viderFeuille('FERMETURE')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:10px; border-radius:8px; cursor:pointer;">Vider Fermetures</button>
+                <button onclick="viderFeuille('PROMO')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:10px; border-radius:8px; cursor:pointer;">Vider Promos</button>
+            </div>
+        </div>
+    </div>
+</section></main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
@@ -2541,70 +2541,67 @@ async function ouvrirModalPaiement() {
         alert("⚠️ Problème de connexion avec le serveur SafeRun.");
     }
 }
-// Fonction pour envoyer une Fermeture ou une Promotion au Google Sheet
+// ZONE SCRIPT : À mettre tout en bas
+function showSection(id) {
+    // Cache toutes les sections
+    document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
+    
+    // Affiche la section cible
+    const target = document.getElementById(id + '-section');
+    if (target) {
+        target.style.display = 'block';
+    }
+    
+    // Gère le style du menu
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+}
+
 async function enregistrerCalendrier(typeCible) {
-    // Récupération des données du formulaire
     const titre = document.getElementById('cal-titre').value;
     const date = document.getElementById('cal-date').value;
     
-    // Si c'est une promo, on peut aussi gérer une description ou une image
-    const desc = (typeCible === 'PROMO') ? prompt("Description de la promo :") : titre;
-
     if (!titre || !date) {
-        alert("⚠️ Erreur : Le titre et la date sont obligatoires.");
+        alert("⚠️ Remplissez le titre et la date !");
         return;
     }
 
+    const desc = (typeCible === 'PROMO') ? prompt("Description de la promo :", titre) : titre;
+
     try {
-        // On envoie la requête POST au GAS
         const response = await fetch(CONFIG.API, {
             method: "POST",
             body: JSON.stringify({
                 action: "gestionCalendrier",
-                type: typeCible, // "FERMETURE" ou "PROMO"
+                type: typeCible,
                 titre: titre,
                 description: desc,
                 date: date
             })
         });
-
         const res = await response.json();
-
         if (res.status === "success") {
-            alert("✅ Enregistré avec succès dans la feuille " + typeCible);
-            // On vide les champs après succès
+            alert("✅ Enregistré : " + res.message);
             document.getElementById('cal-titre').value = "";
-            document.getElementById('cal-date').value = "";
-        } else {
-            alert("❌ Erreur : " + res.message);
         }
-    } catch (error) {
-        console.error("Erreur d'envoi :", error);
-        alert("❌ Impossible de contacter le serveur.");
+    } catch (e) {
+        alert("❌ Erreur de connexion au GAS");
     }
 }
-function showSection(id) {
-    // 1. On cache toutes les sections qui ont la classe 'admin-section'
-    const sections = document.querySelectorAll('.admin-section');
-    sections.forEach(section => {
-        section.style.display = 'none';
-    });
 
-    // 2. On affiche la section demandée (ex: calendrier-section)
-    const target = document.getElementById(id + '-section');
-    if (target) {
-        target.style.display = 'block';
-    } else {
-        console.error("La section " + id + "-section n'existe pas dans le HTML");
-    }
-
-    // 3. On gère le style du menu
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => item.classList.remove('active'));
-    
-    // On ajoute 'active' à l'élément sur lequel on a cliqué
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+async function viderFeuille(typeCible) {
+    if (!confirm("Voulez-vous vraiment tout effacer ?")) return;
+    try {
+        const response = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({ action: "nettoyerFeuilles", cible: typeCible })
+        });
+        const res = await response.json();
+        alert("✅ " + res.message);
+    } catch (e) {
+        alert("❌ Erreur de suppression");
     }
 }
 </script>
