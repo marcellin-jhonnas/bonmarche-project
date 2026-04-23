@@ -505,60 +505,93 @@ async function envoyerDonneesAuSheet() {
 }
 
 function afficherChoixPaiementLuxe(id, montant) {
-    // Nettoyage de sécurité
     const old = document.getElementById('modale-saferun-pay');
     if(old) old.remove();
 
     const overlay = document.createElement('div');
     overlay.id = 'modale-saferun-pay';
-    // Style Glassmorphism pour l'arrière-plan
     overlay.style.cssText = `
         position:fixed; top:0; left:0; width:100%; height:100%;
-        background:rgba(0,0,0,0.85); z-index:999999;
-        display:flex; align-items:center; justify-content:center;
-        backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+        background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7) 0%, rgba(0,0,0,0.9) 100%);
+        z-index:999999; display:flex; align-items:center; justify-content:center;
+        backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
         font-family:'Poppins', sans-serif;
     `;
     
     overlay.innerHTML = `
-        <div style="background:white; padding:40px 30px; border-radius:35px; width:92%; max-width:420px; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.6); animation: slideUp 0.4s ease;">
-            <div style="font-size:3rem; margin-bottom:15px;">🛍️</div>
-            <h2 style="margin:0; color:#1a1a1a; font-size:1.8rem; font-weight:800;">SafeRun Pay</h2>
-            <p style="color:#94a3b8; margin:5px 0; font-size:0.9rem;">Commande sécurisée #${id}</p>
+        <div class="glass-card" style="background:rgba(255,255,255,0.98); padding:45px 35px; border-radius:40px; width:92%; max-width:420px; text-align:center; box-shadow:0 40px 100px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.5); position:relative; overflow:hidden;">
             
-            <div style="background:#f1f5f9; padding:25px; border-radius:25px; margin:25px 0; border:1px solid #e2e8f0;">
-                <span style="display:block; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Total à régler</span>
-                <span style="font-size:2.4rem; font-weight:900; color:#10b981;">${montant.toLocaleString()} Ar</span>
+            <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background: radial-gradient(circle, rgba(255,204,0,0.05) 0%, transparent 50%); animation: rotateBg 15s linear infinite; pointer-events:none;"></div>
+
+            <div style="font-size:3.5rem; margin-bottom:15px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));">🛍️</div>
+            <h2 style="margin:0; color:#1e293b; font-size:1.8rem; font-weight:900; letter-spacing:-0.5px;">SafeRun Pay</h2>
+            <p style="color:#64748b; margin:5px 0; font-size:0.9rem; font-weight:500;">Commande sécurisée #${id}</p>
+            
+            <div class="amount-badge" style="background:#f8fafc; padding:25px; border-radius:30px; margin:30px 0; border:1px solid #e2e8f0; transition: 0.3s;">
+                <span style="display:block; color:#94a3b8; font-size:0.75rem; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">Montant Total</span>
+                <span style="font-size:2.6rem; font-weight:900; color:#059669; display:block; line-height:1;">${montant.toLocaleString()} <small style="font-size:1.2rem;">Ar</small></span>
             </div>
 
-            <button id="go-visa" style="width:100%; padding:20px; background:#1e293b; color:white; border:none; border-radius:20px; font-weight:700; margin-bottom:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.3s; font-size:1rem; box-shadow:0 10px 20px rgba(30,41,59,0.2);">
-                <span style="margin-right:12px; font-size:1.2rem;">💳</span> CB / VISA / MASTERCARD
-            </button>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button id="go-visa" class="btn-luxe btn-dark">
+                    <span class="icon">💳</span> CB / VISA / MASTERCARD
+                    <div class="shimmer"></div>
+                </button>
 
-            <button id="go-mvola" style="width:100%; padding:20px; background:#ffcc00; color:#1a1a1a; border:none; border-radius:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.3s; font-size:1rem;">
-                <span style="margin-right:12px; font-size:1.2rem;">📱</span> PAYER PAR MVOLA
-            </button>
+                <button id="go-mvola" class="btn-luxe btn-yellow">
+                    <span class="icon">📱</span> PAYER PAR MVOLA
+                </button>
+            </div>
 
-            <p onclick="document.getElementById('modale-saferun-pay').remove()" style="margin-top:25px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:underline; font-weight:500;">
-                Retour au panier
+            <p onclick="document.getElementById('modale-saferun-pay').remove()" style="margin-top:30px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:none; font-weight:600; transition:0.3s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+                ← Retour au panier
             </p>
         </div>
+
         <style>
-            @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-            #go-visa:active, #go-mvola:active { transform:scale(0.97); }
+            @keyframes slideUp { 
+                from { opacity:0; transform:translateY(40px) scale(0.95); } 
+                to { opacity:1; transform:translateY(0) scale(1); } 
+            }
+            @keyframes rotateBg { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+            
+            .glass-card { animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+            
+            .btn-luxe {
+                position: relative; overflow: hidden;
+                width: 100%; padding: 22px; border: none; border-radius: 22px;
+                font-weight: 800; font-size: 1rem; cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .btn-dark { background: #1e293b; color: white; box-shadow: 0 10px 25px rgba(30,41,59,0.2); }
+            .btn-yellow { background: #ffcc00; color: #1a1a1a; box-shadow: 0 10px 25px rgba(255,204,0,0.2); }
+            
+            .btn-luxe:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+            .btn-luxe:active { transform: translateY(0) scale(0.97); }
+            
+            .icon { margin-right: 12px; font-size: 1.3rem; transition: 0.3s; }
+            .btn-luxe:hover .icon { transform: scale(1.2) rotate(-5deg); }
+
+            .shimmer {
+                position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transform: skewX(-20deg); animation: shimmer 3s infinite;
+            }
+            
+            .amount-badge:hover { transform: scale(1.02); background: #fff; border-color: #10b981; }
         </style>
     `;
     document.body.appendChild(overlay);
 
-    // --- LOGIQUE DES CLICS ---
+    // --- LOGIQUE DES CLICS (NON MODIFIÉE) ---
     document.getElementById('go-visa').onclick = function() {
-        // Désactivation visuelle pour éviter les doubles clics
-        this.id = "btn-visa-active"; // Marqueur pour la réactivation
+        this.id = "btn-visa-active";
         this.innerHTML = "⌛ Connexion sécurisée...";
         this.style.opacity = "0.6";
         this.disabled = true;
-        
-        // Lancement de l'interface PayPal
         lancerPayUnit(id, montant); 
     };
 
