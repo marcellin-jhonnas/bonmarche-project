@@ -505,55 +505,65 @@ async function envoyerDonneesAuSheet() {
 }
 
 function afficherChoixPaiementLuxe(id, montant) {
-    // Supprimer toute ancienne modale
+    // Nettoyage de sécurité
     const old = document.getElementById('modale-saferun-pay');
     if(old) old.remove();
 
     const overlay = document.createElement('div');
     overlay.id = 'modale-saferun-pay';
-    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);";
+    // Style Glassmorphism pour l'arrière-plan
+    overlay.style.cssText = `
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.85); z-index:999999;
+        display:flex; align-items:center; justify-content:center;
+        backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+        font-family:'Poppins', sans-serif;
+    `;
     
     overlay.innerHTML = `
-        <div style="background:white;padding:35px;border-radius:30px;width:92%;max-width:400px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.5);font-family:sans-serif;">
-            <div style="font-size:2.5rem;margin-bottom:10px;">🚀</div>
-            <h2 style="margin:0;color:#1a1f71;font-size:1.6rem;">Confirmation</h2>
-            <p style="color:#888;margin:5px 0;">Commande #${id}</p>
+        <div style="background:white; padding:40px 30px; border-radius:35px; width:92%; max-width:420px; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.6); animation: slideUp 0.4s ease;">
+            <div style="font-size:3rem; margin-bottom:15px;">🛍️</div>
+            <h2 style="margin:0; color:#1a1a1a; font-size:1.8rem; font-weight:800;">SafeRun Pay</h2>
+            <p style="color:#94a3b8; margin:5px 0; font-size:0.9rem;">Commande sécurisée #${id}</p>
             
-            <div style="background:#f8f9fa;padding:20px;border-radius:20px;margin:25px 0;">
-                <span style="display:block;color:#666;font-size:0.9rem;">Total à payer</span>
-                <span style="font-size:2.2rem;font-weight:bold;color:#27ae60;">${montant.toLocaleString()} Ar</span>
+            <div style="background:#f1f5f9; padding:25px; border-radius:25px; margin:25px 0; border:1px solid #e2e8f0;">
+                <span style="display:block; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Total à régler</span>
+                <span style="font-size:2.4rem; font-weight:900; color:#10b981;">${montant.toLocaleString()} Ar</span>
             </div>
 
-            <p style="font-size:0.9rem;color:#333;margin-bottom:15px;font-weight:bold;">Choisissez votre mode de paiement :</p>
-
-            <button id="go-visa" style="width:100%;padding:18px;background:#1a1f71;color:white;border:none;border-radius:15px;font-weight:bold;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.3s;">
-                <span style="margin-right:10px;">💳</span> VISA / MASTERCARD
+            <button id="go-visa" style="width:100%; padding:20px; background:#1e293b; color:white; border:none; border-radius:20px; font-weight:700; margin-bottom:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.3s; font-size:1rem; box-shadow:0 10px 20px rgba(30,41,59,0.2);">
+                <span style="margin-right:12px; font-size:1.2rem;">💳</span> CB / VISA / MASTERCARD
             </button>
 
-            <button id="go-mvola" style="width:100%;padding:18px;background:#ffcc00;color:black;border:none;border-radius:15px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.3s;">
-                <span style="margin-right:10px;">📱</span> MVOLA MONEY
+            <button id="go-mvola" style="width:100%; padding:20px; background:#ffcc00; color:#1a1a1a; border:none; border-radius:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.3s; font-size:1rem;">
+                <span style="margin-right:12px; font-size:1.2rem;">📱</span> PAYER PAR MVOLA
             </button>
+
+            <p onclick="document.getElementById('modale-saferun-pay').remove()" style="margin-top:25px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:underline; font-weight:500;">
+                Retour au panier
+            </p>
         </div>
+        <style>
+            @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+            #go-visa:active, #go-mvola:active { transform:scale(0.97); }
+        </style>
     `;
     document.body.appendChild(overlay);
 
-    // --- ACTIONS DES BOUTONS (À MODIFIER ICI) ---
-    document.getElementById('go-visa').onclick = () => {
-        // 1. On change l'apparence du bouton pour montrer le chargement
-        const btn = document.getElementById('go-visa');
-        btn.innerHTML = "⌛ Connexion sécurisée...";
-        btn.style.opacity = "0.7";
-        btn.disabled = true;
-
-        // 2. ON APPELLE LE NOUVEAU GAS (C'est ici que la magie opère)
+    // --- LOGIQUE DES CLICS ---
+    document.getElementById('go-visa').onclick = function() {
+        // Désactivation visuelle pour éviter les doubles clics
+        this.id = "btn-visa-active"; // Marqueur pour la réactivation
+        this.innerHTML = "⌛ Connexion sécurisée...";
+        this.style.opacity = "0.6";
+        this.disabled = true;
+        
+        // Lancement de l'interface PayPal
         lancerPayUnit(id, montant); 
     };
 
-    document.getElementById('go-mvola').onclick = () => {
-        // On ferme la modale actuelle avant d'afficher MVola
-        const modale = document.getElementById('modale-saferun-pay');
-        if(modale) modale.remove();
-        
+    document.getElementById('go-mvola').onclick = function() {
+        overlay.remove();
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
         }
@@ -663,7 +673,6 @@ async function lancerPayUnit(id, montant) {
     const overlay = document.createElement('div');
     overlay.id = "paypal-overlay";
     
-    // Style de l'overlay avec animation de fond
     overlay.style.cssText = `
         position: fixed !important; top: 0 !important; left: 0 !important;
         width: 100vw !important; height: 100vh !important;
@@ -714,8 +723,8 @@ async function lancerPayUnit(id, montant) {
                 <div id="paypal-button-container" style="min-height: 350px !important;"></div>
                 
                 <div style="text-align: center !important; margin-top: 20px !important; padding-top: 15px !important; border-top: 1px solid #eee !important;">
-                    <button onclick="window.fermerPaypal()" style="background: none !important; border: none !important; color: #94a3b8 !important; cursor: pointer !important; font-weight: 600 !important; font-size: 0.85rem !important; text-decoration: underline !important;">
-                        Annuler et modifier le panier
+                    <button onclick="window.fermerPaypal()" style="background: none !important; border: none !important; color: #ef4444 !important; cursor: pointer !important; font-weight: 700 !important; font-size: 0.85rem !important; text-decoration: underline !important;">
+                        ✕ Annuler le paiement
                     </button>
                 </div>
             </div>
@@ -731,10 +740,21 @@ async function lancerPayUnit(id, montant) {
 
     document.body.appendChild(overlay);
 
-    // --- FONCTIONS ---
+    // --- FONCTION DE FERMETURE ET RÉACTIVATION ---
     window.fermerPaypal = function() {
         overlay.style.opacity = "0";
-        setTimeout(() => overlay.remove(), 300);
+        setTimeout(() => {
+            overlay.remove();
+            
+            // On cherche le bouton VISA bloqué sur la modale de choix et on le réactive
+            const btnVisa = document.getElementById('btn-visa-active');
+            if (btnVisa) {
+                btnVisa.disabled = false;
+                btnVisa.style.opacity = "1";
+                btnVisa.id = "go-visa"; // On restaure l'ID d'origine
+                btnVisa.innerHTML = "<span style='margin-right:10px;'>💳</span> VISA / MASTERCARD";
+            }
+        }, 300);
     };
 
     // --- INITIALISATION ---
