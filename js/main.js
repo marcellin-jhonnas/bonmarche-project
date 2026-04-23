@@ -644,100 +644,140 @@ function afficherInstructionsMvola(montant, idCommande) {
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
-    // --- CALCULS (Taux 4900 Ar) ---
+    // --- CALCULS ---
     const TAUX_MGA_USD = 4900;
     const FRAIS_FIXE = 0.30;
     const FRAIS_POURCENT = 0.044;
     let montantFinalUSD = (((montant / TAUX_MGA_USD) + FRAIS_FIXE) / (1 - FRAIS_POURCENT)).toFixed(2);
 
-    // --- PRÉPARATION DES DONNÉES (Pour éviter le panier vide) ---
-    const nomClient = "MARCELLIN"; // D'après tes logs
-    const telClient = "0344414702";
-    const quartierClient = "Belanitra";
-    // Récupération dynamique des produits depuis ton tableau panier
-    const listeProduits = typeof panier !== 'undefined' ? 
-        panier.map(p => `${p.nom} (x${p.quantite})`).join(', ') : "Produit SafeRun";
+    // --- DONNÉES CLIENT ---
+    const nomClient = document.getElementById('nom-client')?.value || "Client SafeRun";
+    const telClient = document.getElementById('tel-client')?.value || "034...";
+    const quartierClient = document.getElementById('quartier-client')?.value || "Antananarivo";
+    const produitsCommande = typeof panier !== 'undefined' ? panier.map(p => `${p.nom} (x${p.quantite})`).join(', ') : "Commande SafeRun";
 
-    // --- INTERFACE ANTI-FLOU & ANTI-BLOCAGE ---
+    // --- NETTOYAGE ---
     if (document.getElementById('paypal-overlay')) document.getElementById('paypal-overlay').remove();
 
+    // --- INTERFACE VIVANTE & SCROLLABLE ---
     const overlay = document.createElement('div');
     overlay.id = "paypal-overlay";
-    // Style forcé pour battre le mode Quirks et les blocages
+    
+    // Style de l'overlay avec animation de fond
     overlay.style.cssText = `
         position: fixed !important; top: 0 !important; left: 0 !important;
-        width: 100% !important; height: 100% !important;
-        background: rgba(0,0,0,0.9) !important; z-index: 9999999 !important;
+        width: 100vw !important; height: 100vh !important;
+        background: linear-gradient(-45deg, rgba(0,0,0,0.8), rgba(26,26,26,0.9), rgba(0,0,0,0.8)) !important;
+        background-size: 400% 400% !important;
+        animation: gradientBG 10s ease infinite !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        z-index: 2147483647 !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
-        backdrop-filter: blur(8px) !important;
+        font-family: 'Poppins', sans-serif !important;
+        overflow: hidden !important;
     `;
 
     overlay.innerHTML = `
-        <div id="paypal-modal" style="background: white !important; width: 95% !important; max-width: 400px !important; border-radius: 20px !important; overflow: hidden !important; box-shadow: 0 20px 40px rgba(0,0,0,0.6) !important;">
-            <div style="background: #ffcc00 !important; padding: 15px !important; text-align: center !important; font-family: sans-serif !important;">
-                <b style="color: #1a1a1a !important;">SAFERUN MARKET - PAIEMENT</b>
+        <div id="paypal-modal" style="
+            background: rgba(255, 255, 255, 0.95) !important; 
+            width: 92% !important; 
+            max-width: 440px !important; 
+            max-height: 85vh !important; 
+            border-radius: 30px !important; 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8) !important;
+            display: flex !important; 
+            flex-direction: column !important;
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(255,255,255,0.3) !important;">
+            
+            <div style="background: var(--primary, #ffcc00) !important; padding: 20px !important; text-align: center !important; flex-shrink: 0 !important;">
+                <h3 style="margin: 0 !important; color: #1a1a1a !important; font-weight: 800 !important; letter-spacing: -0.5px !important;">Paiement Sécurisé</h3>
+                <small style="opacity: 0.7 !important; font-size: 0.7rem !important;">SafeRun Market • ID ${id}</small>
             </div>
-            <div style="padding: 20px !important; text-align: center !important; font-family: sans-serif !important;">
-                <p style="margin: 0 !important; color: #666 !important;">Total Commande :</p>
-                <h2 style="margin: 5px 0 !important; color: #1a1a1a !important;">$${montantFinalUSD} USD</h2>
-                <p style="font-size: 12px !important; color: #16a34a !important;">(${montant.toLocaleString()} Ar)</p>
+            
+            <div id="modal-scroll-body" style="
+                padding: 25px !important; 
+                overflow-y: auto !important; 
+                flex-grow: 1 !important; 
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: thin !important;">
                 
-                <div id="paypal-button-container" style="min-height: 300px !important; width: 100% !important; margin-top: 15px !important;"></div>
+                <div style="text-align: center !important; margin-bottom: 20px !important;">
+                    <div style="font-size: 2.2rem !important; font-weight: 900 !important; color: #1a1a1a !important;">$${montantFinalUSD} <small style="font-size: 0.9rem !important; font-weight: 500 !important;">USD</small></div>
+                    <div style="background: #f0fdf4 !important; color: #16a34a !important; padding: 5px 15px !important; border-radius: 20px !important; font-size: 0.85rem !important; font-weight: 600 !important; display: inline-block !important; margin-top: 5px !important;">
+                        ≈ ${montant.toLocaleString()} Ar
+                    </div>
+                </div>
+
+                <div id="paypal-button-container" style="min-height: 350px !important;"></div>
                 
-                <button onclick="document.getElementById('paypal-overlay').remove()" style="margin-top: 15px !important; background: none !important; border: none !important; color: red !important; cursor: pointer !important; text-decoration: underline !important;">Annuler</button>
+                <div style="text-align: center !important; margin-top: 20px !important; padding-top: 15px !important; border-top: 1px solid #eee !important;">
+                    <button onclick="window.fermerPaypal()" style="background: none !important; border: none !important; color: #94a3b8 !important; cursor: pointer !important; font-weight: 600 !important; font-size: 0.85rem !important; text-decoration: underline !important;">
+                        Annuler et modifier le panier
+                    </button>
+                </div>
             </div>
         </div>
+
+        <style>
+            @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+            @keyframes modalPop { from { opacity: 0; transform: translateY(40px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+            #modal-scroll-body::-webkit-scrollbar { width: 6px; }
+            #modal-scroll-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        </style>
     `;
+
     document.body.appendChild(overlay);
 
-    // --- INITIALISATION PAYPAL ---
+    // --- FONCTIONS ---
+    window.fermerPaypal = function() {
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    // --- INITIALISATION ---
     setTimeout(() => {
         if (typeof paypal === 'undefined') {
-            alert("PayPal est bloqué. Vérifiez votre connexion.");
-            overlay.remove();
+            alert("Erreur: PayPal n'a pas pu charger.");
+            window.fermerPaypal();
             return;
         }
 
         paypal.Buttons({
-            style: { layout: 'vertical', color: 'gold', shape: 'rect' },
-            createOrder: (data, actions) => {
-                return actions.order.create({
-                    purchase_units: [{ amount: { currency_code: 'USD', value: montantFinalUSD } }]
-                });
-            },
+            style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
+            createOrder: (data, actions) => actions.order.create({
+                purchase_units: [{ reference_id: id, amount: { currency_code: 'USD', value: montantFinalUSD } }]
+            }),
             onApprove: async (data, actions) => {
                 return actions.order.capture().then(async (details) => {
-                    // Écran de chargement pendant l'envoi au Sheet
-                    document.getElementById('paypal-modal').innerHTML = "<div style='padding:50px;text-align:center;'><b>Validation de votre commande...</b></div>";
+                    document.getElementById('paypal-modal').innerHTML = `
+                        <div style="padding: 60px 20px; text-align: center; animation: modalPop 0.4s ease;">
+                            <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+                            <h2 style="font-weight: 800; color: #1a1a1a;">Paiement Réussi !</h2>
+                            <p style="color: #64748b;">Merci ${details.payer.name.given_name}, votre commande est enregistrée.</p>
+                        </div>
+                    `;
 
-                    // ENVOI AU GOOGLE SHEET
                     try {
                         await fetch(SCRIPT_URL, {
                             method: "POST",
-                            mode: "no-cors", // Pour éviter les erreurs CORS de tes logs
+                            mode: "no-cors",
                             body: JSON.stringify({
                                 action: "nouvelleCommande",
-                                nom: nomClient,
-                                telClient: telClient,
-                                id: id,
-                                montant: montant,
-                                produits: listeProduits,
-                                quartier: quartierClient,
-                                transactionId: details.id,
-                                statut: "PAYÉ"
+                                id: id, nom: nomClient, tel: telClient, quartier: quartierClient,
+                                montant: montant, produits: produitsCommande,
+                                transactionId: details.id, statut: "PAYÉ"
                             })
                         });
-                        
-                        localStorage.removeItem('panier'); // On vide le panier local
-                        alert("Paiement réussi ! Votre commande est enregistrée.");
-                        location.reload();
-                    } catch (e) {
-                        alert("Erreur de synchronisation, mais paiement validé.");
-                    }
+                        if (typeof viderPanier === 'function') viderPanier();
+                        setTimeout(() => location.reload(), 3000);
+                    } catch (e) { console.error(e); }
                 });
             }
         }).render('#paypal-button-container');
-    }, 600);
+    }, 500);
 }
 
 // 5. SIDEBAR ET POPUP
