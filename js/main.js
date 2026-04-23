@@ -644,93 +644,93 @@ function afficherInstructionsMvola(montant, idCommande) {
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
-    // --- CONFIGURATION FINANCIÈRE ---
+    // --- 1. CALCULS FINANCIERS ---
     const TAUX_MGA_USD = 4900; 
     const FRAIS_POURCENTAGE = 0.044;
     const FRAIS_FIXE_USD = 0.30;
     let montantBaseUSD = montant / TAUX_MGA_USD;
     let montantFinalUSD = ((montantBaseUSD + FRAIS_FIXE_USD) / (1 - FRAIS_POURCENTAGE)).toFixed(2);
 
-    // --- NETTOYAGE PRÉALABLE ---
+    // --- 2. RÉCUPÉRATION DES INFOS CLIENT (Indispensable pour le Sheet) ---
+    // On récupère les infos AVANT d'ouvrir PayPal pour être sûr de les avoir
+    const nomClient = document.getElementById('nom-client')?.value || "Client SafeRun";
+    const telClient = document.getElementById('tel-client')?.value || "Non précisé";
+    const quartierClient = document.getElementById('quartier-client')?.value || "Tana";
+    
+    // On récupère le texte du panier (Assure-toi que cette variable existe dans ton code)
+    // Sinon, on utilise une valeur par défaut
+    const produitsCommande = typeof genererTextePanier === 'function' ? genererTextePanier() : "Détails en attente";
+
+    // --- 3. DESIGN DE L'INTERFACE ---
     const existant = document.getElementById('paypal-overlay');
     if (existant) existant.remove();
 
-    // --- CRÉATION DE L'INTERFACE (DESIGN MOBILE-FIRST) ---
     const overlay = document.createElement('div');
     overlay.id = "paypal-overlay";
-    
-    // Style de l'arrière-plan avec flou pour focus maximal
     Object.assign(overlay.style, {
         position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(26, 26, 26, 0.85)', backdropFilter: 'blur(12px)',
         zIndex: '2147483647', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Poppins', sans-serif", transition: 'opacity 0.3s ease'
+        fontFamily: "'Poppins', sans-serif"
     });
 
     overlay.innerHTML = `
-        <div id="paypal-modal" style="background: white; width: 92%; max-width: 420px; max-height: 90vh; border-radius: 24px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <div id="paypal-modal" style="background: white; width: 92%; max-width: 400px; border-radius: 28px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5); transform: scale(0.9); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             
-            <div style="background: var(--primary, #ffcc00); padding: 18px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                <h3 style="margin: 0; font-size: 1.1rem; color: var(--secondary, #1a1a1a); font-weight: 700;">SafeRun Checkout</h3>
-                <span style="font-size: 0.75rem; color: rgba(0,0,0,0.6);">ID Commande: ${id}</span>
+            <div style="background: var(--primary, #ffcc00); padding: 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <div style="font-weight: 800; color: var(--secondary, #1a1a1a); font-size: 1.2rem; letter-spacing: -0.5px;">SAFERUN MARKET</div>
+                <div style="font-size: 0.75rem; color: rgba(0,0,0,0.6); margin-top: 2px;">Paiement Sécurisé • ID ${id}</div>
             </div>
             
-            <div style="padding: 25px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch;">
-                
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <span style="display: block; color: #666; font-size: 0.85rem; margin-bottom: 5px;">Montant Total (incluant frais)</span>
-                    <strong style="font-size: 2.2rem; color: #1a1a1a; letter-spacing: -1px;">$${montantFinalUSD} <small style="font-size: 0.9rem;">USD</small></strong>
-                    <div style="margin-top: 8px; background: #f0fdf4; color: #16a34a; display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">
-                        ≈ ${montant.toLocaleString()} Ar
+            <div style="padding: 30px; text-align: center;">
+                <div style="margin-bottom: 25px;">
+                    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">Total de la commande</p>
+                    <h2 style="margin: 5px 0; font-size: 2.2rem; color: #0f172a; font-weight: 800;">$${montantFinalUSD} <small style="font-size: 0.8rem; font-weight: 400;">USD</small></h2>
+                    <div style="display: inline-block; background: #f0fdf4; color: #15803d; padding: 5px 15px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;">
+                        ${montant.toLocaleString()} Ar
                     </div>
                 </div>
 
-                <div id="pp-loader" style="text-align: center; color: #999; font-size: 0.8rem; margin-bottom: 10px;">
-                    Connexion sécurisée à PayPal...
+                <div id="paypal-loading-status" style="margin-bottom: 15px; font-size: 0.8rem; color: #94a3b8;">
+                    <span class="spinner" style="display: inline-block; width: 12px; height: 12px; border: 2px solid #ddd; border-top-color: #ffcc00; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px;"></span>
+                    Chargement des boutons sécurisés...
                 </div>
 
-                <div id="paypal-button-container" style="width: 100%; min-height: 250px;"></div>
+                <div id="paypal-button-container" style="min-height: 150px; border-radius: 12px; overflow: hidden;"></div>
                 
-                <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                    <button onclick="window.fermerPaypal()" 
-                            style="background: none; border: none; color: #ef4444; font-weight: 600; cursor: pointer; padding: 10px; font-size: 0.9rem; text-decoration: underline;">
-                        Annuler et changer de mode
-                    </button>
-                </div>
+                <button onclick="window.annulerPaiement()" style="margin-top: 25px; background: none; border: none; color: #94a3b8; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: color 0.2s;">
+                    ✕ Annuler et retourner au panier
+                </button>
             </div>
         </div>
+        <style>
+            @keyframes spin { to { transform: rotate(360deg); } }
+            #paypal-modal.show { transform: scale(1); opacity: 1; }
+        </style>
     `;
 
     document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('paypal-modal').classList.add('show'), 10);
 
-    // --- ANIMATION D'ENTRÉE ---
-    setTimeout(() => {
-        const modal = document.getElementById('paypal-modal');
-        modal.style.transform = "scale(1)";
-        modal.style.opacity = "1";
-    }, 10);
-
-    // --- FONCTION DE FERMETURE ---
-    window.fermerPaypal = function() {
+    // --- 4. FONCTION D'ANNULATION ---
+    window.annulerPaiement = function() {
         overlay.style.opacity = "0";
         setTimeout(() => overlay.remove(), 300);
     };
 
-    // --- INITIALISATION DU SDK ---
+    // --- 5. INITIALISATION PAYPAL ---
     setTimeout(() => {
         if (typeof paypal === 'undefined') {
-            alert("Erreur: Le service de paiement n'a pas pu être chargé. Vérifiez votre connexion.");
-            window.fermerPaypal();
+            alert("Erreur: Service PayPal indisponible.");
+            window.annulerPaiement();
             return;
         }
 
         paypal.Buttons({
-            style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+            style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
             
             onInit: function() {
-                // On cache le loader quand les boutons sont prêts
-                const loader = document.getElementById('pp-loader');
-                if(loader) loader.style.display = "none";
+                document.getElementById('paypal-loading-status').style.display = "none";
             },
 
             createOrder: function(data, actions) {
@@ -744,34 +744,51 @@ async function lancerPayUnit(id, montant) {
 
             onApprove: async function(data, actions) {
                 return actions.order.capture().then(async function(details) {
-                    // Écran de succès stylisé
+                    
+                    // Transformation de la modale en écran de succès
                     const modal = document.getElementById('paypal-modal');
                     modal.innerHTML = `
                         <div style="padding: 60px 20px; text-align: center;">
-                            <div style="font-size: 50px; margin-bottom: 20px;">✅</div>
-                            <h2 style="margin: 0; color: #1a1a1a;">Paiement Validé</h2>
-                            <p style="color: #666; margin-top: 10px;">Merci ${details.payer.name.given_name} !<br>Votre commande SafeRun est enregistrée.</p>
+                            <div style="width: 70px; height: 70px; background: #22c55e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 35px; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);">✓</div>
+                            <h2 style="margin: 0; color: #1a1a1a; font-weight: 800;">Paiement Réussi !</h2>
+                            <p style="color: #64748b; margin-top: 10px;">Merci ${details.payer.name.given_name},<br>votre commande est en cours d'enregistrement...</p>
                         </div>
                     `;
-                    
+
+                    // --- ENVOI AU GOOGLE SHEET (UNIQUEMENT MAINTENANT) ---
                     try {
-                        await fetch(SCRIPT_URL, {
+                        const response = await fetch(SCRIPT_URL, {
                             method: "POST",
                             body: JSON.stringify({
-                                action: "paiementReussi",
+                                action: "nouvelleCommande", // On utilise l'action de création de commande
                                 id: id,
+                                nom: nomClient,
+                                telClient: telClient,
+                                quartier: quartierClient,
+                                montant: montant,
+                                produits: produitsCommande,
                                 transactionId: details.id,
-                                montantAr: montant
+                                methode: "PayPal",
+                                statut: "PAYÉ"
                             })
                         });
-                        setTimeout(() => location.reload(), 3000);
-                    } catch (e) { console.error(e); }
+
+                        const result = await response.json();
+                        if (result.status === "success") {
+                            // On vide le panier seulement si l'enregistrement est OK
+                            if(typeof viderPanier === 'function') viderPanier();
+                            setTimeout(() => location.reload(), 2500);
+                        }
+                    } catch (error) {
+                        console.error("Erreur Sheet:", error);
+                        alert("Paiement validé mais erreur système. Gardez votre reçu PayPal !");
+                    }
                 });
             },
 
             onError: function(err) {
-                console.error("PayPal Error:", err);
-                alert("Une erreur technique est survenue. Veuillez réessayer.");
+                alert("Une erreur technique est survenue avec PayPal.");
+                window.annulerPaiement();
             }
         }).render('#paypal-button-container');
     }, 400);
