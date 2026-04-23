@@ -644,86 +644,93 @@ function afficherInstructionsMvola(montant, idCommande) {
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
-    // --- PARAMÈTRES DE CALCUL (SÉCURISÉS) ---
+    // --- CONFIGURATION FINANCIÈRE ---
     const TAUX_MGA_USD = 4900; 
     const FRAIS_POURCENTAGE = 0.044;
     const FRAIS_FIXE_USD = 0.30;
     let montantBaseUSD = montant / TAUX_MGA_USD;
     let montantFinalUSD = ((montantBaseUSD + FRAIS_FIXE_USD) / (1 - FRAIS_POURCENTAGE)).toFixed(2);
 
-    // Suppression d'un éventuel doublon
+    // --- NETTOYAGE PRÉALABLE ---
     const existant = document.getElementById('paypal-overlay');
     if (existant) existant.remove();
 
-    // --- INTERFACE MODERNE ---
+    // --- CRÉATION DE L'INTERFACE (DESIGN MOBILE-FIRST) ---
     const overlay = document.createElement('div');
     overlay.id = "paypal-overlay";
     
-    // Style de l'arrière-plan (Flou et sombre)
+    // Style de l'arrière-plan avec flou pour focus maximal
     Object.assign(overlay.style, {
         position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(10px)',
         zIndex: '2147483647', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Poppins', sans-serif", transition: 'opacity 0.4s ease'
+        fontFamily: "'Poppins', sans-serif", transition: 'opacity 0.3s ease'
     });
 
     overlay.innerHTML = `
-        <div id="paypal-modal" style="background: white; width: 90%; max-width: 380px; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <div id="paypal-modal" style="background: white; width: 92%; max-width: 420px; max-height: 90vh; border-radius: 24px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             
-            <div style="background: #003087; padding: 20px; color: white; text-align: center;">
-                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">SafeRun Market</div>
-                <h3 style="margin: 5px 0 0; font-size: 1.2rem; font-weight: 600;">Paiement Sécurisé</h3>
+            <div style="background: var(--primary, #ffcc00); padding: 18px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--secondary, #1a1a1a); font-weight: 700;">SafeRun Checkout</h3>
+                <span style="font-size: 0.75rem; color: rgba(0,0,0,0.6);">ID Commande: ${id}</span>
             </div>
             
-            <div style="padding: 30px; text-align: center;">
-                <div style="margin-bottom: 25px;">
-                    <span style="color: #666; font-size: 0.9rem;">Récapitulatif Commande #${id}</span>
-                    <div style="margin: 10px 0;">
-                        <strong style="font-size: 2rem; color: #1a1a1a;">$${montantFinalUSD} <small style="font-size: 0.9rem;">USD</small></strong>
-                    </div>
-                    <div style="background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block; font-weight: 500;">
-                        Total : ${montant.toLocaleString()} Ar
+            <div style="padding: 25px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch;">
+                
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <span style="display: block; color: #666; font-size: 0.85rem; margin-bottom: 5px;">Montant Total (incluant frais)</span>
+                    <strong style="font-size: 2.2rem; color: #1a1a1a; letter-spacing: -1px;">$${montantFinalUSD} <small style="font-size: 0.9rem;">USD</small></strong>
+                    <div style="margin-top: 8px; background: #f0fdf4; color: #16a34a; display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">
+                        ≈ ${montant.toLocaleString()} Ar
                     </div>
                 </div>
 
-                <div id="paypal-button-container" style="min-height: 150px; transition: filter 0.3s ease;"></div>
+                <div id="pp-loader" style="text-align: center; color: #999; font-size: 0.8rem; margin-bottom: 10px;">
+                    Connexion sécurisée à PayPal...
+                </div>
 
-                <button onclick="fermerOverlay()" 
-                        style="margin-top: 20px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: color 0.2s;">
-                    ✕ Annuler et changer de mode
-                </button>
+                <div id="paypal-button-container" style="width: 100%; min-height: 250px;"></div>
+                
+                <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <button onclick="window.fermerPaypal()" 
+                            style="background: none; border: none; color: #ef4444; font-weight: 600; cursor: pointer; padding: 10px; font-size: 0.9rem; text-decoration: underline;">
+                        Annuler et changer de mode
+                    </button>
+                </div>
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
 
-    // Animation d'entrée
+    // --- ANIMATION D'ENTRÉE ---
     setTimeout(() => {
         const modal = document.getElementById('paypal-modal');
-        modal.style.transform = "translateY(0)";
+        modal.style.transform = "scale(1)";
         modal.style.opacity = "1";
     }, 10);
 
-    // --- FONCTIONS UTILITAIRES ---
-    window.fermerOverlay = function() {
+    // --- FONCTION DE FERMETURE ---
+    window.fermerPaypal = function() {
         overlay.style.opacity = "0";
-        setTimeout(() => overlay.remove(), 400);
+        setTimeout(() => overlay.remove(), 300);
     };
 
-    // --- INITIALISATION PAYPAL ---
+    // --- INITIALISATION DU SDK ---
     setTimeout(() => {
         if (typeof paypal === 'undefined') {
-            alert("Erreur : Le service PayPal n'est pas chargé. Vérifiez votre connexion.");
-            fermerOverlay();
+            alert("Erreur: Le service de paiement n'a pas pu être chargé. Vérifiez votre connexion.");
+            window.fermerPaypal();
             return;
         }
 
         paypal.Buttons({
-            style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
+            style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
             
-            onClick: function() {
-                document.getElementById('paypal-button-container').style.filter = "grayscale(0.5) blur(1px)";
+            onInit: function() {
+                // On cache le loader quand les boutons sont prêts
+                const loader = document.getElementById('pp-loader');
+                if(loader) loader.style.display = "none";
             },
 
             createOrder: function(data, actions) {
@@ -737,15 +744,16 @@ async function lancerPayUnit(id, montant) {
 
             onApprove: async function(data, actions) {
                 return actions.order.capture().then(async function(details) {
-                    // Écran de succès
-                    document.getElementById('paypal-modal').innerHTML = `
-                        <div style="padding: 50px 30px; text-align: center;">
-                            <div style="width: 60px; height: 60px; background: #22c55e; color: white; border-radius: 50%; display: flex; alignItems: center; justifyContent: center; margin: 0 auto 20px; font-size: 30px; line-height: 60px;">✓</div>
-                            <h3 style="margin: 0; color: #1a1a1a;">Paiement Réussi !</h3>
-                            <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">Merci ${details.payer.name.given_name}, votre commande est en cours de traitement.</p>
+                    // Écran de succès stylisé
+                    const modal = document.getElementById('paypal-modal');
+                    modal.innerHTML = `
+                        <div style="padding: 60px 20px; text-align: center;">
+                            <div style="font-size: 50px; margin-bottom: 20px;">✅</div>
+                            <h2 style="margin: 0; color: #1a1a1a;">Paiement Validé</h2>
+                            <p style="color: #666; margin-top: 10px;">Merci ${details.payer.name.given_name} !<br>Votre commande SafeRun est enregistrée.</p>
                         </div>
                     `;
-
+                    
                     try {
                         await fetch(SCRIPT_URL, {
                             method: "POST",
@@ -757,19 +765,13 @@ async function lancerPayUnit(id, montant) {
                             })
                         });
                         setTimeout(() => location.reload(), 3000);
-                    } catch (e) {
-                        console.error("Erreur mise à jour Sheet:", e);
-                    }
+                    } catch (e) { console.error(e); }
                 });
             },
 
-            onCancel: function() {
-                document.getElementById('paypal-button-container').style.filter = "none";
-            },
-
             onError: function(err) {
-                document.getElementById('paypal-button-container').style.filter = "none";
-                alert("Une erreur est survenue avec PayPal. Veuillez réessayer.");
+                console.error("PayPal Error:", err);
+                alert("Une erreur technique est survenue. Veuillez réessayer.");
             }
         }).render('#paypal-button-container');
     }, 400);
