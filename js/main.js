@@ -644,99 +644,135 @@ function afficherInstructionsMvola(montant, idCommande) {
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
-    // --- PARAMÈTRES DE CALCUL ---
-    const TAUX_MGA_USD = 4900;       // Taux ajusté pour la sécurité
-    const FRAIS_POURCENTAGE = 0.044; // 4.4% commission
-    const FRAIS_FIXE_USD = 0.30;     // 0.30$ fixe
-
+    // --- PARAMÈTRES DE CALCUL (SÉCURISÉS) ---
+    const TAUX_MGA_USD = 4900; 
+    const FRAIS_POURCENTAGE = 0.044;
+    const FRAIS_FIXE_USD = 0.30;
     let montantBaseUSD = montant / TAUX_MGA_USD;
-    let montantFinalUSD = ((montantBaseUSD + FRAIS_FIXE_USD) / (1 - FRAIS_POURCENTAGE)).toFixed(2); 
+    let montantFinalUSD = ((montantBaseUSD + FRAIS_FIXE_USD) / (1 - FRAIS_POURCENTAGE)).toFixed(2);
 
-    console.log("Initialisation PayPal pour la commande : " + id);
-
-    // Suppression d'un ancien overlay si le client a cliqué plusieurs fois
+    // Suppression d'un éventuel doublon
     const existant = document.getElementById('paypal-overlay');
     if (existant) existant.remove();
 
-    // --- CRÉATION DE L'INTERFACE ---
+    // --- INTERFACE MODERNE ---
     const overlay = document.createElement('div');
     overlay.id = "paypal-overlay";
-    // Z-INDEX abaissé à 9999 pour ne pas masquer le formulaire de carte bancaire
-    overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; font-family: sans-serif; transition: opacity 0.3s ease;";
     
+    // Style de l'arrière-plan (Flou et sombre)
+    Object.assign(overlay.style, {
+        position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
+        zIndex: '2147483647', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "'Poppins', sans-serif", transition: 'opacity 0.4s ease'
+    });
+
     overlay.innerHTML = `
-        <div style="background:white; padding:25px; border-radius:15px; width:90%; max-width:400px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;">
-            <h3 style="color:#003087; margin-bottom:10px;">Paiement Sécurisé SafeRun</h3>
-            <p style="color:#666; font-size:0.9rem;">
-                Commande : <strong>${id}</strong><br>
-                Total Marchandise : ${montant.toLocaleString()} Ar<br>
-                <small style="color:#22c55e;">+ Frais de service inclus</small>
-            </p>
-            <p style="font-weight:bold; font-size:1.3rem; margin:15px 0; color:#1a1a1a;">Total : $${montantFinalUSD} USD</p>
+        <div id="paypal-modal" style="background: white; width: 90%; max-width: 380px; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             
-            <div id="paypal-button-container" style="min-height: 150px;"></div>
+            <div style="background: #003087; padding: 20px; color: white; text-align: center;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">SafeRun Market</div>
+                <h3 style="margin: 5px 0 0; font-size: 1.2rem; font-weight: 600;">Paiement Sécurisé</h3>
+            </div>
             
-            <button onclick="document.getElementById('paypal-overlay').remove()" 
-                    style="margin-top:15px; background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; text-decoration:underline;">
-                Annuler et changer de mode
-            </button>
+            <div style="padding: 30px; text-align: center;">
+                <div style="margin-bottom: 25px;">
+                    <span style="color: #666; font-size: 0.9rem;">Récapitulatif Commande #${id}</span>
+                    <div style="margin: 10px 0;">
+                        <strong style="font-size: 2rem; color: #1a1a1a;">$${montantFinalUSD} <small style="font-size: 0.9rem;">USD</small></strong>
+                    </div>
+                    <div style="background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block; font-weight: 500;">
+                        Total : ${montant.toLocaleString()} Ar
+                    </div>
+                </div>
+
+                <div id="paypal-button-container" style="min-height: 150px; transition: filter 0.3s ease;"></div>
+
+                <button onclick="fermerOverlay()" 
+                        style="margin-top: 20px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: color 0.2s;">
+                    ✕ Annuler et changer de mode
+                </button>
+            </div>
         </div>
     `;
+
     document.body.appendChild(overlay);
 
-    // --- BOUTON PAYPAL ---
-    paypal.Buttons({
-        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
-        
-        // Gère le clic pour rendre l'overlay transparent et voir la fenêtre PayPal
-        onClick: function() {
-            document.getElementById('paypal-overlay').style.opacity = "0.6";
-        },
+    // Animation d'entrée
+    setTimeout(() => {
+        const modal = document.getElementById('paypal-modal');
+        modal.style.transform = "translateY(0)";
+        modal.style.opacity = "1";
+    }, 10);
 
-        createOrder: function(data, actions) {
-            return actions.order.create({
-                purchase_units: [{
-                    reference_id: id,
-                    amount: { currency_code: 'USD', value: montantFinalUSD }
-                }]
-            });
-        },
+    // --- FONCTIONS UTILITAIRES ---
+    window.fermerOverlay = function() {
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.remove(), 400);
+    };
 
-        onApprove: async function(data, actions) {
-            return actions.order.capture().then(async function(details) {
-                document.getElementById('paypal-overlay').style.opacity = "1";
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: "POST",
-                        body: JSON.stringify({
-                            action: "paiementReussi",
-                            id: id,
-                            methode: "PayPal",
-                            transactionId: details.id,
-                            montantAr: montant
-                        })
-                    });
-                    
-                    alert("✅ Merci " + details.payer.name.given_name + " ! Paiement validé.");
-                    overlay.remove();
-                    location.reload(); 
-                } catch (e) {
-                    alert("Paiement validé par PayPal, mais erreur de mise à jour système.");
-                }
-            });
-        },
-
-        onCancel: function() {
-            document.getElementById('paypal-overlay').style.opacity = "1";
-            overlay.remove();
-        },
-
-        onError: function(err) {
-            console.error("Erreur PayPal:", err);
-            document.getElementById('paypal-overlay').style.opacity = "1";
-            alert("Le service PayPal n'a pas pu charger le formulaire.");
+    // --- INITIALISATION PAYPAL ---
+    setTimeout(() => {
+        if (typeof paypal === 'undefined') {
+            alert("Erreur : Le service PayPal n'est pas chargé. Vérifiez votre connexion.");
+            fermerOverlay();
+            return;
         }
-    }).render('#paypal-button-container');
+
+        paypal.Buttons({
+            style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
+            
+            onClick: function() {
+                document.getElementById('paypal-button-container').style.filter = "grayscale(0.5) blur(1px)";
+            },
+
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        reference_id: id,
+                        amount: { currency_code: 'USD', value: montantFinalUSD }
+                    }]
+                });
+            },
+
+            onApprove: async function(data, actions) {
+                return actions.order.capture().then(async function(details) {
+                    // Écran de succès
+                    document.getElementById('paypal-modal').innerHTML = `
+                        <div style="padding: 50px 30px; text-align: center;">
+                            <div style="width: 60px; height: 60px; background: #22c55e; color: white; border-radius: 50%; display: flex; alignItems: center; justifyContent: center; margin: 0 auto 20px; font-size: 30px; line-height: 60px;">✓</div>
+                            <h3 style="margin: 0; color: #1a1a1a;">Paiement Réussi !</h3>
+                            <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">Merci ${details.payer.name.given_name}, votre commande est en cours de traitement.</p>
+                        </div>
+                    `;
+
+                    try {
+                        await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                action: "paiementReussi",
+                                id: id,
+                                transactionId: details.id,
+                                montantAr: montant
+                            })
+                        });
+                        setTimeout(() => location.reload(), 3000);
+                    } catch (e) {
+                        console.error("Erreur mise à jour Sheet:", e);
+                    }
+                });
+            },
+
+            onCancel: function() {
+                document.getElementById('paypal-button-container').style.filter = "none";
+            },
+
+            onError: function(err) {
+                document.getElementById('paypal-button-container').style.filter = "none";
+                alert("Une erreur est survenue avec PayPal. Veuillez réessayer.");
+            }
+        }).render('#paypal-button-container');
+    }, 400);
 }
 
 // 5. SIDEBAR ET POPUP
