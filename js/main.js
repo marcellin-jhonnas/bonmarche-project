@@ -642,35 +642,92 @@ function afficherInstructionsMvola(montant, idCommande) {
     `;
 }
 async function lancerPayUnit(id, montant) {
-    const SCRIPT_PAIEMENT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
+    
+    // --- PARAMÈTRES DE CALCUL (SÉCURITÉ MARGE) ---
+    const TAUX_MGA_USD = 4850;      // Taux de change Ariary -> Dollar
+    const FRAIS_POURCENTAGE = 0.044; // 4.4% de commission PayPal
+    const FRAIS_FIXE_USD = 0.30;    // 0.30$ de frais fixes PayPal
 
-    try {
-        // Ajout de 'follow' pour suivre la redirection de Google
-        const response = await fetch(SCRIPT_PAIEMENT_URL, {
-            method: "POST",
-            mode: "cors", 
-            redirect: "follow", 
-            body: JSON.stringify({
-                id: id,
-                montant: montant
-            })
-        });
+    // --- CALCUL DU MONTANT FINAL POUR LE CLIENT ---
+    // Cette formule garantit que tu reçois exactement la somme en Ariary après taxes
+    let montantBaseUSD = montant / TAUX_MGA_USD;
+    let montantFinalUSD = (montantBaseUSD + FRAIS_FIXE_USD) / (1 - FRAIS_POURCENTAGE);
+    montantFinalUSD = montantFinalUSD.toFixed(2); 
 
-        // On vérifie si la réponse est bien arrivée
-        const resultat = await response.json();
+    console.log("Initialisation PayPal pour la commande : " + id);
 
-        if (resultat && resultat.status === "success" && resultat.url) {
-            console.log("URL PayUnit générée : ", resultat.url);
-            // REDIRECTION immédiate dans le même onglet pour éviter les bloqueurs de pub
-            window.location.href = resultat.url;
-        } else {
-            console.error("Erreur retournée par le GAS :", resultat);
-            alert("Erreur de préparation PayUnit.");
+    // --- CRÉATION DE L'INTERFACE ---
+    const overlay = document.createElement('div');
+    overlay.id = "paypal-overlay";
+    overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; align-items:center; justify-content:center; font-family: sans-serif;";
+    
+    overlay.innerHTML = `
+        <div style="background:white; padding:25px; border-radius:15px; width:90%; max-width:400px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <h3 style="color:#003087; margin-bottom:10px;">Paiement Sécurisé SafeRun</h3>
+            <p style="color:#666; font-size:0.9rem;">
+                Commande : <strong>${id}</strong><br>
+                Total Marchandise : ${montant.toLocaleString()} Ar<br>
+                <small style="color:#22c55e;">+ Frais de transaction PayPal inclus</small>
+            </p>
+            <p style="font-weight:bold; font-size:1.3rem; margin:15px 0; color:#1a1a1a;">Total à payer : $${montantFinalUSD} USD</p>
+            
+            <div id="paypal-button-container"></div>
+            
+            <button onclick="document.getElementById('paypal-overlay').remove()" 
+                    style="margin-top:15px; background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; text-decoration:underline;">
+                Annuler
+            </button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // --- BOUTON PAYPAL ---
+    paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    reference_id: id,
+                    amount: { currency_code: 'USD', value: montantFinalUSD }
+                }]
+            });
+        },
+        onApprove: async function(data, actions) {
+            return actions.order.capture().then(async function(details) {
+                // 1. Envoyer la confirmation au GAS
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        mode: "cors",
+                        body: JSON.stringify({
+                            action: "paiementReussi",
+                            id: id,
+                            methode: "PayPal",
+                            transactionId: details.id,
+                            montantAr: montant,
+                            montantUSD: montantFinalUSD
+                        })
+                    });
+                    
+                    const res = await response.json();
+                    if (res.status === "success") {
+                        alert("✅ Merci " + details.payer.name.given_name + " ! Paiement validé.");
+                        overlay.remove();
+                        location.reload(); // Recharge pour mettre à jour l'interface
+                    }
+                } catch (e) {
+                    console.error("Erreur confirmation GAS", e);
+                    alert("Paiement réussi mais erreur de synchronisation. Contactez le support.");
+                }
+            });
+        },
+        onCancel: function() { overlay.remove(); },
+        onError: function(err) {
+            alert("Une erreur PayPal est survenue.");
+            overlay.remove();
         }
-    } catch (error) {
-        console.error("Erreur de connexion au service de paiement :", error);
-        alert("Impossible de joindre le service PayUnit. Vérifiez votre connexion.");
-    }
+    }).render('#paypal-button-container');
 }
 
 // 5. SIDEBAR ET POPUP
