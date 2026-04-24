@@ -586,16 +586,49 @@ function afficherChoixPaiementLuxe(id, montant) {
     `;
     document.body.appendChild(overlay);
 
-    // --- LOGIQUE DES CLICS (NON MODIFIÉE) ---
+    // --- LOGIQUE DES CLICS RÉPARÉE (ENVOI SIMULTANÉ) ---
     document.getElementById('go-visa').onclick = function() {
         this.id = "btn-visa-active";
         this.innerHTML = "⌛ Connexion sécurisée...";
         this.style.opacity = "0.6";
         this.disabled = true;
+
+        // Envoi au Sheet avant de lancer PayUnit
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "nouvelleCommande",
+                id: id,
+                nom: typeof nomClient !== 'undefined' ? nomClient : "Client",
+                telClient: typeof telClient !== 'undefined' ? telClient : "",
+                montant: montant,
+                statut: "ATTENTE VISA",
+                produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "",
+                quartier: typeof quartierClient !== 'undefined' ? quartierClient : ""
+            })
+        });
+
         lancerPayUnit(id, montant); 
     };
 
     document.getElementById('go-mvola').onclick = function() {
+        // Envoi au Sheet avant d'ouvrir MVola
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "nouvelleCommande",
+                id: id,
+                nom: typeof nomClient !== 'undefined' ? nomClient : "Client",
+                telClient: typeof telClient !== 'undefined' ? telClient : "",
+                montant: montant,
+                statut: "NOUVEAU",
+                produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "",
+                quartier: typeof quartierClient !== 'undefined' ? quartierClient : ""
+            })
+        });
+
         overlay.remove();
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
