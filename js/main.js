@@ -420,40 +420,51 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // On garde ton appel de fonction pour dessiner la liste
     afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     if (btnEnvoi) {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         
-        // On remplace le clic par une fonction qui verrouille AVANT d'envoyer
         btnEnvoi.onclick = function() {
-            
-            // --- ÉTAPE 1 : VERROUILLAGE (Le "truck" demandé) ---
-            
-            // Désactiver le bouton confirmer pour éviter les envois multiples
+            // --- 1. PHASE DE VERROUILLAGE ---
             btnEnvoi.disabled = true;
-            btnEnvoi.style.pointerEvents = "none"; 
-            btnEnvoi.style.opacity = "0.7";
-            btnEnvoi.innerHTML = "⌛ TRAITEMENT EN COURS...";
+            btnEnvoi.style.pointerEvents = "none";
+            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
+            btnEnvoi.style.background = "#64748b"; // Couleur neutre pendant l'envoi
 
-            // Cacher le bouton de fermeture (le X) pour forcer le client à rester
+            // Empêcher la fermeture accidentelle
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
-            // Empêcher la fermeture en cliquant à l'extérieur de la modale
-            modal.onclick = function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            };
-
-            // --- ÉTAPE 2 : APPEL DE TA FONCTION D'ENVOI EXISTANTE ---
-            // On appelle ta fonction habituelle sans la modifier elle-même
+            // --- 2. LOGIQUE D'ENVOI ---
+            // On lance l'envoi vers ton Google Sheet
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
+
+            // --- 3. TRANSFORMATION DU BOUTON (LE GUIDE) ---
+            // On simule une petite attente pour que l'utilisateur voit que ça travaille
+            setTimeout(() => {
+                btnEnvoi.disabled = false;
+                btnEnvoi.style.pointerEvents = "auto";
+                btnEnvoi.style.background = "#2563eb"; // Bleu SafeRun
+                btnEnvoi.innerHTML = "💰 PASSER AU PAIEMENT";
+                
+                // Au clic, on le dirige directement vers ton sélecteur de paiement (VISA/MVOLA)
+                btnEnvoi.onclick = function() {
+                    // On récupère les infos nécessaires (montant, id)
+                    // Ces variables doivent être accessibles dans ton scope
+                    if (typeof idCommandeActuelle !== 'undefined') {
+                        modal.classList.remove('show');
+                        setTimeout(() => {
+                            modal.style.display = "none";
+                            // Appelle ta fonction de luxe qu'on a réparé ensemble
+                            afficherChoixPaiementLuxe(idCommandeActuelle, montantTotalGlobal);
+                        }, 300);
+                    }
+                };
+            }, 2000); 
         };
     }
 
