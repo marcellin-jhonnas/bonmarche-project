@@ -420,54 +420,76 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // On dessine le panier normalement
     afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
+    // On récupère le conteneur des boutons pour pouvoir en ajouter un deuxième
+    const containerBoutons = btnEnvoi.parentElement; 
+
     if (btnEnvoi) {
-        // État initial du bouton
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-        btnEnvoi.disabled = false;
-        btnEnvoi.style.pointerEvents = "auto";
-        btnEnvoi.style.background = ""; // Reset couleur si besoin
+        btnEnvoi.style.display = "block"; // On s'assure qu'il est visible
 
         btnEnvoi.onclick = function() {
-            // 1. VERROUILLAGE IMMÉDIAT
+            // 1. VERROUILLAGE ET ENVOI
             btnEnvoi.disabled = true;
-            btnEnvoi.style.pointerEvents = "none";
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
-            // On cache la croix de fermeture pour éviter de perdre le suivi
+            // On cache la croix de fermeture pour forcer le choix entre Payer ou Annuler
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
-            // 2. LANCEMENT DE L'ENVOI (Ta fonction vers Google Sheet)
+            // Envoi initial au Sheet (Statut: "NOUVEAU" ou "ATTENTE")
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
-            // 3. TRANSFORMATION EN BOUTON DE NAVIGATION (Après un court délai)
+            // 2. APPARITION DES DEUX CHOIX (Après l'envoi)
             setTimeout(() => {
+                // On transforme le bouton Confirmer en bouton Payer
                 btnEnvoi.disabled = false;
-                btnEnvoi.style.pointerEvents = "auto";
-                btnEnvoi.style.background = "#1e293b"; // Couleur foncée pour le style
-                btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
+                btnEnvoi.innerHTML = "💰 PAYER MAINTENANT";
+                btnEnvoi.style.background = "#059669"; // Vert succès
                 
-                // Nouveau comportement : réafficher la modale VISA/MVOLA
                 btnEnvoi.onclick = function() {
-                    // On ferme le panier
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        
-                        // On réaffiche ton choix de paiement Luxe
-                        // Utilise les variables globales id et montant stockées lors de l'envoi
-                        if (typeof idCommandeActuelle !== 'undefined') {
-                            afficherChoixPaiementLuxe(idCommandeActuelle, montantTotalGlobal);
-                        }
+                        afficherChoixPaiementLuxe(idCommandeActuelle, montantTotalGlobal);
                     }, 300);
                 };
-            }, 1500); // Laisse le temps au client de voir que l'envoi est fait
+
+                // 3. AJOUT DU BOUTON ANNULER (S'il n'existe pas déjà)
+                if (!document.getElementById('btn-annuler-commande')) {
+                    const btnAnnuler = document.createElement('button');
+                    btnAnnuler.id = 'btn-annuler-commande';
+                    btnAnnuler.innerHTML = "❌ ANNULER LA COMMANDE";
+                    btnAnnuler.className = "btn-luxe"; // On utilise ta classe de style
+                    btnAnnuler.style.marginTop = "10px";
+                    btnAnnuler.style.background = "#ef4444"; // Rouge
+                    btnAnnuler.style.color = "white";
+                    
+                    btnAnnuler.onclick = function() {
+                        if(confirm("Voulez-vous vraiment annuler cette commande ?")) {
+                            // Appel au Sheet pour changer le statut en ANNULÉ
+                            fetch(API_URL, {
+                                method: "POST",
+                                mode: "no-cors",
+                                body: JSON.stringify({
+                                    action: "modifierStatut",
+                                    id: idCommandeActuelle,
+                                    statut: "ANNULÉ"
+                                })
+                            });
+                            
+                            // On réinitialise tout et on ferme
+                            alert("Commande annulée.");
+                            location.reload(); // Le plus simple pour vider le panier et reset
+                        }
+                    };
+                    containerBoutons.appendChild(btnAnnuler);
+                }
+            }, 1500);
         };
     }
 
