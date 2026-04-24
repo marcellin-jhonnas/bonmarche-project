@@ -549,10 +549,7 @@ function afficherChoixPaiementLuxe(id, montant) {
         </div>
 
         <style>
-            @keyframes slideUp { 
-                from { opacity:0; transform:translateY(40px) scale(0.95); } 
-                to { opacity:1; transform:translateY(0) scale(1); } 
-            }
+            @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
             @keyframes rotateBg { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
             
@@ -586,49 +583,38 @@ function afficherChoixPaiementLuxe(id, montant) {
     `;
     document.body.appendChild(overlay);
 
-    // --- LOGIQUE DES CLICS RÉPARÉE (ENVOI SIMULTANÉ) ---
+    // --- LOGIQUE DE RÉPARATION (Utilise API_URL et envoie au Sheet) ---
+    const envoyerActionSheet = (statut) => {
+        if (typeof API_URL !== 'undefined') {
+            fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "nouvelleCommande",
+                    id: id,
+                    nom: typeof nomClient !== 'undefined' ? nomClient : "MARCELLIN",
+                    telClient: typeof telClient !== 'undefined' ? telClient : "0344414702",
+                    montant: montant,
+                    statut: statut,
+                    produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "Commande SafeRun",
+                    quartier: typeof quartierClient !== 'undefined' ? quartierClient : "Belanitra"
+                })
+            });
+        }
+    };
+
     document.getElementById('go-visa').onclick = function() {
         this.id = "btn-visa-active";
         this.innerHTML = "⌛ Connexion sécurisée...";
         this.style.opacity = "0.6";
         this.disabled = true;
-
-        // Envoi au Sheet avant de lancer PayUnit
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                action: "nouvelleCommande",
-                id: id,
-                nom: typeof nomClient !== 'undefined' ? nomClient : "Client",
-                telClient: typeof telClient !== 'undefined' ? telClient : "",
-                montant: montant,
-                statut: "ATTENTE VISA",
-                produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "",
-                quartier: typeof quartierClient !== 'undefined' ? quartierClient : ""
-            })
-        });
-
+        
+        envoyerActionSheet("ATTENTE VISA");
         lancerPayUnit(id, montant); 
     };
 
     document.getElementById('go-mvola').onclick = function() {
-        // Envoi au Sheet avant d'ouvrir MVola
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                action: "nouvelleCommande",
-                id: id,
-                nom: typeof nomClient !== 'undefined' ? nomClient : "Client",
-                telClient: typeof telClient !== 'undefined' ? telClient : "",
-                montant: montant,
-                statut: "NOUVEAU",
-                produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "",
-                quartier: typeof quartierClient !== 'undefined' ? quartierClient : ""
-            })
-        });
-
+        envoyerActionSheet("NOUVEAU");
         overlay.remove();
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
