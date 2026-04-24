@@ -426,10 +426,6 @@ function ouvrirTicketAutomatique() {
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // --- ÉTAPE 1 : RÉCUPÉRATION DE L'ID EXISTANT ---
-        // On récupère l'ID le plus récent stocké. S'il n'existe pas, on le prépare.
-        let idSessionRecente = localStorage.getItem('current_order_id');
-        
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
 
@@ -437,30 +433,38 @@ function ouvrirTicketAutomatique() {
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE 2 : VÉRIFICATION ET FIXATION ---
-            // Si le client revient, idSessionRecente n'est pas vide, donc on RE-UTILISE le même.
-            if (!idSessionRecente) {
-                idSessionRecente = "SR" + Date.now();
-                localStorage.setItem('current_order_id', idSessionRecente);
+            // --- ÉTAPE 1 : RÉCUPÉRER L'ID DEPUIS TON HISTORIQUE ---
+            let idSession;
+            const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+            
+            if (historique.length > 0) {
+                // On prend l'ID de la commande la plus récente dans le tableau
+                idSession = historique[historique.length - 1].id;
+                console.log("ID récupéré de l'historique:", idSession);
+            } else {
+                // Si l'historique est vide, on en crée un nouveau (sécurité)
+                idSession = "SR" + Date.now();
+                console.log("Nouvel ID (Historique vide):", idSession);
             }
 
-            // Fixation du montant pour éviter le 0 Ar
-            let montantDernier = 0;
+            // --- ÉTAPE 2 : FIXER LE MONTANT ---
+            let montantFinal = 0;
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantDernier = Number(montantTotalGlobal);
+                montantFinal = Number(montantTotalGlobal);
             } else {
                 const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-                montantDernier = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+                montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
             }
-            localStorage.setItem('current_order_amount', montantDernier);
             
-            // On force la variable globale pour que tes autres fonctions suivent
-            window.idCommandeActuelle = idSessionRecente; 
+            // On sauvegarde ces deux valeurs précises pour le bouton "Revenir"
+            localStorage.setItem('temp_pay_id', idSession);
+            localStorage.setItem('temp_pay_amount', montantFinal);
+            
+            window.idCommandeActuelle = idSession; 
 
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
-            // Envoi au Sheet
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
@@ -470,20 +474,19 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
                 
+                // --- BOUTON REVENIR ---
                 btnEnvoi.onclick = function() {
-                    // RÉCUPÉRATION DE L'ID RÉCENT POUR LE PAIEMENT
-                    const idFinal = localStorage.getItem('current_order_id');
-                    const montantFinal = localStorage.getItem('current_order_amount');
+                    const idFixe = localStorage.getItem('temp_pay_id');
+                    const montantFixe = localStorage.getItem('temp_pay_amount');
                     
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        // On lance le paiement avec l'ID qui n'a JAMAIS changé
-                        afficherChoixPaiementLuxe(idFinal, Number(montantFinal));
+                        afficherChoixPaiementLuxe(idFixe, Number(montantFixe));
                     }, 300);
                 };
 
-                // --- ÉTAPE 3 : ANNULER & SUPPRIMER ---
+                // --- BOUTON ANNULER ---
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -492,8 +495,7 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        // ON RÉCUPÈRE L'ID RÉCENT POUR LA SUPPRESSION
-                        const idASupprimer = localStorage.getItem('current_order_id');
+                        const idASupprimer = localStorage.getItem('temp_pay_id');
                         if(confirm("Supprimer la commande " + idASupprimer + " ?")) {
                             fetch(API_URL, {
                                 method: "POST",
@@ -504,10 +506,16 @@ function ouvrirTicketAutomatique() {
                                     statut: "ANNULÉ"
                                 })
                             });
-                            // ON NETTOIE TOUT
-                            localStorage.removeItem('current_order_id');
-                            localStorage.removeItem('current_order_amount');
-                            alert("Commande effacée du système.");
+                            
+                            // Nettoyage : On retire aussi la commande de l'historique local
+                            let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+                            h = h.filter(cmd => cmd.id !== idASupprimer);
+                            localStorage.setItem('saferun_commandes', JSON.stringify(h));
+                            
+                            localStorage.removeItem('temp_pay_id');
+                            localStorage.removeItem('temp_pay_amount');
+                            
+                            alert("Commande annulée et retirée de l'historique.");
                             location.reload();
                         }
                     };
