@@ -426,45 +426,41 @@ function ouvrirTicketAutomatique() {
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // --- ÉTAPE 1 : RÉCUPÉRER L'ID EXISTANT IMMÉDIATEMENT ---
-        // On regarde si un ID existe déjà pour ne JAMAIS en créer un nouveau par erreur
-        let idSession = localStorage.getItem('current_order_id');
+        // --- ÉTAPE 1 : RÉCUPÉRATION DE L'ID EXISTANT ---
+        // On récupère l'ID le plus récent stocké. S'il n'existe pas, on le prépare.
+        let idSessionRecente = localStorage.getItem('current_order_id');
         
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
-        btnEnvoi.style.background = "";
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE 2 : FORCER L'ID PRÉCÉDENT ---
-            // Si idSession est vide (première fois), on le génère. 
-            // S'il existe (retour arrière), on garde l'ancien !
-            if (!idSession) {
-                idSession = "SR" + Date.now();
-                localStorage.setItem('current_order_id', idSession);
-                console.log("Nouvel ID généré:", idSession);
-            } else {
-                console.log("ID précédent réutilisé:", idSession);
+            // --- ÉTAPE 2 : VÉRIFICATION ET FIXATION ---
+            // Si le client revient, idSessionRecente n'est pas vide, donc on RE-UTILISE le même.
+            if (!idSessionRecente) {
+                idSessionRecente = "SR" + Date.now();
+                localStorage.setItem('current_order_id', idSessionRecente);
             }
 
-            // Sécurisation du montant
-            let montantFinal = 0;
+            // Fixation du montant pour éviter le 0 Ar
+            let montantDernier = 0;
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantFinal = Number(montantTotalGlobal);
+                montantDernier = Number(montantTotalGlobal);
             } else {
                 const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-                montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+                montantDernier = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
             }
-            localStorage.setItem('current_order_amount', montantFinal);
+            localStorage.setItem('current_order_amount', montantDernier);
             
-            // On force la variable globale pour que envoyerDonneesAuSheet l'utilise aussi
-            window.idCommandeActuelle = idSession; 
+            // On force la variable globale pour que tes autres fonctions suivent
+            window.idCommandeActuelle = idSessionRecente; 
 
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
+            // Envoi au Sheet
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
@@ -475,19 +471,19 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.style.background = "#1e293b";
                 
                 btnEnvoi.onclick = function() {
-                    // On reprend l'ID stocké pour être 100% sûr
-                    const idFixe = localStorage.getItem('current_order_id');
-                    const montantFixe = localStorage.getItem('current_order_amount');
+                    // RÉCUPÉRATION DE L'ID RÉCENT POUR LE PAIEMENT
+                    const idFinal = localStorage.getItem('current_order_id');
+                    const montantFinal = localStorage.getItem('current_order_amount');
                     
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        // On relance le choix de paiement avec l'ID SCELLÉ
-                        afficherChoixPaiementLuxe(idFixe, Number(montantFixe));
+                        // On lance le paiement avec l'ID qui n'a JAMAIS changé
+                        afficherChoixPaiementLuxe(idFinal, Number(montantFinal));
                     }, 300);
                 };
 
-                // Bouton Annuler
+                // --- ÉTAPE 3 : ANNULER & SUPPRIMER ---
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -496,21 +492,22 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        const idToDelete = localStorage.getItem('current_order_id');
-                        if(confirm("Supprimer la commande " + idToDelete + " ?")) {
+                        // ON RÉCUPÈRE L'ID RÉCENT POUR LA SUPPRESSION
+                        const idASupprimer = localStorage.getItem('current_order_id');
+                        if(confirm("Supprimer la commande " + idASupprimer + " ?")) {
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
                                 body: JSON.stringify({
                                     action: "modifierStatut",
-                                    id: idToDelete,
+                                    id: idASupprimer,
                                     statut: "ANNULÉ"
                                 })
                             });
-                            // ON VIDE TOUT SEULEMENT ICI
+                            // ON NETTOIE TOUT
                             localStorage.removeItem('current_order_id');
                             localStorage.removeItem('current_order_amount');
-                            alert("Commande effacée.");
+                            alert("Commande effacée du système.");
                             location.reload();
                         }
                     };
