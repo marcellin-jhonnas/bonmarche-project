@@ -420,7 +420,8 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    afficherPanier(); 
+    // Affiche le panier actuel
+    if (typeof afficherPanier === "function") afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
@@ -428,64 +429,77 @@ function ouvrirTicketAutomatique() {
     if (btnEnvoi) {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
-        
+        btnEnvoi.style.background = "";
+
+        // Nettoyage des anciens boutons
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE 1 : FIXER L'ID DANS LE STORAGE ---
-            // On vérifie s'il y a déjà un ID en cours, sinon on en crée un
+            // --- 1. SÉCURISATION DU MONTANT ---
+            let montantFinal = 0;
+            try {
+                if (typeof montantTotalGlobal !== 'undefined') {
+                    montantFinal = Number(montantTotalGlobal);
+                } else {
+                    // Secours : lecture directe dans le HTML (ex: élément avec l'ID total-panier)
+                    const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+                    montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+                }
+            } catch(e) { montantFinal = 0; }
+
+            // --- 2. SÉCURISATION DE L'ID ---
             let idSession = localStorage.getItem('current_order_id');
             if (!idSession) {
                 idSession = "SR" + Date.now();
                 localStorage.setItem('current_order_id', idSession);
             }
+            
+            // On fixe les valeurs pour toute la session
+            localStorage.setItem('current_order_amount', montantFinal);
+            window.idCommandeActuelle = idSession; 
 
-            // --- ÉTAPE 2 : FIXER LE MONTANT ---
-            const montantFixe = Number(montantTotalGlobal);
-            // On peut aussi stocker le montant pour être sûr au retour
-            localStorage.setItem('current_order_amount', montantFixe);
-
-            console.log("Commande fixée - ID:", idSession, "Montant:", montantFixe);
-
+            // --- 3. VERROUILLAGE INTERFACE ---
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
-            
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
-            // Envoi au Sheet (Assure-toi que envoyerDonneesAuSheet utilise bien localStorage.getItem('current_order_id'))
+            // Envoi au Sheet
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
+            // --- 4. APPARITION DES OPTIONS APRÈS ENVOI ---
             setTimeout(() => {
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b";
+                btnEnvoi.style.background = "#1e293b"; // Couleur pro foncée
                 
+                // Action : Aller vers le choix de paiement (VISA/MVOLA)
                 btnEnvoi.onclick = function() {
+                    const savedId = localStorage.getItem('current_order_id');
+                    const savedAmount = localStorage.getItem('current_order_amount');
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        // On tire les infos stables du Storage
-                        const savedId = localStorage.getItem('current_order_id');
-                        const savedAmount = localStorage.getItem('current_order_amount');
-                        afficherChoixPaiementLuxe(savedId, Number(savedAmount));
+                        if (typeof afficherChoixPaiementLuxe === "function") {
+                            afficherChoixPaiementLuxe(savedId, Number(savedAmount));
+                        }
                     }, 300);
                 };
 
-                // --- ÉTAPE 3 : ANNULER & SUPPRIMER ---
+                // Action : Annuler (Suppression dans le Sheet)
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
                     btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
                     btnAnnuler.className = "btn-luxe";
-                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:22px; font-weight:800; cursor:pointer;";
+                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
                         const idToDelete = localStorage.getItem('current_order_id');
-                        if(confirm("Confirmer l'annulation ?")) {
+                        if(confirm("Voulez-vous vraiment annuler ? Cette commande sera effacée.")) {
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
@@ -495,10 +509,9 @@ function ouvrirTicketAutomatique() {
                                     statut: "ANNULÉ"
                                 })
                             });
-                            // Nettoyage après annulation
                             localStorage.removeItem('current_order_id');
                             localStorage.removeItem('current_order_amount');
-                            alert("Commande supprimée.");
+                            alert("Commande annulée.");
                             location.reload();
                         }
                     };
