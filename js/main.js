@@ -420,60 +420,64 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // 1. Affichage initial du panier
     afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // Reset l'état du bouton au cas où
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
         btnEnvoi.style.display = "block";
         btnEnvoi.style.background = ""; 
 
-        // On supprime l'ancien bouton annuler s'il existait déjà d'une session précédente
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // Sauvegarde des infos pour le retour au paiement
-            // On récupère l'ID actuel (soit global, soit généré)
-            const idPourRetour = typeof idCommandeActuelle !== 'undefined' ? idCommandeActuelle : "SR" + Date.now();
-            const montantPourRetour = typeof montantTotalGlobal !== 'undefined' ? montantTotalGlobal : 0;
+            // --- RECTIFICATION DU MONTANT ---
+            // On essaie de récupérer le montant via la variable globale, 
+            // sinon on le cherche directement dans le texte du panier
+            let montantFinal = 0;
+            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
+                montantFinal = montantTotalGlobal;
+            } else {
+                // Secours : on cherche l'élément HTML qui affiche le total (ex: .total-panier)
+                const totalEl = document.querySelector('.total-amount') || document.querySelector('#total-panier');
+                if (totalEl) {
+                    montantFinal = parseInt(totalEl.innerText.replace(/\D/g, '')) || 0;
+                }
+            }
 
-            // --- ÉTAPE A : VERROUILLAGE ET ENVOI ---
+            // --- RECTIFICATION DE L'ID ---
+            const idPourRetour = (typeof idCommandeActuelle !== 'undefined' && idCommandeActuelle) 
+                                 ? idCommandeActuelle 
+                                 : "SR" + Date.now();
+
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
-            // Envoi au Sheet via ta fonction existante
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
-            // --- ÉTAPE B : APPARITION DU GUIDE APRÈS ENVOI ---
             setTimeout(() => {
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
                 
-                // RECTIFICATION : On force l'affichage de la modale de paiement ici
                 btnEnvoi.onclick = function() {
-                    // Fermer le panier d'abord
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        // ON APPELLE LA MODALE DE PAIEMENT ICI
-                        // On passe les variables sauvegardées
-                        afficherChoixPaiementLuxe(idPourRetour, montantPourRetour);
+                        // On passe les variables BIEN CAPTURÉES ici
+                        afficherChoixPaiementLuxe(idPourRetour, montantFinal);
                     }, 300);
                 };
 
-                // --- ÉTAPE C : BOUTON ANNULER (SUPPRESSION) ---
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -482,17 +486,18 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:22px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        if(confirm("Voulez-vous vraiment annuler ? La ligne sera supprimée du tableau.")) {
+                        if(confirm("Voulez-vous vraiment annuler ?")) {
+                            // On utilise l'ID exact capturé plus haut
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
                                 body: JSON.stringify({
                                     action: "modifierStatut",
-                                    id: idPourRetour,
+                                    id: idPourRetour, // Très important que ce soit String(id)
                                     statut: "ANNULÉ"
                                 })
                             });
-                            alert("Commande supprimée.");
+                            alert("Commande annulée.");
                             location.reload();
                         }
                     };
