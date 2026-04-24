@@ -420,14 +420,14 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // Affichage initial du panier
+    // 1. Affichage initial du panier
     if (typeof afficherPanier === "function") afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // --- RESET DE L'INTERFACE ---
+        // RESET INTERFACE
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
         btnEnvoi.style.display = "block";
@@ -437,55 +437,52 @@ function ouvrirTicketAutomatique() {
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE 1 : CAPTURE DU MONTANT AVANT VIDAGE DU PANIER ---
-            let montantCapture = 0;
+            // --- ÉTAPE CRUCIALE : CAPTURE IMMÉDIATE DU MONTANT ---
+            // On le prend AVANT que envoyerDonneesAuSheet ne vide le panier
+            let montantSecurise = 0;
+            const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+            
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantCapture = Number(montantTotalGlobal);
-            } else {
-                const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-                montantCapture = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+                montantSecurise = montantTotalGlobal;
+            } else if (elTotal) {
+                montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
             }
+            
+            // On sauvegarde ce montant dans le localStorage pour le bouton "REVENIR"
+            localStorage.setItem('safe_last_amount', montantSecurise);
 
-            // --- ÉTAPE 2 : EXÉCUTION DE L'ENVOI ---
+            // --- LANCEMENT DE L'ENVOI ---
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
-            // Appelle tes fonctions habituelles (qui génèrent la facture et l'ID)
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
-            // --- ÉTAPE 3 : GESTION DES BOUTONS APRÈS GÉNÉRATION ---
+            // --- CONFIGURATION DES BOUTONS APRÈS ENVOI ---
             setTimeout(() => {
-                // On récupère l'ID généré par tes fonctions dans l'historique
-                // Puisque tu utilises unshift(), le plus récent est en position 0
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                 let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
 
-                // On stocke ces informations pour les boutons de secours
-                localStorage.setItem('temp_pay_id', idRecent);
-                localStorage.setItem('temp_pay_amount', montantCapture);
-
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b"; // Style sombre SafeRun
+                btnEnvoi.style.background = "#1e293b"; 
                 
-                // --- ACTION : REVENIR AU PAIEMENT (ON CACHE LA MODALE) ---
+                // LOGIQUE REVENIR (N'utilise plus le panier, mais le montant sécurisé)
                 btnEnvoi.onclick = function() {
-                    // Stratégie : on cache juste pour ne pas perdre le contenu HTML (QR Code, etc.)
                     modal.style.display = "none"; 
+                    const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
                     
                     if (typeof afficherChoixPaiementLuxe === "function") {
-                        const idFixe = localStorage.getItem('temp_pay_id');
-                        const montantFixe = localStorage.getItem('temp_pay_amount');
-                        afficherChoixPaiementLuxe(idFixe, Number(montantFixe));
+                        // On passe l'ID récent et le MONTANT RÉCUPÉRÉ du stockage
+                        afficherChoixPaiementLuxe(idRecent, Number(montantRecupere));
                     }
                 };
 
-                // --- ACTION : ANNULER & SUPPRIMER (BOUCLE FOR) ---
+                // LOGIQUE ANNULER
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -494,41 +491,36 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        const idASupprimer = localStorage.getItem('temp_pay_id');
-                        
-                        if(confirm("Confirmer l'annulation de la commande " + idASupprimer + " ?")) {
-                            // 1. Suppression dans Google Sheet via API
-                            fetch(API_URL, {
-                                method: "POST",
-                                mode: "no-cors",
-                                body: JSON.stringify({
-                                    action: "modifierStatut",
-                                    id: idASupprimer,
-                                    statut: "ANNULÉ"
-                                })
-                            });
+                        if(confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+                            if(typeof API_URL !== 'undefined') {
+                                fetch(API_URL, {
+                                    method: "POST",
+                                    mode: "no-cors",
+                                    body: JSON.stringify({
+                                        action: "modifierStatut",
+                                        id: idRecent,
+                                        statut: "ANNULÉ"
+                                    })
+                                });
+                            }
 
-                            // 2. Boucle For pour nettoyer l'historique local (Identification précise)
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                             let nouvelH = [];
                             for (let i = 0; i < h.length; i++) {
-                                if (h[i].id !== idASupprimer) {
+                                if (h[i].id !== idRecent) {
                                     nouvelH.push(h[i]);
                                 }
                             }
                             localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
-
-                            // 3. Nettoyage des temporaires
-                            localStorage.removeItem('temp_pay_id');
-                            localStorage.removeItem('temp_pay_amount');
+                            localStorage.removeItem('safe_last_amount'); // Nettoyage
                             
-                            alert("Commande annulée avec succès.");
-                            location.reload(); // Recharge pour vider les états proprement
+                            alert("Commande annulée.");
+                            location.reload(); 
                         }
                     };
                     containerBoutons.appendChild(btnAnnuler);
                 }
-            }, 2500); // Temps nécessaire pour laisser l'ID se générer
+            }, 2500); 
         };
     }
 
