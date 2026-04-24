@@ -420,73 +420,72 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    afficherPanier(); 
+    // Affichage initial du panier
+    if (typeof afficherPanier === "function") afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
+        // --- RESET DE L'INTERFACE ---
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
+        btnEnvoi.style.display = "block";
+        btnEnvoi.style.background = ""; 
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE 1 : RÉCUPÉRER L'ID DEPUIS TON HISTORIQUE ---
-            let idSession;
-            const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-            
-            if (historique.length > 0) {
-                // On prend l'ID de la commande la plus récente dans le tableau
-                idSession = historique[historique.length - 1].id;
-                console.log("ID récupéré de l'historique:", idSession);
-            } else {
-                // Si l'historique est vide, on en crée un nouveau (sécurité)
-                idSession = "SR" + Date.now();
-                console.log("Nouvel ID (Historique vide):", idSession);
-            }
-
-            // --- ÉTAPE 2 : FIXER LE MONTANT ---
-            let montantFinal = 0;
+            // --- ÉTAPE 1 : CAPTURE DU MONTANT AVANT VIDAGE DU PANIER ---
+            let montantCapture = 0;
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantFinal = Number(montantTotalGlobal);
+                montantCapture = Number(montantTotalGlobal);
             } else {
                 const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-                montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+                montantCapture = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
             }
-            
-            // On sauvegarde ces deux valeurs précises pour le bouton "Revenir"
-            localStorage.setItem('temp_pay_id', idSession);
-            localStorage.setItem('temp_pay_amount', montantFinal);
-            
-            window.idCommandeActuelle = idSession; 
 
+            // --- ÉTAPE 2 : EXÉCUTION DE L'ENVOI ---
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             
+            const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
+            if (btnFermer) btnFermer.style.display = "none";
+
+            // Appelle tes fonctions habituelles (qui génèrent la facture et l'ID)
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
+            // --- ÉTAPE 3 : GESTION DES BOUTONS APRÈS GÉNÉRATION ---
             setTimeout(() => {
+                // On récupère l'ID généré par tes fonctions dans l'historique
+                // Puisque tu utilises unshift(), le plus récent est en position 0
+                const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+                let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
+
+                // On stocke ces informations pour les boutons de secours
+                localStorage.setItem('temp_pay_id', idRecent);
+                localStorage.setItem('temp_pay_amount', montantCapture);
+
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b";
+                btnEnvoi.style.background = "#1e293b"; // Style sombre SafeRun
                 
-                // --- BOUTON REVENIR ---
+                // --- ACTION : REVENIR AU PAIEMENT (ON CACHE LA MODALE) ---
                 btnEnvoi.onclick = function() {
-                    const idFixe = localStorage.getItem('temp_pay_id');
-                    const montantFixe = localStorage.getItem('temp_pay_amount');
+                    // Stratégie : on cache juste pour ne pas perdre le contenu HTML (QR Code, etc.)
+                    modal.style.display = "none"; 
                     
-                    modal.classList.remove('show');
-                    setTimeout(() => {
-                        modal.style.display = "none";
+                    if (typeof afficherChoixPaiementLuxe === "function") {
+                        const idFixe = localStorage.getItem('temp_pay_id');
+                        const montantFixe = localStorage.getItem('temp_pay_amount');
                         afficherChoixPaiementLuxe(idFixe, Number(montantFixe));
-                    }, 300);
+                    }
                 };
 
-                // --- BOUTON ANNULER ---
+                // --- ACTION : ANNULER & SUPPRIMER (BOUCLE FOR) ---
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -496,7 +495,9 @@ function ouvrirTicketAutomatique() {
                     
                     btnAnnuler.onclick = function() {
                         const idASupprimer = localStorage.getItem('temp_pay_id');
-                        if(confirm("Supprimer la commande " + idASupprimer + " ?")) {
+                        
+                        if(confirm("Confirmer l'annulation de la commande " + idASupprimer + " ?")) {
+                            // 1. Suppression dans Google Sheet via API
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
@@ -506,22 +507,28 @@ function ouvrirTicketAutomatique() {
                                     statut: "ANNULÉ"
                                 })
                             });
-                            
-                            // Nettoyage : On retire aussi la commande de l'historique local
+
+                            // 2. Boucle For pour nettoyer l'historique local (Identification précise)
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                            h = h.filter(cmd => cmd.id !== idASupprimer);
-                            localStorage.setItem('saferun_commandes', JSON.stringify(h));
-                            
+                            let nouvelH = [];
+                            for (let i = 0; i < h.length; i++) {
+                                if (h[i].id !== idASupprimer) {
+                                    nouvelH.push(h[i]);
+                                }
+                            }
+                            localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
+
+                            // 3. Nettoyage des temporaires
                             localStorage.removeItem('temp_pay_id');
                             localStorage.removeItem('temp_pay_amount');
                             
-                            alert("Commande annulée et retirée de l'historique.");
-                            location.reload();
+                            alert("Commande annulée avec succès.");
+                            location.reload(); // Recharge pour vider les états proprement
                         }
                     };
                     containerBoutons.appendChild(btnAnnuler);
                 }
-            }, 2000); 
+            }, 2500); // Temps nécessaire pour laisser l'ID se générer
         };
     }
 
@@ -601,6 +608,7 @@ async function envoyerDonneesAuSheet() {
 }
 
 function afficherChoixPaiementLuxe(id, montant) {
+    // Suppression de l'ancienne modale si elle existe déjà
     const old = document.getElementById('modale-saferun-pay');
     if(old) old.remove();
 
@@ -639,7 +647,8 @@ function afficherChoixPaiementLuxe(id, montant) {
                 </button>
             </div>
 
-            <p onclick="document.getElementById('modale-saferun-pay').remove()" style="margin-top:30px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:none; font-weight:600; transition:0.3s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+            <p id="btn-retour-panier-fix" style="margin-top:30px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:none; font-weight:600; transition:0.3s;" 
+               onmouseover="this.style.color='#1e293b'" onmouseout="this.style.color='#94a3b8'">
                 ← Retour au panier
             </p>
         </div>
@@ -648,69 +657,61 @@ function afficherChoixPaiementLuxe(id, montant) {
             @keyframes slideUp { from { opacity:0; transform:translateY(40px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
             @keyframes rotateBg { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
-            
             .glass-card { animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-            
-            .btn-luxe {
-                position: relative; overflow: hidden;
-                width: 100%; padding: 22px; border: none; border-radius: 22px;
-                font-weight: 800; font-size: 1rem; cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            
+            .btn-luxe { position: relative; overflow: hidden; width: 100%; padding: 22px; border: none; border-radius: 22px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .btn-dark { background: #1e293b; color: white; box-shadow: 0 10px 25px rgba(30,41,59,0.2); }
             .btn-yellow { background: #ffcc00; color: #1a1a1a; box-shadow: 0 10px 25px rgba(255,204,0,0.2); }
-            
             .btn-luxe:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
-            .btn-luxe:active { transform: translateY(0) scale(0.97); }
-            
-            .icon { margin-right: 12px; font-size: 1.3rem; transition: 0.3s; }
-            .btn-luxe:hover .icon { transform: scale(1.2) rotate(-5deg); }
-
-            .shimmer {
-                position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-                transform: skewX(-20deg); animation: shimmer 3s infinite;
-            }
-            
+            .icon { margin-right: 12px; font-size: 1.3rem; }
+            .shimmer { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); animation: shimmer 3s infinite; }
             .amount-badge:hover { transform: scale(1.02); background: #fff; border-color: #10b981; }
         </style>
     `;
     document.body.appendChild(overlay);
 
-    // --- LOGIQUE DE RÉPARATION (Utilise API_URL et envoie au Sheet) ---
+    // --- LOGIQUE DE RETOUR MODIFIÉE ---
+    document.getElementById('btn-retour-panier-fix').onclick = function() {
+        overlay.remove();
+        const modalPanier = document.getElementById('modal-panier');
+        if(modalPanier) {
+            modalPanier.style.display = "flex";
+            modalPanier.classList.add('show');
+        }
+    };
+
+    // --- LOGIQUE D'ENVOI SHEET (Améliorée) ---
     const envoyerActionSheet = (statut) => {
         if (typeof API_URL !== 'undefined') {
+            // Tentative de récupération des produits depuis le panier avant qu'il soit vidé
+            const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+            const detailProduits = historique.length > 0 ? historique[0].produits : "Commande SafeRun";
+
             fetch(API_URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify({
                     action: "nouvelleCommande",
                     id: id,
-                    nom: typeof nomClient !== 'undefined' ? nomClient : "MARCELLIN",
-                    telClient: typeof telClient !== 'undefined' ? telClient : "0344414702",
+                    nom: localStorage.getItem('saferun_nom') || "Client",
+                    telClient: localStorage.getItem('saferun_tel') || "N/A",
                     montant: montant,
                     statut: statut,
-                    produits: typeof produitsCommande !== 'undefined' ? produitsCommande : "Commande SafeRun",
-                    quartier: typeof quartierClient !== 'undefined' ? quartierClient : "Belanitra"
+                    produits: detailProduits,
+                    quartier: localStorage.getItem('saferun_quartier') || "Tana"
                 })
             });
         }
     };
 
     document.getElementById('go-visa').onclick = function() {
-        this.id = "btn-visa-active";
-        this.innerHTML = "⌛ Connexion sécurisée...";
-        this.style.opacity = "0.6";
+        this.innerHTML = "⌛ Connexion...";
         this.disabled = true;
-        
         envoyerActionSheet("ATTENTE VISA");
-        lancerPayUnit(id, montant); 
+        if (typeof lancerPayUnit === "function") lancerPayUnit(id, montant); 
     };
 
     document.getElementById('go-mvola').onclick = function() {
-        envoyerActionSheet("NOUVEAU");
+        envoyerActionSheet("NOUVEAU MVOLA");
         overlay.remove();
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
