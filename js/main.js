@@ -428,31 +428,25 @@ function ouvrirTicketAutomatique() {
     if (btnEnvoi) {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
-        btnEnvoi.style.display = "block";
-        btnEnvoi.style.background = ""; 
-
+        
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- RECTIFICATION DU MONTANT ---
-            // On essaie de récupérer le montant via la variable globale, 
-            // sinon on le cherche directement dans le texte du panier
-            let montantFinal = 0;
-            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantFinal = montantTotalGlobal;
-            } else {
-                // Secours : on cherche l'élément HTML qui affiche le total (ex: .total-panier)
-                const totalEl = document.querySelector('.total-amount') || document.querySelector('#total-panier');
-                if (totalEl) {
-                    montantFinal = parseInt(totalEl.innerText.replace(/\D/g, '')) || 0;
-                }
+            // --- ÉTAPE 1 : FIXER L'ID DANS LE STORAGE ---
+            // On vérifie s'il y a déjà un ID en cours, sinon on en crée un
+            let idSession = localStorage.getItem('current_order_id');
+            if (!idSession) {
+                idSession = "SR" + Date.now();
+                localStorage.setItem('current_order_id', idSession);
             }
 
-            // --- RECTIFICATION DE L'ID ---
-            const idPourRetour = (typeof idCommandeActuelle !== 'undefined' && idCommandeActuelle) 
-                                 ? idCommandeActuelle 
-                                 : "SR" + Date.now();
+            // --- ÉTAPE 2 : FIXER LE MONTANT ---
+            const montantFixe = Number(montantTotalGlobal);
+            // On peut aussi stocker le montant pour être sûr au retour
+            localStorage.setItem('current_order_amount', montantFixe);
+
+            console.log("Commande fixée - ID:", idSession, "Montant:", montantFixe);
 
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
@@ -460,6 +454,7 @@ function ouvrirTicketAutomatique() {
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
+            // Envoi au Sheet (Assure-toi que envoyerDonneesAuSheet utilise bien localStorage.getItem('current_order_id'))
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
@@ -473,11 +468,14 @@ function ouvrirTicketAutomatique() {
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        // On passe les variables BIEN CAPTURÉES ici
-                        afficherChoixPaiementLuxe(idPourRetour, montantFinal);
+                        // On tire les infos stables du Storage
+                        const savedId = localStorage.getItem('current_order_id');
+                        const savedAmount = localStorage.getItem('current_order_amount');
+                        afficherChoixPaiementLuxe(savedId, Number(savedAmount));
                     }, 300);
                 };
 
+                // --- ÉTAPE 3 : ANNULER & SUPPRIMER ---
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -486,18 +484,21 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:22px; font-weight:800; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        if(confirm("Voulez-vous vraiment annuler ?")) {
-                            // On utilise l'ID exact capturé plus haut
+                        const idToDelete = localStorage.getItem('current_order_id');
+                        if(confirm("Confirmer l'annulation ?")) {
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
                                 body: JSON.stringify({
                                     action: "modifierStatut",
-                                    id: idPourRetour, // Très important que ce soit String(id)
+                                    id: idToDelete,
                                     statut: "ANNULÉ"
                                 })
                             });
-                            alert("Commande annulée.");
+                            // Nettoyage après annulation
+                            localStorage.removeItem('current_order_id');
+                            localStorage.removeItem('current_order_amount');
+                            alert("Commande supprimée.");
                             location.reload();
                         }
                     };
