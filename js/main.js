@@ -420,13 +420,41 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // Appelle la fonction qu'on vient de créer pour dessiner la liste
+    // On garde ton appel de fonction pour dessiner la liste
     afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     if (btnEnvoi) {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-        btnEnvoi.onclick = envoyerDonneesAuSheet;
+        
+        // On remplace le clic par une fonction qui verrouille AVANT d'envoyer
+        btnEnvoi.onclick = function() {
+            
+            // --- ÉTAPE 1 : VERROUILLAGE (Le "truck" demandé) ---
+            
+            // Désactiver le bouton confirmer pour éviter les envois multiples
+            btnEnvoi.disabled = true;
+            btnEnvoi.style.pointerEvents = "none"; 
+            btnEnvoi.style.opacity = "0.7";
+            btnEnvoi.innerHTML = "⌛ TRAITEMENT EN COURS...";
+
+            // Cacher le bouton de fermeture (le X) pour forcer le client à rester
+            const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
+            if (btnFermer) btnFermer.style.display = "none";
+
+            // Empêcher la fermeture en cliquant à l'extérieur de la modale
+            modal.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            };
+
+            // --- ÉTAPE 2 : APPEL DE TA FONCTION D'ENVOI EXISTANTE ---
+            // On appelle ta fonction habituelle sans la modifier elle-même
+            if (typeof envoyerDonneesAuSheet === "function") {
+                envoyerDonneesAuSheet();
+            }
+        };
     }
 
     modal.style.display = "flex";
