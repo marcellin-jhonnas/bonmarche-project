@@ -420,76 +420,74 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // Affiche le panier actuel
-    if (typeof afficherPanier === "function") afficherPanier(); 
+    afficherPanier(); 
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
+        // --- ÉTAPE 1 : RÉCUPÉRER L'ID EXISTANT IMMÉDIATEMENT ---
+        // On regarde si un ID existe déjà pour ne JAMAIS en créer un nouveau par erreur
+        let idSession = localStorage.getItem('current_order_id');
+        
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
         btnEnvoi.style.background = "";
 
-        // Nettoyage des anciens boutons
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- 1. SÉCURISATION DU MONTANT ---
-            let montantFinal = 0;
-            try {
-                if (typeof montantTotalGlobal !== 'undefined') {
-                    montantFinal = Number(montantTotalGlobal);
-                } else {
-                    // Secours : lecture directe dans le HTML (ex: élément avec l'ID total-panier)
-                    const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-                    montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
-                }
-            } catch(e) { montantFinal = 0; }
-
-            // --- 2. SÉCURISATION DE L'ID ---
-            let idSession = localStorage.getItem('current_order_id');
+            // --- ÉTAPE 2 : FORCER L'ID PRÉCÉDENT ---
+            // Si idSession est vide (première fois), on le génère. 
+            // S'il existe (retour arrière), on garde l'ancien !
             if (!idSession) {
                 idSession = "SR" + Date.now();
                 localStorage.setItem('current_order_id', idSession);
+                console.log("Nouvel ID généré:", idSession);
+            } else {
+                console.log("ID précédent réutilisé:", idSession);
             }
-            
-            // On fixe les valeurs pour toute la session
+
+            // Sécurisation du montant
+            let montantFinal = 0;
+            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
+                montantFinal = Number(montantTotalGlobal);
+            } else {
+                const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+                montantFinal = elTotal ? parseInt(elTotal.innerText.replace(/\D/g, '')) : 0;
+            }
             localStorage.setItem('current_order_amount', montantFinal);
+            
+            // On force la variable globale pour que envoyerDonneesAuSheet l'utilise aussi
             window.idCommandeActuelle = idSession; 
 
-            // --- 3. VERROUILLAGE INTERFACE ---
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
-            const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
-            if (btnFermer) btnFermer.style.display = "none";
-
-            // Envoi au Sheet
+            
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
-            // --- 4. APPARITION DES OPTIONS APRÈS ENVOI ---
             setTimeout(() => {
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b"; // Couleur pro foncée
+                btnEnvoi.style.background = "#1e293b";
                 
-                // Action : Aller vers le choix de paiement (VISA/MVOLA)
                 btnEnvoi.onclick = function() {
-                    const savedId = localStorage.getItem('current_order_id');
-                    const savedAmount = localStorage.getItem('current_order_amount');
+                    // On reprend l'ID stocké pour être 100% sûr
+                    const idFixe = localStorage.getItem('current_order_id');
+                    const montantFixe = localStorage.getItem('current_order_amount');
+                    
                     modal.classList.remove('show');
                     setTimeout(() => {
                         modal.style.display = "none";
-                        if (typeof afficherChoixPaiementLuxe === "function") {
-                            afficherChoixPaiementLuxe(savedId, Number(savedAmount));
-                        }
+                        // On relance le choix de paiement avec l'ID SCELLÉ
+                        afficherChoixPaiementLuxe(idFixe, Number(montantFixe));
                     }, 300);
                 };
 
-                // Action : Annuler (Suppression dans le Sheet)
+                // Bouton Annuler
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
@@ -499,7 +497,7 @@ function ouvrirTicketAutomatique() {
                     
                     btnAnnuler.onclick = function() {
                         const idToDelete = localStorage.getItem('current_order_id');
-                        if(confirm("Voulez-vous vraiment annuler ? Cette commande sera effacée.")) {
+                        if(confirm("Supprimer la commande " + idToDelete + " ?")) {
                             fetch(API_URL, {
                                 method: "POST",
                                 mode: "no-cors",
@@ -509,9 +507,10 @@ function ouvrirTicketAutomatique() {
                                     statut: "ANNULÉ"
                                 })
                             });
+                            // ON VIDE TOUT SEULEMENT ICI
                             localStorage.removeItem('current_order_id');
                             localStorage.removeItem('current_order_amount');
-                            alert("Commande annulée.");
+                            alert("Commande effacée.");
                             location.reload();
                         }
                     };
