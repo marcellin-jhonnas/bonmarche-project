@@ -107,7 +107,7 @@ function genererHTMLProduit(p) {
 }
 function rendreProduits(liste) {
     // 1. On cible la grille intérieure pour ne pas effacer la pub
-    const containerGrille = document.getElementById('grille-produits-reelle');
+    const containerGrille = document.getElementById('boutique');
     const containerScroll = document.getElementById('boutique-ppn');
     const loader = document.getElementById('loading-placeholder');
 
