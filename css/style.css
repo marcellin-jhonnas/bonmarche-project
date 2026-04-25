@@ -2604,3 +2604,53 @@ section.saferun-pro-chat .btn-boutique-secondary {
     padding: 20px !important;
     font-weight: 800 !important;
 }
+/* Sidebar Droite Fixe */
+.sidebar-droite-animee {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 15px 8px;
+    border-radius: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    z-index: 9998; /* Juste en dessous du chat */
+}
+
+/* Style des bulles de contenu */
+.side-content {
+    position: absolute;
+    right: 70px;
+    top: 0;
+    width: 200px;
+    background: white;
+    padding: 15px;
+    border-radius: 20px;
+    display: none;
+    box-shadow: -10px 10px 25px rgba(0,0,0,0.1);
+    animation: slideSide 0.3s ease-out;
+}
+
+.side-item.active .side-content { display: block; }
+
+.side-item {
+    font-size: 24px;
+    cursor: pointer;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.side-item:hover { transform: scale(1.2); }
+
+@keyframes slideSide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
