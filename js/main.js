@@ -166,53 +166,41 @@ document.addEventListener('DOMContentLoaded', demarrerSliderAnnonce);
 // Fonction utilitaire pour garder ton design exact (Évite les erreurs de copier-coller)
 function genererCodeCarte(p) {
     const nomPropre = p.Nom.replace(/'/g, "\\'");
-    const likesAleatoires = Math.floor(Math.random() * 37) + 12;
     const prixFormatte = Number(p.Prix).toLocaleString();
     const descEchappee = (p.Description || "Qualité SafeRun").replace(/'/g, "\\'");
 
     return `
-    <div class="carte-produit" style="display: flex; flex-direction: column; height: 100%; border-radius: 20px; background: #fff; border: 1px solid #eee; overflow: hidden; transition: all 0.3s ease; position: relative;">
+    <div class="product-card" style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: 0.3s; height: 100%; position: relative;">
         
-        <div style="position: absolute; top: 10px; right: 10px; z-index: 5; background: #ffcc00; color: #1a1a1a; width: 65px; height: 65px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid #fff; line-height: 1;">
-            <span>${prixFormatte}</span>
-            <small style="font-size: 0.55rem; margin-top: 2px;">AR</small>
-        </div>
-        
-        <div class="img-container" style="height: 170px; overflow: hidden; background: #f8f9fa;">
+        <div class="img-container" style="height: 180px; padding: 15px; background: #fff; display: flex; align-items: center; justify-content: center;">
             <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
                  onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
                  onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')"
-                 style="width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: 0.5s;">
+                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in;">
         </div>
 
-        <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <span class="cat-tag" style="font-size: 0.65rem; color: #ffa000; font-weight: 700;">${p.Categorie || 'Market'}</span>
-                <div style="color: #ffcc00; font-size: 0.7rem;"><i class="fas fa-star"></i> 4.8</div>
-            </div>
-
-            <h3 style="margin: 5px 0; font-size: 0.95rem; font-weight: 700; color: #2c3e50; line-height: 1.2; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.Nom}</h3>
+        <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1; text-align: left;">
             
-            <p style="font-size: 0.75rem; color: #7f8c8d; margin: 5px 0; line-height: 1.3; height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-grow: 1;">
-                ${p.Description || ""}
-            </p>
+            <h3 style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #555; line-height: 1.2; height: 2.4em; overflow: hidden;">
+                ${p.Nom}
+            </h3>
 
-            <div class="interaction-bar" style="display: flex; gap: 15px; padding: 8px 0; border-top: 1px solid #f8f8f8; margin-top: auto;">
-                <div class="btn-interaction" onclick="actionLike(this)" style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#95a5a6; font-size:0.75rem;">
-                    <i class="far fa-heart"></i> <span class="nb-likes">${likesAleatoires}</span>
-                </div>
-                <div style="font-size:0.75rem; color:#27ae60; font-weight:bold; display:flex; align-items:center; gap:3px;">
-                    ${(Math.random() * (4.9 - 4.6) + 4.6).toFixed(1)} <i class="fas fa-check-circle" style="font-size:0.65rem;"></i>
-                </div>
+            <div style="color: #0d47a1; font-weight: 800; font-size: 1.1rem; margin-bottom: 5px;">
+                ${prixFormatte} <small style="font-size: 0.7rem;">AR</small>
             </div>
 
-            <button class="btn-commander" 
-                    onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})"
-                    onmouseover="this.style.background='linear-gradient(135deg, #ffcc00, #ff9900)'; this.style.color='#1a1a1a'; this.style.transform='scale(1.02)';"
-                    onmouseout="this.style.background='#1a1a1a'; this.style.color='#fff'; this.style.transform='scale(1)';"
-                    style="width: 100%; padding: 12px; border-radius: 12px; background: #1a1a1a; border: none; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
-                <i class="fas fa-shopping-basket" style="color: #ffcc00;"></i> AJOUTER
-            </button>
+            <div style="color: #ffcc00; font-size: 0.75rem; margin-bottom: 15px;">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 25px; padding-top: 10px; border-top: 1px solid #f5f5f5; margin-top: auto;">
+                <div onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" title="Ajouter au panier" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
+                    <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
+                </div>
+                <div onclick="actionLike(this)" title="Ajouter aux favoris" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
+                    <i class="far fa-heart" style="font-size: 1.3rem;"></i>
+                </div>
+            </div>
         </div>
     </div>`;
 }

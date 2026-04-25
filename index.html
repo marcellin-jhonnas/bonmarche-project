@@ -313,48 +313,47 @@
     </div>
 </section>
 
-    <main id="boutique" class="container">
-    <div id="annonce-slider" class="annonce-banner">
-        <div class="slide active">
-            <div class="slide-content">
-                <span class="badge">🚀 LIVRAISON RAPIDE</span>
-                <h2>Livraison dès 3.500 Ar</h2>
-                <p>Ambatobe • Ivandry • Ambohibao • Ivato ...</p>
-                <div class="tag-line">Mora • Aingana • Azo antoka</div>
+    <main id="boutique" class="container" style="display: flex; gap: 20px; padding: 20px; align-items: flex-start;">
+    
+    <div style="flex: 1; min-width: 0;">
+        
+        <div id="annonce-slider" class="annonce-banner">
             </div>
-            <div class="slide-image">🛵</div>
-        </div>
 
-        <div class="slide">
-            <div class="slide-content">
-                <span class="badge">🇲🇬 VITA GASY</span>
-                <h2>Jifao ny Vita Gasy</h2>
-                <p>Fanamorana sy fahafantana ny mpanjifa</p>
-                <div class="tag-line">Ny tanjontsika : Ny fahafizanao</div>
+        <div class="nouveautes-section">
+            <div class="nouveautes-header">
+                <span><i class="fas fa-certificate"></i> LES NOUVEAUTÉS DE LA SEMAINE</span>
+                <a href="#" class="voir-plus">VOIR PLUS »</a>
             </div>
-            <div class="slide-image">🇲🇬</div>
-        </div>
-
-        <div class="slide">
-            <div class="slide-content">
-                <span class="badge">📅 SERVICE CLIENT</span>
-                <h2>Lundi au Samedi</h2>
-                <p>Commander maintenant, on prend charge le reste !</p>
-                <div class="tag-line">SafeRun : Ho fanamorana ny fiainanao</div>
+            
+            <div id="grille-produits-reelle" class="produits-carousel">
+                <div id="loading-placeholder" class="skeleton-grille">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
             </div>
-            <div class="slide-image">📦</div>
         </div>
     </div>
 
-    <div id="grille-produits-reelle" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px;">
+    <aside class="pub-sidebar">
+        <div class="pub-card">
+            <div class="pub-header">
+                <img src="https://i.imgur.com/FEke8Cf.png" alt="SafeRun Logo">
+                <span>MADA VISION</span>
+            </div>
+            <div class="pub-content">
+                <p class="pub-edition">ÉDITION 2026</p>
+                <h3>Madagascar en Mouvement</h3>
+                <p class="pub-desc">Votre partenaire pour innover et livrer l'excellence à Antananarivo.</p>
+                <div class="pub-stats">
+                    <div class="stat-box"><b>+350</b><br>Produits</div>
+                    <div class="stat-box"><b>40</b><br>Quartiers</div>
+                </div>
+                <div class="pub-footer">07 - 10 MAI | CCI IVATO</div>
+            </div>
         </div>
-
-    <div id="loading-placeholder" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px;">
-        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
-        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
-        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
-        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
-    </div>
+    </aside>
 </main>
 </div>
 <section class="cta-saferun-visuel">
