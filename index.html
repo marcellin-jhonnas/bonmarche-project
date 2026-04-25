@@ -313,32 +313,34 @@
     </div>
 </section>
 
- <div style="display: flex; gap: 20px; padding: 20px; align-items: flex-start;">
-
-    <div style="flex: 3;">
-        
-        <main id="boutique" class="container">
-            <div id="grille-produits-reelle" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                
-                <div id="loading-placeholder" style="grid-column: span 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                </div>
-
-            </div>
-        </main>
-
-        <div id="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;"></div>
+ <div id="boutique-ppn" style="display: flex; overflow-x: auto; gap: 15px; padding: 15px; min-height: 100px;">
     </div>
 
-    <aside style="flex: 1; min-width: 280px; background: #1e3a8a; color: white; padding: 30px; border-radius: 15px; text-align: center; min-height: 400px; position: sticky; top: 10px;">
-        <h2 style="color: #ffcc00;">SAFERUN</h2>
-        <p>Livraison Rapide</p>
-        <div style="margin-top: 20px; border: 1px dashed rgba(255,255,255,0.3); padding: 15px;">
-            PUB ICI
+<div style="display: flex; gap: 20px; padding: 20px; align-items: flex-start;">
+
+    <div style="flex: 3;">
+        <main id="boutique" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            <div id="loading-placeholder" style="grid-column: span 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+        </main>
+        
+        <div id="pagination" style="margin-top: 30px; display: flex; justify-content: center;"></div>
+    </div>
+
+    <aside style="flex: 1; min-width: 280px; background: #1e3a8a; color: white; padding: 30px; border-radius: 20px; text-align: center; position: sticky; top: 10px; min-height: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <h2 style="color: #ffcc00; font-size: 2rem; font-weight: 800;">SAFERUN</h2>
+        <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 20px;">Livraison Rapide</p>
+        
+        <div style="border: 1px dashed rgba(255,255,255,0.3); padding: 20px; border-radius: 15px;">
+            <p style="font-size: 0.9rem;">Besoin d'un colis en urgence ? 🚚</p>
+            <p style="color: #ffcc00; font-weight: bold; margin-top: 10px;">SafeRun Express Mada</p>
         </div>
     </aside>
+
+</div>
 
 </div>
 </div>
