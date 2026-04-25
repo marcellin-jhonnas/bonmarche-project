@@ -313,14 +313,33 @@
     </div>
 </section>
 
- <div style="display: flex; gap: 20px;">
+ <div style="display: flex; gap: 20px; padding: 20px; align-items: flex-start;">
+
     <div style="flex: 3;">
-        <div id="grille-produits-reelle" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-        </div>
+        
+        <main id="boutique" class="container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            
+            <div id="loading-placeholder" style="grid-column: span 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+            
+        </main>
+
+        <div id="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
+            </div>
+
     </div>
-    <aside style="flex: 1; background: #1e3a8a; color: white; padding: 20px; border-radius: 15px;">
-        <h2>SAFERUN</h2>
+
+    <aside style="flex: 1; min-width: 280px; background: #1e3a8a; color: white; padding: 30px; border-radius: 15px; text-align: center; min-height: 400px; position: sticky; top: 10px;">
+        <h2 style="color: #ffcc00;">SAFERUN</h2>
+        <p>Livraison Rapide</p>
+        <div style="margin-top: 20px; border: 1px dashed rgba(255,255,255,0.3); padding: 15px;">
+            PUB ICI
+        </div>
     </aside>
+
 </div>
 </div>
 </div>
