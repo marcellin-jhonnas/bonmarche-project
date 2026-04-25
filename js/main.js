@@ -106,43 +106,52 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-const containerGrille = document.getElementById('boutique');
-const containerScroll = document.getElementById('boutique-ppn'); 
-if (!containerGrille) return;
-const loader = document.getElementById('loading-placeholder');
-if (loader) loader.style.display = 'none';
+    // MODIFICATION ICI : On cible la grille de gauche uniquement
+    const containerGrille = document.getElementById('grille-produits-reelle');
+    const containerScroll = document.getElementById('boutique-ppn');
+    const loader = document.getElementById('loading-placeholder');
 
-if (liste.length === 0) {
-containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
-if (containerScroll) containerScroll.innerHTML = "";
-return;
-}
+    if (!containerGrille) {
+        console.error("ID 'grille-produits-reelle' introuvable !");
+        return;
+    }
 
-// On vide proprement les deux zones
-containerGrille.innerHTML = "";
-if (containerScroll) containerScroll.innerHTML = "";
+    if (loader) loader.style.display = 'none';
 
-// --- ÉTAPE A : SÉPARATION DES PRODUITS ---
-const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
-const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
+    // On vide les zones
+    containerGrille.innerHTML = "";
+    if (containerScroll) containerScroll.innerHTML = "";
 
-// --- ÉTAPE B : AFFICHAGE DES PPN (Pas de pagination ici) ---
-produitsPPN.forEach(p => {
-containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-});
+    if (liste.length === 0) {
+        containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
+        return;
+    }
 
-// --- ÉTAPE C : PAGINATION POUR "TOUT LE MARCHÉ" ---
-const totalProduitsMarche = produitsMarche.length;
-const debut = (pageActuelle - 1) * produitsParPage;
-const fin = debut + produitsParPage;
-const produitsAPresenter = produitsMarche.slice(debut, fin);
+    // --- ÉTAPE A : SÉPARATION ---
+    const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
+    const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
 
-produitsAPresenter.forEach(p => {
-containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-});
+    // --- ÉTAPE B : PPN ---
+    if (containerScroll) {
+        produitsPPN.forEach(p => {
+            containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+        });
+    }
 
-// --- ÉTAPE D : CRÉER LES BOUTONS 1, 2, 3... ---
-creerBarrePagination(totalProduitsMarche);
+    // --- ÉTAPE C : MARCHÉ (La partie qui plantait) ---
+    const totalProduitsMarche = produitsMarche.length;
+    const debut = (pageActuelle - 1) * produitsParPage;
+    const fin = debut + produitsParPage;
+    const produitsAPresenter = produitsMarche.slice(debut, fin);
+
+    produitsAPresenter.forEach(p => {
+        containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+    });
+
+    // --- ÉTAPE D : PAGINATION ---
+    if (typeof creerBarrePagination === "function") {
+        creerBarrePagination(totalProduitsMarche);
+    }
 }
 
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
