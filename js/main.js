@@ -106,8 +106,7 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-    // CHANGE CETTE LIGNE : 
-    // Au lieu de 'boutique', on cible 'grille-produits-reelle'
+    // 1. On cible la grille intérieure pour ne pas effacer la pub
     const containerGrille = document.getElementById('grille-produits-reelle');
     const containerScroll = document.getElementById('boutique-ppn');
     const loader = document.getElementById('loading-placeholder');
@@ -117,12 +116,31 @@ function rendreProduits(liste) {
         return;
     }
 
-    // ... le reste de ton code ne change pas ...
-    
-    // --- PARTIE MARCHÉ (C'est ici que ça va débloquer) ---
+    // On cache le loader
+    if (loader) loader.style.display = 'none';
+
+    // 2. On vide les zones proprement
+    containerGrille.innerHTML = "";
+    if (containerScroll) containerScroll.innerHTML = "";
+
+    if (!liste || liste.length === 0) {
+        containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
+        return;
+    }
+
+    // --- ÉTAPE A : SÉPARATION DES PRODUITS ---
+    const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
     const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
-    
-    // On s'assure que produitsParPage est bien défini (met 3 pour ton design actuel)
+
+    // --- ÉTAPE B : AFFICHAGE DES PPN (Slider du haut) ---
+    if (containerScroll) {
+        produitsPPN.forEach(p => {
+            containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+        });
+    }
+
+    // --- ÉTAPE C : AFFICHAGE DU MARCHÉ (3 PRODUITS) ---
+    // On utilise 3 pour correspondre à tes 3 colonnes à côté de la pub
     const pParPage = 3; 
     const debut = (pageActuelle - 1) * pParPage;
     const fin = debut + pParPage;
@@ -131,6 +149,12 @@ function rendreProduits(liste) {
     produitsAPresenter.forEach(p => {
         containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
     });
+
+    // --- ÉTAPE D : RÉACTIVATION DES BOUTONS 1, 2, 3... ---
+    // Très important pour faire revenir la pagination !
+    if (typeof creerBarrePagination === "function") {
+        creerBarrePagination(produitsMarche.length);
+    }
 }
 
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
