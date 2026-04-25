@@ -106,30 +106,32 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-    // MODIFICATION ICI : On cible la grille de gauche uniquement
+    console.log("--- DIAGNOSTIC DEBUT ---");
+    console.log("Nombre de produits reçus :", liste.length);
+
     const containerGrille = document.getElementById('grille-produits-reelle');
     const containerScroll = document.getElementById('boutique-ppn');
     const loader = document.getElementById('loading-placeholder');
 
+    // VERIFICATION LOG 1 : Est-ce que le conteneur existe ?
     if (!containerGrille) {
-        console.error("ID 'grille-produits-reelle' introuvable !");
+        console.error("ERREUR LOG : L'ID 'grille-produits-reelle' n'existe pas dans le HTML.");
         return;
+    } else {
+        console.log("SUCCÈS LOG : Conteneur de grille trouvé.");
     }
 
     if (loader) loader.style.display = 'none';
 
-    // On vide les zones
     containerGrille.innerHTML = "";
     if (containerScroll) containerScroll.innerHTML = "";
-
-    if (liste.length === 0) {
-        containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
-        return;
-    }
 
     // --- ÉTAPE A : SÉPARATION ---
     const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
     const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
+    
+    console.log("Produits PPN trouvés :", produitsPPN.length);
+    console.log("Produits Marché trouvés :", produitsMarche.length);
 
     // --- ÉTAPE B : PPN ---
     if (containerScroll) {
@@ -138,19 +140,25 @@ function rendreProduits(liste) {
         });
     }
 
-    // --- ÉTAPE C : MARCHÉ (La partie qui plantait) ---
-    const totalProduitsMarche = produitsMarche.length;
-    const debut = (pageActuelle - 1) * produitsParPage;
-    const fin = debut + produitsParPage;
+    // --- ÉTAPE C : MARCHÉ ---
+    // On force ces variables si elles manquent pour le test
+    const pParPage = (typeof produitsParPage !== 'undefined') ? produitsParPage : 3;
+    const pActuelle = (typeof pageActuelle !== 'undefined') ? pageActuelle : 1;
+
+    const debut = (pActuelle - 1) * pParPage;
+    const fin = debut + pParPage;
     const produitsAPresenter = produitsMarche.slice(debut, fin);
+
+    console.log("Tentative d'affichage de", produitsAPresenter.length, "produits.");
 
     produitsAPresenter.forEach(p => {
         containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
     });
 
-    // --- ÉTAPE D : PAGINATION ---
+    console.log("--- DIAGNOSTIC FIN ---");
+
     if (typeof creerBarrePagination === "function") {
-        creerBarrePagination(totalProduitsMarche);
+        creerBarrePagination(produitsMarche.length);
     }
 }
 
