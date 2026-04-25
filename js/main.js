@@ -1342,7 +1342,21 @@ function synchroniserBadges(nombre) {
         badgeFlottant.style.display = nombre > 0 ? "block" : "none";
     }
 }
+function demarrerSliderAnnonce() {
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
 
+    if(slides.length === 0) return;
+
+    setInterval(() => {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }, 5000); // 5000ms = 5 secondes
+}
+
+// Lancement au chargement
+document.addEventListener('DOMContentLoaded', demarrerSliderAnnonce);
 // Fonction pour le Like (Rouge + Gras)
 // Gère le Like (Rouge + Gras + Compteur)
 function actionLike(element) {
