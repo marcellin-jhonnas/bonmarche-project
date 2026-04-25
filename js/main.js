@@ -106,47 +106,35 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-    // 1. On cible la GRILLE RÉELLE, pas le main complet
     const containerGrille = document.getElementById('grille-produits-reelle');
-    const containerScroll = document.getElementById('boutique-ppn'); 
     const loader = document.getElementById('loading-placeholder');
 
-    if (!containerGrille) return;
-
-    // 2. Cacher le loader
-    if (loader) loader.style.display = 'none';
-
-    // 3. Vider uniquement la grille de produits (le slider reste intact en haut)
-    containerGrille.innerHTML = "";
-    if (containerScroll) containerScroll.innerHTML = "";
-
-    if (liste.length === 0) {
-        containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
+    // On vérifie si la grille existe dans le HTML
+    if (!containerGrille) {
+        console.error("La grille 'grille-produits-reelle' n'a pas été trouvée !");
         return;
     }
 
-    // --- LOGIQUE DE SEPARATION (PPN vs MARCHÉ) ---
-    const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
-    const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
+    // On cache le chargement
+    if (loader) loader.style.display = 'none';
 
-    // Affichage PPN
-    if (containerScroll) {
-        produitsPPN.forEach(p => {
-            containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-        });
+    // On vide la grille
+    containerGrille.innerHTML = "";
+
+    // TEST SIMPLE : On prend les 3 premiers produits de la liste, peu importe la catégorie
+    const produitsTest = liste.slice(0, 3);
+
+    if (produitsTest.length === 0) {
+        containerGrille.innerHTML = "La liste de produits est vide.";
+        return;
     }
 
-    // Affichage Marché avec Pagination
-    const debut = (pageActuelle - 1) * produitsParPage;
-    const fin = debut + produitsParPage;
-    const produitsAPresenter = produitsMarche.slice(debut, fin);
-
-    produitsAPresenter.forEach(p => {
+    // On les affiche
+    produitsTest.forEach(p => {
         containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
     });
 
-    // Mise à jour des boutons de page
-    creerBarrePagination(produitsMarche.length);
+    console.log("Étape 2 réussie : 3 produits affichés.");
 }
 
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
