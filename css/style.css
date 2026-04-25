@@ -2799,3 +2799,28 @@ section.saferun-pro-chat .btn-boutique-secondary {
         grid-template-columns: 1fr; 
     }
 }
+.layout-boutique {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+}
+
+#grille-produits-reelle {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.pub-sidebar-fixe {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: sticky;
+    top: 20px;
+}
+
+#pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
