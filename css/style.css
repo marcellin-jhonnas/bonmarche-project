@@ -2759,17 +2759,29 @@ section.saferun-pro-chat .btn-boutique-secondary {
 /* --- AJUSTEMENT DE LA GRILLE --- */
 #grille-produits-reelle {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 colonnes comme sur ton site actuel */
+    grid-template-columns: repeat(3, 1fr); /* CHANGÉ de 2 à 3 pour l'alignement */
     gap: 15px;
-    background: #f9f9f9; /* Fond gris clair pour faire ressortir les cartes blanches */
+    background: #f9f9f9;
     padding: 15px;
     border: 1px solid #eee;
     border-top: none;
 }
 /* Ajustement pour que ça reste propre sur téléphone */
 @media (max-width: 900px) {
-    #boutique > div { flex-direction: column !important; }
-    #grille-produits-reelle { grid-template-columns: repeat(2, 1fr) !important; width: 100% !important; }
-    .pub-sidebar-fixe { width: 100% !important; min-height: auto !important; margin-top: 15px; }
-    #loading-placeholder { width: 100% !important; grid-template-columns: repeat(2, 1fr) !important; }
+    #boutique > div { 
+        flex-direction: column !important; 
+    }
+    #grille-produits-reelle { 
+        grid-template-columns: repeat(2, 1fr) !important; /* Reste à 2 sur téléphone */
+        width: 100% !important; 
+    }
+    .pub-sidebar-fixe { 
+        width: 100% !important; 
+        min-height: auto !important; 
+        margin-top: 15px; 
+    }
+    #loading-placeholder { 
+        width: 100% !important; 
+        grid-template-columns: repeat(2, 1fr) !important; 
+    }
 }
