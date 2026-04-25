@@ -2766,3 +2766,10 @@ section.saferun-pro-chat .btn-boutique-secondary {
     border: 1px solid #eee;
     border-top: none;
 }
+/* Ajustement pour que ça reste propre sur téléphone */
+@media (max-width: 900px) {
+    #boutique > div { flex-direction: column !important; }
+    #grille-produits-reelle { grid-template-columns: repeat(2, 1fr) !important; width: 100% !important; }
+    .pub-sidebar-fixe { width: 100% !important; min-height: auto !important; margin-top: 15px; }
+    #loading-placeholder { width: 100% !important; grid-template-columns: repeat(2, 1fr) !important; }
+}

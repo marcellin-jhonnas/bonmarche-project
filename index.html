@@ -313,47 +313,50 @@
     </div>
 </section>
 
-    <main id="boutique" class="container" style="display: flex; gap: 20px; padding: 20px; align-items: flex-start;">
+  <main id="boutique" class="container" style="padding: 10px;">
     
-    <div style="flex: 1; min-width: 0;">
+    <div id="annonce-slider" class="annonce-banner">
+        <div class="slide active">
+            <div class="slide-content">
+                <span class="badge">🚀 LIVRAISON RAPIDE</span>
+                <h2>Livraison dès 3.500 Ar</h2>
+                <p>Ambatobe • Ivandry • Ambohibao • Ivato ...</p>
+                <div class="tag-line">Mora • Aingana • Azo antoka</div>
+            </div>
+            <div class="slide-image">🛵</div>
+        </div>
+        </div>
+
+    <div style="display: flex; gap: 15px; align-items: flex-start;">
         
-        <div id="annonce-slider" class="annonce-banner">
+        <div id="grille-produits-reelle" style="flex: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
             </div>
 
-        <div class="nouveautes-section">
-            <div class="nouveautes-header">
-                <span><i class="fas fa-certificate"></i> LES NOUVEAUTÉS DE LA SEMAINE</span>
-                <a href="#" class="voir-plus">VOIR PLUS »</a>
+        <div class="pub-sidebar-fixe" style="flex: 1; min-width: 260px; background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%); border-radius: 12px; color: white; padding: 20px; text-align: center; min-height: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 20px;">
+                <span>SAFERUN</span>
+                <span>MARKET</span>
+            </div>
+            <p style="font-size: 0.8rem; margin: 0;">ANTANANARIVO</p>
+            <h2 style="font-size: 1.4rem; margin: 15px 0; line-height: 1.2;">Livraison Rapide & Fiable</h2>
+            <p style="font-size: 0.85rem; opacity: 0.9;">Votre partenaire quotidien pour faire vos courses sans vous déplacer.</p>
+            
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin: 25px 0;">
+                <b style="font-size: 0.9rem;">MORA • AINGANA</b><br>
+                <span style="font-size: 0.8rem;">AZO ANTOKA</span>
             </div>
             
-            <div id="grille-produits-reelle" class="produits-carousel">
-                <div id="loading-placeholder" class="skeleton-grille">
-                    <div class="skeleton-card"></div>
-                    <div class="skeleton-card"></div>
-                    <div class="skeleton-card"></div>
-                </div>
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 20px;">
+                <p style="font-weight: bold; font-size: 0.9rem;">OUVERT : LUNDI - SAMEDI</p>
             </div>
         </div>
     </div>
 
-    <aside class="pub-sidebar">
-        <div class="pub-card">
-            <div class="pub-header">
-                <img src="https://i.imgur.com/FEke8Cf.png" alt="SafeRun Logo">
-                <span>MADA VISION</span>
-            </div>
-            <div class="pub-content">
-                <p class="pub-edition">ÉDITION 2026</p>
-                <h3>Madagascar en Mouvement</h3>
-                <p class="pub-desc">Votre partenaire pour innover et livrer l'excellence à Antananarivo.</p>
-                <div class="pub-stats">
-                    <div class="stat-box"><b>+350</b><br>Produits</div>
-                    <div class="stat-box"><b>40</b><br>Quartiers</div>
-                </div>
-                <div class="pub-footer">07 - 10 MAI | CCI IVATO</div>
-            </div>
-        </div>
-    </aside>
+    <div id="loading-placeholder" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px; width: 75%;">
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+    </div>
 </main>
 </div>
 <section class="cta-saferun-visuel">
