@@ -106,55 +106,31 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-    console.log("--- VÉRIFICATION LOGS ---");
-    console.log("Données reçues de Google :", liste ? liste.length : "AUCUNE");
-
+    // CHANGE CETTE LIGNE : 
+    // Au lieu de 'boutique', on cible 'grille-produits-reelle'
     const containerGrille = document.getElementById('grille-produits-reelle');
-    
-    // VERIFICATION 1 : Le conteneur HTML existe-t-il ?
+    const containerScroll = document.getElementById('boutique-ppn');
+    const loader = document.getElementById('loading-placeholder');
+
     if (!containerGrille) {
-        console.error("ERREUR : L'ID 'grille-produits-reelle' est introuvable dans le HTML !");
-        alert("Attention : L'ID 'grille-produits-reelle' n'existe pas dans ton fichier HTML.");
+        console.error("L'ID 'grille-produits-reelle' n'a pas été trouvé dans le HTML");
         return;
     }
 
-    // VERIFICATION 2 : La liste est-elle vide ?
-    if (!liste || liste.length === 0) {
-        containerGrille.innerHTML = "<p style='color:red;'>La liste de produits est vide ou bloquée par Google.</p>";
-        return;
-    }
-
-    // Nettoyage avant affichage
-    containerGrille.innerHTML = "";
-
-    // On prépare les variables (avec valeurs par défaut si elles manquent)
-    const pParPage = (typeof produitsParPage !== 'undefined') ? produitsParPage : 3;
-    const pActuelle = (typeof pageActuelle !== 'undefined') ? pageActuelle : 1;
-
-    // --- FILTRE MARCHÉ ---
+    // ... le reste de ton code ne change pas ...
+    
+    // --- PARTIE MARCHÉ (C'est ici que ça va débloquer) ---
     const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
     
-    const debut = (pActuelle - 1) * pParPage;
+    // On s'assure que produitsParPage est bien défini (met 3 pour ton design actuel)
+    const pParPage = 3; 
+    const debut = (pageActuelle - 1) * pParPage;
     const fin = debut + pParPage;
     const produitsAPresenter = produitsMarche.slice(debut, fin);
 
-    console.log("Produits à afficher dans la grille :", produitsAPresenter.length);
-
-    // --- AFFICHAGE ---
     produitsAPresenter.forEach(p => {
-        try {
-            // On vérifie si la fonction de création de carte existe
-            if (typeof genererCodeCarte === 'function') {
-                containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-            } else {
-                containerGrille.innerHTML += `<div style="border:1px solid #ccc; padding:10px;">${p.Nom || 'Produit sans nom'}</div>`;
-            }
-        } catch (err) {
-            console.error("Erreur lors de la création d'une carte :", err);
-        }
+        containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
     });
-
-    console.log("--- FIN DIAGNOSTIC ---");
 }
 
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
