@@ -106,56 +106,43 @@ function genererHTMLProduit(p) {
     </div>`;
 }
 function rendreProduits(liste) {
-    // 1. ON CIBLE LA GRILLE ET NON LE MAIN
-    // On utilise 'grille-produits-reelle' pour ne pas effacer la pub à droite
-    const containerGrille = document.getElementById('grille-produits-reelle');
-    const containerScroll = document.getElementById('boutique-ppn');
-    const loader = document.getElementById('loading-placeholder');
+const containerGrille = document.getElementById('boutique');
+const containerScroll = document.getElementById('boutique-ppn'); 
+if (!containerGrille) return;
+const loader = document.getElementById('loading-placeholder');
+if (loader) loader.style.display = 'none';
 
-    // Sécurité : si la grille n'existe pas dans le HTML, on arrête
-    if (!containerGrille) {
-        console.error("Erreur : L'élément 'grille-produits-reelle' est introuvable.");
-        return;
-    }
+if (liste.length === 0) {
+containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
+if (containerScroll) containerScroll.innerHTML = "";
+return;
+}
 
-    // 2. CACHER LE LOADER
-    if (loader) loader.style.display = 'none';
+// On vide proprement les deux zones
+containerGrille.innerHTML = "";
+if (containerScroll) containerScroll.innerHTML = "";
 
-    // 3. VIDER UNIQUEMENT LA ZONE DES PRODUITS
-    containerGrille.innerHTML = "";
-    if (containerScroll) containerScroll.innerHTML = "";
+// --- ÉTAPE A : SÉPARATION DES PRODUITS ---
+const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
+const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
 
-    // 4. SI LA LISTE EST VIDE
-    if (liste.length === 0) {
-        containerGrille.innerHTML = "<p style='padding:20px;'>Aucun produit trouvé.</p>";
-        return;
-    }
+// --- ÉTAPE B : AFFICHAGE DES PPN (Pas de pagination ici) ---
+produitsPPN.forEach(p => {
+containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+});
 
-    // --- SÉPARATION DES PRODUITS (PPN vs MARCHÉ) ---
-    const produitsPPN = liste.filter(p => (p.Categorie || "").toUpperCase() === 'PPN');
-    const produitsMarche = liste.filter(p => (p.Categorie || "").toUpperCase() !== 'PPN');
+// --- ÉTAPE C : PAGINATION POUR "TOUT LE MARCHÉ" ---
+const totalProduitsMarche = produitsMarche.length;
+const debut = (pageActuelle - 1) * produitsParPage;
+const fin = debut + produitsParPage;
+const produitsAPresenter = produitsMarche.slice(debut, fin);
 
-    // --- AFFICHAGE PPN (Slider horizontal si présent) ---
-    if (containerScroll) {
-        produitsPPN.forEach(p => {
-            containerScroll.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-        });
-    }
+produitsAPresenter.forEach(p => {
+containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
+});
 
-    // --- AFFICHAGE MARCHÉ (Les 3 produits à gauche de la pub) ---
-    // On s'assure que pageActuelle et produitsParPage sont définis en haut de ton main.js
-    const debut = (pageActuelle - 1) * produitsParPage;
-    const fin = debut + produitsParPage;
-    const produitsAPresenter = produitsMarche.slice(debut, fin);
-
-    produitsAPresenter.forEach(p => {
-        containerGrille.insertAdjacentHTML('beforeend', genererCodeCarte(p));
-    });
-
-    // --- MISE À JOUR DE LA PAGINATION ---
-    if (typeof creerBarrePagination === "function") {
-        creerBarrePagination(produitsMarche.length);
-    }
+// --- ÉTAPE D : CRÉER LES BOUTONS 1, 2, 3... ---
+creerBarrePagination(totalProduitsMarche);
 }
 
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
