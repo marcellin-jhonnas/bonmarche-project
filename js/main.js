@@ -139,9 +139,9 @@ function rendreProduits(liste) {
         });
     }
 
-    // --- ÉTAPE C : AFFICHAGE DU MARCHÉ (3 PRODUITS) ---
-    // On utilise 3 pour correspondre à tes 3 colonnes à côté de la pub
-    const pParPage = 3; 
+    // --- ÉTAPE C : AFFICHAGE DU MARCHÉ (MODIFIÉ POUR 6 PRODUITS) ---
+    // On change 3 par 6 pour avoir nos 2 lignes de 3 colonnes
+    const pParPage = 6; 
     const debut = (pageActuelle - 1) * pParPage;
     const fin = debut + pParPage;
     const produitsAPresenter = produitsMarche.slice(debut, fin);
