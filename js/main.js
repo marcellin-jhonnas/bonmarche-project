@@ -161,16 +161,34 @@ function rendreProduits(liste) {
 function demarrerSliderAnnonce() {
     const slides = document.querySelectorAll('.slide');
     let current = 0;
+    
     if (slides.length === 0) return;
 
-    setInterval(() => {
-        slides[current].classList.remove('active');
-        current = (current + 1) % slides.length;
-        slides[current].classList.add('active');
-    }, 5000);
-}
-document.addEventListener('DOMContentLoaded', demarrerSliderAnnonce);
+    // Initialisation : On s'assure que la première est visible
+    slides.forEach((s, i) => s.style.display = (i === 0) ? 'block' : 'none');
 
+    setInterval(() => {
+        // Sortie de la slide actuelle (fondu)
+        slides[current].style.opacity = '0';
+        
+        setTimeout(() => {
+            slides[current].style.display = 'none';
+            slides[current].classList.remove('active');
+            
+            // Passage à la suivante
+            current = (current + 1) % slides.length;
+            
+            slides[current].style.display = 'block';
+            setTimeout(() => {
+                slides[current].style.opacity = '1';
+                slides[current].classList.add('active');
+            }, 50);
+        }, 600); // Temps de transition
+    }, 5000); // 5 secondes
+}
+
+// Lancer le slider au chargement
+document.addEventListener('DOMContentLoaded', demarrerSliderAnnonce);
 // Fonction utilitaire pour garder ton design exact (Évite les erreurs de copier-coller)
 function genererCodeCarte(p) {
     const nomPropre = p.Nom.replace(/'/g, "\\'");
