@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
 // Ce lien sert à LIRE tes produits
 const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 let pageActuelle = 1;
-const produitsParPage = 8; // Affiche 8 produits par page pour un rendu propre sur mobile
+const produitsParPage = 6; // Affiche 8 produits par page pour un rendu propre sur mobile
 // Ce lien sert à ENVOYER la commande et PAYER (Ton dernier déploiement)
 const SCRIPT_PAYS_URL = "https://script.google.com/macros/s/AKfycbV7YHbxOYUzgFN-ji7yjamKnwJdrIZU2PuJVClrPWFra5Us69gyUK8sklpvi0mX5Ew/exec";
 const POURCENTAGE_LIVRAISON = 0.15; // 15% de frais de service
