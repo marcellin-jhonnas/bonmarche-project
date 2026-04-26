@@ -1509,31 +1509,32 @@ window.addEventListener('scroll', () => {
 
 const heroData = [
     {
-        img: 'Images/hero/malagasy.png', 
+        // On ajoute ../ pour sortir du dossier CSS et trouver le dossier Images
+        img: '../Images/hero/malagasy.png', 
         badge: " 🇲🇬 Fièrement Malagasy",
         title: "TSY MISY TOA NY VITA GASY",
         desc: "Consommons local ! Harena sarobidy ny vokatra vokarin'ny tanantsika."
     },
     {
-        img: 'Images/hero/huile.png',
+        img: '../Images/hero/huile.png',
         badge: " 🌻 Cuisine & Matsiro",
         title: "HUILES ET MATIÈRES GRASSES",
         desc: "Ny tsara indrindra ho an'ny nahandro isan'andro. Qualité au meilleur prix."
     },
     {
-        img: 'Images/hero/gasy.png',
+        img: '../Images/hero/gasy.png',
         badge: " 🍚 Essential Gasy",
         title: "LE MEILLEUR VARY GASY",
         desc: "Vary fotsy madio sy voafantina. Le goût authentique de notre terre."
     },
     {
-        img: 'Images/hero/eauvive.png',
+        img: '../Images/hero/eauvive.png',
         badge: " 💧 Pureté & Fahasalamana",
         title: "EAU DE SOURCE NATURELLE",
         desc: "Rano velona, madio sy mahasalama. Votre hydratation livrée à domicile."
     },
     {
-        img: 'Images/hero/PPN.png',
+        img: '../Images/hero/PPN.png',
         badge: " 🥫 Stock & PPN",
         title: "ÉPICERIE ET PRODUITS ILAINA",
         desc: "Fenoy ny lakozia amin'ny sarany mirary. Livraison rapide latsaky ny 2 ora."
