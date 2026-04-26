@@ -214,9 +214,9 @@ function genererCodeCarte(p) {
             
             <div onclick="event.stopPropagation(); ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')" 
                  title="Aperçu rapide"
-                 style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                 style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.95); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
                  onmouseover="this.style.transform='scale(1.3) rotate(15deg)'; this.style.background='#0d47a1'; this.style.color='#fff';"
-                 onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.9)'; this.style.color='#0d47a1';">
+                 onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.95)'; this.style.color='#0d47a1';">
                 <i class="fas fa-eye" style="font-size: 0.9rem;"></i>
             </div>
         </div>
@@ -237,7 +237,7 @@ function genererCodeCarte(p) {
 
             <div style="display: flex; justify-content: center; gap: 30px; padding-top: 10px; border-top: 1px solid #f5f5f5; margin-top: auto;">
                 
-                <div onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" 
+                <div onclick="gererClicPanier(this, '${nomPropre}', ${p.Prix})" 
                      style="cursor: pointer; color: #0d47a1; transition: 0.2s; width: 25px; text-align: center;" 
                      onmouseover="this.innerHTML='<i class=\'fas fa-plus\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#f36f21'" 
                      onmouseout="this.innerHTML='<i class=\'fas fa-shopping-bag\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#0d47a1'">
@@ -1418,28 +1418,35 @@ document.addEventListener('DOMContentLoaded', demarrerSliderAnnonce);
 // Gère le Like (Rouge + Gras + Compteur)
 function actionLike(element) {
     const icon = element.querySelector('i');
-    const txt = element.querySelector('.txt-like');
     const count = element.querySelector('.nb-likes');
-    let nb = parseInt(count.innerText);
+    let nb = parseInt(count.innerText) || 0;
     
     if (icon.classList.contains('far')) {
-        // ACTIVER
         icon.classList.replace('far', 'fas');
         icon.style.color = "#ff3b30";
-        txt.style.fontWeight = "bold";
-        txt.style.color = "#1a1a1a";
         count.innerText = nb + 1;
-        count.style.color = "#ff3b30";
-        element.style.transform = "scale(1.1)";
-        setTimeout(() => element.style.transform = "scale(1)", 200);
+        
+        // EFFET EXPLOSION
+        const rect = element.getBoundingClientRect();
+        creerExplosion(rect.left + 10, rect.top + 10, "fas fa-heart", "#ff3b30");
     } else {
-        // DESACTIVER
         icon.classList.replace('fas', 'far');
-        icon.style.color = "#666";
-        txt.style.fontWeight = "normal";
-        txt.style.color = "#666";
+        icon.style.color = "#0d47a1";
         count.innerText = nb - 1;
-        count.style.color = "#666";
+    }
+}
+function creerExplosion(x, y, icone, couleur) {
+    for (let i = 0; i < 8; i++) {
+        const p = document.createElement('i');
+        p.className = icone + " particle";
+        p.style.color = couleur;
+        // Direction aléatoire
+        p.style.setProperty('--x', (Math.random() - 0.5) * 100 + 'px');
+        p.style.setProperty('--y', (Math.random() - 0.5) * 100 + 'px');
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 800);
     }
 }
 

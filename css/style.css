@@ -2947,3 +2947,14 @@ section.saferun-pro-chat .btn-boutique-secondary {
         flex-direction: column; /* On les empile sur mobile */
     }
 }
+@keyframes explosion {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+}
+
+.particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    animation: explosion 0.8s ease-out forwards;
+}
