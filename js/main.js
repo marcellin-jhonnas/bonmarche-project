@@ -239,8 +239,8 @@ function genererCodeCarte(p) {
                 
                 <div onclick="gererClicPanier(this, '${nomPropre}', ${p.Prix})" 
                      style="cursor: pointer; color: #0d47a1; transition: 0.2s; width: 25px; text-align: center;" 
-                     onmouseover="this.innerHTML='<i class=\'fas fa-plus\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#f36f21'" 
-                     onmouseout="this.innerHTML='<i class=\'fas fa-shopping-bag\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#0d47a1'">
+                     onmouseover="if(!this.dataset.clicked){ this.innerHTML='<i class=\'fas fa-plus\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#f36f21'; }" 
+                     onmouseout="if(!this.dataset.clicked){ this.innerHTML='<i class=\'fas fa-shopping-bag\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#0d47a1'; }">
                     <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
                 </div>
 
@@ -256,6 +256,31 @@ function genererCodeCarte(p) {
             </div>
         </div>
     </div>`;
+}
+function gererClicPanier(el, nom, prix) {
+    // 1. On bloque l'état visuel (pour éviter que le onmouseout ne remette le sac)
+    el.dataset.clicked = "true";
+    
+    // 2. On force l'icône "+" et la couleur Jaune
+    el.innerHTML = '<i class="fas fa-plus" style="font-size: 1.3rem;"></i>';
+    el.style.color = "#ffcc00"; 
+    
+    // 3. Explosion de particules
+    if (typeof creerExplosion === "function") {
+        const rect = el.getBoundingClientRect();
+        creerExplosion(rect.left + 15, rect.top + 15, "fas fa-shopping-bag", "#ffcc00");
+    }
+    
+    // 4. On appelle ton action d'ajout au panier
+    ajouterAuPanier(nom, prix);
+    
+    // 5. Après 1.5 seconde, on libère le bouton pour qu'il puisse redevenir un sac
+    setTimeout(() => {
+        delete el.dataset.clicked;
+        // Si la souris n'est plus dessus à ce moment, on remet le design original
+        el.style.color = "#0d47a1";
+        el.innerHTML = '<i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>';
+    }, 1500);
 }
 function creerBarrePagination(total) {
     let container = document.getElementById('pagination-container');
