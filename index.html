@@ -313,27 +313,38 @@
     </div>
 </section>
 
-<main id="boutique" class="container">
+<div style="display: flex; flex-direction: row; gap: 20px; padding: 20px; align-items: flex-start; width: 100%; box-sizing: border-box;">
 
-    <div class="layout-boutique">
-
-        <div class="zone-produits">
-            <div id="grille-produits-reelle">
-                <div id="loading-placeholder">...</div>
+    <div style="flex: 3; min-width: 0;">
+        <main id="boutique">
+            <div id="grille-produits-reelle" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div id="loading-placeholder" style="grid-column: span 3; text-align: center; padding: 50px;">
+                    Chargement...
+                </div>
             </div>
-
-            <div id="pagination"></div>
-        </div>
-
-        <aside class="pub-sidebar-fixe">
-            <div class="pub-card-style card-saferun">
-                PUB
-            </div>
-        </aside>
-
+        </main>
     </div>
 
-</main>
+    <aside style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
+        
+        <div style="background: #1a202c; color: white; padding: 20px; border-radius: 15px; text-align: center; min-height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <h3 style="color: #ffcc00; margin: 0;">GIZ</h3>
+            <p style="font-size: 0.8rem; opacity: 0.8;">Partenaire Officiel</p>
+        </div>
+
+        <div style="background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%); color: white; padding: 25px; border-radius: 15px; text-align: center; min-height: 300px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: sticky; top: 10px;">
+            <h2 style="margin: 0; font-size: 1.5rem;">SAFERUN</h2>
+            <p style="font-size: 0.9rem; margin-top: 10px;">Livraison Rapide & Fiable</p>
+            <div style="margin-top: 40px; border: 1px dashed rgba(255,255,255,0.4); padding: 15px; border-radius: 10px;">
+                ESPACE PUB SR-MARKET
+            </div>
+        </div>
+
+    </aside>
+</div>
+
+<div id="pagination" style="display: flex; justify-content: center; width: 100%; margin-top: 30px; padding-bottom: 50px;">
+    </div>
 
 </div>
 </div>
