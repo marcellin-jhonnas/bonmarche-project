@@ -2801,8 +2801,12 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 .layout-boutique {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 1fr 300px; /* FIXE la largeur de la pub */
     gap: 20px;
+}
+
+.zone-produits {
+    min-width: 0; /* IMPORTANT pour éviter débordement */
 }
 
 #grille-produits-reelle {
@@ -2812,15 +2816,11 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 
 .pub-sidebar-fixe {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    position: sticky;
-    top: 20px;
+    width: 300px; /* FORCER visibilité */
 }
 
-#pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+.pub-card-style {
+    background: orange;
+    padding: 20px;
+    color: white;
 }
