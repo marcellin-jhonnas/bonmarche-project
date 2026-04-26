@@ -1375,7 +1375,33 @@ async function traiterPaiement(montant, telClient, livraison, adresse) {
         return false;
     }
 }
+const ribbonImages = [
+    'Images/hero/malagasy.png',
+    'Images/hero/huile.png',
+    'Images/hero/gasy.png',
+    'Images/hero/eauvive.png',
+    'Images/hero/PPN.png'
+];
 
+const track = document.getElementById('ribbonTrack');
+
+function initRibbon() {
+    // On duplique la liste pour créer l'effet de boucle infinie
+    const fullList = [...ribbonImages, ...ribbonImages, ...ribbonImages];
+    
+    track.innerHTML = fullList.map(src => `
+        <div class="ribbon-item">
+            <img src="${src}" alt="SafeRun Quality" onerror="this.src='https://via.placeholder.com/100x50?text=SafeRun'">
+        </div>
+    `).join('');
+}
+
+// Changement de vitesse ou influence toutes les 4 secondes (optionnel)
+setInterval(() => {
+    // On peut changer la vitesse de l'animation ici si besoin
+}, 4000);
+
+initRibbon();
 // Note : verifierStatut n'est plus nécessaire car le client 
 // reçoit directement la notification USSD sur son téléphone.
 
