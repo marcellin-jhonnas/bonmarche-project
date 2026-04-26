@@ -195,6 +195,9 @@ function genererCodeCarte(p) {
     const prixFormatte = Number(p.Prix).toLocaleString();
     const descEchappee = (p.Description || "Qualité SafeRun").replace(/'/g, "\\'");
 
+    // GÉNÉRER UN NOMBRE ALÉATOIRE DE LIKES (entre 5 et 25)
+    const likesAleatoires = Math.floor(Math.random() * (25 - 5 + 1)) + 5;
+
     return `
     <div class="product-card" style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: all 0.3s ease; height: 100%; position: relative;"
          onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" 
@@ -211,7 +214,7 @@ function genererCodeCarte(p) {
             
             <div onclick="event.stopPropagation(); ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')" 
                  title="Aperçu rapide"
-                 style="position: absolute; top: 10px; right: 15px; background: rgba(255,255,255,0.9); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 5; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                 style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
                  onmouseover="this.style.transform='scale(1.3) rotate(15deg)'; this.style.background='#0d47a1'; this.style.color='#fff';"
                  onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.9)'; this.style.color='#0d47a1';">
                 <i class="fas fa-eye" style="font-size: 0.9rem;"></i>
@@ -241,9 +244,9 @@ function genererCodeCarte(p) {
                     <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
                 </div>
 
-                <div onclick="actionLike(this)" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
-                    <i class="far fa-heart" style="font-size: 1.3rem;"></i>
-                    <span class="nb-likes" style="display:none;">0</span>
+                <div onclick="actionLike(this)" style="cursor: pointer; color: #0d47a1; transition: 0.2s; display: flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
+                    <i class="far fa-heart" style="font-size: 1.2rem;"></i>
+                    <span class="nb-likes" style="font-size: 0.8rem; font-weight: bold;">${likesAleatoires}</span>
                 </div>
 
                 <div onclick="actionCommentaire('${nomPropre}')" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
