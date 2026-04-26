@@ -2824,3 +2824,126 @@ section.saferun-pro-chat .btn-boutique-secondary {
     padding: 20px;
     color: white;
 }
+
+/* --- LE CONTENEUR DE LA SIDEBAR --- */
+.pub-sidebar-fixe {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 300px;
+}
+
+/* --- STYLE GÉNÉRAL DES CARTES --- */
+.pub-card-style {
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+}
+
+.pub-card-style:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+/* --- ANIMATION DU SLIDER (FADE) --- */
+.slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease-in-out, visibility 0.8s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.slide.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Effet de zoom léger sur le contenu quand la slide devient active */
+.slide.active .slide-content {
+    animation: zoomIn 0.8s ease forwards;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- EFFET BRILLANT (GLOSSY) SUR LES CARTES --- */
+.pub-card-style::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: shine 6s infinite;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    20% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* --- STYLES SPÉCIFIQUES --- */
+
+/* Carte Identité (Blanc/Rouge/Vert) */
+.card-identity {
+    border-top: 5px solid #e6192e;
+}
+
+/* Carte Slider SafeRun (Orange/Bleu) */
+.card-saferun {
+    background: linear-gradient(135deg, #f36f21 0%, #1e3a8a 100%) !important;
+    color: white;
+}
+
+.card-saferun h2 {
+    color: #ffcc00;
+    font-size: 1.6rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* --- BOUTON DYNAMIQUE --- */
+.btn-commander {
+    background: #ffcc00;
+    color: #1e3a8a;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+}
+
+.btn-commander:hover {
+    background: #ffffff;
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+    .pub-sidebar-fixe {
+        width: 100%;
+        flex-direction: row; /* On les met côte à côte sur tablette */
+    }
+}
+
+@media (max-width: 600px) {
+    .pub-sidebar-fixe {
+        flex-direction: column; /* On les empile sur mobile */
+    }
+}
