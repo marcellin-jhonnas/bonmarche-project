@@ -196,36 +196,57 @@ function genererCodeCarte(p) {
     const descEchappee = (p.Description || "Qualité SafeRun").replace(/'/g, "\\'");
 
     return `
-    <div class="product-card" style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: 0.3s; height: 100%; position: relative;">
+    <div class="product-card" style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); height: 100%; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" 
+         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 30px rgba(0,0,0,0.1)';" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
         
-        <div class="img-container" style="height: 180px; padding: 15px; background: #fff; display: flex; align-items: center; justify-content: center;">
+        <div class="img-container" style="height: 180px; padding: 15px; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+            
             <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
                  onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
                  onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')"
-                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in;">
+                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.5s ease;"
+                 onmouseover="this.style.transform='scale(1.2) rotate(2deg)';"
+                 onmouseout="this.style.transform='scale(1) rotate(0deg)';">
+
+            <div onclick="event.stopPropagation(); ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')" 
+                 title="Aperçu rapide"
+                 style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; z-index: 10;"
+                 onmouseover="this.style.background='#f36f21'; this.style.color='#fff';"
+                 onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.color='#0d47a1';">
+                <i class="fas fa-eye"></i>
+            </div>
         </div>
 
         <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1; text-align: left;">
             
-            <h3 style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #555; line-height: 1.2; height: 2.4em; overflow: hidden;">
+            <h3 style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 600; color: #333; line-height: 1.2; height: 2.4em; overflow: hidden;">
                 ${p.Nom}
             </h3>
 
-            <div style="color: #0d47a1; font-weight: 800; font-size: 1.1rem; margin-bottom: 5px;">
+            <div style="color: #e6192e; font-weight: 800; font-size: 1.15rem; margin-bottom: 5px;">
                 ${prixFormatte} <small style="font-size: 0.7rem;">AR</small>
             </div>
 
-            <div style="color: #ffcc00; font-size: 0.75rem; margin-bottom: 15px;">
+            <div style="color: #ffcc00; font-size: 0.7rem; margin-bottom: 12px;">
                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
             </div>
 
-            <div style="display: flex; justify-content: center; gap: 25px; padding-top: 10px; border-top: 1px solid #f5f5f5; margin-top: auto;">
-                <div onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" title="Ajouter au panier" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
-                    <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
+            <div style="display: flex; justify-content: space-around; align-items: center; padding-top: 12px; border-top: 1px solid #f5f5f5; margin-top: auto;">
+                
+                <div onclick="ajouterAuPanier('${nomPropre}', ${p.Prix})" title="Acheter" style="cursor: pointer; color: #0d47a1; transition: 0.3s;">
+                    <i class="fas fa-shopping-bag" style="font-size: 1.2rem;"></i>
                 </div>
-                <div onclick="actionLike(this)" title="Ajouter aux favoris" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
-                    <i class="far fa-heart" style="font-size: 1.3rem;"></i>
+
+                <div class="btn-like" onclick="actionLike(this)" title="J'aime" style="cursor: pointer; color: #666; transition: 0.3s; display: flex; align-items: center; gap: 4px;">
+                    <i class="far fa-heart" style="font-size: 1.1rem;"></i>
+                    <span class="nb-likes" style="font-size: 0.7rem; display:none;">0</span>
                 </div>
+
+                <div onclick="actionCommentaire('${nomPropre}')" title="Donner mon avis" style="cursor: pointer; color: #007e3a; transition: 0.3s;">
+                    <i class="fab fa-whatsapp" style="font-size: 1.3rem;"></i>
+                </div>
+                
             </div>
         </div>
     </div>`;
