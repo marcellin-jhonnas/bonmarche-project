@@ -2971,8 +2971,14 @@ section.saferun-pro-chat .btn-boutique-secondary {
 
 .trust-ribbon-track {
     display: inline-flex;
-    gap: 40px; /* Plus d'espace entre les produits */
-    animation: scrollRibbon 30s linear infinite; /* Vitesse fluide */
+    gap: 50px; 
+    /* Augmenter à 45s ou 60s pour ralentir encore plus */
+    animation: scrollRibbon 45s linear infinite; 
+}
+
+/* On garde la pause au survol pour une lecture parfaite */
+.trust-ribbon-container:hover .trust-ribbon-track {
+    animation-play-state: paused;
 }
 
 .trust-ribbon-item img {
