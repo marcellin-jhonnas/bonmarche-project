@@ -1380,26 +1380,22 @@ const ribbonImages = [
     'Images/hero/huile.png',
     'Images/hero/gasy.png',
     'Images/hero/eauvive.png',
-    'Images/hero/PPN.png'
+    'Images/hero/PPN.png',
+    'Images/hero/PPN2.png' // Ajout de la 6ème image
 ];
 
 const track = document.getElementById('ribbonTrack');
 
 function initRibbon() {
-    // On duplique la liste pour créer l'effet de boucle infinie
-    const fullList = [...ribbonImages, ...ribbonImages, ...ribbonImages];
+    // On multiplie par 4 pour bien remplir tout l'écran sans trous
+    const fullList = [...ribbonImages, ...ribbonImages, ...ribbonImages, ...ribbonImages];
     
     track.innerHTML = fullList.map(src => `
         <div class="ribbon-item">
-            <img src="${src}" alt="SafeRun Quality" onerror="this.src='https://via.placeholder.com/100x50?text=SafeRun'">
+            <img src="${src}" alt="Vokatra Malagasy" onerror="this.style.display='none'">
         </div>
     `).join('');
 }
-
-// Changement de vitesse ou influence toutes les 4 secondes (optionnel)
-setInterval(() => {
-    // On peut changer la vitesse de l'animation ici si besoin
-}, 4000);
 
 initRibbon();
 // Note : verifierStatut n'est plus nécessaire car le client 
