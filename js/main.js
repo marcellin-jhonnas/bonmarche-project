@@ -211,7 +211,7 @@ function genererCodeCarte(p) {
             
             <div onclick="event.stopPropagation(); ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')" 
                  title="Aperçu rapide"
-                 style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 5; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                 style="position: absolute; top: 10px; right: 15px; background: rgba(255,255,255,0.9); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 5; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
                  onmouseover="this.style.transform='scale(1.3) rotate(15deg)'; this.style.background='#0d47a1'; this.style.color='#fff';"
                  onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.9)'; this.style.color='#0d47a1';">
                 <i class="fas fa-eye" style="font-size: 0.9rem;"></i>
@@ -246,8 +246,8 @@ function genererCodeCarte(p) {
                     <span class="nb-likes" style="display:none;">0</span>
                 </div>
 
-                <div onclick="actionCommentaire('${nomPropre}')" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#25D366'" onmouseout="this.style.color='#0d47a1'">
-                    <i class="fab fa-whatsapp" style="font-size: 1.4rem;"></i>
+                <div onclick="actionCommentaire('${nomPropre}')" style="cursor: pointer; color: #0d47a1; transition: 0.2s;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
+                    <i class="far fa-comment-dots" style="font-size: 1.3rem;"></i>
                 </div>
 
             </div>
