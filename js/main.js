@@ -1509,34 +1509,34 @@ window.addEventListener('scroll', () => {
 
 const heroData = [
     {
-        img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=2000',
-        badge: "🌻 Cuisine",
+        img: 'Images/hero/malagasy.png', 
+        badge: " 🇲🇬 Fièrement Malagasy",
+        title: "TSY MISY TOA NY VITA GASY",
+        desc: "Consommons local ! Harena sarobidy ny vokatra vokarin'ny tanantsika."
+    },
+    {
+        img: 'Images/hero/huile.png',
+        badge: " 🌻 Cuisine & Matsiro",
         title: "HUILES ET MATIÈRES GRASSES",
-        desc: "L'essentiel pour vos cuissons au meilleur prix du marché."
+        desc: "Ny tsara indrindra ho an'ny nahandro isan'andro. Qualité au meilleur prix."
     },
     {
-        img: 'https://images.unsplash.com/photo-1616118132534-381148898bb4?w=1200',
-        badge: "💧 Hydratation",
-        title: "CRISTALINE & EAU DE SOURCE",
-        desc: "Restez hydraté ! Vos packs livrés directement à l'étage."
+        img: 'Images/hero/gasy.png',
+        badge: " 🍚 Essential Gasy",
+        title: "LE MEILLEUR VARY GASY",
+        desc: "Vary fotsy madio sy voafantina. Le goût authentique de notre terre."
     },
     {
-        img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=2000',
-        badge: "🍚 Essentiel",
-        title: "LE MEILLEUR RIZ GASY",
-        desc: "La base de votre alimentation, sélectionnée avec soin."
+        img: 'Images/hero/eauvive.png',
+        badge: " 💧 Pureté & Fahasalamana",
+        title: "EAU DE SOURCE NATURELLE",
+        desc: "Rano velona, madio sy mahasalama. Votre hydratation livrée à domicile."
     },
     {
-        img: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1200',
-        badge: "🥫 Épicerie",
-        title: "CONSERVES ET PPN",
-        desc: "Tout votre stock de provisions livré en moins de 2h."
-    },
-    {
-        img: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=800',
-        badge: "🍎 Fraîcheur",
-        title: "FRUITS ET LÉGUMES FRAIS",
-        desc: "Le goût du marché d'Anosibe, sans bouger de chez vous."
+        img: 'Images/hero/PPN.png',
+        badge: " 🥫 Stock & PPN",
+        title: "ÉPICERIE ET PRODUITS ILAINA",
+        desc: "Fenoy ny lakozia amin'ny sarany mirary. Livraison rapide latsaky ny 2 ora."
     }
 ];
 
