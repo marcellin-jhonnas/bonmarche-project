@@ -1524,7 +1524,7 @@ const heroData = [
     {
         img: '../Images/hero/gasy.png',
         badge: " 🍚 Essential Gasy",
-        title: "LE MEILLEUR VARY GASY",
+        title: "MAYONNAISE SY SAUCES MATSIRO",
         desc: "Vary fotsy madio sy voafantina. Le goût authentique de notre terre."
     },
     {
