@@ -3014,3 +3014,83 @@ section.saferun-pro-chat .btn-boutique-secondary {
         height: 140px; /* On baisse la hauteur de l'image pour mobile */
     }
 }
+/* Conteneur principal pour positionner les flèches */
+.ppn-carousel-main-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 20px 0; /* Espace pour que les flèches respirent */
+}
+
+/* Ton conteneur de scroll (sécurité anti-compression) */
+.ppn-scroll-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth; /* Scroll fluide obligatoire */
+    gap: 20px;
+    width: 100%;
+    scrollbar-width: none; /* Cache barre moche Firefox */
+    padding: 10px;
+}
+
+.ppn-scroll-container::-webkit-scrollbar {
+    display: none; /* Cache barre Chrome/Safari */
+}
+
+/* Style commun des GRANDES flèches */
+.ppn-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+    
+    /* TAILLE : C'est ici qu'on les rend grandes */
+    font-size: 4rem; /* Très grand symbole */
+    color: var(--primary, #FFD700); /* Ton jaune */
+    
+    /* Effet d'ombre pour décoller du fond */
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    
+    /* Transition douce pour le hover */
+    transition: all 0.3s ease;
+    
+    /* --- L'ANIMATION "VIVANTE" (PULSE) --- */
+    animation: ppnPulse 2s infinite ease-in-out;
+}
+
+/* Positionnement Gauche/Droite */
+.ppn-prev-live { left: 10px; }
+.ppn-next-live { right: 10px; }
+
+/* Interaction au survol */
+.ppn-nav-arrow:hover {
+    color: #000; /* Devient noir */
+    transform: translateY(-50%) scale(1.2); /* Grossit encore un peu */
+    animation-play-state: paused; /* S'arrête de pulser quand on le pointe */
+}
+
+/* Masquer sur mobile pour laisser le swipe naturel */
+@media (max-width: 768px) {
+    .ppn-nav-arrow { display: none; }
+}
+
+/* --- DÉFINITION DE L'ANIMATION DE RESPIRATION --- */
+@keyframes ppnPulse {
+    0% {
+        transform: translateY(-50%) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-50%) scale(1.1); /* Grossit légèrement */
+        opacity: 1; /* Devient totalement opaque */
+    }
+    100% {
+        transform: translateY(-50%) scale(1);
+        opacity: 0.8;
+    }
+}

@@ -1410,7 +1410,17 @@ function animerBadgePanier() {
         badge.style.backgroundColor = "var(--primary)"; // Revient au jaune
     }, 300);
 }
-
+function scrollPPN(direction) {
+    const container = document.getElementById('boutique-ppn');
+    // On défile de la largeur visible du conteneur (80%) pour un effet fluide
+    const scrollAmount = container.clientWidth * 0.8;
+    
+    if (direction === 'droite') {
+        container.scrollLeft += scrollAmount;
+    } else {
+        container.scrollLeft -= scrollAmount;
+    }
+}
 function montrerNotificationAchat() {
     const quartiers = ["Itaosy", "Analakely", "Ivato", "Talatamaty", "Ankorondrano"];
     const quartier = quartiers[Math.floor(Math.random() * quartiers.length)];
