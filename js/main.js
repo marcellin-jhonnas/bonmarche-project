@@ -198,8 +198,11 @@ function genererCodeCarte(p) {
     // GÉNÉRER UN NOMBRE ALÉATOIRE DE LIKES (entre 5 et 25)
     const likesAleatoires = Math.floor(Math.random() * (25 - 5 + 1)) + 5;
 
+    // ... (début de ta fonction identique)
+
     return `
-    <div class="product-card" style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: all 0.3s ease; height: 100%; position: relative;"
+    <div class="product-card ${p.Categorie === 'PPN' ? 'ppn-card-fix' : ''}" 
+         style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: all 0.3s ease; height: 100%; position: relative; flex: 0 0 auto; min-width: 240px; max-width: 240px;"
          onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" 
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
         
@@ -1412,13 +1415,15 @@ function animerBadgePanier() {
 }
 function scrollPPN(direction) {
     const container = document.getElementById('boutique-ppn');
-    // On défile de la largeur visible du conteneur (80%) pour un effet fluide
-    const scrollAmount = container.clientWidth * 0.8;
+    if (!container) return;
+    
+    // On calcule le saut (largeur d'un produit + gap)
+    const saut = 240; 
     
     if (direction === 'droite') {
-        container.scrollLeft += scrollAmount;
+        container.scrollBy({ left: saut, behavior: 'smooth' });
     } else {
-        container.scrollLeft -= scrollAmount;
+        container.scrollBy({ left: -saut, behavior: 'smooth' });
     }
 }
 function montrerNotificationAchat() {
