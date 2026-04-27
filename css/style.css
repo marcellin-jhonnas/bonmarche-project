@@ -3003,3 +3003,14 @@ section.saferun-pro-chat .btn-boutique-secondary {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
+@media (max-width: 500px) {
+    .container {
+        /* On baisse le minimum à 140px pour laisser la place à 2 colonnes */
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px; /* On réduit un peu l'espace */
+    }
+    
+    .carte-produit img {
+        height: 140px; /* On baisse la hauteur de l'image pour mobile */
+    }
+}
