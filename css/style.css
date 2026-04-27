@@ -3193,3 +3193,26 @@ section.saferun-pro-chat .btn-boutique-secondary {
 @media (max-width: 768px) {
     .ppn-nav-arrow { display: none; }
 }
+@media (max-width: 768px) {
+    /* 1. On cache les flèches animées */
+    .ppn-nav-arrow {
+        display: none !important;
+    }
+
+    /* 2. On ajuste la taille des cartes pour l'effet "appel" */
+    .ppn-scroll-container .product-card {
+        flex: 0 0 75vw !important; /* Chaque produit prend 75% de la largeur */
+        min-width: 75vw !important;
+        scroll-snap-align: center; /* Le produit se centre au milieu du swipe */
+    }
+
+    /* 3. On réduit un peu la hauteur de l'image pour mobile */
+    .ppn-scroll-container .img-container {
+        height: 140px !important;
+    }
+
+    /* 4. On ajoute une légère ombre au conteneur pour la profondeur */
+    .ppn-scroll-container {
+        padding-bottom: 25px; /* Espace pour l'ombre portée */
+    }
+}
