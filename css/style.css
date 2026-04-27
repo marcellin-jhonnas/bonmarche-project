@@ -3216,3 +3216,47 @@ section.saferun-pro-chat .btn-boutique-secondary {
         padding-bottom: 25px; /* Espace pour l'ombre portée */
     }
 }
+/* --- CONFIGURATION ORDINATEUR (Par défaut) --- */
+.shop-layout-container {
+    display: flex;
+    flex-direction: row; /* Côte à côte */
+    gap: 20px;
+    padding: 20px;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- CONFIGURATION MOBILE (Écran < 768px) --- */
+@media (max-width: 768px) {
+    .shop-layout-container {
+        flex-direction: column; /* Empile les éléments verticalement */
+        padding: 10px;
+    }
+
+    /* Le bloc des produits prend toute la largeur */
+    .shop-layout-container > div:first-child {
+        width: 100%;
+        flex: none;
+    }
+
+    /* On ajuste la grille de 3 à 2 colonnes pour mobile */
+    #grille-produits-reelle {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    /* Le bloc de publicité (aside) passe en dessous */
+    aside {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: none;
+        position: relative !important;
+        top: 0 !important;
+        margin-top: 20px;
+    }
+
+    .pub-card-style {
+        min-height: auto !important; /* On laisse la pub s'adapter */
+    }
+}
