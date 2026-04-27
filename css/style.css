@@ -3230,50 +3230,53 @@ section.saferun-pro-chat .btn-boutique-secondary {
 /* --- CONFIGURATION MOBILE (Écran < 768px) --- */
 @media (max-width: 768px) {
     .shop-layout-container {
-        flex-direction: column !important; /* Ajout du !important pour écraser le style en ligne */
-        padding: 10px;
-        width: 100% !important; /* Force la largeur totale */
-        box-sizing: border-box; 
-        overflow-x: hidden; /* Empêche tout dépassement à gauche/droite */
+        flex-direction: column !important;
+        padding: 5px !important; /* Réduit pour gagner de la place */
+        width: 100% !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
-    /* Le bloc des produits prend toute la largeur */
     .shop-layout-container > div:first-child {
         width: 100% !important;
-        max-width: 100vw; /* Sécurité pour ne pas sortir de l'écran */
+        max-width: 100% !important;
         flex: none;
     }
 
-    /* On ajuste la grille de 3 à 2 colonnes pour mobile */
     #grille-produits-reelle {
         display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important; /* 2 colonnes égales */
-        gap: 10px !important;
-        width: 100% !important; /* Les produits utilisent tout l'espace */
-        padding: 0;
-        margin: 0;
+        /* "minmax(0, 1fr)" force le contenu à ne jamais dépasser la moitié de l'écran */
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important; 
+        gap: 8px !important; /* Espace optimisé pour mobile */
+        width: 100% !important;
+        padding: 5px !important;
+        box-sizing: border-box; /* Crucial pour que le padding ne pousse pas le contenu */
     }
 
-    /* Le bloc de publicité (aside) passe en dessous */
+    /* --- LA SOLUTION POUR L'AGRANDISSEMENT --- */
+    .product-card {
+        width: 100% !important; 
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+        /* On réduit légèrement la taille interne pour que tout soit visible */
+        padding: 8px !important; 
+    }
+
+    /* On adapte la hauteur de l'image pour que la carte ne soit pas trop longue */
+    .product-card .img-container {
+        height: 120px !important; 
+    }
+
+    /* On réduit la police pour que le prix et le nom ne créent pas de débordement */
+    .product-card h3 {
+        font-size: 0.75rem !important;
+        line-height: 1.1 !important;
+    }
+
     aside {
         width: 100% !important;
         min-width: 0 !important;
-        flex: none;
-        position: relative !important;
-        top: 0 !important;
-        margin-top: 30px; /* Plus d'espace entre les produits et la pub */
-        padding: 0;
-    }
-
-    .pub-card-style {
-        min-height: auto !important;
-        width: 100% !important; /* La pub s'élargit proprement */
-        box-sizing: border-box;
-    }
-    
-    /* Sécurité pour les cartes produits */
-    .product-card {
-        width: 100% !important; /* Chaque carte remplit sa moitié de grille */
-        margin: 0 !important;
+        margin-top: 20px;
     }
 }
