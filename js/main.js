@@ -508,93 +508,58 @@ function ouvrirTicketAutomatique() {
     const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
     const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
 
-    // --- CORRECTION : RECHERCHE MULTI-CLÉS ---
-    // On essaie de trouver tes produits dans toutes les clés que tu as pu utiliser
-    let donneesRaw = localStorage.getItem('panier') || 
-                     localStorage.getItem('mon_panier') || 
-                     localStorage.getItem('saferun_panier');
+    // On récupère tes données réelles
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
     
-    let panier = [];
-    try {
-        panier = donneesRaw ? JSON.parse(donneesRaw) : [];
-    } catch (e) {
-        console.error("Erreur de lecture du panier", e);
-        panier = [];
-    }
+    // On prend la commande la plus récente pour l'afficher dans le ticket
+    let derniereCommande = historique.length > 0 ? historique[0] : null;
 
-    let montantCalculé = 0;
-
-    if (containerItems) {
-        if (panier.length === 0) {
-            // Message si vraiment rien n'est trouvé
-            containerItems.innerHTML = `
-                <div style="padding:40px; text-align:center; color:#64748b;">
-                    <div style="font-size:40px; margin-bottom:10px;">🛒</div>
-                    <p>Votre panier est vide ou introuvable.</p>
-                </div>`;
-        } else {
-            // Rendu avec le design de l'image Kibo
-            containerItems.innerHTML = panier.map(item => {
-                let p = parseInt(item.prix) || 0;
-                let q = parseInt(item.quantite) || 1;
-                let totalLigne = p * q;
-                montantCalculé += totalLigne;
-
-                return `
-                <div class="cart-item-card" style="display:flex; align-items:center; background:white; margin-bottom:12px; padding:15px; border-radius:12px; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;">
-                    <div style="display:flex; align-items:center; gap:15px; flex:1;">
-                        <img src="${item.img || ''}" style="width:70px; height:70px; object-fit:contain; border-radius:8px;">
-                        <div>
-                            <div style="font-weight:800; font-size:12px; text-transform:uppercase; color:#0f172a; margin-bottom:4px;">${item.nom}</div>
-                            <div style="color:#64748b; font-size:12px;">${p.toLocaleString()} Ar</div>
+    if (containerItems && derniereCommande) {
+        // Design Kibo basé sur ta dernière commande enregistrée
+        containerItems.innerHTML = `
+            <div class="cart-item-card" style="display:flex; align-items:center; background:white; margin-bottom:12px; padding:15px; border-radius:12px; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;">
+                <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                    <img src="https://via.placeholder.com/70" style="width:70px; height:70px; object-fit:contain; border-radius:8px;">
+                    <div>
+                        <div style="font-weight:800; font-size:12px; text-transform:uppercase; color:#0f172a; margin-bottom:4px;">
+                            ${derniereCommande.produits}
                         </div>
+                        <div style="color:#64748b; font-size:12px;">ID: ${derniereCommande.id}</div>
                     </div>
-                    
-                    <!-- Sélecteur Quantité style Kibo -->
-                    <div style="display:flex; align-items:center; gap:10px; border:1px solid #e2e8f0; padding:4px 12px; border-radius:6px; background:#f8fafc;">
-                        <span style="font-weight:700; color:#0f172a;">${q}</span>
-                    </div>
+                </div>
+                
+                <div style="font-weight:800; color:#0f172a; min-width:100px; text-align:right; font-size:14px;">
+                    ${derniereCommande.total.toLocaleString()} Ar
+                </div>
 
-                    <!-- Prix Total -->
-                    <div style="font-weight:800; color:#0f172a; min-width:100px; text-align:right; font-size:14px;">
-                        ${totalLigne.toLocaleString()} Ar
-                    </div>
-
-                    <!-- Bouton Supprimer vert -->
-                    <button onclick="supprimerDuPanier('${item.id}')" style="margin-left:15px; background:#00a591; color:white; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
-                </div>`;
-            }).join('');
+                <button style="margin-left:15px; background:#00a591; color:white; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>`;
+        
+        if (elTotal) {
+            elTotal.innerText = derniereCommande.total.toLocaleString() + " Ar";
+            window.montantTotalGlobal = derniereCommande.total;
         }
+    } else if (containerItems) {
+        containerItems.innerHTML = "<div style='padding:20px; text-align:center;'>Aucune commande trouvée dans saferun_commandes</div>";
     }
 
-    // Mise à jour du total (Indispensable pour éviter le 0 Ar)
-    if (elTotal) {
-        elTotal.innerText = montantCalculé.toLocaleString() + " Ar";
-    }
-    window.montantTotalGlobal = montantCalculé;
-
-    // --- LOGIQUE ORIGINALE DE COMMANDE ---
+    // --- LOGIQUE BOUTON (Ta version originale) ---
     const btnEnvoi = modal.querySelector('.btn-inscription');
     if (btnEnvoi) {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-        btnEnvoi.disabled = (panier.length === 0);
         btnEnvoi.style.background = "#00a591";
 
         btnEnvoi.onclick = function() {
-            localStorage.setItem('safe_last_amount', montantCalculé);
-            btnEnvoi.disabled = true;
-            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
-            
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
-
+            btnEnvoi.disabled = true;
+            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
+            
             setTimeout(() => {
-                // ... suite de ta logique REVENIR / ANNULER (identique à ton code original)
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
-                // (Garder le reste de ton code original ici pour l'annulation)
             }, 2500);
         };
     }
