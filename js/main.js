@@ -1549,7 +1549,7 @@ const heroData = [
         // On ajoute ../ pour sortir du dossier CSS et trouver le dossier Images
         img: '../Images/hero/malagasy.png', 
         badge: " 🇲🇬 Fièrement Malagasy",
-        title: "TSY MISY TOA NY VITA GASY",
+        title: "VITA MALAGASY, KALITAO MIAVAKA SY AZO ITOKISANA",
         desc: "Consommons local ! Harena sarobidy ny vokatra vokarin'ny tanantsika."
     },
     {
