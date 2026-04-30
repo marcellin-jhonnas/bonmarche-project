@@ -3434,3 +3434,32 @@ section.saferun-pro-chat .btn-boutique-secondary {
 /* Scrollbar discrète */
 .cart-items-grid::-webkit-scrollbar { width: 5px; }
 .cart-items-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+/* Style inspiré de l'image Kibo */
+.cart-items-kibo-style {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+/* Chaque ligne de produit */
+.cart-item-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+}
+
+/* Bouton supprimer vert de l'image */
+.btn-remove-kibo {
+    background: #00a591;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+}
