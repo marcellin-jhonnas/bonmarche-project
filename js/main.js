@@ -505,8 +505,23 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // 1. Affichage initial du panier
+    // 1. AFFICHAGE INITIAL ET GÉNÉRATION VISUELLE
     if (typeof afficherPanier === "function") afficherPanier(); 
+    
+    const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
+    if (containerItems) {
+        let panier = JSON.parse(localStorage.getItem('mon_panier')) || [];
+        containerItems.className = "cart-items-grid"; 
+        
+        containerItems.innerHTML = panier.map(item => `
+            <div class="cart-item-card">
+                <div style="font-size:0.7rem; color:#1e3a8a; font-weight:800;">x${item.quantite}</div>
+                <img src="${item.img || 'Images/default-prod.png'}" alt="${item.nom}">
+                <div style="font-size:0.75rem; font-weight:700; height:30px; overflow:hidden;">${item.nom}</div>
+                <div style="color:#ef4444; font-size:0.8rem; font-weight:800;">${(item.prix * item.quantite).toLocaleString()} Ar</div>
+            </div>
+        `).join('');
+    }
     
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
@@ -523,7 +538,6 @@ function ouvrirTicketAutomatique() {
 
         btnEnvoi.onclick = function() {
             // --- ÉTAPE CRUCIALE : CAPTURE IMMÉDIATE DU MONTANT ---
-            // On le prend AVANT que envoyerDonneesAuSheet ne vide le panier
             let montantSecurise = 0;
             const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
             
@@ -533,7 +547,6 @@ function ouvrirTicketAutomatique() {
                 montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
             }
             
-            // On sauvegarde ce montant dans le localStorage pour le bouton "REVENIR"
             localStorage.setItem('safe_last_amount', montantSecurise);
 
             // --- LANCEMENT DE L'ENVOI ---
@@ -556,13 +569,10 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b"; 
                 
-                // LOGIQUE REVENIR (N'utilise plus le panier, mais le montant sécurisé)
                 btnEnvoi.onclick = function() {
                     modal.style.display = "none"; 
                     const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
-                    
                     if (typeof afficherChoixPaiementLuxe === "function") {
-                        // On passe l'ID récent et le MONTANT RÉCUPÉRÉ du stockage
                         afficherChoixPaiementLuxe(idRecent, Number(montantRecupere));
                     }
                 };
@@ -581,23 +591,14 @@ function ouvrirTicketAutomatique() {
                                 fetch(API_URL, {
                                     method: "POST",
                                     mode: "no-cors",
-                                    body: JSON.stringify({
-                                        action: "modifierStatut",
-                                        id: idRecent,
-                                        statut: "ANNULÉ"
-                                    })
+                                    body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" })
                                 });
                             }
 
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                            let nouvelH = [];
-                            for (let i = 0; i < h.length; i++) {
-                                if (h[i].id !== idRecent) {
-                                    nouvelH.push(h[i]);
-                                }
-                            }
+                            let nouvelH = h.filter(item => item.id !== idRecent);
                             localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
-                            localStorage.removeItem('safe_last_amount'); // Nettoyage
+                            localStorage.removeItem('safe_last_amount');
                             
                             alert("Commande annulée.");
                             location.reload(); 
