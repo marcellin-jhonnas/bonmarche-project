@@ -1026,20 +1026,47 @@ body {
     }
 
     /* 2. BOUTIQUE : On force 2 colonnes pour éviter les cartes trop larges */
-    #boutique {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-        padding: 10px !important;
+    /* --- NOUVELLE CONFIGURATION MOBILE --- */
+    #grille-produits-reelle {
+        display: grid !important;
+        /* On utilise 48% pour garantir que la 2ème colonne ne sorte jamais de l'écran */
+        grid-template-columns: repeat(2, 48%) !important; 
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 5px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* 3. CARTES PRODUITS : On réduit la taille pour mobile */
-    .carte-produit img {
-        height: 120px !important; /* Image moins haute */
+    /* On applique le style aux deux noms possibles pour être sûr à 100% */
+    .product-card, .carte-produit {
+        width: 100% !important;
+        min-width: 0 !important; /* Débloque le rétrécissement de la carte */
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        background: #fff;
+        border-radius: 10px;
     }
 
-    .carte-produit h3 {
-        font-size: 0.8rem !important;
+    .product-card img, .carte-produit img {
+        height: 100px !important; /* Hauteur réduite pour laisser de la place au texte */
+        width: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .product-card h3, .carte-produit h3 {
+        font-size: 0.75rem !important;
+        white-space: normal !important; 
+        word-wrap: break-word !important; 
+        line-height: 1.2 !important;
         margin: 5px 0 !important;
+
+        /* --- Zone corrigée --- */
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important; /* Pour Chrome, Safari, Edge */
+        line-clamp: 2 !important;         /* La propriété standard (Ligne 1064) */
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
     }
 
     .prix-badge {
