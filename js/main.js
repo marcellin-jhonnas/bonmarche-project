@@ -505,42 +505,104 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if (!modal) return;
 
-    // 1. AFFICHAGE INITIAL (On garde ta fonction qui marche)
+    // ✅ STYLE MODERNE INJECTÉ (non destructif)
+    modal.style.cssText += `
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        backdrop-filter: blur(12px);
+        background: rgba(0,0,0,0.5);
+        padding: 10px;
+    `;
+
+    const modalContent = modal.querySelector('.modal-content') || modal.firstElementChild;
+    if (modalContent) {
+        modalContent.style.cssText += `
+            width:100%;
+            max-width:520px;
+            max-height:90vh;
+            overflow:hidden;
+            border-radius:20px;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            display:flex;
+            flex-direction:column;
+            animation: fadeInUp 0.3s ease;
+        `;
+    }
+
+    // ✅ SCROLL INTELLIGENT POUR PETITS ÉCRANS
+    let scrollZone = modal.querySelector('.cart-items-kibo-style') 
+        || modal.querySelector('#panier-items');
+
+    if (scrollZone) {
+        scrollZone.style.cssText += `
+            overflow-y:auto;
+            max-height:40vh;
+            padding-right:5px;
+        `;
+    }
+
+    // 1. AFFICHAGE INITIAL
     if (typeof afficherPanier === "function") {
         afficherPanier(); 
         
-        // PETITE AMÉLIORATION : On force le conteneur à utiliser la grille de l'image
-        const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
-        if(containerItems) containerItems.className = "cart-items-kibo-style";
+        const containerItems = document.getElementById('panier-items') 
+            || modal.querySelector('.cart-items-container');
+
+        if(containerItems) {
+            containerItems.className = "cart-items-kibo-style";
+            containerItems.style.gap = "10px";
+        }
     }
 
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // RESET INTERFACE
+        // 🎨 STYLE BOUTON PREMIUM
+        btnEnvoi.style.cssText = `
+            width:100%;
+            padding:16px;
+            border:none;
+            border-radius:14px;
+            font-weight:700;
+            font-size:15px;
+            cursor:pointer;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color:white;
+            transition: all 0.25s ease;
+        `;
+
+        btnEnvoi.onmouseover = () => btnEnvoi.style.transform = "scale(1.03)";
+        btnEnvoi.onmouseleave = () => btnEnvoi.style.transform = "scale(1)";
+
+        // RESET
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
-        btnEnvoi.style.display = "block";
-        btnEnvoi.style.background = "";
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if (oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // CAPTURE DU MONTANT (Ta logique originale)
+
             let montantSecurise = 0;
-            const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+            const elTotal = document.getElementById('total-panier') 
+                || document.querySelector('.total-amount');
+
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
                 montantSecurise = montantTotalGlobal;
             } else if (elTotal) {
                 montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
             }
+
             localStorage.setItem('safe_last_amount', montantSecurise);
 
-            // LANCEMENT DE L'ENVOI
+            // ⏳ LOADING UX
             btnEnvoi.disabled = true;
-            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
+            btnEnvoi.innerHTML = "⌛ Traitement en cours...";
+            btnEnvoi.style.opacity = "0.7";
+
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
             if (btnFermer) btnFermer.style.display = "none";
 
@@ -548,49 +610,79 @@ function ouvrirTicketAutomatique() {
                 envoyerDonneesAuSheet();
             }
 
-            // CONFIGURATION APRÈS ENVOI (2500ms)
             setTimeout(() => {
+
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                 let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
 
                 btnEnvoi.disabled = false;
-                btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b";
+                btnEnvoi.innerHTML = "💳 PASSER AU PAIEMENT";
+                btnEnvoi.style.background = "#0f172a";
+                btnEnvoi.style.opacity = "1";
 
                 btnEnvoi.onclick = function() {
                     modal.style.display = "none";
+
                     const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
+
                     if (typeof afficherChoixPaiementLuxe === "function") {
                         afficherChoixPaiementLuxe(idRecent, Number(montantRecupere));
                     }
                 };
 
-                // LOGIQUE ANNULER
+                // ❌ ANNULER (STYLE MODERNE)
                 if (!document.getElementById('btn-annuler-commande')) {
+
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
-                    btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
-                    btnAnnuler.className = "btn-luxe";
-                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
+
+                    btnAnnuler.innerHTML = "❌ Annuler la commande";
+
+                    btnAnnuler.style.cssText = `
+                        margin-top:10px;
+                        width:100%;
+                        padding:14px;
+                        border:none;
+                        border-radius:14px;
+                        font-weight:600;
+                        background:#ef4444;
+                        color:white;
+                        cursor:pointer;
+                        transition:0.2s;
+                    `;
+
+                    btnAnnuler.onmouseover = () => btnAnnuler.style.opacity = "0.8";
+                    btnAnnuler.onmouseleave = () => btnAnnuler.style.opacity = "1";
+
                     btnAnnuler.onclick = function() {
                         if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+
                             if (typeof API_URL !== 'undefined') {
                                 fetch(API_URL, {
                                     method: "POST",
                                     mode: "no-cors",
-                                    body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" })
+                                    body: JSON.stringify({
+                                        action: "modifierStatut",
+                                        id: idRecent,
+                                        statut: "ANNULÉ"
+                                    })
                                 });
                             }
+
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                             let nouvelH = h.filter(item => item.id !== idRecent);
+
                             localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
                             localStorage.removeItem('safe_last_amount');
+
                             location.reload();
                         }
                     };
+
                     containerBoutons.appendChild(btnAnnuler);
                 }
-            }, 2500); 
+
+            }, 2500);
         };
     }
 
