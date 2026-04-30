@@ -505,69 +505,41 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if (!modal) return;
 
-    // 1. DÉTECTION ET AFFICHAGE DU PANIER (Design Kibo)
-    let nomCle = localStorage.getItem('mon_panier') ? 'mon_panier' : 'panier';
-    let panier = JSON.parse(localStorage.getItem(nomCle)) || [];
-    const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
-    const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-
-    let montantGlobalCalculé = 0;
-
-    if (containerItems) {
-        containerItems.className = "cart-items-grid"; 
+    // --- 1. AFFICHAGE DU PANIER (On garde ta fonction qui marche) ---
+    if (typeof afficherPanier === "function") {
+        afficherPanier(); 
         
-        if (panier.length === 0) {
-            containerItems.innerHTML = "<div style='padding:20px; text-align:center;'>Votre panier est vide</div>";
-        } else {
-            containerItems.innerHTML = panier.map(item => {
-                let p = parseInt(item.prix) || 0;
-                let q = parseInt(item.quantite) || 1;
-                let totalLigne = p * q;
-                montantGlobalCalculé += totalLigne;
-
-                return `
-                <div class="cart-item-card">
-                    <img src="${item.img || 'https://via.placeholder.com/80'}" alt="${item.nom}">
-                    <div class="cart-item-details">
-                        <div class="cart-item-name">${item.nom || 'Produit'}</div>
-                        <div class="cart-item-price-unit">${p.toLocaleString()} Ar</div>
-                    </div>
-                    <div class="cart-item-qty-box"><span>${q}</span></div>
-                    <div class="cart-item-total-price">${totalLigne.toLocaleString()} Ar</div>
-                    <button class="btn-remove" onclick="supprimerDuPanier('${item.id}')">✕</button>
-                </div>`;
-            }).join('');
-        }
+        // PETIT AJOUT : On force le container à utiliser la nouvelle grille CSS
+        const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
+        if(containerItems) containerItems.className = "cart-items-grid";
     }
 
-    // Mise à jour du texte du total pour éviter le 0 Ar
-    if (elTotal) {
-        elTotal.innerText = montantGlobalCalculé.toLocaleString() + " Ar";
-    }
-
-    // 2. LOGIQUE DU BOUTON D'ENVOI (Ta logique originale préservée)
     const btnEnvoi = modal.querySelector('.btn-inscription');
-    const containerBoutons = btnEnvoi ? btnEnvoi.parentElement : null;
+    const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
         // RESET INTERFACE
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-        btnEnvoi.disabled = (panier.length === 0);
+        btnEnvoi.disabled = false;
         btnEnvoi.style.display = "block";
-        btnEnvoi.style.background = "#00a591"; // Vert Kibo
-        btnEnvoi.style.borderRadius = "8px";
+        btnEnvoi.style.background = "#00a591"; // Vert SafeRun
+        btnEnvoi.style.borderRadius = "25px";
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if (oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE CRUCIALE : CAPTURE DU MONTANT ---
-            let montantSecurise = montantGlobalCalculé;
+            let montantSecurise = 0;
+            const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
             
-            // On sauvegarde ce montant dans le localStorage
+            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
+                montantSecurise = montantTotalGlobal;
+            } else if (elTotal) {
+                montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
+            }
+            
             localStorage.setItem('safe_last_amount', montantSecurise);
 
-            // --- LANCEMENT DE L'ENVOI ---
             btnEnvoi.disabled = true;
             btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
             const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
@@ -577,7 +549,6 @@ function ouvrirTicketAutomatique() {
                 envoyerDonneesAuSheet();
             }
 
-            // --- CONFIGURATION DES BOUTONS APRÈS ENVOI ---
             setTimeout(() => {
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                 let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
@@ -585,8 +556,7 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
-
-                // LOGIQUE REVENIR
+                
                 btnEnvoi.onclick = function() {
                     modal.style.display = "none";
                     const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
@@ -595,36 +565,27 @@ function ouvrirTicketAutomatique() {
                     }
                 };
 
-                // LOGIQUE ANNULER (Ta version fetch originale)
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
                     btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
-                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:8px; padding:15px; font-weight:800; cursor:pointer;";
-                    
+                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
                     btnAnnuler.onclick = function() {
-                        if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+                        if (confirm("Confirmer l'annulation ?")) {
                             if (typeof API_URL !== 'undefined') {
-                                fetch(API_URL, {
-                                    method: "POST",
-                                    mode: "no-cors",
-                                    body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" })
-                                });
+                                fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" }) });
                             }
-
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                             localStorage.setItem('saferun_commandes', JSON.stringify(h.filter(i => i.id !== idRecent)));
                             localStorage.removeItem('safe_last_amount');
-                            alert("Commande annulée.");
                             location.reload();
                         }
                     };
-                    if (containerBoutons) containerBoutons.appendChild(btnAnnuler);
+                    containerBoutons.appendChild(btnAnnuler);
                 }
             }, 2500);
         };
     }
-
     modal.style.display = "flex";
     setTimeout(() => modal.classList.add('show'), 10);
 }
