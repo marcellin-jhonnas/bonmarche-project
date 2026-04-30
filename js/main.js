@@ -505,37 +505,83 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if (!modal) return;
 
-    // --- 1. AFFICHAGE DU PANIER (On garde ta fonction qui marche) ---
-    if (typeof afficherPanier === "function") {
-        afficherPanier(); 
+    // --- 1. GÉNÉRATION DU DESIGN "KIBO" (Image, Titre, Quantité, Prix) ---
+    const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
+    const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+
+    if (containerItems) {
+        // On récupère tes données (clé 'panier' ou 'mon_panier')
+        let nomCle = localStorage.getItem('mon_panier') ? 'mon_panier' : 'panier';
+        let panier = JSON.parse(localStorage.getItem(nomCle)) || [];
+        let montantGlobalCalculé = 0;
+
+        if (panier.length === 0) {
+            containerItems.innerHTML = "<div style='padding:20px; text-align:center;'>Votre panier est vide</div>";
+        } else {
+            // Rendu visuel calqué sur ton image
+            containerItems.innerHTML = panier.map(item => {
+                let p = parseInt(item.prix) || 0;
+                let q = parseInt(item.quantite) || 1;
+                let totalLigne = p * q;
+                montantGlobalCalculé += totalLigne;
+
+                return `
+                <div class="cart-item-card" style="display: flex; align-items: center; background: white; margin-bottom: 15px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                        <!-- Image du produit -->
+                        <img src="${item.img || 'https://via.placeholder.com/80'}" style="width: 80px; height: 80px; object-fit: contain;">
+                        
+                        <!-- Nom et Prix Unitaire -->
+                        <div>
+                            <div style="font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">${item.nom}</div>
+                            <div style="color: #666; font-size: 0.85rem;">${p.toLocaleString()} Ar</div>
+                        </div>
+                    </div>
+
+                    <!-- Sélecteur de Quantité (Design image) -->
+                    <div style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 5px 10px; margin: 0 20px;">
+                        <span style="font-weight: bold;">${q}</span>
+                    </div>
+
+                    <!-- Prix Total Ligne -->
+                    <div style="font-weight: bold; min-width: 100px; text-align: right;">
+                        ${totalLigne.toLocaleString()} Ar
+                    </div>
+
+                    <!-- Bouton Supprimer (Cercle vert) -->
+                    <button onclick="supprimerDuPanier('${item.id}')" style="margin-left: 15px; background: #00a591; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>`;
+            }).join('');
+        }
         
-        // PETIT AJOUT : On force le container à utiliser la nouvelle grille CSS
-        const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
-        if(containerItems) containerItems.className = "cart-items-grid";
+        // Mise à jour du total dans l'interface
+        if (elTotal) {
+            elTotal.innerText = montantGlobalCalculé.toLocaleString() + " Ar";
+            window.montantTotalGlobal = montantGlobalCalculé; // Mise à jour de ta variable globale
+        }
     }
 
+    // --- 2. TA LOGIQUE ORIGINALE (CONSERVÉE LIGNE PAR LIGNE) ---
     const btnEnvoi = modal.querySelector('.btn-inscription');
     const containerBoutons = btnEnvoi.parentElement;
 
     if (btnEnvoi) {
-        // RESET INTERFACE
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
         btnEnvoi.style.display = "block";
-        btnEnvoi.style.background = "#00a591"; // Vert SafeRun
-        btnEnvoi.style.borderRadius = "25px";
+        btnEnvoi.style.background = "#00a591"; // Couleur Kibo
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if (oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
             let montantSecurise = 0;
-            const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+            const elTotalCheck = document.getElementById('total-panier') || document.querySelector('.total-amount');
             
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
                 montantSecurise = montantTotalGlobal;
-            } else if (elTotal) {
-                montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
+            } else if (elTotalCheck) {
+                montantSecurise = parseInt(elTotalCheck.innerText.replace(/\D/g, ''));
             }
             
             localStorage.setItem('safe_last_amount', montantSecurise);
@@ -556,7 +602,7 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
-                
+
                 btnEnvoi.onclick = function() {
                     modal.style.display = "none";
                     const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
@@ -569,23 +615,32 @@ function ouvrirTicketAutomatique() {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
                     btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
+                    btnAnnuler.className = "btn-luxe";
                     btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
+                    
                     btnAnnuler.onclick = function() {
-                        if (confirm("Confirmer l'annulation ?")) {
+                        if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
                             if (typeof API_URL !== 'undefined') {
                                 fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" }) });
                             }
+
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                            localStorage.setItem('saferun_commandes', JSON.stringify(h.filter(i => i.id !== idRecent)));
+                            let nouvelH = [];
+                            for (let i = 0; i < h.length; i++) {
+                                if (h[i].id !== idRecent) nouvelH.push(h[i]);
+                            }
+                            localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
                             localStorage.removeItem('safe_last_amount');
+                            alert("Commande annulée.");
                             location.reload();
                         }
                     };
                     containerBoutons.appendChild(btnAnnuler);
                 }
-            }, 2500);
+            }, 2500); 
         };
     }
+
     modal.style.display = "flex";
     setTimeout(() => modal.classList.add('show'), 10);
 }
