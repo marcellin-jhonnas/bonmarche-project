@@ -505,70 +505,97 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if(!modal) return;
     
-    // 1. AFFICHAGE INITIAL ET GÉNÉRATION VISUELLE
-    if (typeof afficherPanier === "function") afficherPanier(); 
-    
+    // --- 1. GÉNÉRATION DU CONTENU VISUEL (STYLE KIBO) ---
     const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
+    
     if (containerItems) {
         let panier = JSON.parse(localStorage.getItem('mon_panier')) || [];
+        
+        // On s'assure que le container a la bonne classe pour le CSS
         containerItems.className = "cart-items-grid"; 
         
-        containerItems.innerHTML = panier.map(item => `
-            <div class="cart-item-card">
-                <div style="font-size:0.7rem; color:#1e3a8a; font-weight:800;">x${item.quantite}</div>
-                <img src="${item.img || 'Images/default-prod.png'}" alt="${item.nom}">
-                <div style="font-size:0.75rem; font-weight:700; height:30px; overflow:hidden;">${item.nom}</div>
-                <div style="color:#ef4444; font-size:0.8rem; font-weight:800;">${(item.prix * item.quantite).toLocaleString()} Ar</div>
-            </div>
-        `).join('');
+        if (panier.length === 0) {
+            containerItems.innerHTML = "<div style='padding:20px; text-align:center; color:#64748b;'>Votre panier est vide</div>";
+        } else {
+            containerItems.innerHTML = panier.map(item => `
+                <div class="cart-item-card">
+                    <!-- Image du produit -->
+                    <img src="${item.img || 'Images/default-prod.png'}" alt="${item.nom}">
+                    
+                    <!-- Détails Nom et Prix Unitaire -->
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.nom}</div>
+                        <div class="cart-item-price-unit">${Number(item.prix).toLocaleString()} Ar</div>
+                    </div>
+
+                    <!-- Quantité (Encadrée comme sur l'image) -->
+                    <div class="cart-item-qty-box">
+                        <span>${item.quantite}</span>
+                    </div>
+
+                    <!-- Prix Total de la ligne -->
+                    <div class="cart-item-total-price">
+                        ${(item.prix * item.quantite).toLocaleString()} Ar
+                    </div>
+
+                    <!-- Bouton Supprimer (Cercle vert) -->
+                    <button class="btn-remove" onclick="supprimerDuPanier('${item.id}')" title="Supprimer">✕</button>
+                </div>
+            `).join('');
+        }
     }
-    
+
+    // --- 2. GESTION DES BOUTONS ET DE LA LOGIQUE D'ENVOI ---
     const btnEnvoi = modal.querySelector('.btn-inscription');
-    const containerBoutons = btnEnvoi.parentElement;
+    const containerBoutons = btnEnvoi ? btnEnvoi.parentElement : null;
 
     if (btnEnvoi) {
-        // RESET INTERFACE
-        btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
+        // Reset du bouton principal
+        btnEnvoi.innerHTML = "Commander"; 
         btnEnvoi.disabled = false;
         btnEnvoi.style.display = "block";
-        btnEnvoi.style.background = ""; 
+        // Style du bouton calqué sur l'image (Vert Kibo)
+        btnEnvoi.style.cssText = "background:#00a591; color:white; border-radius:8px; padding:15px; width:100%; font-weight:bold; border:none; margin-top:20px; cursor:pointer; font-size:1rem;";
 
+        // Nettoyage de l'ancien bouton annuler s'il existe
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if(oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
-            // --- ÉTAPE CRUCIALE : CAPTURE IMMÉDIATE DU MONTANT ---
+            // A. Sécurisation du montant total
             let montantSecurise = 0;
             const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
             
             if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
                 montantSecurise = montantTotalGlobal;
             } else if (elTotal) {
+                // Nettoyage du texte pour ne garder que les chiffres
                 montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
             }
             
+            // Sauvegarde pour l'étape de paiement suivante
             localStorage.setItem('safe_last_amount', montantSecurise);
 
-            // --- LANCEMENT DE L'ENVOI ---
+            // B. Animation d'envoi
             btnEnvoi.disabled = true;
-            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
+            btnEnvoi.innerHTML = "⌛ Envoi en cours...";
             
-            const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
-            if (btnFermer) btnFermer.style.display = "none";
-
+            // C. Appel de ta fonction vers Google Sheets
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
 
-            // --- CONFIGURATION DES BOUTONS APRÈS ENVOI ---
+            // D. Phase après envoi (2.5 secondes après)
             setTimeout(() => {
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+                // Récupération de l'ID de commande généré par ton script
                 let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
 
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
-                btnEnvoi.style.background = "#1e293b"; 
+                btnEnvoi.style.background = "#1e293b"; // Couleur sombre pour différencier
                 
+                // Action pour ouvrir le choix de paiement (MVola/Orange Money)
                 btnEnvoi.onclick = function() {
                     modal.style.display = "none"; 
                     const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
@@ -577,16 +604,16 @@ function ouvrirTicketAutomatique() {
                     }
                 };
 
-                // LOGIQUE ANNULER
+                // E. Ajout du bouton d'annulation (Sécurité)
                 if (!document.getElementById('btn-annuler-commande')) {
                     const btnAnnuler = document.createElement('button');
                     btnAnnuler.id = 'btn-annuler-commande';
-                    btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
-                    btnAnnuler.className = "btn-luxe";
-                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
+                    btnAnnuler.innerHTML = "❌ ANNULER CETTE COMMANDE";
+                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:8px; padding:15px; font-weight:bold; cursor:pointer;";
                     
                     btnAnnuler.onclick = function() {
-                        if(confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+                        if(confirm("Voulez-vous vraiment annuler la commande " + idRecent + " ?")) {
+                            // Signal à l'API Google Sheets
                             if(typeof API_URL !== 'undefined') {
                                 fetch(API_URL, {
                                     method: "POST",
@@ -594,22 +621,21 @@ function ouvrirTicketAutomatique() {
                                     body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" })
                                 });
                             }
-
+                            // Nettoyage local
                             let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                            let nouvelH = h.filter(item => item.id !== idRecent);
-                            localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
+                            localStorage.setItem('saferun_commandes', JSON.stringify(h.filter(i => i.id !== idRecent)));
                             localStorage.removeItem('safe_last_amount');
-                            
-                            alert("Commande annulée.");
+                            alert("Commande annulée avec succès.");
                             location.reload(); 
                         }
                     };
-                    containerBoutons.appendChild(btnAnnuler);
+                    if(containerBoutons) containerBoutons.appendChild(btnAnnuler);
                 }
             }, 2500); 
         };
     }
 
+    // Affichage de la modal avec animation
     modal.style.display = "flex";
     setTimeout(() => modal.classList.add('show'), 10);
 }
