@@ -1579,6 +1579,7 @@ const heroData = [
 ];
 
 // --- ANIMATION DU HERO SLIDER DYNAMIQUE ---
+// --- FONCTION ANIMATION HERO (VERSION KIBO) ---
 function updateHeroAnimate() {
     const heroSection = document.getElementById('hero-slider');
     const title = document.getElementById('hero-title');
@@ -1587,84 +1588,77 @@ function updateHeroAnimate() {
 
     if (!heroSection || !title || !desc || !badge) return;
 
-    // 1. PHASE DE SORTIE : Les éléments glissent vers le bas et disparaissent
     const elements = [badge, title, desc];
     
-    elements.forEach((el, index) => {
-        el.style.transition = "all 0.5s ease-in-out";
+    // 1. SORTIE : On glisse vers la gauche avec un flou léger
+    elements.forEach((el) => {
+        el.style.transition = "all 0.4s ease-in-out";
         el.style.opacity = "0";
-        el.style.transform = "translateY(20px)";
-        el.style.filter = "blur(5px)"; // Petit effet de flou pour le mouvement
+        el.style.transform = "translateX(-20px)";
+        el.style.filter = "blur(4px)";
     });
 
     setTimeout(() => {
-        // Changement d'index
+        // Changement de l'index des données
         currentHeroIdx = (currentHeroIdx + 1) % heroData.length;
         const current = heroData[currentHeroIdx];
 
-        // 2. MISE À JOUR DU CONTENU ET DU FOND
-        // J'ajoute un dégradé noir pour que le texte blanc reste toujours lisible sur les images claires
-        heroSection.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('${current.img}')`;
+        // 2. MISE À JOUR : Utilisation de la variable CSS pour garder le dégradé blanc du design
+        heroSection.style.setProperty('--bg-image', `url('${current.img}')`);
         
         badge.innerText = current.badge;
         title.innerText = current.title;
         desc.innerText = current.desc;
 
-        // Préparation des éléments en haut (invisible) pour l'effet d'entrée
+        // On prépare les éléments (cachés à droite pour l'entrée)
         elements.forEach(el => {
-            el.style.transition = "none"; // On coupe la transition pour le repositionnement
-            el.style.transform = "translateY(-20px)"; 
+            el.style.transition = "none";
+            el.style.transform = "translateX(20px)"; 
         });
 
-        // 3. PHASE D'ENTRÉE : Les éléments redescendent à leur place avec un effet de cascade
+        // 3. ENTRÉE : Effet de cascade premium de gauche à droite
         setTimeout(() => {
             elements.forEach((el, index) => {
-                // On rétablit la transition avec un délai différent pour chaque élément (cascade)
-                el.style.transition = `all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.15}s`;
+                el.style.transition = `all 0.7s cubic-bezier(0.23, 1, 0.32, 1) ${index * 0.1}s`;
                 el.style.opacity = "1";
-                el.style.transform = "translateY(0)";
+                el.style.transform = "translateX(0)";
                 el.style.filter = "blur(0)";
             });
-        }, 50); // Petit délai pour laisser le navigateur enregistrer le changement de position
+        }, 50);
 
-    }, 600); // Temps correspondant à la phase de sortie
+    }, 500); 
 }
 
-// Lancer l'animation toutes les 5 secondes (5000ms)
-setInterval(updateHeroAnimate, 5000);
-
-let heroInterval; // Variable pour stocker le cycle
+// --- GESTION DU CYCLE DU SLIDER ---
+let heroInterval;
 
 function startHeroCycle() {
-    // Lance l'animation toutes les 5 secondes
+    // Nettoyage de sécurité avant de relancer
+    if (heroInterval) clearInterval(heroInterval);
     heroInterval = setInterval(updateHeroAnimate, 5000);
 }
 
 function stopHeroCycle() {
-    // Arrête l'animation immédiatement
     clearInterval(heroInterval);
 }
 
-// --- INITIALISATION DES ÉVÉNEMENTS ---
+// --- INITIALISATION ET ÉVÉNEMENTS ---
 const heroSlider = document.getElementById('hero-slider');
 
 if (heroSlider) {
-    // Quand la souris entre : on arrête
-    heroSlider.addEventListener('mouseenter', () => {
-        stopHeroCycle();
-        console.log("Slider en pause pour lecture...");
-    });
-
-    // Quand la souris sort : on relance
-    heroSlider.addEventListener('mouseleave', () => {
-        startHeroCycle();
-        console.log("Slider relancé.");
-    });
+    // Pause au survol pour laisser le client lire les promos
+    heroSlider.addEventListener('mouseenter', stopHeroCycle);
+    heroSlider.addEventListener('mouseleave', startHeroCycle);
+    
+    // Support tactile pour mobile
+    heroSlider.addEventListener('touchstart', stopHeroCycle, { passive: true });
+    heroSlider.addEventListener('touchend', startHeroCycle, { passive: true });
 }
 
-// Lancement initial au chargement de la page
+// Lancement initial
 startHeroCycle();
 
+// --- CATEGORY SLIDER (AUTO-SCROLL) ---
 const categorySlider = document.getElementById('category-slider');
 let isSliderPaused = false;
 let scrollStep = 1; 
@@ -1672,24 +1666,16 @@ let scrollStep = 1;
 if (categorySlider) {
     categorySlider.addEventListener('mouseenter', () => isSliderPaused = true);
     categorySlider.addEventListener('mouseleave', () => isSliderPaused = false);
-    categorySlider.addEventListener('touchstart', () => isSliderPaused = true, { passive: true });
-    categorySlider.addEventListener('touchend', () => isSliderPaused = false, { passive: true });
 
     function loopCategories() {
         if (!isSliderPaused) {
-            // VERIFICATION : Est-ce que le contenu dépasse vraiment de l'écran ?
             const hasOverflow = categorySlider.scrollWidth > categorySlider.clientWidth;
-
             if (hasOverflow) {
-                // On ne fait défiler QUE si les boutons sont trop larges pour l'écran
                 categorySlider.scrollLeft += scrollStep;
-                
+                // Boucle infinie
                 if (categorySlider.scrollLeft >= (categorySlider.scrollWidth - categorySlider.clientWidth - 1)) {
                     categorySlider.scrollLeft = 0;
                 }
-            } else {
-                // Si tout est visible (comme sur ta capture), on force le scroll à 0
-                categorySlider.scrollLeft = 0;
             }
         }
         requestAnimationFrame(loopCategories);
