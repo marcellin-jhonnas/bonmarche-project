@@ -3256,54 +3256,66 @@ section.saferun-pro-chat .btn-boutique-secondary {
 
 /* --- CONFIGURATION MOBILE (Écran < 768px) --- */
 @media (max-width: 768px) {
+    /* 1. On force le conteneur à ne pas dépasser la largeur de l'écran */
     .shop-layout-container {
+        display: flex !important;
         flex-direction: column !important;
-        padding: 5px !important; /* Réduit pour gagner de la place */
-        width: 100% !important;
-        box-sizing: border-box;
-        overflow-x: hidden;
+        width: 100vw !important; /* vw = largeur de la vitre du téléphone */
+        max-width: 100vw !important;
+        padding: 5px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important; 
     }
 
+    /* 2. On neutralise le "flex: 3" que tu as dans ton HTML */
+    .shop-layout-container > div[style*="flex: 3"],
     .shop-layout-container > div:first-child {
         width: 100% !important;
         max-width: 100% !important;
-        flex: none;
+        flex: none !important; /* Annule le flex: 3 */
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
+    /* 3. La grille : On utilise 47% pour être sûr que ça rentre */
     #grille-produits-reelle {
         display: grid !important;
-        /* "minmax(0, 1fr)" force le contenu à ne jamais dépasser la moitié de l'écran */
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important; 
-        gap: 8px !important; /* Espace optimisé pour mobile */
+        grid-template-columns: repeat(2, 47%) !important; 
+        justify-content: center !important; /* Centre les produits */
+        gap: 10px !important;
         width: 100% !important;
-        padding: 5px !important;
-        box-sizing: border-box; /* Crucial pour que le padding ne pousse pas le contenu */
+        padding: 5px 0 !important;
+        box-sizing: border-box !important;
     }
 
-    /* --- LA SOLUTION POUR L'AGRANDISSEMENT --- */
-    .product-card {
-        width: 100% !important; 
+    /* 4. On force les cartes produits à rester dans leur colonne */
+    .product-card, .carte-produit {
+        width: 100% !important;
+        min-width: 0 !important; /* Obligatoire pour le rétrécissement */
         max-width: 100% !important;
         margin: 0 !important;
-        box-sizing: border-box;
-        /* On réduit légèrement la taille interne pour que tout soit visible */
-        padding: 8px !important; 
+        box-sizing: border-box !important;
     }
 
-    /* On adapte la hauteur de l'image pour que la carte ne soit pas trop longue */
-    .product-card .img-container {
-        height: 120px !important; 
-    }
-
-    /* On réduit la police pour que le prix et le nom ne créent pas de débordement */
-    .product-card h3 {
+    /* 5. On empêche le texte de pousser les murs */
+    .product-card h3, .carte-produit h3 {
         font-size: 0.75rem !important;
-        line-height: 1.1 !important;
+        white-space: normal !important; 
+        word-wrap: break-word !important; 
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important; /* Pour la compatibilité */
+        -webkit-box-orient: vertical !important;
     }
 
+    /* 6. On gère la publicité en dessous */
     aside {
         width: 100% !important;
         min-width: 0 !important;
-        margin-top: 20px;
+        flex: none !important;
+        margin-top: 20px !important;
     }
 }
