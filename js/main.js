@@ -505,62 +505,92 @@ function ouvrirTicketAutomatique() {
     const modal = document.getElementById('modal-panier');
     if (!modal) return;
 
-    const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
-    const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
-
-    // On récupère tes données réelles
-    let historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-    
-    // On prend la commande la plus récente pour l'afficher dans le ticket
-    let derniereCommande = historique.length > 0 ? historique[0] : null;
-
-    if (containerItems && derniereCommande) {
-        // Design Kibo basé sur ta dernière commande enregistrée
-        containerItems.innerHTML = `
-            <div class="cart-item-card" style="display:flex; align-items:center; background:white; margin-bottom:12px; padding:15px; border-radius:12px; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;">
-                <div style="display:flex; align-items:center; gap:15px; flex:1;">
-                    <img src="https://via.placeholder.com/70" style="width:70px; height:70px; object-fit:contain; border-radius:8px;">
-                    <div>
-                        <div style="font-weight:800; font-size:12px; text-transform:uppercase; color:#0f172a; margin-bottom:4px;">
-                            ${derniereCommande.produits}
-                        </div>
-                        <div style="color:#64748b; font-size:12px;">ID: ${derniereCommande.id}</div>
-                    </div>
-                </div>
-                
-                <div style="font-weight:800; color:#0f172a; min-width:100px; text-align:right; font-size:14px;">
-                    ${derniereCommande.total.toLocaleString()} Ar
-                </div>
-
-                <button style="margin-left:15px; background:#00a591; color:white; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
-            </div>`;
+    // 1. AFFICHAGE INITIAL (On garde ta fonction qui marche)
+    if (typeof afficherPanier === "function") {
+        afficherPanier(); 
         
-        if (elTotal) {
-            elTotal.innerText = derniereCommande.total.toLocaleString() + " Ar";
-            window.montantTotalGlobal = derniereCommande.total;
-        }
-    } else if (containerItems) {
-        containerItems.innerHTML = "<div style='padding:20px; text-align:center;'>Aucune commande trouvée dans saferun_commandes</div>";
+        // PETITE AMÉLIORATION : On force le conteneur à utiliser la grille de l'image
+        const containerItems = document.getElementById('panier-items') || modal.querySelector('.cart-items-container');
+        if(containerItems) containerItems.className = "cart-items-kibo-style";
     }
 
-    // --- LOGIQUE BOUTON (Ta version originale) ---
     const btnEnvoi = modal.querySelector('.btn-inscription');
+    const containerBoutons = btnEnvoi.parentElement;
+
     if (btnEnvoi) {
+        // RESET INTERFACE
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
-        btnEnvoi.style.background = "#00a591";
+        btnEnvoi.disabled = false;
+        btnEnvoi.style.display = "block";
+        btnEnvoi.style.background = "";
+
+        const oldAnnuler = document.getElementById('btn-annuler-commande');
+        if (oldAnnuler) oldAnnuler.remove();
 
         btnEnvoi.onclick = function() {
+            // CAPTURE DU MONTANT (Ta logique originale)
+            let montantSecurise = 0;
+            const elTotal = document.getElementById('total-panier') || document.querySelector('.total-amount');
+            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
+                montantSecurise = montantTotalGlobal;
+            } else if (elTotal) {
+                montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
+            }
+            localStorage.setItem('safe_last_amount', montantSecurise);
+
+            // LANCEMENT DE L'ENVOI
+            btnEnvoi.disabled = true;
+            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
+            const btnFermer = modal.querySelector('.close-modal') || document.querySelector('.close');
+            if (btnFermer) btnFermer.style.display = "none";
+
             if (typeof envoyerDonneesAuSheet === "function") {
                 envoyerDonneesAuSheet();
             }
-            btnEnvoi.disabled = true;
-            btnEnvoi.innerHTML = "⌛ ENVOI EN COURS...";
-            
+
+            // CONFIGURATION APRÈS ENVOI (2500ms)
             setTimeout(() => {
+                const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+                let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
+
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "🔄 REVENIR AU PAIEMENT";
                 btnEnvoi.style.background = "#1e293b";
-            }, 2500);
+
+                btnEnvoi.onclick = function() {
+                    modal.style.display = "none";
+                    const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
+                    if (typeof afficherChoixPaiementLuxe === "function") {
+                        afficherChoixPaiementLuxe(idRecent, Number(montantRecupere));
+                    }
+                };
+
+                // LOGIQUE ANNULER
+                if (!document.getElementById('btn-annuler-commande')) {
+                    const btnAnnuler = document.createElement('button');
+                    btnAnnuler.id = 'btn-annuler-commande';
+                    btnAnnuler.innerHTML = "❌ ANNULER & SUPPRIMER";
+                    btnAnnuler.className = "btn-luxe";
+                    btnAnnuler.style.cssText = "margin-top:10px; background:#ef4444; color:white; width:100%; border:none; border-radius:22px; padding:20px; font-weight:800; cursor:pointer;";
+                    btnAnnuler.onclick = function() {
+                        if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+                            if (typeof API_URL !== 'undefined') {
+                                fetch(API_URL, {
+                                    method: "POST",
+                                    mode: "no-cors",
+                                    body: JSON.stringify({ action: "modifierStatut", id: idRecent, statut: "ANNULÉ" })
+                                });
+                            }
+                            let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+                            let nouvelH = h.filter(item => item.id !== idRecent);
+                            localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
+                            localStorage.removeItem('safe_last_amount');
+                            location.reload();
+                        }
+                    };
+                    containerBoutons.appendChild(btnAnnuler);
+                }
+            }, 2500); 
         };
     }
 
