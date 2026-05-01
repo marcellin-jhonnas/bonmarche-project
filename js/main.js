@@ -156,7 +156,45 @@ function rendreProduits(liste) {
         creerBarrePagination(produitsMarche.length);
     }
 }
+// --- INITIALISATION SAFERUN MARKET ---
+document.addEventListener('DOMContentLoaded', () => {
+    // On vérifie si l'utilisateur a déjà choisi une zone
+    const isSecteurValide = localStorage.getItem('saferun_secteur_valide');
 
+    if (!isSecteurValide) {
+        // Apparition élégante après 7 secondes pour ne pas brusquer le client
+        setTimeout(() => {
+            const headerBar = document.getElementById('saferun-header-bar');
+            if (headerBar) headerBar.classList.remove('sr-hidden');
+        }, 7000);
+    }
+});
+
+/**
+ * Traitement de la sélection de zone
+ * Synchronise les données avec ton Google Sheet (via Mr Haja/Mr Rivo)[cite: 1]
+ */
+function processSelection(data) {
+    if (!data) return;
+
+    // Séparation Nom de l'Axe | Code Postal
+    const [nomQuartier, codePostal] = data.split('|');
+
+    // Sauvegarde dans le localStorage (utilisé par tes fonctions d'envoi existantes)
+    localStorage.setItem('saferun_quartier', nomQuartier);
+    localStorage.setItem('saferun_cp_zone', codePostal);
+    localStorage.setItem('saferun_secteur_valide', 'true');
+
+    // Animation de sortie "Pro"
+    const headerBar = document.getElementById('saferun-header-bar');
+    headerBar.style.opacity = '0';
+    headerBar.style.transform = 'translateY(-100%)';
+
+    setTimeout(() => {
+        headerBar.style.display = 'none';
+        console.log("✅ Logistique synchronisée pour " + nomQuartier);
+    }, 600);
+}
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
 function demarrerSliderAnnonce() {
     const slides = document.querySelectorAll('.slide');

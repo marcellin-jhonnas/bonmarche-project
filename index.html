@@ -13,6 +13,36 @@
     <meta name="theme-color" content="#ffcc00">
 </head>
 <body>
+    <!-- BANNIÈRE PROFESSIONNELLE SAFERUN MARKET -->
+<div id="saferun-header-bar" class="sr-hidden">
+    <div class="sr-container">
+        <!-- Logo SafeRun depuis Imgur -->
+        <div class="sr-logo-section">
+            <img src="https://i.imgur.com/FEke8Cf.png" alt="SafeRun Logo" class="sr-logo-img">
+        </div>
+
+        <div class="sr-info-section">
+            <span class="sr-title">LIVRAISON ANTANANARIVO</span>
+            <p class="sr-subtitle">Vos PPN chez vous en moins de 2h</p>
+        </div>
+
+        <!-- Sélecteur d'Axe avec tes quartiers précis -->
+        <div class="sr-select-section">
+            <select id="sr-zone-picker" onchange="processSelection(this.value)">
+                <option value="">-- Choisissez votre zone --</option>
+                <option value="🔵 Axe Est — Avaradrano/Belanitra|103">🏘️ Axe Est (Belanitra, Ankadikely)</option>
+                <option value="🔵 Axe Sud — Itaosy/Atsimondrano|102">🛣️ Axe Sud (Itaosy, Ampitatafika)</option>
+                <option value="🔵 Axe Nord — Ivato/Ambohidratrimo|105">🚀 Axe Nord (Ivato, Talatamaty)</option>
+                <option value="🧭 Centre Ville — Renivohitra|101">🏛️ Centre Ville (Analakely, Behoririka)</option>
+            </select>
+        </div>
+
+        <!-- Image PPN depuis ton GitHub -->
+        <div class="sr-image-section">
+            <img src="https://raw.githubusercontent.com/marcellin-jhonnas/bonmarche-project/main/Images/hero/PPN2.png" alt="Produits PPN" class="sr-ppn-img">
+        </div>
+    </div>
+</div>
     <div class="menu-toggle-btn" onclick="toggleSidebar()">
     <i class="fas fa-bars" id="menu-icon-main"></i>
     </div>
