@@ -3604,3 +3604,33 @@ select#sr-zone-picker:hover {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
+/* CSS UNIQUE POUR L'IMAGE PROMO */
+.floating-sticker {
+    position: absolute;
+    bottom: 15px;    /* Positionnée en bas */
+    right: 15px;     /* Positionnée à droite */
+    width: 85px;     /* Taille de l'image */
+    z-index: 99;     /* S'affiche par-dessus les slides */
+    filter: drop-shadow(2px 5px 10px rgba(0,0,0,0.3)); /* Effet de relief */
+    animation: bounce-promo 3s infinite ease-in-out; /* Animation vivante */
+    pointer-events: none; /* Ne bloque pas les clics sur les boutons en dessous */
+}
+
+/* Animation de flottement et légère rotation */
+@keyframes bounce-promo {
+    0%, 100% { 
+        transform: translateY(0) rotate(0deg); 
+    }
+    50% { 
+        transform: translateY(-10px) rotate(5deg); 
+    }
+}
+
+/* Adaptation pour les petits écrans (mobiles) */
+@media (max-width: 480px) {
+    .floating-sticker {
+        width: 65px;
+        bottom: 10px;
+        right: 10px;
+    }
+}
