@@ -3538,71 +3538,69 @@ select#sr-zone-picker:hover {
     .sr-image-section, .sr-info-section { display: none; }
     .sr-container { justify-content: space-between; }
 }
-/* Cadre principal de la zone de paiement */
-.payment-card {
+/* Carte ultra compacte */
+.payment-card-mini {
     background: #ffffff;
-    border-radius: 20px;
-    padding: 25px;
-    text-align: center;
-    max-width: 450px;
-    margin: 20px auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    border: 1px solid #f0f0f0;
-    transition: transform 0.3s ease;
+    border-radius: 15px;
+    padding: 10px 20px;
+    max-width: 400px;
+    margin: 10px auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    overflow: hidden;
 }
 
-.payment-card:hover {
-    transform: translateY(-5px);
-}
-
-/* Style de la grande image d'illustration */
-.payment-illustration {
-    width: 100%;
-    max-width: 280px;
-    height: auto;
-    margin-bottom: 20px;
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
-    animation: float 3s ease-in-out infinite;
-}
-
-/* Texte et logos */
-.payment-header {
-    font-size: 1.1rem;
-    color: #444;
-    letter-spacing: 1px;
-}
-
-.logo-container {
+/* Alignement horizontal */
+.payment-row {
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 12px;
-    margin-top: 15px;
+    justify-content: space-between;
+    gap: 15px;
 }
 
-.payment-logo {
-    height: 45px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+/* Illustration en miniature */
+.mini-illustration {
+    width: 80px; /* Taille très réduite */
+    height: auto;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+    animation: float-mini 3s ease-in-out infinite;
 }
 
-.separator {
+.payment-content {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.mini-header {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0 0 5px 0;
     font-weight: bold;
-    color: #888;
-    font-size: 0.9rem;
+    letter-spacing: 0.5px;
 }
 
-/* Animations */
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+/* Logos plus petits */
+.mini-logos {
+    display: flex;
+    gap: 10px;
 }
 
-.mvola-anim { animation: pulse 2s infinite ease-in-out; }
-.visa-anim { animation: pulse 2s infinite ease-in-out 1s; }
+.mini-logo {
+    height: 30px; /* Hauteur réduite pour économiser l'espace */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
 
-@keyframes pulse {
+/* Animations légères pour ne pas surcharger */
+@keyframes float-mini {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+}
+
+.mvola-anim { animation: pulse-mini 2s infinite ease-in-out; }
+.visa-anim { animation: pulse-mini 2s infinite ease-in-out 1s; }
+
+@keyframes pulse-mini {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+    50% { transform: scale(1.05); }
 }
