@@ -340,15 +340,14 @@ const actionClicPanier = quartierValide
     
     <!-- LOGO EN FILIGRANE (FOND) -->
     <img src="Images/hero/fond.png" 
-     style="position: absolute; width: 70%; opacity: 0.3; z-index: 1; pointer-events: none;" 
-     alt="SafeRun Back"
-     onerror="console.error('Fond introuvable à cette adresse'); this.style.display='none';">
+         style="position: absolute; width: 80%; opacity: 0.2; z-index: 1; pointer-events: none; filter: grayscale(100%);"
+         alt="SafeRun Back">
 
-    <!-- IMAGE PRODUIT -->
+    <!-- IMAGE PRODUIT : On ajoute "background: transparent" pour ne pas cacher le logo -->
     <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
          onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
          onclick="${quartierValide ? `ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')` : 'focusSearch()'}"
-         style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.4s ease; position: relative; z-index: 2;"
+         style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.4s ease; position: relative; z-index: 2; background: transparent;"
          onmouseover="this.style.transform='scale(1.1)';"
          onmouseout="this.style.transform='scale(1)';"
     >
