@@ -321,7 +321,7 @@ const quartierValide = localStorage.getItem('saferun_secteur_valide');
 const affichagePrix = quartierValide 
     ? `${Number(p.Prix).toLocaleString()} <small style="font-size: 0.7rem;">AR</small>`
     : `<span onclick="focusSearch()" style="color: #f36f21; font-size: 0.75rem; cursor: pointer; text-decoration: underline; font-weight: bold;">
-        📍 Sélectionnez votre quartier pour voir le prix
+        📍 Précisez votre zone pour voir le prix
        </span>`;
 
 // Préparation de l'action du bouton (Ajouter au panier ou Remonter en haut)
