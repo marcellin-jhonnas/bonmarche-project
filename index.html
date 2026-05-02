@@ -670,49 +670,7 @@ setInterval(nextSlide, 5000);
     }
     setTimeout(showFakeNotif, 10000);
 
-    // --- LOGIQUE DU VOLET ROULLANT (PROMO CHAT) ---
-    const messagesPromo = [
-    "🚀 Commande validée dès réception du paiement",
-    "🚀 Voamarina ny kaomandinao raha vao voaray ny sarany",
-    "💳 Payez via MVola/AirtelMoney pour réserver",
-    "💳 Aloavy amin'ny finday mba hanamafisana ny baiko",
-    "🔒 Transaction 100% sécurisée",
-    "🔒 Antoka feno ny fandoavam-bola",
-    "⚡ Votre reçu envoyé immédiatement après paiement",
-    "⚡ Handefasana tapakila ianao raha vao voaray ny vola",
-    "📦 Livraison prioritaire pour les pré-paiements",
-    "📦 Laharam-pahamehana ny mpandoa vola mialoha"
-];
-
-   let indexMsg = 0;
-
-    function animerMessagePromo() {
-        const bubble = document.getElementById('chat-promo-text');
-        const chatWindow = document.getElementById('chat-window');
-        
-        // On n'anime que si le chat est FERMÉ
-        if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
-            if (bubble) {
-                bubble.style.display = "block";
-                bubble.style.opacity = "0";
-                bubble.style.transform = "translateY(5px)";
-
-                setTimeout(() => {
-                    bubble.innerText = messagesPromo[indexMsg];
-                    bubble.style.opacity = "1";
-                    bubble.style.transform = "translateY(0)";
-                    indexMsg = (indexMsg + 1) % messagesPromo.length;
-                }, 400);
-            }
-        } else {
-            if (bubble) bubble.style.display = "none";
-        }
-    }
-
-    // Lancer la rotation
-    setInterval(animerMessagePromo, 3000);
-    setTimeout(animerMessagePromo, 1500);
-
+    
     // --- MISE À JOUR DE TOGGLE CHAT (S'assurer qu'elle est aussi dans main.js) ---
     function toggleChat() {
         const chatWindow = document.getElementById('chat-window');
