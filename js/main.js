@@ -337,22 +337,30 @@ const actionClicPanier = quartierValide
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
         
         <div class="img-container" style="height: 180px; padding: 15px; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-            <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
-                 onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
-                 onclick="ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')"
-                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.4s ease;"
-                 onmouseover="this.style.transform='scale(1.1)';"
-                 onmouseout="this.style.transform='scale(1)';"
-            >
-            
-            <div onclick="event.stopPropagation(); ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')" 
-                 title="Aperçu rapide"
-                 style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.95); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-                 onmouseover="this.style.transform='scale(1.3) rotate(15deg)'; this.style.background='#0d47a1'; this.style.color='#fff';"
-                 onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.95)'; this.style.color='#0d47a1';">
-                <i class="fas fa-eye" style="font-size: 0.9rem;"></i>
-            </div>
-        </div>
+    
+    <!-- LOGO EN FILIGRANE (FOND) -->
+    <img src="/workspaces/bonmarche-project/Images/hero/fond.png" 
+         style="position: absolute; width: 70%; opacity: 0.12; z-index: 1; pointer-events: none; filter: grayscale(100%);"
+         alt="SafeRun Back">
+
+    <!-- IMAGE PRODUIT -->
+    <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
+         onerror="this.src='https://via.placeholder.com/150?text=SafeRun'"
+         onclick="${quartierValide ? `ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')` : 'focusSearch()'}"
+         style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.4s ease; position: relative; z-index: 2;"
+         onmouseover="this.style.transform='scale(1.1)';"
+         onmouseout="this.style.transform='scale(1)';"
+    >
+    
+    <!-- BOUTON OEIL (APERÇU) -->
+    <div onclick="event.stopPropagation(); ${quartierValide ? `ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')` : 'focusSearch()'}" 
+         title="Aperçu rapide"
+         style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.95); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d47a1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+         onmouseover="this.style.transform='scale(1.3) rotate(15deg)'; this.style.background='#0d47a1'; this.style.color='#fff';"
+         onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.background='rgba(255,255,255,0.95)'; this.style.color='#0d47a1';">
+        <i class="fas fa-eye" style="font-size: 0.9rem;"></i>
+    </div>
+</div>
 
         <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1; text-align: left;">
             
