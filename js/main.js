@@ -564,15 +564,32 @@ function afficherPanier() {
         });
     }
 
-    // --- LE CALCUL DOIT ÊTRE ICI (APRES LA BOUCLE) ---
-    let fraisLivraison = 0;
-    if (sousTotal > 0) {
-        let calcul15 = sousTotal * 0.15;
-        fraisLivraison = Math.max(calcul15, 3500); 
-        fraisLivraison = Math.ceil(fraisLivraison / 10) * 10; 
+    // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET ---
+let fraisLivraison = 0;
+
+// On récupère les réglages du quartier (chargés via searchZoneSafeRun)
+// On garde 5000 et 100000 comme valeurs de sécurité si le quartier est "Hors Liste"
+const tarifMin = parseInt(localStorage.getItem('saferun_tarif_minimal')) || 6000; 
+const seuilGratuit = parseInt(localStorage.getItem('saferun_seuil_gratuite')) || 120000;
+
+if (sousTotal > 0) {
+    // 1. Calcul de la règle des 15% (Protection sur le poids/volume)
+    let calcul15 = sousTotal * 0.15;
+
+    // 2. Comparaison avec le tarif minimal extrait du GAS (via tarif)
+    // On applique le plus élevé des deux
+    fraisLivraison = Math.max(calcul15, tarifMin);
+
+    // 3. Vérification du seuil de gratuité (via seuil)
+    if (sousTotal >= seuilGratuit) {
+        fraisLivraison = 0;
     }
 
-    let totalFinal = sousTotal + fraisLivraison;
+    // 4. Arrondi à la dizaine pour un total propre
+    fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
+}
+
+let totalFinal = sousTotal + fraisLivraison;
 
     // --- MISE À JOUR DE L'AFFICHAGE ---
     detail.innerHTML = `
