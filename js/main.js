@@ -158,7 +158,7 @@ function rendreProduits(liste) {
 }
 // --- INITIALISATION SAFERUN MARKET ---
 // --- CONFIGURATION ---
-const MON_URL_GAS = "https://script.google.com/macros/s/AKfycbxKuyJphzDyu7C1jUyADrad3YujTLuLBgKe3pBrdpp-Zk-P9A4XExexu0ejXMb5T0df/exec"; //
+const MON_URL_GAS = "https://script.google.com/macros/s/AKfycbxKuyJphzDyu7C1jUyADrad3YujTLuLBgKe3pBrdpp-Zk-P9A4XExexu0ejXMb5T0df/exec";
 
 // --- INITIALISATION SAFERUN MARKET ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,97 +167,110 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isSecteurValide) {
         setTimeout(() => {
             const headerBar = document.getElementById('saferun-header-bar');
+            const siteContent = document.getElementById('main-content'); // Préparation pour le flou
+
             if (headerBar) headerBar.classList.remove('sr-hidden');
+            // Activer cette ligne quand vous serez prêt pour le flou :
+            // if (siteContent) siteContent.classList.add('sr-blur-active');
         }, 7000);
     }
 });
 
 /**
- * Étape 1 : Le client choisit son Axe (Code Postal)
+ * Étape 1 : Sélection de l'Axe
  */
 function processSelection(data) {
     if (!data) return;
-
-    // On extrait le code (ex: 103) après le pipe |
     const codePostal = data.includes('|') ? data.split('|')[1] : data; 
 
-    // On affiche l'étape de recherche du quartier
     const searchContainer = document.getElementById('sr-input-container');
     if (searchContainer) {
         searchContainer.style.display = 'block';
         document.getElementById('sr-quartier-input').focus();
-        
-        // Stockage temporaire du code pour le filtrage
         localStorage.setItem('temp_saferun_cp', codePostal);
     }
 }
 
 /**
- * Étape 2 : Filtrage dynamique (ex: "Tal" -> Talatamaty)
+ * Étape 2 : Filtrage ultra-rapide (lettre par lettre)
  */
 function filtrageDynamique() {
     const cp = localStorage.getItem('temp_saferun_cp');
-    const query = document.getElementById('sr-quartier-input').value;
+    const query = document.getElementById('sr-quartier-input').value.trim();
     const suggestionsDiv = document.getElementById('sr-suggestions');
 
-    if (query.length >= 2) {
-        fetch(`${MON_URL_GAS}?postalCode=${cp}&query=${query}`) //
-            .then(response => response.json())
-            .then(data => {
-                suggestionsDiv.innerHTML = "";
-                
-                // 1. On liste les quartiers officiels trouvés
+    if (query.length < 1) {
+        suggestionsDiv.innerHTML = "";
+        return;
+    }
+
+    fetch(`${MON_URL_GAS}?postalCode=${cp}&query=${query}`)
+        .then(response => response.json())
+        .then(data => {
+            suggestionsDiv.innerHTML = ""; 
+            
+            if (data.length > 0) {
                 data.forEach(item => {
                     let div = document.createElement("div");
                     div.className = "sr-suggestion-item";
                     div.innerHTML = `📍 ${item.nomOfficiel} (TANA ${item.codeComplet})`;
-                    div.onclick = () => validerQuartierFinal(item);
+                    div.onclick = () => {
+                        document.getElementById('sr-quartier-input').value = item.nomOfficiel;
+                        validerQuartierFinal(item, false);
+                    };
                     suggestionsDiv.appendChild(div);
                 });
+            }
+        })
+        .catch(err => console.log("Erreur : ", err));
+}
 
-                // 2. Option "AUTRE" : Toujours disponible pour ne pas bloquer le client
-                let autreDiv = document.createElement("div");
-                autreDiv.className = "sr-suggestion-item autre-option";
-                autreDiv.innerHTML = `➕ Utiliser "${query}" (Autre quartier)`;
-                autreDiv.onclick = () => validerQuartierFinal(query, true);
-                suggestionsDiv.appendChild(autreDiv);
-            });
+function validerManuellement() {
+    const query = document.getElementById('sr-quartier-input').value.trim();
+    if (query.length >= 2) {
+        validerQuartierFinal(query, true);
     } else {
-        suggestionsDiv.innerHTML = "";
+        alert("Précisez votre quartier pour la livraison SafeRun.");
     }
 }
 
 /**
- * Étape 3 : Enregistrement définitif
+ * Étape 3 : Enregistrement et Nettoyage de l'écran
  */
 function validerQuartierFinal(donnees, isManual = false) {
     const cp = localStorage.getItem('temp_saferun_cp');
     let nomFinal, tarif, seuil;
 
     if (isManual) {
-        nomFinal = `${donnees} TANA ${cp}`; // Récupère la valeur tapée
-        tarif = 5000; // Tarif standard si zone non listée
+        nomFinal = `${donnees.toUpperCase()} TANA ${cp}`; 
+        tarif = 5000; 
         seuil = 100000;
     } else {
-        nomFinal = donnees.etiquetteTana; // Ex: "Anosy TANA 101A"
+        nomFinal = donnees.etiquetteTana;
         tarif = donnees.tarif;
         seuil = donnees.seuil;
     }
 
-    // --- DOUBLE ENREGISTREMENT ---
+    // Sauvegarde des données
     localStorage.setItem('saferun_quartier', nomFinal);
     localStorage.setItem('saferun_tarif_minimal', tarif);
     localStorage.setItem('saferun_seuil_gratuite', seuil);
     localStorage.setItem('saferun_secteur_valide', 'true');
 
-    // Animation de sortie
+    // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
+    const siteContent = document.getElementById('main-content');
+
+    // Retrait du flou si activé
+    if (siteContent) siteContent.classList.remove('sr-blur-active');
+
+    // Disparition de la barre
     headerBar.style.opacity = '0';
     headerBar.style.transform = 'translateY(-100%)';
 
     setTimeout(() => {
         headerBar.style.display = 'none';
-        console.log("✅ Logistique validée : " + nomFinal);
+        console.log("✅ Logistique SafeRun validée : " + nomFinal);
     }, 600);
 }
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---

@@ -35,9 +35,12 @@
         <option value="Centre Ville|101">🏛️ Centre Ville (Renivohitra 101)</option>
     </select>
 
-    <!-- Champ qui apparaît après le choix de l'axe -->
-    <div id="sr-input-container" style="display:none; margin-top:10px;">
-        <input type="text" id="sr-quartier-input" placeholder="Tapez votre quartier..." oninput="filtrageDynamique()">
+    <div id="sr-input-container" style="display:none; margin-top:10px; position: relative;">
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="sr-quartier-input" placeholder="Ex: Analakely..." oninput="filtrageDynamique()">
+            <button id="sr-btn-valider" onclick="validerManuellement()" style="padding: 10px; border-radius: 50px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold;">OK</button>
+        </div>
+        <!-- C'est ici que la liste s'affichera au fur et à mesure de la frappe -->
         <div id="sr-suggestions" class="sr-suggestions-list"></div>
     </div>
 </div>
