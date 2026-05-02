@@ -313,7 +313,21 @@ function genererCodeCarte(p) {
 
     // GÉNÉRER UN NOMBRE ALÉATOIRE DE LIKES (entre 5 et 25)
     const likesAleatoires = Math.floor(Math.random() * (25 - 5 + 1)) + 5;
+    // --- ZONE DE SÉCURITÉ : VÉRIFICATION DU QUARTIER ---
+// On regarde si le client a déjà choisi son quartier
+const quartierValide = localStorage.getItem('saferun_secteur_valide');
 
+// Préparation du texte du prix (Normal ou Message d'alerte)
+const affichagePrix = quartierValide 
+    ? `${Number(p.Prix).toLocaleString()} <small style="font-size: 0.7rem;">AR</small>`
+    : `<span onclick="focusSearch()" style="color: #f36f21; font-size: 0.75rem; cursor: pointer; text-decoration: underline; font-weight: bold;">
+        📍 Sélectionnez votre quartier pour voir le prix
+       </span>`;
+
+// Préparation de l'action du bouton (Ajouter au panier ou Remonter en haut)
+const actionClicPanier = quartierValide 
+    ? `gererClicPanier(this, '${nomPropre}', ${p.Prix})` 
+    : `focusSearch()`;
     // ... (début de ta fonction identique)
 
     return `
@@ -347,7 +361,7 @@ function genererCodeCarte(p) {
             </h3>
 
             <div style="color: #0d47a1; font-weight: 800; font-size: 1.1rem; margin-bottom: 5px;">
-                ${prixFormatte} <small style="font-size: 0.7rem;">AR</small>
+                ${affichagePrix}
             </div>
 
             <div style="color: #ffcc00; font-size: 0.75rem; margin-bottom: 15px;">
@@ -356,12 +370,10 @@ function genererCodeCarte(p) {
 
             <div style="display: flex; justify-content: center; gap: 30px; padding-top: 10px; border-top: 1px solid #f5f5f5; margin-top: auto;">
                 
-                <div onclick="gererClicPanier(this, '${nomPropre}', ${p.Prix})" 
-                     style="cursor: pointer; color: #0d47a1; transition: 0.2s; width: 25px; text-align: center;" 
-                     onmouseover="if(!this.dataset.clicked){ this.innerHTML='<i class=\'fas fa-plus\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#f36f21'; }" 
-                     onmouseout="if(!this.dataset.clicked){ this.innerHTML='<i class=\'fas fa-shopping-bag\' style=\'font-size: 1.3rem;\'></i>'; this.style.color='#0d47a1'; }">
-                    <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
-                </div>
+                <div onclick="${actionClicPanier}" 
+     style="cursor: pointer; color: ${quartierValide ? '#0d47a1' : '#ccc'}; transition: 0.2s; width: 25px; text-align: center;">
+    <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
+</div>
 
                 <div onclick="actionLike(this)" style="cursor: pointer; color: #0d47a1; transition: 0.2s; display: flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#f36f21'" onmouseout="this.style.color='#0d47a1'">
                     <i class="far fa-heart" style="font-size: 1.2rem;"></i>
@@ -400,6 +412,19 @@ function gererClicPanier(el, nom, prix) {
         el.style.color = "#0d47a1";
         el.innerHTML = '<i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>';
     }, 1500);
+}
+function focusSearch() {
+    // 1. Remonte la page tout en haut
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // 2. Attend la fin du mouvement et met le focus sur la recherche
+    setTimeout(() => {
+        const input = document.getElementById('searchZoneInput');
+        if(input) {
+            input.focus();
+            input.style.boxShadow = "0 0 10px #f36f21"; // On fait briller la barre
+        }
+    }, 600);
 }
 function creerBarrePagination(total) {
     let container = document.getElementById('pagination-container');
