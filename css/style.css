@@ -3463,18 +3463,19 @@ section.saferun-pro-chat .btn-boutique-secondary {
     border-radius: 50%;
     cursor: pointer;
 }
-/* --- DESIGN PREMIUM SAFERUN MARKET --- */
+/* --- DESIGN PREMIUM SAFERUN MARKET (MISE À JOUR) --- */
 :root {
     --sr-blue: #007bff;
     --sr-dark: #004085;
     --sr-white: #ffffff;
+    --sr-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 #saferun-header-bar {
     position: fixed;
     top: 0; left: 0; width: 100%;
     background: var(--sr-white);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: var(--sr-shadow);
     border-bottom: 4px solid var(--sr-blue);
     z-index: 9999;
     padding: 10px 0;
@@ -3482,7 +3483,7 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 
 .sr-hidden {
-    transform: translateY(-120%); /* Sort de l'écran proprement */
+    transform: translateY(-120%);
 }
 
 .sr-container {
@@ -3494,6 +3495,7 @@ section.saferun-pro-chat .btn-boutique-secondary {
     padding: 0 20px;
 }
 
+/* --- SECTIONS EXISTANTES --- */
 .sr-logo-img { height: 50px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
 
 .sr-info-section .sr-title {
@@ -3510,33 +3512,74 @@ section.saferun-pro-chat .btn-boutique-secondary {
     font-size: 12px;
 }
 
-select#sr-zone-picker {
-    padding: 12px 15px;
+/* --- SÉLECTEUR ET INPUT (AMÉLIORÉS) --- */
+select#sr-zone-picker, #sr-quartier-input {
+    padding: 12px 20px;
     border: 2px solid var(--sr-blue);
-    border-radius: 50px;
+    border-radius: 50px; /* Garde le style arrondi "Premium" */
     background: #f8f9fa;
     font-weight: 600;
     color: var(--sr-dark);
-    cursor: pointer;
     outline: none;
     transition: 0.3s;
 }
 
-select#sr-zone-picker:hover {
-    background: var(--sr-blue);
-    color: white;
+#sr-quartier-input {
+    width: 200px; /* Taille adaptée pour la bannière */
+    margin-left: 10px;
 }
 
+select#sr-zone-picker:hover, #sr-quartier-input:focus {
+    background: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+}
+
+/* --- LISTE DES SUGGESTIONS (NOUVEAU) --- */
+.sr-suggestions-list {
+    position: absolute;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--sr-shadow);
+    max-height: 200px;
+    overflow-y: auto;
+    width: 280px;
+    margin-top: 5px;
+    z-index: 10000;
+}
+
+.sr-suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 13px;
+    color: var(--sr-dark);
+    transition: background 0.2s;
+}
+
+.sr-suggestion-item:hover {
+    background: #e7f1ff;
+    color: var(--sr-blue);
+}
+
+.sr-suggestion-item.autre-option {
+    font-style: italic;
+    color: #28a745; /* Vert pour l'option "Autre" */
+    border-top: 1px solid #eee;
+}
+
+/* --- IMAGE PPN --- */
 .sr-ppn-img {
     height: 60px;
     border-radius: 8px;
     border: 1px solid #eee;
 }
 
-/* Version Mobile rapide */
+/* --- MOBILE --- */
 @media (max-width: 768px) {
     .sr-image-section, .sr-info-section { display: none; }
-    .sr-container { justify-content: space-between; }
+    .sr-container { flex-direction: column; gap: 10px; }
+    #sr-quartier-input { width: 90%; margin-left: 0; }
+    .sr-suggestions-list { width: 90%; left: 5%; }
 }
 /* Carte ultra compacte */
 .payment-card-mini {

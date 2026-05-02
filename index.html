@@ -26,16 +26,21 @@
             <p class="sr-subtitle">Vos PPN chez vous en moins de 2h</p>
         </div>
 
-        <!-- Sélecteur d'Axe avec tes quartiers précis -->
         <div class="sr-select-section">
-            <select id="sr-zone-picker" onchange="processSelection(this.value)">
-                <option value="">-- Choisissez votre zone --</option>
-                <option value="🔵 Axe Est — Avaradrano/Belanitra|103">🏘️ Axe Est (sab-nam, Ankadikely,...)</option>
-                <option value="🔵 Axe Sud — Atsimondrano/Itaosy|102">🛣️ Axe Sud (Itaosy, Ampitatafika,...)</option>
-                <option value="🔵 Axe Nord — Ambohidratrimo/Ivato|105">🚀 Axe Nord (Ivato, Talatamaty,...)</option>
-                <option value="🧭 Centre Ville — Renivohitra|101">🏛️ Centre Ville (Analakely, Behoririka,...)</option>
-            </select>
-        </div>
+    <select id="sr-zone-picker" onchange="processSelection(this.value)">
+        <option value="">-- Choisissez votre zone --</option>
+        <option value="Axe Est|103">🏘️ Axe Est (Avaradrano 103)</option>
+        <option value="Axe Sud|102">🛣️ Axe Sud (Atsimondrano 102)</option>
+        <option value="Axe Nord|105">🚀 Axe Nord (Ivato/Ambohidratrimo 105)</option>
+        <option value="Centre Ville|101">🏛️ Centre Ville (Renivohitra 101)</option>
+    </select>
+
+    <!-- Champ qui apparaît après le choix de l'axe -->
+    <div id="sr-input-container" style="display:none; margin-top:10px;">
+        <input type="text" id="sr-quartier-input" placeholder="Tapez votre quartier..." oninput="filtrageDynamique()">
+        <div id="sr-suggestions" class="sr-suggestions-list"></div>
+    </div>
+</div>
 
         <!-- Image PPN depuis ton GitHub -->
         <div class="sr-image-section">

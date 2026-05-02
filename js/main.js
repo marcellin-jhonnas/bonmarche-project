@@ -157,12 +157,14 @@ function rendreProduits(liste) {
     }
 }
 // --- INITIALISATION SAFERUN MARKET ---
+// --- CONFIGURATION ---
+const MON_URL_GAS = "https://script.google.com/macros/s/AKfycbxKuyJphzDyu7C1jUyADrad3YujTLuLBgKe3pBrdpp-Zk-P9A4XExexu0ejXMb5T0df/exec"; //
+
+// --- INITIALISATION SAFERUN MARKET ---
 document.addEventListener('DOMContentLoaded', () => {
-    // On vérifie si l'utilisateur a déjà choisi une zone
     const isSecteurValide = localStorage.getItem('saferun_secteur_valide');
 
     if (!isSecteurValide) {
-        // Apparition élégante après 7 secondes pour ne pas brusquer le client
         setTimeout(() => {
             const headerBar = document.getElementById('saferun-header-bar');
             if (headerBar) headerBar.classList.remove('sr-hidden');
@@ -171,28 +173,91 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Traitement de la sélection de zone
- * Synchronise les données avec ton Google Sheet (via Mr Haja/Mr Rivo)[cite: 1]
+ * Étape 1 : Le client choisit son Axe (Code Postal)
  */
 function processSelection(data) {
     if (!data) return;
 
-    // Séparation Nom de l'Axe | Code Postal
-    const [nomQuartier, codePostal] = data.split('|');
+    // On extrait le code (ex: 103) après le pipe |
+    const codePostal = data.includes('|') ? data.split('|')[1] : data; 
 
-    // Sauvegarde dans le localStorage (utilisé par tes fonctions d'envoi existantes)
-    localStorage.setItem('saferun_quartier', nomQuartier);
-    localStorage.setItem('saferun_cp_zone', codePostal);
+    // On affiche l'étape de recherche du quartier
+    const searchContainer = document.getElementById('sr-input-container');
+    if (searchContainer) {
+        searchContainer.style.display = 'block';
+        document.getElementById('sr-quartier-input').focus();
+        
+        // Stockage temporaire du code pour le filtrage
+        localStorage.setItem('temp_saferun_cp', codePostal);
+    }
+}
+
+/**
+ * Étape 2 : Filtrage dynamique (ex: "Tal" -> Talatamaty)
+ */
+function filtrageDynamique() {
+    const cp = localStorage.getItem('temp_saferun_cp');
+    const query = document.getElementById('sr-quartier-input').value;
+    const suggestionsDiv = document.getElementById('sr-suggestions');
+
+    if (query.length >= 2) {
+        fetch(`${MON_URL_GAS}?postalCode=${cp}&query=${query}`) //
+            .then(response => response.json())
+            .then(data => {
+                suggestionsDiv.innerHTML = "";
+                
+                // 1. On liste les quartiers officiels trouvés
+                data.forEach(item => {
+                    let div = document.createElement("div");
+                    div.className = "sr-suggestion-item";
+                    div.innerHTML = `📍 ${item.nomOfficiel} (TANA ${item.codeComplet})`;
+                    div.onclick = () => validerQuartierFinal(item);
+                    suggestionsDiv.appendChild(div);
+                });
+
+                // 2. Option "AUTRE" : Toujours disponible pour ne pas bloquer le client
+                let autreDiv = document.createElement("div");
+                autreDiv.className = "sr-suggestion-item autre-option";
+                autreDiv.innerHTML = `➕ Utiliser "${query}" (Autre quartier)`;
+                autreDiv.onclick = () => validerQuartierFinal(query, true);
+                suggestionsDiv.appendChild(autreDiv);
+            });
+    } else {
+        suggestionsDiv.innerHTML = "";
+    }
+}
+
+/**
+ * Étape 3 : Enregistrement définitif
+ */
+function validerQuartierFinal(donnees, isManual = false) {
+    const cp = localStorage.getItem('temp_saferun_cp');
+    let nomFinal, tarif, seuil;
+
+    if (isManual) {
+        nomFinal = `${donnees} TANA ${cp}`; // Récupère la valeur tapée
+        tarif = 5000; // Tarif standard si zone non listée
+        seuil = 100000;
+    } else {
+        nomFinal = donnees.etiquetteTana; // Ex: "Anosy TANA 101A"
+        tarif = donnees.tarif;
+        seuil = donnees.seuil;
+    }
+
+    // --- DOUBLE ENREGISTREMENT ---
+    localStorage.setItem('saferun_quartier', nomFinal);
+    localStorage.setItem('saferun_tarif_minimal', tarif);
+    localStorage.setItem('saferun_seuil_gratuite', seuil);
     localStorage.setItem('saferun_secteur_valide', 'true');
 
-    // Animation de sortie "Pro"
+    // Animation de sortie
     const headerBar = document.getElementById('saferun-header-bar');
     headerBar.style.opacity = '0';
     headerBar.style.transform = 'translateY(-100%)';
 
     setTimeout(() => {
         headerBar.style.display = 'none';
-        console.log("✅ Logistique synchronisée pour " + nomQuartier);
+        console.log("✅ Logistique validée : " + nomFinal);
     }, 600);
 }
 // --- LOGIQUE DU SLIDER AUTO (À mettre en bas de tes scripts) ---
