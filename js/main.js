@@ -340,8 +340,9 @@ const actionClicPanier = quartierValide
     
     <!-- LOGO EN FILIGRANE (FOND) -->
     <img src="Images/hero/fond.png" 
-         style="position: absolute; width: 70%; opacity: 0.12; z-index: 1; pointer-events: none; filter: grayscale(100%);"
-         alt="SafeRun Back">
+     style="position: absolute; width: 70%; opacity: 0.3; z-index: 1; pointer-events: none;" 
+     alt="SafeRun Back"
+     onerror="console.error('Fond introuvable à cette adresse'); this.style.display='none';">
 
     <!-- IMAGE PRODUIT -->
     <img src="${p.Image_URL}" alt="${p.Nom}" loading="lazy" 
