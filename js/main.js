@@ -261,7 +261,7 @@ function validerQuartierFinal(donnees, isManual = false) {
     // Dans validerQuartierFinal, remplacez l'ancien appel par :
 if (typeof rendreProduits === "function") {
     // On relance le rendu avec la liste globale des produits
-    rendreProduits(produitsBruts); 
+    rendreProduits(data); 
 }
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
