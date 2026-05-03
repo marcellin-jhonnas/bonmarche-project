@@ -205,24 +205,30 @@ function filtrageDynamique() {
     }
 
     fetch(`${MON_URL_GAS}?postalCode=${cp}&query=${query}`)
-        .then(response => response.json())
-        .then(data => {
-            suggestionsDiv.innerHTML = ""; 
-            
-            if (data.length > 0) {
-                data.forEach(item => {
-                    let div = document.createElement("div");
-                    div.className = "sr-suggestion-item";
-                    div.innerHTML = `📍 ${item.nomOfficiel} (TANA ${item.codeComplet})`;
-                    div.onclick = () => {
-                        document.getElementById('sr-quartier-input').value = item.nomOfficiel;
-                        validerQuartierFinal(item, false);
-                    };
-                    suggestionsDiv.appendChild(div);
-                });
-            }
-        })
-        .catch(err => console.log("Erreur : ", err));
+    .then(response => response.json())
+    .then(data => {
+        // --- ÉTAPE 1 : SAUVEGARDE GLOBALE (INDISPENSABLE) ---
+        // On mémorise les données pour que validerQuartierFinal puisse les utiliser plus tard
+        window.listeLocaleSafeRun = data; 
+        
+        suggestionsDiv.innerHTML = ""; 
+        
+        if (data.length > 0) {
+            data.forEach(item => {
+                let div = document.createElement("div");
+                div.className = "sr-suggestion-item";
+                div.innerHTML = `📍 ${item.nomOfficiel} (TANA ${item.codeComplet})`;
+                div.onclick = () => {
+                    document.getElementById('sr-quartier-input').value = item.nomOfficiel;
+                    // --- ÉTAPE 2 : APPEL DE LA VALIDATION ---
+                    // Cette fonction utilisera maintenant window.listeLocaleSafeRun sans erreur
+                    validerQuartierFinal(item, false);
+                };
+                suggestionsDiv.appendChild(div);
+            });
+        }
+    })
+    .catch(err => console.log("Erreur : ", err));
 }
 
 function validerManuellement() {
@@ -233,7 +239,18 @@ function validerManuellement() {
         alert("Précisez votre quartier pour la livraison SafeRun.");
     }
 }
-
+// --- FONCTION DE SÉCURITÉ SAFERUN ---
+// Cette fonction met à jour les prix sans risquer de bloquer le site
+function mettreAJourAffichageProduits() {
+    try {
+        if (typeof rendreProduits === "function" && window.listeLocaleSafeRun) {
+            console.log("🔄 SafeRun : Actualisation des prix pour Antananarivo...");
+            rendreProduits(window.listeLocaleSafeRun);
+        }
+    } catch (e) {
+        console.warn("Erreur d'affichage : les produits ne sont pas prêts.", e);
+    }
+}
 /**
  * Étape 3 : Enregistrement et Nettoyage de l'écran
  */
@@ -259,14 +276,8 @@ function validerQuartierFinal(donnees, isManual = false) {
 
     // Actualise l'affichage pour montrer les prix immédiatement
    // --- MISE À JOUR DYNAMIQUE DES PRIX ---
-if (typeof rendreProduits === "function") {
-    // On utilise la variable globale pour forcer l'affichage des nouveaux tarifs
-    if (window.listeLocaleSafeRun) {
-        rendreProduits(window.listeLocaleSafeRun); 
-    } else {
-        console.warn("SafeRun : Données produits introuvables dans window.listeLocaleSafeRun");
-    }
-}
+// Actualise l'affichage pour montrer les prix immédiatement
+    mettreAJourAffichageProduits();
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
     const siteContent = document.getElementById('main-content');
