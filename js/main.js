@@ -1818,7 +1818,7 @@ const heroData = [
         img: '../Images/hero/gasy.png',
         badge: " 🍚 Essential Gasy",
         title: "MAYONNAISE SY SAUCES MATSIRO",
-        desc: "Vary fotsy madio sy voafantina. Le goût authentique de notre terre."
+        desc: "L'excellence de nos sauces locales pour sublimer vos plats quotidiens."
     },
     {
         img: '../Images/hero/eauvive.png',
