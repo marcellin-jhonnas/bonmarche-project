@@ -3677,3 +3677,50 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         right: 10px;
     }
 }
+/* Animation de révélation pour le prix débloqué */
+@keyframes priceReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(15px) scale(0.9);
+        filter: blur(5px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+/* Style moderne pour le prix affiché */
+.prix-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #0d47a1; /* Bleu SafeRun */
+    font-weight: 900;
+    font-size: 1.2rem;
+    animation: priceReveal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Petit badge "Dispo" qui apparaît avec le prix */
+.badge-dispo {
+    font-size: 0.6rem;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+/* Style de l'alerte "Précisez votre zone" */
+.alerte-zone {
+    color: #f36f21; /* Orange SafeRun */
+    font-size: 0.78rem;
+    background: #fff5f0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #f36f21;
+    display: inline-block;
+    transition: all 0.3s ease;
+}

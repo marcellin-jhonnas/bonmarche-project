@@ -257,6 +257,8 @@ function validerQuartierFinal(donnees, isManual = false) {
     localStorage.setItem('saferun_seuil_gratuite', seuil);
     localStorage.setItem('saferun_secteur_valide', 'true');
 
+    // Actualise l'affichage pour montrer les prix immédiatement
+    if (typeof afficherProduits === "function") afficherProduits();
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
     const siteContent = document.getElementById('main-content');
@@ -318,11 +320,16 @@ function genererCodeCarte(p) {
 const quartierValide = localStorage.getItem('saferun_secteur_valide');
 
 // Préparation du texte du prix (Normal ou Message d'alerte)
+// Préparation du texte du prix avec les classes pour l'animation 2026
 const affichagePrix = quartierValide 
-    ? `${Number(p.Prix).toLocaleString()} <small style="font-size: 0.7rem;">AR</small>`
-    : `<span onclick="focusSearch()" style="color: #f36f21; font-size: 0.75rem; cursor: pointer; text-decoration: underline; font-weight: bold;">
-        📍 Précisez votre zone pour voir le prix
-       </span>`;
+    ? `<div class="prix-container">
+        <span>${Number(p.Prix).toLocaleString()}</span>
+        <small style="font-size: 0.7rem; margin-left: 2px;">AR</small>
+        <span class="badge-dispo">Disponible</span>
+       </div>`
+    : `<div class="alerte-zone" onclick="focusSearch()" style="cursor: pointer;">
+        <i class="fas fa-map-marker-alt"></i> Précisez votre zone pour voir le prix
+       </div>`;
 
 // Préparation de l'action du bouton (Ajouter au panier ou Remonter en haut)
 const actionClicPanier = quartierValide 
@@ -368,8 +375,8 @@ const actionClicPanier = quartierValide
                 ${p.Nom}
             </h3>
 
-            <div style="color: #0d47a1; font-weight: 800; font-size: 1.1rem; margin-bottom: 5px;">
-                ${affichagePrix}
+            <div style="font-weight: 800; margin-bottom: 5px; min-height: 30px; display: flex; align-items: center;">
+            ${affichagePrix}
             </div>
 
             <div style="color: #ffcc00; font-size: 0.75rem; margin-bottom: 15px;">
@@ -379,7 +386,8 @@ const actionClicPanier = quartierValide
             <div style="display: flex; justify-content: center; gap: 30px; padding-top: 10px; border-top: 1px solid #f5f5f5; margin-top: auto;">
                 
                 <div onclick="${actionClicPanier}" 
-     style="cursor: pointer; color: ${quartierValide ? '#0d47a1' : '#ccc'}; transition: 0.2s; width: 25px; text-align: center;">
+     style="cursor: pointer; color: ${quartierValide ? '#0d47a1' : '#f36f21'}; opacity: ${quartierValide ? '1' : '0.6'}; transition: 0.2s; width: 25px; text-align: center;"
+     title="${quartierValide ? 'Ajouter au panier' : 'Veuillez choisir votre zone'}">
     <i class="fas fa-shopping-bag" style="font-size: 1.3rem;"></i>
 </div>
 
