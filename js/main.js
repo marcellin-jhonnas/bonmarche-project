@@ -33,7 +33,7 @@ async function chargerBoutique() {
 
         const response = await fetch(API_URL);
         tousLesProduits = await response.json();
-        
+        window.listeLocaleSafeRun = tousLesProduits;
         // 2. On génère les produits (mais ils sont encore invisibles)
         rendreProduits(tousLesProduits);
 
@@ -260,12 +260,9 @@ function validerQuartierFinal(donnees, isManual = false) {
     // Actualise l'affichage pour montrer les prix immédiatement
   // --- APRÈS LE REMPLISSAGE ET LA SAUVEGARDE ---
 // On demande au navigateur de relancer le moteur de rendu des produits
-if (typeof rendreProduits === "function") {
-    // On récupère les produits qui sont déjà présents sur la page
-    // pour les mettre à jour avec le nouveau tarif de livraison
-    if (window.listeLocaleSafeRun) {
-        rendreProduits(window.listeLocaleSafeRun);
-    }
+// Dans validerQuartierFinal, après le remplissage de la zone :
+if (typeof rendreProduits === "function" && window.listeLocaleSafeRun) {
+    rendreProduits(window.listeLocaleSafeRun);
 }
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
