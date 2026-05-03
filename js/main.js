@@ -258,7 +258,11 @@ function validerQuartierFinal(donnees, isManual = false) {
     localStorage.setItem('saferun_secteur_valide', 'true');
 
     // Actualise l'affichage pour montrer les prix immédiatement
-    if (typeof afficherProduits === "function") afficherProduits();
+    // Dans validerQuartierFinal, remplacez l'ancien appel par :
+if (typeof rendreProduits === "function") {
+    // On relance le rendu avec la liste globale des produits
+    rendreProduits(produitsBruts); 
+}
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
     const siteContent = document.getElementById('main-content');
