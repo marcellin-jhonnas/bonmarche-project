@@ -538,22 +538,24 @@ header.scrolled .logo-img {
 .sidebar {
     position: fixed;
     top: 0;
-    left: -300px; /* Caché par défaut */
+    left: -300px;
     width: 280px;
-    height: 100vh; /* Utilise toute la hauteur de l'écran */
-    background: #1a1a1a;
+    height: 100vh;
+    /* Fond blanc très transparent */
+    background: rgba(255, 255, 255, 0.1); 
+    /* L'effet de flou magique */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); 
     color: white;
     z-index: 9999;
     transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 20px;
-    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    box-shadow: 5px 0 15px rgba(0,0,0,0.2);
     
-    /* --- LES LIGNES QUI RÉPARENT TON PROBLÈME --- */
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Permet de défiler vers le bas si ça dépasse */
-    -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* --- LE MOTEUR DE L'EFFET PUSH --- */
