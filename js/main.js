@@ -1496,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!estInscrit && popup && !popup.classList.contains('show')) {
             popup.classList.add('show');
         }
-    }, 10000); 
+    }, 80000); 
 });
 
 function contacterAssistance() {
