@@ -258,10 +258,14 @@ function validerQuartierFinal(donnees, isManual = false) {
     localStorage.setItem('saferun_secteur_valide', 'true');
 
     // Actualise l'affichage pour montrer les prix immédiatement
-    // Dans validerQuartierFinal, remplacez l'ancien appel par :
+   // --- MISE À JOUR DYNAMIQUE DES PRIX ---
 if (typeof rendreProduits === "function") {
-    // On relance le rendu avec la liste globale des produits
-    rendreProduits(data); 
+    // On utilise la variable globale pour forcer l'affichage des nouveaux tarifs
+    if (window.listeLocaleSafeRun) {
+        rendreProduits(window.listeLocaleSafeRun); 
+    } else {
+        console.warn("SafeRun : Données produits introuvables dans window.listeLocaleSafeRun");
+    }
 }
     // --- ACTIONS DE SORTIE ---
     const headerBar = document.getElementById('saferun-header-bar');
