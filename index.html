@@ -103,19 +103,19 @@
     </div>
 
     <header>
-        <div class="logo-area" style="position: relative; display: flex; align-items: center; gap: 10px;">
-    <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"> 
+        <div class="logo-area" style="position: relative; display: flex; align-items: center;">
+    <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img"> 
     
-    <div style="position: relative; display: inline-block;">
-        <div class="logo-text" style="letter-spacing: -0.5px; margin: 0;">
-            SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
+    <div style="position: relative; margin-left: 10px;">
+        <div class="logo-text" style="letter-spacing: -0.5px; margin: 0; font-weight: 800;">
+            SAFERUN <span style="color: var(--primary);">MARKET</span>
         </div>
-        <!-- Conteneur de la signature -->
-        <div id="signature-container" style="position: absolute; right: 0; bottom: -35px; white-space: nowrap;">
+        
+        <!-- Conteneur flottant pour ne pas pousser les éléments du bas -->
+        <div style="position: absolute; right: 0; bottom: -25px; white-space: nowrap; display: flex; align-items: center;">
             <span id="plume-signature" class="signature-manuscrite"></span>
-            <!-- Image de la plume qui écrit -->
-            <img id="plume-stylo" src="https://www.pngall.com/wp-content/uploads/2016/03/Feather-Pen-PNG-Image.png" 
-                 style="height: 40px; position: absolute; top: -20px; transition: left 0.1s linear; display: none;">
+            <img id="plume-stylo" src="https://i.imgur.com/H9GfXQY.png" 
+                 style="height: 35px; width: auto; margin-left: -5px; display: none; transform: rotate(15deg);">
         </div>
     </div>
 </div>
@@ -835,43 +835,44 @@ document.addEventListener('click', function(e) {
     }
 });
 
-const textToSign = "by Marcellin";
-const sigElement = document.getElementById("plume-signature");
-const penElement = document.getElementById("plume-stylo");
-
-let charPos = 0;
-let isErasing = false;
-
-function animerPlumePrestige() {
-    const visibleText = isErasing 
-        ? textToSign.substring(0, charPos--) 
-        : textToSign.substring(0, charPos++);
-
-    sigElement.innerHTML = visibleText;
-
-    // Affiche la plume seulement quand elle écrit
-    penElement.style.display = "block";
+document.addEventListener("DOMContentLoaded", function() {
+    const text = "by Marcellin";
+    const sigSpan = document.getElementById("plume-signature");
+    const penImg = document.getElementById("plume-stylo");
     
-    // Positionne la plume au bout du texte actuel
-    const offset = sigElement.offsetWidth;
-    penElement.style.left = (offset - 10) + "px";
+    let i = 0;
+    let deleting = false;
 
-    let delay = isErasing ? 80 : 180;
+    function typewriter() {
+        const current = deleting 
+            ? text.substring(0, i--) 
+            : text.substring(0, i++);
 
-    if (!isErasing && charPos > textToSign.length) {
-        isErasing = true;
-        delay = 3000; // Pause pour admirer la signature
-        penElement.style.display = "none"; // Cache la plume pendant la pause
-    } else if (isErasing && charPos < 0) {
-        isErasing = false;
-        charPos = 0;
-        delay = 500;
+        sigSpan.innerHTML = current;
+
+        // Gestion de l'affichage de la plume
+        if (current.length > 0 && current.length < text.length + 1) {
+            penImg.style.display = "inline-block";
+        } else {
+            penImg.style.display = "none";
+        }
+
+        let speed = deleting ? 50 : 150;
+
+        if (!deleting && i > text.length) {
+            deleting = true;
+            speed = 3000; // Pause de 3 secondes une fois fini
+        } else if (deleting && i < 0) {
+            deleting = false;
+            i = 0;
+            speed = 500;
+        }
+
+        setTimeout(typewriter, speed);
     }
 
-    setTimeout(animerPlumePrestige, delay);
-}
-
-document.addEventListener("DOMContentLoaded", animerPlumePrestige);
+    typewriter();
+});
 </script>
 </body>
 </html>

@@ -3728,20 +3728,19 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* eto nomanomboka ny signature " */
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive;
-    font-size: 2.2rem;
+    font-family: 'Birthstone', cursive; /* Assurez-vous du lien Google Fonts dans le head */
+    font-size: 2rem; 
     color: #27ae60;
-    transform: rotate(-3deg);
-    display: inline-block;
-    min-width: 5px;
-    z-index: 10;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* On s'assure que rien ne bouge dans le header */
+.logo-area {
+    overflow: visible;
 }
 
 @media (max-width: 480px) {
-    .signature-manuscrite {
-        font-size: 1.6rem;
-    }
-    #plume-stylo {
-        height: 30px !important;
-    }
+    .signature-manuscrite { font-size: 1.5rem; }
+    #plume-stylo { height: 25px !important; }
 }
