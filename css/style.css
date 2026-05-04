@@ -3727,24 +3727,21 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     transition: all 0.3s ease;
 }
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive; /* Assurez-vous d'avoir chargé Birthstone dans le <head> */
+    font-family: 'Birthstone', cursive; /* Assurez-vous du lien Google Fonts dans le <head> */
     font-size: 1.1rem;
-    color: #27ae60; /* Vert SafeRun */
-    align-self: flex-end; /* Aligne la signature à la fin (sous MARKET) */
-    margin-top: -4px;     /* Rapproche la signature du texte */
-    margin-right: 2px;    /* Ajustement précis sous le T de MARKET */
-    transform: rotate(-3deg);
+    color: #27ae60;
+    position: absolute; /* Fondamental : ne prend plus de place dans le flux */
+    right: 0;           /* S'aligne sur la fin du mot MARKET */
+    bottom: -12px;      /* Se place juste en dessous du texte */
+    transform: rotate(-2deg);
     white-space: nowrap;
-    opacity: 0.9;
+    pointer-events: none; /* Évite de gêner les clics */
 }
 
-/* Adaptation Mobile */
+/* Correction pour mobile pour éviter tout chevauchement */
 @media (max-width: 480px) {
     .signature-manuscrite {
-        font-size: 0.9rem; /* Un peu plus petit sur mobile */
-        margin-top: -2px;
-    }
-    .logo-text {
-        font-size: 1.2rem; /* Ajustez selon votre besoin mobile */
+        font-size: 0.9rem;
+        bottom: -10px;
     }
 }
