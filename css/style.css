@@ -3726,27 +3726,25 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     display: inline-block;
     transition: all 0.3s ease;
 }
-    .brand-container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Aligne le texte à gauche, contre le logo */
-        margin-left: 10px;
-    }
+.signature-manuscrite {
+    font-family: 'Birthstone', cursive; /* Assurez-vous d'avoir chargé Birthstone dans le <head> */
+    font-size: 1.1rem;
+    color: #27ae60; /* Vert SafeRun */
+    align-self: flex-end; /* Aligne la signature à la fin (sous MARKET) */
+    margin-top: -4px;     /* Rapproche la signature du texte */
+    margin-right: 2px;    /* Ajustement précis sous le T de MARKET */
+    transform: rotate(-3deg);
+    white-space: nowrap;
+    opacity: 0.9;
+}
 
-    .logo-text {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 800;
-        font-size: 1.4rem;
-        line-height: 1;
-        text-transform: uppercase;
-    }
-
+/* Adaptation Mobile */
+@media (max-width: 480px) {
     .signature-manuscrite {
-        font-family: 'Birthstone', cursive; /* Police style signature manuscrite */
-        font-size: 1.2rem;
-        color: #27ae60; /* Utilisation du vert pour la confiance */
-        margin-top: -5px; /* Pour rapprocher la signature du logo */
-        margin-left: 40px; /* Décalage vers la droite pour un effet authentique */
-        transform: rotate(-3deg); /* Légère inclinaison pour le réalisme */
-        filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
+        font-size: 0.9rem; /* Un peu plus petit sur mobile */
+        margin-top: -2px;
     }
+    .logo-text {
+        font-size: 1.2rem; /* Ajustez selon votre besoin mobile */
+    }
+}
