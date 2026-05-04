@@ -3727,21 +3727,23 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     transition: all 0.3s ease;
 }
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive; /* Assurez-vous du lien Google Fonts dans le <head> */
-    font-size: 1.1rem;
-    color: #27ae60;
-    position: absolute; /* Fondamental : ne prend plus de place dans le flux */
-    right: 0;           /* S'aligne sur la fin du mot MARKET */
-    bottom: -12px;      /* Se place juste en dessous du texte */
-    transform: rotate(-2deg);
+    font-family: 'Birthstone', cursive; /* La police manuscrite pour l'effet signature */
+    font-size: 1.6rem;         /* AGRANDI : Passé de 1.1rem à 1.6rem pour une meilleure visibilité */
+    color: #27ae60;            /* Vert SafeRun pour la confiance */
+    position: absolute;        /* Flotte au-dessus sans déplacer la barre de recherche */
+    right: 0;                  /* Aligné exactement sous le 'T' de MARKET */
+    bottom: -22px;             /* AJUSTÉ : Descendu un peu plus car la police est plus grande */
+    transform: rotate(-3deg);  /* Inclinaison légère pour un effet plume authentique */
     white-space: nowrap;
-    pointer-events: none; /* Évite de gêner les clics */
+    pointer-events: none;      /* Le curseur ignore la signature pour ne pas gêner les clics */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05); /* Petite ombre légère pour le relief */
+    z-index: 5;
 }
 
-/* Correction pour mobile pour éviter tout chevauchement */
+/* Optimisation pour les écrans mobiles à Antananarivo */
 @media (max-width: 480px) {
     .signature-manuscrite {
-        font-size: 0.9rem;
-        bottom: -10px;
+        font-size: 1.3rem;     /* Plus grand sur mobile également */
+        bottom: -18px;         /* Ajustement de la position verticale */
     }
 }
