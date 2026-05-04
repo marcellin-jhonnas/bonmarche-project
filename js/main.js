@@ -921,6 +921,7 @@ async function envoyerDonneesAuSheet() {
         total: montantTotal, // <--- C'EST CETTE LIGNE QUI RÉPARE L'ERREUR "cmd.total"
         statut: "NOUVEAU",
         livraison: infoLivraison,
+        livraisonPrevue: infoLivraison,
         quartier: quartier || "Non précisé"
     };
 
