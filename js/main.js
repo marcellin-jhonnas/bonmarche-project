@@ -3192,3 +3192,4 @@ setInterval(chargerMessagesChat, 3000);
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(animerMessagePromo, 2000);
 });
+

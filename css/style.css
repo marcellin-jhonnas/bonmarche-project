@@ -3729,42 +3729,31 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* eto nomanomboka ny signature " */
 .signature-manuscrite {
     font-family: 'Birthstone', cursive;
-    font-size: 2.5rem; /* Taille généreuse pour l'impact visuel */
+    font-size: 2.2rem; /* Taille agrandie pour être bien visible */
     color: #27ae60;
     position: absolute;
-    right: 0;
-    bottom: -35px;
+    right: 0;          /* Aligné sous le mot MARKET */
+    bottom: -32px;     /* Positionné juste en dessous */
     transform: rotate(-3deg);
     white-space: nowrap;
-    overflow: hidden; /* Nécessaire pour l'effet d'écriture */
-    border-right: 3px solid #27ae60; /* La pointe de la plume */
+    border-right: 3px solid #27ae60; /* Curseur représentant la plume */
+    min-height: 40px;
     z-index: 10;
-    
-    /* Animation : Écrit (2s), Pause (3s), Efface (1s) */
-    animation: 
-        plume-ecriture 6s steps(30) infinite,
-        plume-curseur 0.8s infinite;
+    pointer-events: none;
 }
 
-/* Animation de l'écriture et de l'effacement */
-@keyframes plume-ecriture {
-    0% { width: 0; }               /* Début : vide */
-    30% { width: 100%; }           /* 2s pour écrire le nom */
-    80% { width: 100%; }           /* Pause de 3s pour laisser lire */
-    90% { width: 0; opacity: 1; }  /* Effacement rapide */
-    100% { width: 0; opacity: 0; } /* Disparition avant de recommencer */
+/* Animation du curseur qui clignote pendant l'écriture */
+.signature-manuscrite {
+    animation: plume-clignote 0.8s infinite;
 }
 
-/* Animation du curseur (la pointe de la plume qui clignote) */
-@keyframes plume-curseur {
-    from, to { border-color: transparent; }
-    50% { border-color: #27ae60; }
+@keyframes plume-clignote {
+    50% { border-color: transparent; }
 }
 
-/* Ajustement pour les petits écrans (Mobile à Tana) */
 @media (max-width: 480px) {
     .signature-manuscrite {
-        font-size: 1.8rem;
-        bottom: -25px;
+        font-size: 1.6rem;
+        bottom: -24px;
     }
 }
