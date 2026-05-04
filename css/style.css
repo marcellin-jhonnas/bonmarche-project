@@ -3726,24 +3726,45 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     display: inline-block;
     transition: all 0.3s ease;
 }
+/* eto nomanomboka ny signature " */
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive; /* La police manuscrite pour l'effet signature */
-    font-size: 1.6rem;         /* AGRANDI : Passé de 1.1rem à 1.6rem pour une meilleure visibilité */
-    color: #27ae60;            /* Vert SafeRun pour la confiance */
-    position: absolute;        /* Flotte au-dessus sans déplacer la barre de recherche */
-    right: 0;                  /* Aligné exactement sous le 'T' de MARKET */
-    bottom: -22px;             /* AJUSTÉ : Descendu un peu plus car la police est plus grande */
-    transform: rotate(-3deg);  /* Inclinaison légère pour un effet plume authentique */
+    font-family: 'Birthstone', cursive;
+    font-size: 2.5rem; /* Taille généreuse pour l'impact visuel */
+    color: #27ae60;
+    position: absolute;
+    right: 0;
+    bottom: -35px;
+    transform: rotate(-3deg);
     white-space: nowrap;
-    pointer-events: none;      /* Le curseur ignore la signature pour ne pas gêner les clics */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.05); /* Petite ombre légère pour le relief */
-    z-index: 5;
+    overflow: hidden; /* Nécessaire pour l'effet d'écriture */
+    border-right: 3px solid #27ae60; /* La pointe de la plume */
+    z-index: 10;
+    
+    /* Animation : Écrit (2s), Pause (3s), Efface (1s) */
+    animation: 
+        plume-ecriture 6s steps(30) infinite,
+        plume-curseur 0.8s infinite;
 }
 
-/* Optimisation pour les écrans mobiles à Antananarivo */
+/* Animation de l'écriture et de l'effacement */
+@keyframes plume-ecriture {
+    0% { width: 0; }               /* Début : vide */
+    30% { width: 100%; }           /* 2s pour écrire le nom */
+    80% { width: 100%; }           /* Pause de 3s pour laisser lire */
+    90% { width: 0; opacity: 1; }  /* Effacement rapide */
+    100% { width: 0; opacity: 0; } /* Disparition avant de recommencer */
+}
+
+/* Animation du curseur (la pointe de la plume qui clignote) */
+@keyframes plume-curseur {
+    from, to { border-color: transparent; }
+    50% { border-color: #27ae60; }
+}
+
+/* Ajustement pour les petits écrans (Mobile à Tana) */
 @media (max-width: 480px) {
     .signature-manuscrite {
-        font-size: 1.3rem;     /* Plus grand sur mobile également */
-        bottom: -18px;         /* Ajustement de la position verticale */
+        font-size: 1.8rem;
+        bottom: -25px;
     }
 }
