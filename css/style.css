@@ -3729,31 +3729,19 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* eto nomanomboka ny signature " */
 .signature-manuscrite {
     font-family: 'Birthstone', cursive;
-    font-size: 2.2rem; /* Taille agrandie pour être bien visible */
+    font-size: 2.2rem;
     color: #27ae60;
-    position: absolute;
-    right: 0;          /* Aligné sous le mot MARKET */
-    bottom: -32px;     /* Positionné juste en dessous */
     transform: rotate(-3deg);
-    white-space: nowrap;
-    border-right: 3px solid #27ae60; /* Curseur représentant la plume */
-    min-height: 40px;
+    display: inline-block;
+    min-width: 5px;
     z-index: 10;
-    pointer-events: none;
-}
-
-/* Animation du curseur qui clignote pendant l'écriture */
-.signature-manuscrite {
-    animation: plume-clignote 0.8s infinite;
-}
-
-@keyframes plume-clignote {
-    50% { border-color: transparent; }
 }
 
 @media (max-width: 480px) {
     .signature-manuscrite {
         font-size: 1.6rem;
-        bottom: -24px;
+    }
+    #plume-stylo {
+        height: 30px !important;
     }
 }
