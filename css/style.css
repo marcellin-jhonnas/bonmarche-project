@@ -3728,14 +3728,13 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* eto nomanomboka ny signature " */
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive; /* Assurez-vous d'avoir le lien Google Fonts */
-    font-size: 1.6rem;
+    font-family: 'Birthstone', cursive; /* Assure-toi que le lien Google Fonts est dans ton <head> */
+    font-size: 1.8rem;
     color: #27ae60;
-    line-height: 1;
+    position: absolute;
+    right: 0;
+    bottom: -25px; /* Ajuste selon tes préférences */
+    white-space: nowrap;
     pointer-events: none;
-}
-
-#plume-stylo {
-    transition: left 0.1s linear;
-    pointer-events: none;
+    border-right: 2px solid #27ae60; /* Simule la pointe de la plume */
 }

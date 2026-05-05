@@ -104,21 +104,13 @@
 
     <header>
         <div class="header-container">
-    <div class="logo-area" style="position: relative; display: flex; align-items: center;">
-        <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); height: 45px;"> 
-        
-        <div style="position: relative; margin-left: 10px;">
-            <div class="logo-text" style="letter-spacing: -0.5px; font-weight: 800; margin: 0;">
-                SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
-            </div>
-            
-            <!-- Zone de signature animée -->
-            <div style="position: absolute; right: 0; bottom: -22px; white-space: nowrap;">
-                <span id="plume-signature" class="signature-manuscrite"></span>
-                <img id="plume-stylo" src="https://i.imgur.com/H9GfXQY.png" 
-                     style="height: 30px; position: absolute; top: -15px; display: none; transform: rotate(15deg);">
-            </div>
+    <div class="logo-area" style="position: relative;">
+        <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"> 
+        <div class="logo-text" style="letter-spacing: -0.5px;">
+            SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
         </div>
+        <!-- On ajoute l'ID ici pour l'animation -->
+        <div id="signature-anim" class="signature-manuscrite"></div>
     </div>
 </div>
 
@@ -838,44 +830,33 @@ document.addEventListener('click', function(e) {
 });
 // eto ilay izy //
 document.addEventListener("DOMContentLoaded", function() {
-    const texte = "by Marcellin";
-    const zoneTexte = document.getElementById("plume-signature");
-    const imagePlume = document.getElementById("plume-stylo");
-    
+    const text = "by Marcellin";
+    const element = document.getElementById("signature-anim");
     let index = 0;
-    let effacement = false;
+    let isDeleting = false;
 
-    function animer() {
-        const rendu = effacement 
-            ? texte.substring(0, index--) 
-            : texte.substring(0, index++);
+    function animate() {
+        const currentText = isDeleting 
+            ? text.substring(0, index--) 
+            : text.substring(0, index++);
 
-        zoneTexte.innerHTML = rendu;
+        element.innerHTML = currentText;
 
-        // Positionnement de la plume
-        if (rendu.length > 0) {
-            imagePlume.style.display = "block";
-            imagePlume.style.left = (zoneTexte.offsetWidth - 5) + "px";
-        } else {
-            imagePlume.style.display = "none";
-        }
+        let speed = isDeleting ? 100 : 200;
 
-        let vitesse = effacement ? 50 : 150;
-
-        if (!effacement && index > texte.length) {
-            effacement = true;
-            vitesse = 3000; // Pause pour lecture
-            imagePlume.style.display = "none";
-        } else if (effacement && index < 0) {
-            effacement = false;
+        if (!isDeleting && index > text.length) {
+            isDeleting = true;
+            speed = 3000; // Pause de 3 secondes une fois la signature finie
+        } else if (isDeleting && index < 0) {
+            isDeleting = false;
             index = 0;
-            vitesse = 500;
+            speed = 500;
         }
 
-        setTimeout(animer, vitesse);
+        setTimeout(animate, speed);
     }
 
-    animer();
+    animate();
 });
 </script>
 </body>
