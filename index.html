@@ -104,14 +104,23 @@
 
     <header>
         <div class="header-container">
-<div class="logo-area" style="position: relative;">
-<img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"> 
-<div class="logo-text" style="letter-spacing: -0.5px;">
-SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
+    <div class="logo-area" style="position: relative; display: flex; align-items: center;">
+        <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); height: 45px;"> 
+        
+        <div style="position: relative; margin-left: 10px;">
+            <div class="logo-text" style="letter-spacing: -0.5px; font-weight: 800; margin: 0;">
+                SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
+            </div>
+            
+            <!-- Zone de signature animée -->
+            <div style="position: absolute; right: 0; bottom: -22px; white-space: nowrap;">
+                <span id="plume-signature" class="signature-manuscrite"></span>
+                <img id="plume-stylo" src="https://i.imgur.com/H9GfXQY.png" 
+                     style="height: 30px; position: absolute; top: -15px; display: none; transform: rotate(15deg);">
+            </div>
+        </div>
+    </div>
 </div>
-<div class="signature-manuscrite">by Marcellin</div>
-</div>
-
 
             <div class="nav-elements">
                 <div class="search-wrapper">
@@ -829,43 +838,44 @@ document.addEventListener('click', function(e) {
 });
 // eto ilay izy //
 document.addEventListener("DOMContentLoaded", function() {
-    const textToSign = "by Marcellin";
-    const sigSpan = document.getElementById("plume-signature");
-    const penImg = document.getElementById("plume-stylo");
+    const texte = "by Marcellin";
+    const zoneTexte = document.getElementById("plume-signature");
+    const imagePlume = document.getElementById("plume-stylo");
     
     let index = 0;
-    let isErasing = false;
+    let effacement = false;
 
-    function drawSignature() {
-        const currentText = isErasing 
-            ? textToSign.substring(0, index--) 
-            : textToSign.substring(0, index++);
+    function animer() {
+        const rendu = effacement 
+            ? texte.substring(0, index--) 
+            : texte.substring(0, index++);
 
-        sigSpan.innerHTML = currentText;
+        zoneTexte.innerHTML = rendu;
 
-        // On affiche la plume seulement si on écrit/efface
-        if (currentText.length > 0) {
-            penImg.style.display = "inline-block";
+        // Positionnement de la plume
+        if (rendu.length > 0) {
+            imagePlume.style.display = "block";
+            imagePlume.style.left = (zoneTexte.offsetWidth - 5) + "px";
         } else {
-            penImg.style.display = "none";
+            imagePlume.style.display = "none";
         }
 
-        let speed = isErasing ? 60 : 160; // Vitesse d'écriture manuelle
+        let vitesse = effacement ? 50 : 150;
 
-        if (!isErasing && index > textToSign.length) {
-            isErasing = true;
-            speed = 4000; // Pause de 4 secondes pour que les clients voient bien votre signature
-            penImg.style.display = "none"; 
-        } else if (isErasing && index < 0) {
-            isErasing = false;
+        if (!effacement && index > texte.length) {
+            effacement = true;
+            vitesse = 3000; // Pause pour lecture
+            imagePlume.style.display = "none";
+        } else if (effacement && index < 0) {
+            effacement = false;
             index = 0;
-            speed = 800; // Petite pause avant de recommencer le cycle
+            vitesse = 500;
         }
 
-        setTimeout(drawSignature, speed);
+        setTimeout(animer, vitesse);
     }
 
-    drawSignature();
+    animer();
 });
 </script>
 </body>
