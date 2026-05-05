@@ -103,19 +103,19 @@
     </div>
 
     <header>
-        <div class="logo-area" style="position: relative; display: flex; align-items: center;">
-    <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img"> 
+        <div class="logo-area" style="position: relative; display: flex; align-items: center; height: 50px;">
+    <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="height: 45px; width: auto;"> 
     
-    <div style="position: relative; margin-left: 10px;">
-        <div class="logo-text" style="letter-spacing: -0.5px; margin: 0; font-weight: 800;">
+    <div style="position: relative; margin-left: 12px; display: flex; flex-direction: column; justify-content: center;">
+        <div class="logo-text" style="letter-spacing: -0.5px; margin: 0; font-weight: 800; font-size: 1.4rem; line-height: 1;">
             SAFERUN <span style="color: var(--primary);">MARKET</span>
         </div>
         
-        <!-- Conteneur flottant pour ne pas pousser les éléments du bas -->
-        <div style="position: absolute; right: 0; bottom: -25px; white-space: nowrap; display: flex; align-items: center;">
+        <!-- Zone de la signature : positionnée en absolute pour ne pas décaler la barre de recherche -->
+        <div style="position: absolute; right: 0; bottom: -20px; height: 25px; pointer-events: none; display: flex; align-items: center;">
             <span id="plume-signature" class="signature-manuscrite"></span>
             <img id="plume-stylo" src="https://i.imgur.com/H9GfXQY.png" 
-                 style="height: 35px; width: auto; margin-left: -5px; display: none; transform: rotate(15deg);">
+                 style="height: 30px; width: auto; display: none; transform: rotate(15deg); margin-left: -5px;">
         </div>
     </div>
 </div>
@@ -834,44 +834,45 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.side-item').forEach(item => item.classList.remove('active'));
     }
 });
-
+// eto ilay izy //
 document.addEventListener("DOMContentLoaded", function() {
-    const text = "by Marcellin";
+    const textToSign = "by Marcellin";
     const sigSpan = document.getElementById("plume-signature");
     const penImg = document.getElementById("plume-stylo");
     
-    let i = 0;
-    let deleting = false;
+    let index = 0;
+    let isErasing = false;
 
-    function typewriter() {
-        const current = deleting 
-            ? text.substring(0, i--) 
-            : text.substring(0, i++);
+    function drawSignature() {
+        const currentText = isErasing 
+            ? textToSign.substring(0, index--) 
+            : textToSign.substring(0, index++);
 
-        sigSpan.innerHTML = current;
+        sigSpan.innerHTML = currentText;
 
-        // Gestion de l'affichage de la plume
-        if (current.length > 0 && current.length < text.length + 1) {
+        // On affiche la plume seulement si on écrit/efface
+        if (currentText.length > 0) {
             penImg.style.display = "inline-block";
         } else {
             penImg.style.display = "none";
         }
 
-        let speed = deleting ? 50 : 150;
+        let speed = isErasing ? 60 : 160; // Vitesse d'écriture manuelle
 
-        if (!deleting && i > text.length) {
-            deleting = true;
-            speed = 3000; // Pause de 3 secondes une fois fini
-        } else if (deleting && i < 0) {
-            deleting = false;
-            i = 0;
-            speed = 500;
+        if (!isErasing && index > textToSign.length) {
+            isErasing = true;
+            speed = 4000; // Pause de 4 secondes pour que les clients voient bien votre signature
+            penImg.style.display = "none"; 
+        } else if (isErasing && index < 0) {
+            isErasing = false;
+            index = 0;
+            speed = 800; // Petite pause avant de recommencer le cycle
         }
 
-        setTimeout(typewriter, speed);
+        setTimeout(drawSignature, speed);
     }
 
-    typewriter();
+    drawSignature();
 });
 </script>
 </body>
