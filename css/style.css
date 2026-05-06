@@ -3765,3 +3765,18 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         max-width: 5px; /* Étoiles plus discrètes sur mobile */
     }
 }
+/* Animation de l'icône pour attirer l'oeil sans bloquer */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Adaptation Mobile Professionnelle */
+@media (max-width: 480px) {
+    .slide h2 {
+        font-size: 1.5rem !important;
+    }
+    .slide p {
+        font-size: 0.9rem !important;
+    }
+}
