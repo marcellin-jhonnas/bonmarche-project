@@ -3728,13 +3728,40 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* eto nomanomboka ny signature " */
 .signature-manuscrite {
-    font-family: 'Birthstone', cursive; /* Assure-toi que le lien Google Fonts est dans ton <head> */
-    font-size: 1.8rem;
-    color: #27ae60;
-    position: absolute;
-    right: 0;
-    bottom: -25px; /* Ajuste selon tes préférences */
+    font-family: 'Birthstone', cursive;
+    font-size: 1.6rem; /* Taille idéale sur PC */
+    color: #f1c40f; 
     white-space: nowrap;
+    position: relative;
+    border-right: 2px solid #f1c40f;
+    line-height: 1;
+}
+
+#signature-underline {
+    height: 2px;
+    background-color: #f1c40f;
+    width: 0;
+    margin-top: -2px;
+    transition: width 0.2s ease-out;
+}
+
+.star-particle {
+    position: absolute;
+    background-color: #f1c40f;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
     pointer-events: none;
-    border-right: 2px solid #27ae60; /* Simule la pointe de la plume */
+}
+
+/* --- ADAPTATION MOBILE --- */
+@media (max-width: 480px) {
+    .signature-manuscrite {
+        font-size: 1.1rem; /* Plus petit sur mobile pour rester pro */
+        bottom: -5px;
+    }
+    #signature-wrapper {
+        bottom: -15px;
+    }
+    .star-particle {
+        max-width: 5px; /* Étoiles plus discrètes sur mobile */
+    }
 }

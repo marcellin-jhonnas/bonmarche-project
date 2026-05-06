@@ -104,13 +104,20 @@
 
     <header>
         <div class="header-container">
-<div class="logo-area" style="position: relative;">
-<img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"> 
-<div class="logo-text" style="letter-spacing: -0.5px;">
-SAFERUN <span style="color: var(--primary); text-shadow: 1px 1px 0px rgba(0,0,0,0.05);">MARKET</span>
-</div>
-        <!-- On ajoute l'ID ici pour l'animation -->
-        <div id="signature-anim" class="signature-manuscrite"></div>
+    <div class="logo-area" style="position: relative; display: flex; align-items: center; max-width: 100%;">
+        <img src="https://i.imgur.com/FEke8Cf.png" alt="Logo SafeRunMarket" class="logo-img" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); height: 40px; width: auto;"> 
+        
+        <div style="position: relative; margin-left: 10px;">
+            <div class="logo-text" style="letter-spacing: -0.5px; font-weight: 800; font-size: clamp(1rem, 4vw, 1.4rem);">
+                SAFERUN <span style="color: var(--primary);">MARKET</span>
+            </div>
+            
+            <div id="signature-wrapper" style="position: absolute; right: 0; bottom: -20px;">
+                <div id="signature-interactive" class="signature-manuscrite"></div>
+                <div id="stars-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+                <div id="signature-underline"></div>
+            </div>
+        </div>
     </div>
 
             <div class="nav-elements">
@@ -828,35 +835,69 @@ document.addEventListener('click', function(e) {
     }
 });
 // eto ilay izy //
-document.addEventListener("DOMContentLoaded", function() {
+(function() {
     const text = "by Marcellin";
-    const element = document.getElementById("signature-anim");
-    let index = 0;
+    const target = document.getElementById("signature-interactive");
+    const underline = document.getElementById("signature-underline");
+    const starsContainer = document.getElementById("stars-container");
+    const isMobile = window.innerWidth <= 480;
+    
+    let charIdx = 0;
     let isDeleting = false;
 
-    function animate() {
-        const currentText = isDeleting 
-            ? text.substring(0, index--) 
-            : text.substring(0, index++);
+    function createStar(xPos) {
+        const star = document.createElement("div");
+        star.className = "star-particle";
+        
+        // Moins d'étoiles et plus petites sur mobile
+        const size = isMobile ? Math.random() * 4 + 2 : Math.random() * 7 + 3;
+        star.style.width = size + "px";
+        star.style.height = size + "px";
+        star.style.left = xPos + "px";
+        star.style.top = (Math.random() * 16 - 8) + "px";
 
-        element.innerHTML = currentText;
+        starsContainer.appendChild(star);
 
-        let speed = isDeleting ? 100 : 200;
+        const destX = (Math.random() * 40 - 20);
+        const destY = (Math.random() * 40 - 20);
 
-        if (!isDeleting && index > text.length) {
-            isDeleting = true;
-            speed = 3000; // Pause de 3 secondes une fois la signature finie
-        } else if (isDeleting && index < 0) {
-            isDeleting = false;
-            index = 0;
-            speed = 500;
-        }
-
-        setTimeout(animate, speed);
+        star.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+            { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }
+        ], { duration: 700, easing: 'ease-out' }).onfinish = () => star.remove();
     }
 
-    animate();
-});
+    function draw() {
+        if (!target) return;
+
+        const content = isDeleting 
+            ? text.substring(0, charIdx--) 
+            : text.substring(0, charIdx++);
+
+        target.innerHTML = content;
+        
+        if (!isDeleting && charIdx > 0 && charIdx <= text.length) {
+            // 1 seule étoile sur mobile, 3 sur PC pour rester fluide
+            const starCount = isMobile ? 1 : 3;
+            for(let i=0; i < starCount; i++) createStar(target.offsetWidth);
+        }
+
+        underline.style.width = ((charIdx / text.length) * 100) + "%";
+
+        let delay = isDeleting ? 40 : 160;
+
+        if (!isDeleting && charIdx > text.length) {
+            isDeleting = true;
+            delay = 3500; 
+        } else if (isDeleting && charIdx < 0) {
+            isDeleting = false;
+            charIdx = 0;
+            delay = 700;
+        }
+        setTimeout(draw, delay);
+    }
+    document.addEventListener("DOMContentLoaded", draw);
+})();
 </script>
 </body>
 </html>
