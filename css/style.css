@@ -3799,6 +3799,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* ty ndray lou ty */
 /* --- Style rectifié pour supprimer le débordement --- */
+/* --- Style rectifié pour supprimer le débordement --- */
 .promo-slide {
     padding: 0 !important;
     margin: 0 !important;
@@ -3807,20 +3808,25 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    
     /* Empêche l'image de sortir du cadre */
     overflow: hidden !important; 
-    /* Force l'image à respecter les arrondis du parent aside */
-    border-radius: 15px; 
+    
+    /* Force l'image à respecter les arrondis */
+    border-radius: 15px !important; 
     background-color: #1e3a8a;
+
+    /* FIX DÉBORDEMENT MOBILE (L'erreur que tu avais) */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    mask-image: radial-gradient(white, black);
 }
 
 .promo-slide img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover; 
+    object-fit: cover !important; 
     object-position: center;
     display: block;
-    /* Sécurité supplémentaire pour le débordement sur certains navigateurs */
     border-radius: inherit; 
 }
 
@@ -3828,14 +3834,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 @media (max-width: 768px) {
     .card-saferun {
         min-height: 300px !important;
-        /* On s'assure que le conteneur principal coupe aussi */
         overflow: hidden !important;
-        border-radius: 15px;
-    }
-    
-    .promo-slide img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover;
+        border-radius: 15px !important;
+        
+        /* On répète le fix ici pour le conteneur mobile */
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+        mask-image: radial-gradient(white, black);
     }
 }
