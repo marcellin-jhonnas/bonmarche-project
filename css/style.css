@@ -3781,27 +3781,37 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     }
 }
 /* ty ndray lou ty */
-/* Style spécifique pour les slides d'images promotionnelles */
+/* --- Style pour les images PROMO --- */
 .promo-slide {
-    padding: 0 !important; /* On enlève le padding pour que l'image touche les bords */
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+    height: 100%; /* S'adapte à la hauteur du parent .card-saferun */
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff; /* Fond blanc si l'image est transparente */
-    height: 100%;
-    width: 100%;
+    overflow: hidden;
+    background-color: #1e3a8a; /* Fond bleu pour rester pro pendant le chargement */
 }
 
 .promo-slide img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain; /* L'image s'adapte sans être coupée ni écrasée */
+    object-fit: cover; /* Remplit tout le cadre sans déformer */
+    object-position: center; /* Centre l'image pour ne pas couper les visages */
     display: block;
 }
 
-/* Correction pour mobile pour garder l'aspect pro */
-@media (max-width: 480px) {
+/* --- ADAPTATION MOBILE (Tana Mobile Data) --- */
+@media (max-width: 768px) {
+    .card-saferun {
+        min-height: 300px !important; /* On réduit un peu la hauteur sur mobile pour gagner de la place */
+    }
+    
     .promo-slide img {
-        object-fit: cover; /* Sur petit écran, on remplit tout le cadre */
+        /* Sur mobile, si l'image est très large, on s'assure qu'elle ne crée pas de scroll horizontal */
+        max-width: 100%;
+        height: auto; 
+        object-fit: cover;
     }
 }
