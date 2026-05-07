@@ -3781,37 +3781,44 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     }
 }
 /* ty ndray lou ty */
-/* --- Style pour les images PROMO --- */
+/* --- Style rectifié pour supprimer le débordement --- */
 .promo-slide {
     padding: 0 !important;
     margin: 0 !important;
     width: 100%;
-    height: 100%; /* S'adapte à la hauteur du parent .card-saferun */
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    background-color: #1e3a8a; /* Fond bleu pour rester pro pendant le chargement */
+    /* Empêche l'image de sortir du cadre */
+    overflow: hidden !important; 
+    /* Force l'image à respecter les arrondis du parent aside */
+    border-radius: 15px; 
+    background-color: #1e3a8a;
 }
 
 .promo-slide img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover; /* Remplit tout le cadre sans déformer */
-    object-position: center; /* Centre l'image pour ne pas couper les visages */
+    object-fit: cover; 
+    object-position: center;
     display: block;
+    /* Sécurité supplémentaire pour le débordement sur certains navigateurs */
+    border-radius: inherit; 
 }
 
-/* --- ADAPTATION MOBILE (Tana Mobile Data) --- */
+/* --- ADAPTATION MOBILE --- */
 @media (max-width: 768px) {
     .card-saferun {
-        min-height: 300px !important; /* On réduit un peu la hauteur sur mobile pour gagner de la place */
+        min-height: 300px !important;
+        /* On s'assure que le conteneur principal coupe aussi */
+        overflow: hidden !important;
+        border-radius: 15px;
     }
     
     .promo-slide img {
-        /* Sur mobile, si l'image est très large, on s'assure qu'elle ne crée pas de scroll horizontal */
-        max-width: 100%;
-        height: auto; 
+        width: 100% !important;
+        height: 100% !important;
         object-fit: cover;
     }
 }
