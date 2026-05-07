@@ -3799,38 +3799,35 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* ty ndray lou ty */
 /* --- Style rectifié pour supprimer le débordement --- */
-/* --- RECTIFICATION SIMPLE ET EFFICACE --- */
+/* --- Style rectifié pour supprimer le débordement --- */
 .promo-slide {
-    width: 100% !important;
-    height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-    display: block !important; /* On s'assure qu'il est visible */
-    overflow: hidden !important;
-    border-radius: 15px !important;
-    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Empêche l'image de sortir du cadre */
+    overflow: hidden !important; 
+    
+    /* Force l'image à respecter les arrondis */
+    border-radius: 15px !important; 
+    background-color: #1e3a8a;
+
+    /* FIX DÉBORDEMENT MOBILE (L'erreur que tu avais) */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    mask-image: radial-gradient(white, black);
 }
 
 .promo-slide img {
-    /* On utilise min-width/height pour forcer le remplissage sans bloquer */
-    min-width: 100% !important;
-    min-height: 100% !important;
     width: 100% !important;
-    height: 380px !important; /* Force la hauteur fixe de ta carte */
+    height: 100% !important;
     object-fit: cover !important; 
-    
-    display: block !important;
-    border-radius: inherit;
-    
-    /* Empêche tout décalage bizarre */
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Fix spécifique pour forcer l'arrondi sur les navigateurs têtus */
-.card-saferun, .promo-slide {
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: radial-gradient(white, black);
+    object-position: center;
+    display: block;
+    border-radius: inherit; 
 }
 
 /* --- ADAPTATION MOBILE --- */
