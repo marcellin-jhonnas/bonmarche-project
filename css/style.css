@@ -2806,6 +2806,12 @@ section.saferun-pro-chat .btn-boutique-secondary {
 .card-saferun {
     background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);
     min-height: 280px;
+    /* AJOUTS CRITIQUES POUR STOPPER LE DÉBORDEMENT */
+    position: relative;
+    overflow: hidden !important; /* Coupe tout ce qui dépasse */
+    border-radius: 15px !important; /* Force l'arrondi sur tout le contenu */
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- PAGINATION --- */
