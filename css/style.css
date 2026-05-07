@@ -2792,10 +2792,12 @@ section.saferun-pro-chat .btn-boutique-secondary {
 /* --- CARTES PUB --- */
 .pub-card-style {
     border-radius: 15px;
-    padding: 20px;
     color: white;
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    /* On garde le padding ici pour les autres cartes comme GIZ */
+    padding: 20px; 
 }
 
 .card-giz {
@@ -2806,12 +2808,21 @@ section.saferun-pro-chat .btn-boutique-secondary {
 .card-saferun {
     background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);
     min-height: 280px;
-    /* AJOUTS CRITIQUES POUR STOPPER LE DÉBORDEMENT */
-    position: relative;
-    overflow: hidden !important; /* Coupe tout ce qui dépasse */
-    border-radius: 15px !important; /* Force l'arrondi sur tout le contenu */
+    position: sticky;
+    top: 10px;
+    padding: 0 !important;
     display: flex;
     flex-direction: column;
+    isolation: isolate;
+
+    /* ANCHOR: Correction du débordement & Compatibilité */
+    border-radius: 15px !important;
+    overflow: hidden !important;
+
+    /* Version pour Safari/Chrome (ton erreur actuelle) */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    /* Version Standard (ce que l'éditeur demande d'ajouter) */
+    mask-image: radial-gradient(white, black);
 }
 
 /* --- PAGINATION --- */
