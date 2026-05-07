@@ -3799,35 +3799,40 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* ty ndray lou ty */
 /* --- Style rectifié pour supprimer le débordement --- */
-/* --- Style rectifié pour supprimer le débordement --- */
+/* --- RECTIFICATION ULTIME ANTI-DÉBORDEMENT --- */
 .promo-slide {
+    position: relative !important; /* Devient la référence */
+    width: 100% !important;
+    height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     
-    /* Empêche l'image de sortir du cadre */
-    overflow: hidden !important; 
+    /* On force la coupure ici aussi */
+    overflow: hidden !important;
+    border-radius: 15px !important;
     
-    /* Force l'image à respecter les arrondis */
-    border-radius: 15px !important; 
-    background-color: #1e3a8a;
-
-    /* FIX DÉBORDEMENT MOBILE (L'erreur que tu avais) */
+    /* Fix pour Safari/Chrome mobile */
     -webkit-mask-image: -webkit-radial-gradient(white, black);
     mask-image: radial-gradient(white, black);
 }
 
 .promo-slide img {
+    /* L'IMAGE NE DOIT PLUS DICTER SA TAILLE */
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important; /* Centrage parfait */
+    
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important; 
-    object-position: center;
+    
+    /* On s'assure que l'image ne dépasse jamais du parent */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    
+    border-radius: inherit;
     display: block;
-    border-radius: inherit; 
 }
 
 /* --- ADAPTATION MOBILE --- */
