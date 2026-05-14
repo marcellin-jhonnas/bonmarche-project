@@ -685,24 +685,38 @@ function surveillerNouveauxMessages(allMsgs) {
 function declencherPopup(id, nb, texte) {
     const popup = document.getElementById('notif-popup');
     const body = document.getElementById('notif-body');
-    
     popup.style.display = 'block';
+
+    // --- LOGIQUE DE DÉTECTION D'IMAGE ---
+    let contenuAffiche = "";
+    // On vérifie si le texte contient un lien imgBB ou une extension image
+    if (texte.includes("i.ibb.co") || texte.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+        contenuAffiche = `
+            <div style="margin-top:5px; text-align:center;">
+                <img src="${texte}" style="max-width:100%; max-height:100px; border-radius:4px; border:1px solid #cbd5e1; display:block; margin:0 auto;">
+                <span style="font-size:10px; color:#ff6600;">[ Image reçue ]</span>
+            </div>`;
+    } else {
+        // Texte normal s'il n'y a pas de lien d'image
+        contenuAffiche = `"${texte.substring(0, 60)}${texte.length > 60 ? '...' : ''}"`;
+    }
+
     body.innerHTML = `
         <div style="font-size:13px; color:#64748b;">De : <strong>${id}</strong></div>
         <div style="font-size:15px; font-weight:800; color:#1e293b; margin:4px 0;">${nb} nouveau(x) message(s)</div>
         <div style="font-style:italic; font-size:12px; color:#94a3b8; background:#f8fafc; padding:5px; border-radius:4px; margin-top:5px; border-left:3px solid #cbd5e1;">
-            "${texte.substring(0, 60)}${texte.length > 60 ? '...' : ''}"
+            ${contenuAffiche}
         </div>
     `;
 
-    // CONFIGURATION DES BOUTONS
+    // CONFIGURATION DES BOUTONS (Inchangée pour ne prendre aucun risque)
     document.getElementById('btn-rejoindre').onclick = function() {
         marquerLu(id);
         showTab('tab-chat', document.querySelector('.nav-link[onclick*="tab-chat"]'));
         loadDiscussion(id);
         fermerNotif();
     };
-
+    
     document.getElementById('btn-repondre').onclick = function() {
         const rep = prompt("Réponse rapide pour " + id + " :");
         if(rep) {
