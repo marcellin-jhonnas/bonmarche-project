@@ -651,8 +651,8 @@ let totalFinal = sousTotal + fraisLivraison;
                 <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
             </div>
             <div style="display:flex; justify-content:space-between; color:#d35400; font-weight:bold; margin-top:5px;">
-                <span>Frais de Livraison :</span> <span>+ ${fraisLivraison.toLocaleString()} Ar</span>
-            </div>
+    <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
+</div>
         </div>` : ''}
     `;
 
