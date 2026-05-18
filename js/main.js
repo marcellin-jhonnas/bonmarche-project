@@ -613,10 +613,14 @@ function afficherPanier() {
     // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET ---
 let fraisLivraison = 0;
 
-// On récupère les réglages du quartier (chargés via searchZoneSafeRun)
-// On garde 5000 et 100000 comme valeurs de sécurité si le quartier est "Hors Liste"
-const tarifMin = parseInt(localStorage.getItem('saferun_tarif_minimal')) || 6000; 
-const seuilGratuit = parseInt(localStorage.getItem('saferun_seuil_gratuite')) || 120000;
+// --- BLOC DE SÉCURITÉ ET DE NETTOYAGE DES TARIFS ---
+const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
+const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
+
+// Nettoyage extrême : supprime "Ar" et les espaces pour obtenir de vrais nombres purs
+const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
+const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
+// ---------------------------------------------------
 
 if (sousTotal > 0) {
     // 1. Calcul de la règle des 15% (Protection sur le poids/volume)
