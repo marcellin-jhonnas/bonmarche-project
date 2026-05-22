@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeRun Admin OS</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeRun Admin OS</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --orange: #ff6b00; --dark: #0f172a; --bg: #f8fafc;
@@ -187,6 +187,96 @@
     position: relative;
     z-index: 10; /* Pour être sûr qu'il soit au-dessus du fond */
 }
+/* ===================================================
+   ADAPTATION SMARTPHONE POUR SAFERUN ADMIN
+   =================================================== */
+@media screen and (max-width: 768px) {
+    /* 1. Déblocage du défilement vertical */
+    body { 
+        overflow: auto !important; 
+    }
+
+    /* 2. Menu latéral transformé en volet coulissant */
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: -260px; /* Caché à gauche par défaut */
+        z-index: 10000;
+        transition: left 0.3s ease;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+    }
+
+    /* S'active quand on clique sur le bouton menu ☰ */
+    .sidebar.mobile-open {
+        left: 0 !important;
+    }
+
+    /* 3. Structure globale de la page */
+    .admin-container {
+        display: block !important;
+        height: auto !important;
+    }
+
+    .main {
+        height: auto !important;
+        min-height: 100vh;
+    }
+
+    .topbar {
+        padding: 0 15px !important;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+
+    #mobile-menu-btn {
+        display: block !important; /* Rend le bouton visible sur mobile */
+    }
+
+    .content {
+        padding: 15px !important;
+    }
+
+    /* 4. Rangement du Dashboard (1 seule colonne pour vos cartes) */
+    .grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* 5. Protection des tableaux (Glissement au doigt sans tout casser) */
+    .card:has(table) {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 500px;
+    }
+
+    th, td {
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+    }
+
+    /* 6. Interface du Chat Admin sur mobile */
+    .chat-box {
+        flex-direction: column !important;
+    }
+
+    .chat-sidebar {
+        width: 100% !important;
+        height: 180px !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* 7. Alignement vertical des formulaires et de la Caisse */
+    div[style*="display: flex; gap: 15px;"], 
+    div[style*="display: flex; gap: 10px;"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -266,12 +356,21 @@
 
     <main class="main">
         <header class="topbar">
-            <h3 id="view-title">Dashboard</h3>
-            <div style="display:flex; align-items:center; gap:15px;">
-                <button onclick="refreshAll()" style="background:none; border:none; cursor:pointer;"><i class="fas fa-sync-alt"></i></button>
-                <div style="height: 35px; width: 35px; background: var(--orange); border-radius: 50%; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold;">A</div>
-            </div>
-        </header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="mobile-menu-btn" onclick="toggleMobileMenu()" style="background: none; border: none; font-size: 20px; color: var(--dark); cursor: pointer; display: none;">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <h3 id="view-title" style="margin: 0;">Dashboard</h3>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <button onclick="refreshAll()" style="background: none; border: none; cursor: pointer;">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+        <div style="height: 35px; width: 35px; background: var(--orange); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">A</div>
+    </div>
+</header>
 
         <div class="content">
     <div id="tab-dash" class="tab-content">
@@ -2616,6 +2715,33 @@ async function viderFeuille(typeCible) {
         alert("✅ " + res.message);
     } catch (e) {
         alert("❌ Erreur de suppression");
+    }
+}
+// =========================================================
+// 1. L'ENROBAGE SÉCURISÉ POUR LE MOBILE (Sans toucher à votre code du haut)
+// =========================================================
+// On sauvegarde votre fonction d'origine sous un autre nom secret
+const originalSafeRunShowTab = showTab;
+
+// On crée une nouvelle version qui appelle la vôtre PUIS gère le mobile
+showTab = function(id, el) {
+    // On exécute votre fonction d'origine exactement avec ses arguments
+    originalSafeRunShowTab(id, el);
+    
+    // SÉCURITÉ MOBILE : Si le menu de gauche est ouvert sur smartphone, on le ferme
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
+    }
+};
+
+// =========================================================
+// 2. LA FONCTION POUR LE BOUTON HAMBURGER ☰
+// =========================================================
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('mobile-open');
     }
 }
 </script>
