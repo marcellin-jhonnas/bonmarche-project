@@ -3196,9 +3196,7 @@ setInterval(chargerMessagesChat, 3000);
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(animerMessagePromo, 2000);
 });
-// ==========================================
-// MOTEUR DE RELANCE SÉCURISÉ POUR LE CHAT SAFERUN
-// ==========================================
+
 setInterval(function() {
     // 1. On récupère les éléments du chat
     const chatWindow = document.getElementById('chat-window');
@@ -3207,11 +3205,15 @@ setInterval(function() {
     // 2. On vérifie si le chat est ouvert à l'écran
     const isChatOpen = chatWindow && (chatWindow.style.display === "flex" || chatWindow.classList.contains('active'));
     
-    // 3. SÉCURITÉ MODIFIÉE : On ajoute "bubble.innerHTML === """ 
-    // On ne relance QUE si le chat est fermé, qu'on n'écrit pas ET que la bulle est complètement vide.
-    if (!isChatOpen && typeof isTyping !== "undefined" && !isTyping && bubble && bubble.innerHTML === "") {
+    // 3. Si le chat est fermé et qu'aucune écriture n'est en cours
+    if (!isChatOpen && typeof isTyping !== "undefined" && !isTyping && bubble) {
         
-        // Sécurité : Si l'animation s'est arrêtée en plein milieu, on force la relance
+        // CORRECTION INTERNE : Si la bulle contient déjà du texte figé, on la vide d'abord
+        if (bubble.innerHTML !== "") {
+            bubble.innerHTML = "";
+        }
+        
+        // Maintenant que c'est propre et vide, on force la relance de l'animation
         if (typeof animerMessagePromo === "function") {
             animerMessagePromo();
         }
