@@ -277,6 +277,32 @@
         gap: 10px !important;
     }
 }
+/* Styles isolés pour l'espace Pilote */
+.btn-pilote {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 14px 18px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    text-align: left !important;
+}
+.btn-pilote:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.btn-matin:hover { border-color: #0284c7 !important; color: #0284c7 !important; background: #f0f9ff !important; }
+.btn-aprem:hover { border-color: #b45309 !important; color: #b45309 !important; background: #fffbeb !important; }
+.btn-demain:hover { border-color: #16a34a !important; color: #16a34a !important; background: #f0fdf4 !important; }
+.btn-futur:hover { border-color: #475569 !important; color: #475569 !important; background: #f1f5f9 !important; }
+.badge-pdf { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -346,6 +372,9 @@
 <div class="nav-item" onclick="showSection('calendrier')">
     <i class="fas fa-calendar-alt"></i> <span>Calendrier & Promos</span>
 </div>
+<div class="nav-item" onclick="showTab('tab-pilote', this)">
+    <i class="fas fa-route"></i> <span>Pilote Déstockage</span>
+</div>
     </nav>
     <div style="padding: 20px;">
         <button onclick="logout()" style="width: 100%; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
@@ -373,6 +402,50 @@
 </header>
 
         <div class="content">
+            <div id="tab-pilote" class="tab-content view-section" style="display: none; padding: 20px;">
+    <div class="card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-top: 0; color: var(--dark); border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
+            <i class="fas fa-sliders-h" style="color: var(--orange);"></i> Centre de Dispatch & Déstockage Grossistes
+        </h3>
+        <p style="color: var(--gray); font-size: 14px; margin-bottom: 25px;">
+            Sélectionnez une vague de livraison pour générer et extraire instantanément un fichier PDF distinct. Ce document servira au déstockage matinal ou de mi-journée auprès des grossistes et à la feuille de route des coursiers.
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <div>
+                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 15px;"><i class="fas fa-calendar-day" style="color: #0284c7;"></i> FLUX D'AUJOURD'HUI</h4>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <button type="button" onclick="filtrerEtExporterPDF('AUJOURDHUI', '09:00', '11:00')" class="btn-pilote btn-matin">
+                            <span><i class="fas fa-clock"></i> Première Vague (9h00 - 11h00)</span> <span class="badge-pdf">PDF</span>
+                        </button>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <button type="button" onclick="filtrerEtExporterPDF('AUJOURDHUI', '14:00', '17:00')" class="btn-pilote btn-aprem">
+                            <span><i class="fas fa-clock"></i> Deuxième Vague (14h00 - 17h00)</span> <span class="badge-pdf">PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed #e2e8f0; padding-top: 20px;">
+                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 15px;"><i class="fas fa-forward" style="color: #16a34a;"></i> PLANIFICATIONS & SÉCURITÉ</h4>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <button type="button" onclick="filtrerEtExporterPDF('DEMAIN', '00:00', '23:59')" class="btn-pilote btn-demain">
+                            <span><i class="fas fa-calendar-alt"></i> Toutes les expéditions de Demain</span> <span class="badge-pdf">PDF</span>
+                        </button>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <button type="button" onclick="filtrerEtExporterPDF('AUTRES', '00:00', '23:59')" class="btn-pilote btn-futur">
+                            <span><i class="fas fa-boxes"></i> Commandes en attente (Autres dates)</span> <span class="badge-pdf">PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <div id="tab-dash" class="tab-content">
         <div class="grid">
             <div class="card"><h3>Ventes Totales</h3><h2 id="dash-ca">0 Ar</h2></div>
@@ -2743,6 +2816,103 @@ function toggleMobileMenu() {
     if (sidebar) {
         sidebar.classList.toggle('mobile-open');
     }
+}
+// =========================================================================
+// MOTEUR D'EXTRACTION DU PILOTE : RECHERCHE INTÉGRALE ET SÉPARATION PDF
+// =========================================================================
+function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
+    // Étape critique : On va scanner TOUTES les lignes de tableaux présentes dans l'application
+    const lignes = document.querySelectorAll('table tbody tr');
+    
+    if (lignes.length === 0) {
+        alert("Aucune donnée disponible. Assurez-vous d'avoir cliqué sur l'onglet Logistique au moins une fois pour charger le tableau.");
+        return;
+    }
+
+    const maintenant = new Date();
+    const aujStr = maintenant.getFullYear() + '-' + String(maintenant.getMonth() + 1).padStart(2, '0') + '-' + String(maintenant.getDate()).padStart(2, '0');
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const demStr = demain.getFullYear() + '-' + String(demain.getMonth() + 1).padStart(2, '0') + '-' + String(demain.getDate()).padStart(2, '0');
+
+    let htmlContenu = "";
+    let totalColis = 0;
+
+    lignes.forEach(ligne => {
+        const texteLigne = ligne.innerText || "";
+        
+        // Regex pour identifier la date (AAAA-MM-JJ) et l'heure (HH:MM)
+        const matchDate = texteLigne.match(/\d{4}-\d{2}-\d{2}/);
+        const matchHeure = texteLigne.match(/\d{2}[:h]\d{2}/);
+        
+        let dateCmd = matchDate ? matchDate[0] : aujStr;
+        let heureCmd = matchHeure ? matchHeure[0].replace('h', ':') : "09:00";
+
+        let jourValide = false;
+        if (cibleJour === 'AUJOURDHUI' && dateCmd === aujStr) jourValide = true;
+        else if (cibleJour === 'DEMAIN' && dateCmd === demStr) jourValide = true;
+        else if (cibleJour === 'AUTRES' && dateCmd !== aujStr && dateCmd !== demStr) jourValide = true;
+
+        if (jourValide) {
+            if (heureCmd >= heureDebut && heureCmd <= heureFin) {
+                // On préserve le style et le HTML d'origine de la ligne de commande
+                htmlContenu += `<tr style="border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">${ligne.innerHTML}</tr>`;
+                totalColis++;
+            }
+        }
+    });
+
+    if (totalColis === 0) {
+        alert(`Information : Aucun enregistrement trouvé pour la période [${cibleJour}] dans la tranche horaire [${heureDebut} à ${heureFin}].`);
+        return;
+    }
+
+    // Génération du PDF via l'instance d'impression du navigateur
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html>
+        <head>
+            <title>SafeRun - Export ${cibleJour}</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; }
+                .titre-zone { border-bottom: 3px solid #ff6600; padding-bottom: 12px; margin-bottom: 25px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; }
+                td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; }
+                /* Sécurité pour épurer le PDF imprimé */
+                button, .btn, .actions, .btn-action, input[type="checkbox"] { display: none !important; }
+            </style>
+        </head>
+        <body>
+            <div class="titre-zone">
+                <h2 style="margin:0; color:#0f172a; font-size: 22px;">🚚 COMPTE-RENDU DE EXPÉDITION & DÉSTOCKAGE</h2>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                    <strong>Filtre appliqué :</strong> ${cibleJour} de ${heureDebut} à ${heureFin}<br>
+                    <strong>Volume de chargement :</strong> ${totalColis} colis identifiés<br>
+                    Fichier d'exploitation extrait le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+                </p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Spécifications et Contenu de la Commande</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${htmlContenu}
+                </tbody>
+            </table>
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 300);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
 }
 </script>
 </body>
