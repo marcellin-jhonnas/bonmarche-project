@@ -405,42 +405,48 @@
             <div id="tab-pilote" class="tab-content view-section" style="display: none; padding: 20px;">
     <div class="card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
         <h3 style="margin-top: 0; color: var(--dark); border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
-            <i class="fas fa-sliders-h" style="color: var(--orange);"></i> Centre de Dispatch & Déstockage Grossistes
+            <i class="fas fa-shield-alt" style="color: var(--success);"></i> Pilote de Déstockage Sécurisé (Google Sheets)
         </h3>
         <p style="color: var(--gray); font-size: 14px; margin-bottom: 25px;">
-            Sélectionnez une vague de livraison pour générer et extraire instantanément un fichier PDF distinct. Ce document servira au déstockage matinal ou de mi-journée auprès des grossistes et à la feuille de route des coursiers.
+            Ce module filtre les données réelles issues de Google Sheets. Il retient uniquement les commandes au statut <strong>SÉRIEUX / VALIDÉ</strong> et sépare automatiquement la marchandise du matin et de l'après-midi pour éviter les mélanges.
         </p>
         
-        <div style="display: flex; flex-direction: column; gap: 25px;">
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
             <div>
-                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 15px;"><i class="fas fa-calendar-day" style="color: #0284c7;"></i> FLUX D'AUJOURD'HUI</h4>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 200px;">
-                        <button type="button" onclick="filtrerEtExporterPDF('AUJOURDHUI', '09:00', '11:00')" class="btn-pilote btn-matin">
-                            <span><i class="fas fa-clock"></i> Première Vague (9h00 - 11h00)</span> <span class="badge-pdf">PDF</span>
-                        </button>
-                    </div>
-                    <div style="flex: 1; min-width: 200px;">
-                        <button type="button" onclick="filtrerEtExporterPDF('AUJOURDHUI', '14:00', '17:00')" class="btn-pilote btn-aprem">
-                            <span><i class="fas fa-clock"></i> Deuxième Vague (14h00 - 17h00)</span> <span class="badge-pdf">PDF</span>
-                        </button>
-                    </div>
+                <label style="font-weight: bold; font-size: 13px; color: #475569;">Jour d'extraction :</label>
+                <select id="pilote-filtre-jour" class="form-control" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; margin-left: 10px;">
+                    <option value="AUJOURDHUI">Aujourd'hui</option>
+                    <option value="DEMAIN">Demain</option>
+                    <option value="AUTRES">Autres dates planifiées</option>
+                </select>
+            </div>
+            <button type="button" onclick="analyserEtDispatcherLivraisons()" style="background: var(--orange); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i> Calculer et Dispatcher les 2 Flux
+            </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 30px;">
+            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h4 style="margin: 0; color: #0284c7; font-size: 16px;"><i class="fas fa-cloud-sun"></i> 1ère FEUILLE : Récupération Matin (9h00 - 11h00)</h4>
+                    <button type="button" onclick="imprimerZonePDF('zone-matin', 'MATIN')" style="background: #0284c7; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold;">
+                        <i class="fas fa-file-pdf"></i> Imprimer Feuille Matin
+                    </button>
+                </div>
+                <div id="zone-matin" style="background: #fafafa; padding: 10px; border-radius: 6px; min-height: 60px; overflow-x: auto;">
+                    <p style="color: #94a3b8; text-align: center; font-style: italic; margin: 15px 0;">Cliquez sur "Calculer et Dispatcher" pour générer la feuille...</p>
                 </div>
             </div>
 
-            <div style="border-top: 1px dashed #e2e8f0; padding-top: 20px;">
-                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 15px;"><i class="fas fa-forward" style="color: #16a34a;"></i> PLANIFICATIONS & SÉCURITÉ</h4>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 200px;">
-                        <button type="button" onclick="filtrerEtExporterPDF('DEMAIN', '00:00', '23:59')" class="btn-pilote btn-demain">
-                            <span><i class="fas fa-calendar-alt"></i> Toutes les expéditions de Demain</span> <span class="badge-pdf">PDF</span>
-                        </button>
-                    </div>
-                    <div style="flex: 1; min-width: 200px;">
-                        <button type="button" onclick="filtrerEtExporterPDF('AUTRES', '00:00', '23:59')" class="btn-pilote btn-futur">
-                            <span><i class="fas fa-boxes"></i> Commandes en attente (Autres dates)</span> <span class="badge-pdf">PDF</span>
-                        </button>
-                    </div>
+            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h4 style="margin: 0; color: #b45309; font-size: 16px;"><i class="fas fa-cloud-moon"></i> 2ème FEUILLE : Récupération Après-midi (14h00 - 17h00)</h4>
+                    <button type="button" onclick="imprimerZonePDF('zone-aprem', 'APRES-MIDI')" style="background: #b45309; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold;">
+                        <i class="fas fa-file-pdf"></i> Imprimer Feuille Après-Midi
+                    </button>
+                </div>
+                <div id="zone-aprem" style="background: #fafafa; padding: 10px; border-radius: 6px; min-height: 60px; overflow-x: auto;">
+                    <p style="color: #94a3b8; text-align: center; font-style: italic; margin: 15px 0;">Cliquez sur "Calculer et Dispatcher" pour générer la feuille...</p>
                 </div>
             </div>
         </div>
@@ -2914,6 +2920,8 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
     `);
     win.document.close();
 }
+
+
 </script>
 </body>
 </html>
