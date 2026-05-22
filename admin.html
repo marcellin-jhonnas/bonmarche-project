@@ -2921,7 +2921,148 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
     win.document.close();
 }
 
+// =========================================================================
+// MOTEUR DE DISPATCHING SÉCURISÉ & INTELLIGENT (ANTI-PIÈGE)
+// =========================================================================
+function analyserEtDispatcherLivraisons() {
+    const cibleJour = document.getElementById('pilote-filtre-jour').value;
+    
+    // 1. Extraction des lignes actuelles du tableau chargées depuis Google Sheet
+    const lignes = document.querySelectorAll('table tbody tr');
+    
+    if (lignes.length === 0) {
+        alert("⚠️ Le tableau est vide. Veuillez d'abord charger l'onglet Logistique pour synchroniser les données du Sheet.");
+        return;
+    }
 
+    // Préparation des dates de contrôle
+    const maintenant = new Date();
+    const aujStr = maintenant.getFullYear() + '-' + String(maintenant.getMonth() + 1).padStart(2, '0') + '-' + String(maintenant.getDate()).padStart(2, '0');
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const demStr = demain.getFullYear() + '-' + String(demain.getMonth() + 1).padStart(2, '0') + '-' + String(demain.getDate()).padStart(2, '0');
+
+    // Modèles de tableaux HTML pour l'affichage des deux feuilles distinctes
+    let enteteTableau = `<table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+        <thead>
+            <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; color:#475569;">
+                <th style="padding:10px;">Détails de la Commande Validée</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    let htmlMatin = enteteTableau;
+    let htmlAprem = enteteTableau;
+    
+    let compteurMatin = 0;
+    let compteurAprem = 0;
+
+    // 2. Boucle de vérification sur chaque commande
+    lignes.forEach(ligne => {
+        const contenuTexte = ligne.innerText || "";
+        const contenuHTML = ligne.innerHTML;
+        
+        // --- FILTRE DE SÉCURITÉ 1 : LE STATUT SÉRIEUX ---
+        // On évite les pièges : on ignore la ligne si elle contient "Annulé", "Panier" ou "En attente"
+        // Adaptez ces mots selon les statuts exacts de votre base SafeRun
+        const texteMinuscule = contenuTexte.toLowerCase();
+        if (texteMinuscule.includes("annulé") || texteMinuscule.includes("panier")) {
+            return; // On passe à la commande suivante, on ignore celle-ci
+        }
+
+        // --- FILTRE 2 : DÉTECTION DU JOUR ---
+        const matchDate = contenuTexte.match(/\d{4}-\d{2}-\d{2}/);
+        let dateCmd = matchDate ? matchDate[0] : aujStr;
+
+        let jourValide = false;
+        if (cibleJour === 'AUJOURDHUI' && dateCmd === aujStr) jourValide = true;
+        else if (cibleJour === 'DEMAIN' && dateCmd === demStr) jourValide = true;
+        else if (cibleJour === 'AUTRES' && dateCmd !== aujStr && dateCmd !== demStr) jourValide = true;
+
+        if (!jourValide) return; // Si ce n'est pas le jour demandé, on passe
+
+        // --- FILTRE 3 : ANALYSE DE VOTRE FORMAT DE LIVRAISON EXCLUSIF ---
+        // On cherche les mots clés "matin", "9h", "11h" d'un côté et "après-midi", "14h", "17h" de l'autre
+        let estMatin = texteMinuscule.includes("matin") || texteMinuscule.includes("9h") || texteMinuscule.includes("11h");
+        let estAprem = texteMinuscule.includes("après-midi") || texteMinuscule.includes("cet après-midi") || texteMinuscule.includes("14h") || texteMinuscule.includes("17h");
+
+        // Rangement chirurgical sans mélange
+        if (estMatin) {
+            htmlMatin += `<tr style="border-bottom:1px solid #e2e8f0; background:white;"><td style="padding:10px;">${contenuHTML}</td></tr>`;
+            compteurMatin++;
+        } else if (estAprem) {
+            htmlAprem += `<tr style="border-bottom:1px solid #e2e8f0; background:white;"><td style="padding:10px;">${contenuHTML}</td></tr>`;
+            compteurAprem++;
+        }
+    });
+
+    htmlMatin += `</tbody></table>`;
+    htmlAprem += `</tbody></table>`;
+
+    // 3. Injection des données dans les deux zones d'affichage distinctes
+    const zoneMatin = document.getElementById('zone-matin');
+    const zoneAprem = document.getElementById('zone-aprem');
+
+    if (compteurMatin > 0) {
+        zoneMatin.innerHTML = `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;">✅ ${compteurMatin} colis à récupérer ce matin.</p>` + htmlMatin;
+    } else {
+        zoneMatin.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:10px;">Aucun déstockage prévu pour le matin.</p>`;
+    }
+
+    if (compteurAprem > 0) {
+        zoneAprem.innerHTML = `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;">✅ ${compteurAprem} colis à récupérer cet après-midi.</p>` + htmlAprem;
+    } else {
+        zoneAprem.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:10px;">Aucun déstockage prévu pour l'après-midi.</p>`;
+    }
+    
+    alert(`Dispatching terminé !\n\nFeuille Matin : ${compteurMatin} commande(s)\nFeuille Après-midi : ${compteurAprem} commande(s)`);
+}
+
+// FUNCTION COMPLÉMENTAIRE POUR IMPRIMER CHAQUE FEUILLE EN PDF SÉPARÉ
+function imprimerZonePDF(idZone, fluxNom) {
+    const contenuZone = document.getElementById(idZone).innerHTML;
+    const cibleJour = document.getElementById('pilote-filtre-jour').value;
+
+    if (contenuZone.includes("Aucun déstockage") || contenuZone.includes("Cliquez sur")) {
+        alert("La feuille est vide. Impossible de générer un PDF.");
+        return;
+    }
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html>
+        <head>
+            <title>SafeRun - Feuille de Déstockage ${fluxNom}</title>
+            <style>
+                body { font-family: sans-serif; color: #1e293b; padding: 30px; }
+                .pdf-header { border-bottom: 3px solid #ff6600; padding-bottom: 10px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; }
+                td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; }
+                button, .btn, .actions, .btn-action, input[type="checkbox"] { display: none !important; }
+            </style>
+        </head>
+        <body>
+            <div class="pdf-header">
+                <h2 style="margin:0; color:#0f172a;">📦 SAFE-RUN MARKET - LOGISTIQUE GROSSISTES</h2>
+                <h3 style="margin:5px 0 0 0; color:#ff6600;">FLUX EXTRACTIF : ${fluxNom} (${cibleJour})</h3>
+                <p style="margin:5px 0 0 0; font-size:11px; color:#64748b;">Généré de manière sécurisée via Apps Script le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+            </div>
+            <div>
+                ${contenuZone}
+            </div>
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 300);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+}
 </script>
 </body>
 </html>
