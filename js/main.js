@@ -1049,7 +1049,7 @@ function afficherChoixPaiementLuxe(id, montant) {
     };
 
     document.getElementById('go-mvola').onclick = function() {
-        envoyerActionSheet("NOUVEAU MVOLA");
+        envoyerActionSheet("NOUVEAU");
         overlay.remove();
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
