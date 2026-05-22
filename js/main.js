@@ -3197,31 +3197,40 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(animerMessagePromo, 2000);
 });
 // ==========================================
-// NETTOYEUR ET RELANCEUR DE SÉCURITÉ UNIQUE
+// LE SURVEILLANT ABSOLU (ANTI-CHARABIA ET BLOCAGE)
 // ==========================================
+let safeRunTimeoutTracker = null;
+
+// On intercepte discrètement le setTimeout d'origine pour pouvoir le stopper
+const originalSetTimeout = window.setTimeout;
+window.setTimeout = function(fonc, delai) {
+    const id = originalSetTimeout(fonc, delai);
+    // Si c'est le setTimeout de l'écriture (qui tourne autour de 35-60ms)
+    if (delai >= 30 && delai <= 65) {
+        safeRunTimeoutTracker = id;
+    }
+    return id;
+};
+
 setInterval(function() {
     const chatWindow = document.getElementById('chat-window');
     const bubble = document.getElementById('chat-promo-text');
     const isChatOpen = chatWindow && (chatWindow.style.display === "flex" || chatWindow.classList.contains('active'));
     
-    // Si le chat est fermé
-    if (!isChatOpen && bubble) {
-        
-        // Si l'écriture est bloquée ou s'est arrêtée
-        if (typeof isTyping !== "undefined" && !isTyping) {
-            
-            // On nettoie la bulle pour que l'animation d'origine puisse réécrire sur du propre
-            bubble.innerHTML = ""; 
-            
-            // On appelle l'animation UNE SEULE FOIS pour relancer la machine
+    if (isChatOpen) {
+        // 🔥 1. SI LE CHAT EST OUVERT : On détruit instantanément tout ce qui écrit en cachette
+        if (safeRunTimeoutTracker) {
+            clearTimeout(safeRunTimeoutTracker);
+            safeRunTimeoutTracker = null;
+        }
+        isTyping = false;
+        if (bubble) bubble.innerHTML = ""; 
+    } else {
+        // 🔥 2. SI LE CHAT EST FERMÉ : On regarde si l'animation s'est arrêtée
+        if (bubble && !isTyping && bubble.innerHTML === "") {
             if (typeof animerMessagePromo === "function") {
                 animerMessagePromo();
             }
         }
-    } else if (isChatOpen) {
-        // Sécurité absolue : Si le chat est OUVERT, on force l'arrêt immédiat de l'écriture
-        // et on vide la bulle pour casser net les boucles invisibles en arrière-plan
-        isTyping = false;
-        if (bubble) bubble.innerHTML = "";
     }
-}, 4000);
+}, 3000);
