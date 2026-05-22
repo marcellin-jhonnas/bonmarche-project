@@ -2637,7 +2637,7 @@ function taperMessage(element, texte, callback) {
         if (i < texte.length) {
             element.innerHTML += texte.charAt(i);
             i++;
-            setTimeout(type, 35); // Vitesse légèrement plus rapide pour le confort (35ms)
+            setTimeout(type, 60); // Vitesse légèrement plus rapide pour le confort (35ms)
         } else {
             isTyping = false;
             if (callback) setTimeout(callback, 2500); // Pause avant le prochain message
