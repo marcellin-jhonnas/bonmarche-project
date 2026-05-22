@@ -2653,7 +2653,7 @@ function animerMessagePromo() {
     // On vérifie si le chat est ouvert
     const isChatOpen = chatWindow && (chatWindow.style.display === "flex");
 
-    if (isChatOpen || isTyping || !bubble) return;
+    if (isChatOpen || isTyping || !bubble) { isTyping = false; return; }
 
     const messagesActuels = obtenirMessagesSelonHeure();
     const messageATaper = messagesActuels[indexMsg];
