@@ -2628,10 +2628,10 @@ function obtenirMessagesSelonHeure() {
 let isTyping = false;
 
 function taperMessage(element, texte, callback) {
-    if (!element) return;
-    let i = 0;
-    element.innerHTML = ""; 
-    isTyping = true;
+if (!element || isTyping) return; // <-- SÉCURITÉ : Si une écriture tourne déjà, on sort !
+let i = 0;
+element.innerHTML = "";
+isTyping = true;
     
     function type() {
         if (i < texte.length) {
@@ -3207,8 +3207,9 @@ setInterval(function() {
     // 2. On vérifie si le chat est ouvert à l'écran
     const isChatOpen = chatWindow && (chatWindow.style.display === "flex" || chatWindow.classList.contains('active'));
     
-    // 3. Si le chat est fermé et qu'aucune écriture n'est en cours
-    if (!isChatOpen && typeof isTyping !== "undefined" && !isTyping && bubble) {
+    // 3. SÉCURITÉ MODIFIÉE : On ajoute "bubble.innerHTML === """ 
+    // On ne relance QUE si le chat est fermé, qu'on n'écrit pas ET que la bulle est complètement vide.
+    if (!isChatOpen && typeof isTyping !== "undefined" && !isTyping && bubble && bubble.innerHTML === "") {
         
         // Sécurité : Si l'animation s'est arrêtée en plein milieu, on force la relance
         if (typeof animerMessagePromo === "function") {
