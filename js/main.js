@@ -3196,26 +3196,32 @@ setInterval(chargerMessagesChat, 3000);
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(animerMessagePromo, 2000);
 });
-
+// ==========================================
+// NETTOYEUR ET RELANCEUR DE SÉCURITÉ UNIQUE
+// ==========================================
 setInterval(function() {
-    // 1. On récupère les éléments du chat
     const chatWindow = document.getElementById('chat-window');
     const bubble = document.getElementById('chat-promo-text');
-    
-    // 2. On vérifie si le chat est ouvert à l'écran
     const isChatOpen = chatWindow && (chatWindow.style.display === "flex" || chatWindow.classList.contains('active'));
     
-    // 3. Si le chat est fermé et qu'aucune écriture n'est en cours
-    if (!isChatOpen && typeof isTyping !== "undefined" && !isTyping && bubble) {
+    // Si le chat est fermé
+    if (!isChatOpen && bubble) {
         
-        // CORRECTION INTERNE : Si la bulle contient déjà du texte figé, on la vide d'abord
-        if (bubble.innerHTML !== "") {
-            bubble.innerHTML = "";
+        // Si l'écriture est bloquée ou s'est arrêtée
+        if (typeof isTyping !== "undefined" && !isTyping) {
+            
+            // On nettoie la bulle pour que l'animation d'origine puisse réécrire sur du propre
+            bubble.innerHTML = ""; 
+            
+            // On appelle l'animation UNE SEULE FOIS pour relancer la machine
+            if (typeof animerMessagePromo === "function") {
+                animerMessagePromo();
+            }
         }
-        
-        // Maintenant que c'est propre et vide, on force la relance de l'animation
-        if (typeof animerMessagePromo === "function") {
-            animerMessagePromo();
-        }
+    } else if (isChatOpen) {
+        // Sécurité absolue : Si le chat est OUVERT, on force l'arrêt immédiat de l'écriture
+        // et on vide la bulle pour casser net les boucles invisibles en arrière-plan
+        isTyping = false;
+        if (bubble) bubble.innerHTML = "";
     }
-}, 4000); // Vérification douce toutes les 4 secondes
+}, 4000);
