@@ -2925,43 +2925,45 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 // MOTEUR DE DISPATCHING ULTRA-PRO & LIEN DIRECT APPS SCRIPT (SAFERUN)
 // =========================================================================
 function analyserEtDispatcherLivraisons() {
-    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+    console.log("=== DÉBUT DU DISPATCHING LOGISTIQUE ===");
 
-    console.log("=== DEBUT DU DISPATCHING LOGISTIQUE ===");
+    // 1. VÉRIFICATION ET CHARGEMENT AUTOMATIQUE VIA VOTRE FONCTION SYSTEME
+    // On vérifie si la variable globale allData ou currentSerieuses contient des données.
+    // Si elles sont vides, on regarde si des lignes existent dans le tableau logistique.
+    const commandesEnMemoire = window.allData || window.currentSerieuses || [];
+    const lignesTableauLogistique = document.querySelectorAll('#table-logistique-body tr, #logistique-table tbody tr');
 
-    // 1. Détection et Chargement Automatique si la mémoire 'allData' est vide
-    if (!window.allData || window.allData.length === 0) {
-        console.warn("⚠️ window.allData est vide ou inexistant !");
+    if (commandesEnMemoire.length === 0 && lignesTableauLogistique.length === 0) {
+        console.warn("⚠️ Aucune commande détectée en mémoire ni dans le tableau.");
         
         if (typeof loadLogistique === "function") {
-            console.log("Appel de la fonction système loadLogistique()...");
-            loadLogistique();
-            alert("🔄 Synchronisation avec Google Sheets lancée ! Veuillez patienter 2 à 3 secondes, puis recliquez sur 'Calculer'.");
-            return;
-        } else {
-            console.log("Tentative de récupération directe via Fetch...");
-            alert("⏳ Chargement initial des commandes depuis Google Sheets... Cliquez sur OK.");
+            console.log("Appel automatique de la fonction système : loadLogistique()...");
             
-            fetch(`${API_URL}?action=getCommandes`)
-                .then(res => res.json())
-                .then(data => {
-                    console.log("🔍 Données reçues via Fetch direct :", data);
-                    window.allData = data;
-                    alert("✅ Données synchronisées ! Le tri va se lancer.");
-                    analyserEtDispatcherLivraisons();
-                })
-                .catch(err => {
-                    console.error("❌ Erreur Fetch :", err);
-                    alert("❌ Erreur de connexion : " + err.toString());
-                });
+            // On affiche un indicateur visuel dans vos zones de flux
+            const zm = document.getElementById('zone-matin');
+            const za = document.getElementById('zone-aprem');
+            if (zm) zm.innerHTML = `<p style="color:#0284c7; text-align:center; padding:10px;">⏳ Synchronisation de la base SafeRun en cours...</p>`;
+            if (za) za.innerHTML = `<p style="color:#b45309; text-align:center; padding:10px;">⏳ Chargement des données...</p>`;
+
+            // Lancement du chargement officiel de votre application
+            loadLogistique();
+            
+            // On laisse 2,5 secondes à Apps Script pour répondre, puis on relance automatiquement le tri
+            setTimeout(function() {
+                console.log("🔄 Tentative de re-calcul après synchronisation automatique...");
+                analyserEtDispatcherLivraisons();
+            }, 2500);
+            
+            return; // On stoppe cette exécution en attendant la fin du setTimeout
+        } else {
+            alert("❌ Erreur : Impossible de trouver la fonction de synchronisation 'loadLogistique()'. Veuillez ouvrir l'onglet 'Gestion de Commande' manuellement une fois.");
             return;
         }
     }
 
-    console.log("📊 Nombre total de lignes en mémoire (allData) :", window.allData.length);
-
+    // 2. PRÉPARATION DES DONNÉES À EXTRAIRE
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
-    console.log("🎯 Filtre de jour sélectionné dans l'interface :", cibleJour);
+    console.log("🎯 Filtre sélectionné :", cibleJour);
     
     const joursSemaine = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
     const maintenant = new Date();
@@ -2970,8 +2972,6 @@ function analyserEtDispatcherLivraisons() {
     const demain = new Date();
     demain.setDate(maintenant.getDate() + 1);
     const nomDemain = joursSemaine[demain.getDay()];
-
-    console.log(`📅 Détecteur de dates -> Aujourd'hui: "${nomAuj}" | Demain: "${nomDemain}"`);
 
     let enteteTableau = `<table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
         <thead>
@@ -2989,24 +2989,43 @@ function analyserEtDispatcherLivraisons() {
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 2. Traitement ligne par ligne avec traçabilité complète
-    window.allData.forEach((cmd, index) => {
-        const idCmd = cmd.ID || cmd["ID_Commande"] || index;
-        const client = cmd.Client || "Anonyme";
+    // Source de données unifiée : soit le tableau d'objets JavaScript, soit extraction depuis le tableau HTML existant
+    let listeAAnalyser = [];
+
+    if (commandesEnMemoire.length > 0) {
+        console.log(`📊 Analyse basée sur la mémoire système (${commandesEnMemoire.length} commandes).`);
+        listeAAnalyser = commandesEnMemoire;
+    } else {
+        console.log(`📊 Analyse basée sur les lignes HTML visibles (${lignesTableauLogistique.length} lignes).`);
+        // Si votre système stocke uniquement dans le DOM HTML, on convertit les lignes en objets lisibles
+        lignesTableauLogistique.forEach(tr => {
+            const texteLigne = tr.innerText || "";
+            if(texteLigne.trim() !== "") {
+                // Création d'un objet temporaire simulant la structure de la commande
+                listeAAnalyser.push({
+                    Client: tr.cells[1] ? tr.cells[1].innerText : "Client SafeRun",
+                    Livraison: tr.cells[2] ? tr.cells[2].innerText : texteLigne, // Utilise la cellule ou le texte global
+                    "Lieu Exact": tr.cells[3] ? tr.cells[3].innerText : "",
+                    Livreur: tr.cells[4] ? tr.cells[4].innerText : "Non assigné",
+                    Montant: tr.cells[5] ? tr.cells[5].innerText.replace(/[^0-9]/g, "") : "0",
+                    Statut: tr.cells[6] ? tr.cells[6].innerText : "VALIDE",
+                    ID: tr.cells[0] ? tr.cells[0].innerText : "---"
+                });
+            }
+        });
+    }
+
+    // 3. TRI CHIRURGICAL DES CRITÈRES (ANTI-PIÈGE)
+    listeAAnalyser.forEach((cmd, index) => {
         const statut = (cmd.Statut || "").toUpperCase();
         const texteLivraison = (cmd.Livraison || "").toLowerCase();
 
-        console.log(`--- [Commande #${index}] Client: ${client} (ID: ${idCmd}) ---`);
-        console.log(`    -> Statut brut dans le Sheets: "${statut}"`);
-        console.log(`    -> Colonne H (Livraison) brute: "${cmd.Livraison}"`);
-
-        // --- BLOGAGE POTENTIEL 1 : LE STATUT ---
+        // --- FILTRE 1 : SÉCURITÉ STATUT ---
         if (statut.includes("ANNULÉ") || statut.includes("PANIER") || statut === "") {
-            console.log(`    ❌ REJETÉ : Statut non admissible ("${statut}").`);
             return; 
         }
 
-        // --- BLOCAGE POTENTIEL 2 : LE JOUR ---
+        // --- FILTRE 2 : RECHERCHE DU JOUR ---
         let jourValide = false;
         if (cibleJour === 'AUJOURDHUI') {
             if (texteLivraison.includes(nomAuj) || texteLivraison.includes("aujourd'hui") || texteLivraison.includes("ce jour")) {
@@ -3022,69 +3041,56 @@ function analyserEtDispatcherLivraisons() {
             }
         }
 
-        if (!jourValide) {
-            console.log(`    ❌ REJETÉ : Ne correspond pas au filtre de jour "${cibleJour}".`);
-            return;
-        }
+        if (!jourValide) return;
 
-        console.log(`    ✅ VALIDÉ POUR LE JOUR !`);
-
-        // --- BLOCAGE POTENTIEL 3 : L'HEURE (MATIN / APREM) ---
+        // --- FILTRE 3 : VAGUE HORAIRE ---
         let estMatin = texteLivraison.includes("matin") || texteLivraison.includes("9h") || texteLivraison.includes("11h");
         let estAprem = texteLivraison.includes("après-midi") || texteLivraison.includes("aprem") || texteLivraison.includes("14h") || texteLivraison.includes("17h");
 
-        console.log(`    -> Détection horaire: EstMatin = ${estMatin}, EstAprem = ${estAprem}`);
-
         if (!estMatin && !estAprem) {
-            console.log(`    ⚠️ Aucun marqueur horaire trouvé. Redirection par défaut : MATIN.`);
-            estMatin = true; 
+            estMatin = true; // Protection par défaut
         }
 
         const ligneHTML = `
             <tr style="border-bottom:1px solid #e2e8f0; background:white;">
-                <td style="padding:10px;"><strong>${client}</strong><br><small style="color:#64748b;">Ref: #${idCmd}</small></td>
+                <td style="padding:10px;"><strong>${cmd.Client || 'Client'}</strong><br><small style="color:#64748b;">Ref: #${cmd.ID || '---'}</small></td>
                 <td style="padding:10px;">
                     <span style="color:#ff6600; font-weight:600;">📅 ${cmd.Livraison || 'Non spécifié'}</span><br>
-                    <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small><br>
-                    <small style="color:#64748b;">📞 Tél : ${cmd.Téléphone || '---'}</small>
+                    <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small>
                 </td>
-                <td style="padding:10px; font-weight:bold; color:#0f172a;">💼 ${cmd.Livreur || '<i>En attente</i>'}</td>
+                <td style="padding:10px; font-weight:bold; color:#0f172a;">💼 ${cmd.Livreur || 'En attente'}</td>
                 <td style="padding:10px; font-weight:bold; color:#16a34a;">${Number(cmd.Montant || 0).toLocaleString()} Ar</td>
             </tr>`;
 
         if (estMatin) {
             htmlMatin += ligneHTML;
             compteurMatin++;
-            console.log(`    📦 Dispatché dans : VAGUE MATIN`);
-        } else if (estAprem) {
+        } else {
             htmlAprem += ligneHTML;
             compteurAprem++;
-            console.log(`    📦 Dispatché dans : VAGUE APRÈS-MIDI`);
         }
     });
 
     htmlMatin += `</tbody></table>`;
     htmlAprem += `</tbody></table>`;
 
-    console.log(`=== FIN DU SCAN -> Matin: ${compteurMatin} | Après-midi: ${compteurAprem} ===`);
-
-    // 3. Injection et mise à jour des conteneurs HTML
+    // 4. INJECTION ET RENDER DANS LES ZONES GRAPHIK
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
     if (zoneMatin) {
         zoneMatin.innerHTML = compteurMatin > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis ce matin.</p>` + htmlMatin : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun colis ce matin.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis identifiés ce matin.</p>` + htmlMatin : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun déstockage ce matin.</p>`;
     }
     
     if (zoneAprem) {
         zoneAprem.innerHTML = compteurAprem > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis cet après-midi.</p>` + htmlAprem : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun colis cet après-midi.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis identifiés cet après-midi.</p>` + htmlAprem : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun déstockage cet après-midi.</p>`;
     }
-    
-    alert(`📊 Extraction terminée !\n\nMatin : ${compteurMatin} colis\nAprès-midi : ${compteurAprem} colis`);
+
+    console.log(`=== SCAN TERMINÉ : Matin ${compteurMatin} | Aprem ${compteurAprem} ===`);
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
