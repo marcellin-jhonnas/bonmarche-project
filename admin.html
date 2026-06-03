@@ -2927,39 +2927,43 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 function analyserEtDispatcherLivraisons() {
     const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 
+    console.log("=== DEBUT DU DISPATCHING LOGISTIQUE ===");
+
     // 1. Détection et Chargement Automatique si la mémoire 'allData' est vide
     if (!window.allData || window.allData.length === 0) {
-        // Option A : Si la fonction native loadLogistique existe, on l'appelle
+        console.warn("⚠️ window.allData est vide ou inexistant !");
+        
         if (typeof loadLogistique === "function") {
-            console.log("Appel de la fonction native loadLogistique...");
+            console.log("Appel de la fonction système loadLogistique()...");
             loadLogistique();
             alert("🔄 Synchronisation avec Google Sheets lancée ! Veuillez patienter 2 à 3 secondes, puis recliquez sur 'Calculer'.");
             return;
-        } 
-        // Option B : Secours direct par récupération Fetch instantanée si non chargée
-        else {
-            console.log("Récupération directe via le lien GAS de SafeRun...");
-            alert("⏳ Chargement initial des commandes depuis Google Sheets... Cliquez sur OK et attendez la confirmation.");
+        } else {
+            console.log("Tentative de récupération directe via Fetch...");
+            alert("⏳ Chargement initial des commandes depuis Google Sheets... Cliquez sur OK.");
             
             fetch(`${API_URL}?action=getCommandes`)
                 .then(res => res.json())
                 .then(data => {
-                    window.allData = data; // Remplit la mémoire globale de l'OS Admin
-                    alert("✅ Données synchronisées avec succès ! Le tri va se lancer automatiquement.");
-                    analyserEtDispatcherLivraisons(); // Relance le calcul immédiatement
+                    console.log("🔍 Données reçues via Fetch direct :", data);
+                    window.allData = data;
+                    alert("✅ Données synchronisées ! Le tri va se lancer.");
+                    analyserEtDispatcherLivraisons();
                 })
                 .catch(err => {
-                    alert("❌ Erreur de connexion avec Google Sheets : " + err.toString());
+                    console.error("❌ Erreur Fetch :", err);
+                    alert("❌ Erreur de connexion : " + err.toString());
                 });
             return;
         }
     }
 
+    console.log("📊 Nombre total de lignes en mémoire (allData) :", window.allData.length);
+
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
+    console.log("🎯 Filtre de jour sélectionné dans l'interface :", cibleJour);
     
-    // Tableau des jours en français pour faire la correspondance textuelle exacte
     const joursSemaine = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    
     const maintenant = new Date();
     const nomAuj = joursSemaine[maintenant.getDay()];
     
@@ -2967,7 +2971,8 @@ function analyserEtDispatcherLivraisons() {
     demain.setDate(maintenant.getDate() + 1);
     const nomDemain = joursSemaine[demain.getDay()];
 
-    // Structure d'en-tête professionnelle pour les tableaux de tri
+    console.log(`📅 Détecteur de dates -> Aujourd'hui: "${nomAuj}" | Demain: "${nomDemain}"`);
+
     let enteteTableau = `<table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
         <thead>
             <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; color:#475569;">
@@ -2984,55 +2989,60 @@ function analyserEtDispatcherLivraisons() {
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 2. Traitement chirurgical de la base de données globale (window.allData)
-    window.allData.forEach(cmd => {
+    // 2. Traitement ligne par ligne avec traçabilité complète
+    window.allData.forEach((cmd, index) => {
+        const idCmd = cmd.ID || cmd["ID_Commande"] || index;
+        const client = cmd.Client || "Anonyme";
         const statut = (cmd.Statut || "").toUpperCase();
-        
-        // --- FILTRE DE SÉCURITÉ 1 : LE STATUT SÉRIEUX ---
+        const texteLivraison = (cmd.Livraison || "").toLowerCase();
+
+        console.log(`--- [Commande #${index}] Client: ${client} (ID: ${idCmd}) ---`);
+        console.log(`    -> Statut brut dans le Sheets: "${statut}"`);
+        console.log(`    -> Colonne H (Livraison) brute: "${cmd.Livraison}"`);
+
+        // --- BLOGAGE POTENTIEL 1 : LE STATUT ---
         if (statut.includes("ANNULÉ") || statut.includes("PANIER") || statut === "") {
+            console.log(`    ❌ REJETÉ : Statut non admissible ("${statut}").`);
             return; 
         }
 
-        // On extrait et convertit le texte complet de la colonne H (Livraison) en minuscules
-        const texteLivraison = (cmd.Livraison || "").toLowerCase();
-        const texteGlobal = ((cmd.Client || "") + " " + texteLivraison + " " + (cmd["Lieu Exact"] || "")).toLowerCase();
-
-        // --- FILTRE DE SÉCURITÉ 2 : SÉPARATION INTELLIGENTE DES JOURS ---
+        // --- BLOCAGE POTENTIEL 2 : LE JOUR ---
         let jourValide = false;
-        
         if (cibleJour === 'AUJOURDHUI') {
-            // Est valide si le texte contient explicitement le nom du jour actuel (ex: "mardi") OU "aujourd'hui"
             if (texteLivraison.includes(nomAuj) || texteLivraison.includes("aujourd'hui") || texteLivraison.includes("ce jour")) {
                 jourValide = true;
             }
         } else if (cibleJour === 'DEMAIN') {
-            // Est valide si le texte contient explicitement le nom du jour de demain (ex: "mercredi") OU "demain"
             if (texteLivraison.includes(nomDemain) || texteLivraison.includes("demain")) {
                 jourValide = true;
             }
         } else if (cibleJour === 'AUTRES') {
-            // Regroupe toutes les planifications qui ne concernent ni aujourd'hui ni demain
             if (!texteLivraison.includes(nomAuj) && !texteLivraison.includes(nomDemain)) {
                 jourValide = true;
             }
         }
 
-        if (!jourValide) return;
+        if (!jourValide) {
+            console.log(`    ❌ REJETÉ : Ne correspond pas au filtre de jour "${cibleJour}".`);
+            return;
+        }
 
-        // --- FILTRE DE SÉCURITÉ 3 : DISPATCH HORAIRE (MATIN VS APRÈS-MIDI) ---
-        // Analyse stricte basée sur vos exemples réels
+        console.log(`    ✅ VALIDÉ POUR LE JOUR !`);
+
+        // --- BLOCAGE POTENTIEL 3 : L'HEURE (MATIN / APREM) ---
         let estMatin = texteLivraison.includes("matin") || texteLivraison.includes("9h") || texteLivraison.includes("11h");
         let estAprem = texteLivraison.includes("après-midi") || texteLivraison.includes("aprem") || texteLivraison.includes("14h") || texteLivraison.includes("17h");
 
-        // Sécurité si aucun marqueur n'est détecté (par défaut mis le matin)
+        console.log(`    -> Détection horaire: EstMatin = ${estMatin}, EstAprem = ${estAprem}`);
+
         if (!estMatin && !estAprem) {
+            console.log(`    ⚠️ Aucun marqueur horaire trouvé. Redirection par défaut : MATIN.`);
             estMatin = true; 
         }
 
-        // Reconstruction d'un rendu HTML ultra-propre pour l'impression finale
         const ligneHTML = `
             <tr style="border-bottom:1px solid #e2e8f0; background:white;">
-                <td style="padding:10px;"><strong>${cmd.Client || 'Client SafeRun'}</strong><br><small style="color:#64748b;">Ref: #${cmd.ID || '---'}</small></td>
+                <td style="padding:10px;"><strong>${client}</strong><br><small style="color:#64748b;">Ref: #${idCmd}</small></td>
                 <td style="padding:10px;">
                     <span style="color:#ff6600; font-weight:600;">📅 ${cmd.Livraison || 'Non spécifié'}</span><br>
                     <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small><br>
@@ -3042,36 +3052,39 @@ function analyserEtDispatcherLivraisons() {
                 <td style="padding:10px; font-weight:bold; color:#16a34a;">${Number(cmd.Montant || 0).toLocaleString()} Ar</td>
             </tr>`;
 
-        // Répartition finale dans les deux tableaux distincts
         if (estMatin) {
             htmlMatin += ligneHTML;
             compteurMatin++;
+            console.log(`    📦 Dispatché dans : VAGUE MATIN`);
         } else if (estAprem) {
             htmlAprem += ligneHTML;
             compteurAprem++;
+            console.log(`    📦 Dispatché dans : VAGUE APRÈS-MIDI`);
         }
     });
 
     htmlMatin += `</tbody></table>`;
     htmlAprem += `</tbody></table>`;
 
-    // 3. Injection et mise à jour de l'interface utilisateur à l'écran
+    console.log(`=== FIN DU SCAN -> Matin: ${compteurMatin} | Après-midi: ${compteurAprem} ===`);
+
+    // 3. Injection et mise à jour des conteneurs HTML
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
     if (zoneMatin) {
         zoneMatin.innerHTML = compteurMatin > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis à récupérer au grossiste ce matin.</p>` + htmlMatin : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague du matin.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis ce matin.</p>` + htmlMatin : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun colis ce matin.</p>`;
     }
     
     if (zoneAprem) {
         zoneAprem.innerHTML = compteurAprem > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis à récupérer au grossiste cet après-midi.</p>` + htmlAprem : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague de l'après-midi.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis cet après-midi.</p>` + htmlAprem : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun colis cet après-midi.</p>`;
     }
     
-    alert(`📊 Extraction Apps Script réussie !\n\nFeuille Matin : ${compteurMatin} colis\nFeuille Après-midi : ${compteurAprem} colis`);
+    alert(`📊 Extraction terminée !\n\nMatin : ${compteurMatin} colis\nAprès-midi : ${compteurAprem} colis`);
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
