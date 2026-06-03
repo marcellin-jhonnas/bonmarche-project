@@ -2922,77 +2922,108 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 }
 
 // =========================================================================
-// MOTEUR DE DISPATCHING SÉCURISÉ & INTELLIGENT (ANTI-PIÈGE)
+// MOTEUR DE DISPATCHING ULTRA-PRO & LIEN DIRECT APPS SCRIPT (SAFERUN)
 // =========================================================================
 function analyserEtDispatcherLivraisons() {
-    const cibleJour = document.getElementById('pilote-filtre-jour').value;
-    
-    // 1. Extraction des lignes actuelles du tableau chargées depuis Google Sheet
-    const lignes = document.querySelectorAll('table tbody tr');
-    
-    if (lignes.length === 0) {
-        alert("⚠️ Le tableau est vide. Veuillez d'abord charger l'onglet Logistique pour synchroniser les données du Sheet.");
+    // 1. Vérification de la présence des données lues depuis le Google Sheets (window.currentSerieuses)
+    if (!window.currentSerieuses || window.currentSerieuses.length === 0) {
+        alert("⚠️ Aucune commande en mémoire. Veuillez d'abord charger ou actualiser l'onglet 'Gestion de Commande' pour synchroniser le Google Sheet.");
         return;
     }
 
-    // Préparation des dates de contrôle
+    const cibleJour = document.getElementById('pilote-filtre-jour').value;
+    
+    // Tableau des jours en français pour faire la correspondance textuelle exacte
+    const joursSemaine = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    
     const maintenant = new Date();
-    const aujStr = maintenant.getFullYear() + '-' + String(maintenant.getMonth() + 1).padStart(2, '0') + '-' + String(maintenant.getDate()).padStart(2, '0');
+    const nomAuj = joursSemaine[maintenant.getDay()];
     
     const demain = new Date();
     demain.setDate(maintenant.getDate() + 1);
-    const demStr = demain.getFullYear() + '-' + String(demain.getMonth() + 1).padStart(2, '0') + '-' + String(demain.getDate()).padStart(2, '0');
+    const nomDemain = joursSemaine[demain.getDay()];
 
-    // Modèles de tableaux HTML pour l'affichage des deux feuilles distinctes
+    // Structure d'en-tête professionnelle pour les tableaux de tri
     let enteteTableau = `<table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
         <thead>
             <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; color:#475569;">
-                <th style="padding:10px;">Détails de la Commande Validée</th>
+                <th style="padding:10px; width:25%;">Client / ID</th>
+                <th style="padding:10px; width:40%;">Spécification Livraison & Adresse</th>
+                <th style="padding:10px; width:20%;">Livreur Assigné</th>
+                <th style="padding:10px; width:15%;">Montant</th>
             </tr>
         </thead>
         <tbody>`;
 
     let htmlMatin = enteteTableau;
     let htmlAprem = enteteTableau;
-    
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 2. Boucle de vérification sur chaque commande
-    lignes.forEach(ligne => {
-        const contenuTexte = ligne.innerText || "";
-        const contenuHTML = ligne.innerHTML;
+    // 2. Traitement chirurgical de la base de données globale
+    window.currentSerieuses.forEach(cmd => {
+        const statut = (cmd.Statut || "").toUpperCase();
         
         // --- FILTRE DE SÉCURITÉ 1 : LE STATUT SÉRIEUX ---
-        // On évite les pièges : on ignore la ligne si elle contient "Annulé", "Panier" ou "En attente"
-        // Adaptez ces mots selon les statuts exacts de votre base SafeRun
-        const texteMinuscule = contenuTexte.toLowerCase();
-        if (texteMinuscule.includes("annulé") || texteMinuscule.includes("panier")) {
-            return; // On passe à la commande suivante, on ignore celle-ci
+        if (statut.includes("ANNULÉ") || statut.includes("PANIER") || statut === "") {
+            return; 
         }
 
-        // --- FILTRE 2 : DÉTECTION DU JOUR ---
-        const matchDate = contenuTexte.match(/\d{4}-\d{2}-\d{2}/);
-        let dateCmd = matchDate ? matchDate[0] : aujStr;
+        // On extrait et convertit le texte complet de la colonne H (Livraison) en minuscules
+        const texteLivraison = (cmd.Livraison || "").toLowerCase();
+        const texteGlobal = ((cmd.Client || "") + " " + texteLivraison + " " + (cmd["Lieu Exact"] || "")).toLowerCase();
 
+        // --- FILTRE DE SÉCURITÉ 2 : SÉPARATION INTELLIGENTE DES JOURS ---
         let jourValide = false;
-        if (cibleJour === 'AUJOURDHUI' && dateCmd === aujStr) jourValide = true;
-        else if (cibleJour === 'DEMAIN' && dateCmd === demStr) jourValide = true;
-        else if (cibleJour === 'AUTRES' && dateCmd !== aujStr && dateCmd !== demStr) jourValide = true;
+        
+        if (cibleJour === 'AUJOURDHUI') {
+            // Est valide si le texte contient explicitement le nom du jour actuel (ex: "mercredi") OU "aujourd'hui"
+            if (texteLivraison.includes(nomAuj) || texteLivraison.includes("aujourd'hui") || texteLivraison.includes("ce jour")) {
+                jourValide = true;
+            }
+        } else if (cibleJour === 'DEMAIN') {
+            // Est valide si le texte contient explicitement le nom du jour de demain (ex: "jeudi") OU "demain"
+            if (texteLivraison.includes(nomDemain) || texteLivraison.includes("demain")) {
+                jourValide = true;
+            }
+        } else if (cibleJour === 'AUTRES') {
+            // Regroupe toutes les planifications qui ne concernent ni aujourd'hui ni demain
+            if (!texteLivraison.includes(nomAuj) && !texteLivraison.includes(nomDemain)) {
+                jourValide = true;
+            }
+        }
 
-        if (!jourValide) return; // Si ce n'est pas le jour demandé, on passe
+        if (!jourValide) return;
 
-        // --- FILTRE 3 : ANALYSE DE VOTRE FORMAT DE LIVRAISON EXCLUSIF ---
-        // On cherche les mots clés "matin", "9h", "11h" d'un côté et "après-midi", "14h", "17h" de l'autre
-        let estMatin = texteMinuscule.includes("matin") || texteMinuscule.includes("9h") || texteMinuscule.includes("11h");
-        let estAprem = texteMinuscule.includes("après-midi") || texteMinuscule.includes("cet après-midi") || texteMinuscule.includes("14h") || texteMinuscule.includes("17h");
+        // --- FILTRE DE SÉCURITÉ 3 : DISPATCH HORAIRE (MATIN VS APRÈS-MIDI) ---
+        // Analyse stricte basée sur vos exemples : "9h et 11h", "matin", "14h et 17h", "après-midi"
+        let estMatin = texteLivraison.includes("matin") || texteLivraison.includes("9h") || texteLivraison.includes("11h");
+        let estAprem = texteLivraison.includes("après-midi") || texteLivraison.includes("aprem") || texteLivraison.includes("14h") || texteLivraison.includes("17h");
 
-        // Rangement chirurgical sans mélange
+        // Sécurité si aucun marqueur n'est détecté (par défaut mis le matin)
+        if (!estMatin && !estAprem) {
+            estMatin = true; 
+        }
+
+        // Reconstruction d'un rendu HTML ultra-propre pour l'impression finale
+        const ligneHTML = `
+            <tr style="border-bottom:1px solid #e2e8f0; background:white;">
+                <td style="padding:10px;"><strong>${cmd.Client || 'Client SafeRun'}</strong><br><small style="color:#64748b;">Ref: #${cmd.ID || '---'}</small></td>
+                <td style="padding:10px;">
+                    <span style="color:#ff6600; font-weight:600;">📅 ${cmd.Livraison || 'Non spécifié'}</span><br>
+                    <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small><br>
+                    <small style="color:#64748b;">📞 Tél : ${cmd.Téléphone || '---'}</small>
+                </td>
+                <td style="padding:10px; font-weight:bold; color:#0f172a;">💼 ${cmd.Livreur || '<i>En attente</i>'}</td>
+                <td style="padding:10px; font-weight:bold; color:#16a34a;">${Number(cmd.Montant || 0).toLocaleString()} Ar</td>
+            </tr>`;
+
+        // Répartition finale dans les deux tableaux distincts
         if (estMatin) {
-            htmlMatin += `<tr style="border-bottom:1px solid #e2e8f0; background:white;"><td style="padding:10px;">${contenuHTML}</td></tr>`;
+            htmlMatin += ligneHTML;
             compteurMatin++;
         } else if (estAprem) {
-            htmlAprem += `<tr style="border-bottom:1px solid #e2e8f0; background:white;"><td style="padding:10px;">${contenuHTML}</td></tr>`;
+            htmlAprem += ligneHTML;
             compteurAprem++;
         }
     });
@@ -3000,32 +3031,27 @@ function analyserEtDispatcherLivraisons() {
     htmlMatin += `</tbody></table>`;
     htmlAprem += `</tbody></table>`;
 
-    // 3. Injection des données dans les deux zones d'affichage distinctes
+    // 3. Injection et mise à jour de l'interface utilisateur à l'écran
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
-    if (compteurMatin > 0) {
-        zoneMatin.innerHTML = `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;">✅ ${compteurMatin} colis à récupérer ce matin.</p>` + htmlMatin;
-    } else {
-        zoneMatin.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:10px;">Aucun déstockage prévu pour le matin.</p>`;
-    }
-
-    if (compteurAprem > 0) {
-        zoneAprem.innerHTML = `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;">✅ ${compteurAprem} colis à récupérer cet après-midi.</p>` + htmlAprem;
-    } else {
-        zoneAprem.innerHTML = `<p style="color:#94a3b8; text-align:center; padding:10px;">Aucun déstockage prévu pour l'après-midi.</p>`;
-    }
+    zoneMatin.innerHTML = compteurMatin > 0 ? 
+        `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis à récupérer au grossiste ce matin.</p>` + htmlMatin : 
+        `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague du matin.</p>`;
     
-    alert(`Dispatching terminé !\n\nFeuille Matin : ${compteurMatin} commande(s)\nFeuille Après-midi : ${compteurAprem} commande(s)`);
+    zoneAprem.innerHTML = compteurAprem > 0 ? 
+        `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis à récupérer au grossiste cet après-midi.</p>` + htmlAprem : 
+        `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague de l'après-midi.</p>`;
+    
+    alert(`📊 Extraction Apps Script réussie !\n\nFeuille Matin : ${compteurMatin} colis\nFeuille Après-midi : ${compteurAprem} colis`);
 }
 
-// FUNCTION COMPLÉMENTAIRE POUR IMPRIMER CHAQUE FEUILLE EN PDF SÉPARÉ
 function imprimerZonePDF(idZone, fluxNom) {
     const contenuZone = document.getElementById(idZone).innerHTML;
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
 
-    if (contenuZone.includes("Aucun déstockage") || contenuZone.includes("Cliquez sur")) {
-        alert("La feuille est vide. Impossible de générer un PDF.");
+    if (contenuZone.includes("Aucun colis") || contenuZone.includes("Veuillez d'abord")) {
+        alert("Erreur : Impossible de générer un fichier PDF sur une liste vide.");
         return;
     }
 
@@ -3033,29 +3059,38 @@ function imprimerZonePDF(idZone, fluxNom) {
     win.document.write(`
         <html>
         <head>
-            <title>SafeRun - Feuille de Déstockage ${fluxNom}</title>
+            <title>SafeRun - Bon de Récupération Grossiste ${fluxNom}</title>
             <style>
-                body { font-family: sans-serif; color: #1e293b; padding: 30px; }
-                .pdf-header { border-bottom: 3px solid #ff6600; padding-bottom: 10px; margin-bottom: 20px; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; background: white; }
+                .pdf-header { border-bottom: 3px solid #ff6600; padding-bottom: 15px; margin-bottom: 25px; }
                 table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; }
-                td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; }
-                button, .btn, .actions, .btn-action, input[type="checkbox"] { display: none !important; }
+                th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; }
+                td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; line-height: 1.5; }
+                small { color: #64748b; }
             </style>
         </head>
         <body>
             <div class="pdf-header">
-                <h2 style="margin:0; color:#0f172a;">📦 SAFE-RUN MARKET - LOGISTIQUE GROSSISTES</h2>
-                <h3 style="margin:5px 0 0 0; color:#ff6600;">FLUX EXTRACTIF : ${fluxNom} (${cibleJour})</h3>
-                <p style="margin:5px 0 0 0; font-size:11px; color:#64748b;">Généré de manière sécurisée via Apps Script le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+                <table style="width:100%; margin:0; border:none;">
+                    <tr>
+                        <td style="border:none; padding:0;">
+                            <h2 style="margin:0; color:#0f172a; font-size:24px; letter-spacing:0.5px;">🚀 SAFE-RUN EXPRESS</h2>
+                            <h3 style="margin:5px 0 0 0; color:#ff6600; text-transform: uppercase; font-size:16px;">BON DE RÉCUPÉRATION GROSSISTE : VAGUE ${fluxNom}</h3>
+                        </td>
+                        <td style="border:none; padding:0; text-align:right; vertical-align:top;">
+                            <span style="background:#0f172a; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:12px;">PÉRIODE : ${cibleJour}</span>
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin:15px 0 0 0; font-size:11px; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
+                    Document logistique officiel extrait le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')} pour tri de marchandise.
+                </p>
             </div>
-            <div>
-                ${contenuZone}
-            </div>
+            <div>${contenuZone}</div>
             <script>
-                window.onload = function() {
-                    window.print();
-                    setTimeout(function() { window.close(); }, 300);
+                window.onload = function() { 
+                    window.print(); 
+                    setTimeout(function() { window.close(); }, 300); 
                 };
             <\/script>
         </body>
