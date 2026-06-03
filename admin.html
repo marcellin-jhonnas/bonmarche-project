@@ -2925,10 +2925,34 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 // MOTEUR DE DISPATCHING ULTRA-PRO & LIEN DIRECT APPS SCRIPT (SAFERUN)
 // =========================================================================
 function analyserEtDispatcherLivraisons() {
-    // 1. Vérification de la présence des données lues depuis le Google Sheets (window.currentSerieuses)
-    if (!window.currentSerieuses || window.currentSerieuses.length === 0) {
-        alert("⚠️ Aucune commande en mémoire. Veuillez d'abord charger ou actualiser l'onglet 'Gestion de Commande' pour synchroniser le Google Sheet.");
-        return;
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+
+    // 1. Détection et Chargement Automatique si la mémoire 'allData' est vide
+    if (!window.allData || window.allData.length === 0) {
+        // Option A : Si la fonction native loadLogistique existe, on l'appelle
+        if (typeof loadLogistique === "function") {
+            console.log("Appel de la fonction native loadLogistique...");
+            loadLogistique();
+            alert("🔄 Synchronisation avec Google Sheets lancée ! Veuillez patienter 2 à 3 secondes, puis recliquez sur 'Calculer'.");
+            return;
+        } 
+        // Option B : Secours direct par récupération Fetch instantanée si non chargée
+        else {
+            console.log("Récupération directe via le lien GAS de SafeRun...");
+            alert("⏳ Chargement initial des commandes depuis Google Sheets... Cliquez sur OK et attendez la confirmation.");
+            
+            fetch(`${API_URL}?action=getCommandes`)
+                .then(res => res.json())
+                .then(data => {
+                    window.allData = data; // Remplit la mémoire globale de l'OS Admin
+                    alert("✅ Données synchronisées avec succès ! Le tri va se lancer automatiquement.");
+                    analyserEtDispatcherLivraisons(); // Relance le calcul immédiatement
+                })
+                .catch(err => {
+                    alert("❌ Erreur de connexion avec Google Sheets : " + err.toString());
+                });
+            return;
+        }
     }
 
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
@@ -2960,8 +2984,8 @@ function analyserEtDispatcherLivraisons() {
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 2. Traitement chirurgical de la base de données globale
-    window.currentSerieuses.forEach(cmd => {
+    // 2. Traitement chirurgical de la base de données globale (window.allData)
+    window.allData.forEach(cmd => {
         const statut = (cmd.Statut || "").toUpperCase();
         
         // --- FILTRE DE SÉCURITÉ 1 : LE STATUT SÉRIEUX ---
@@ -2977,12 +3001,12 @@ function analyserEtDispatcherLivraisons() {
         let jourValide = false;
         
         if (cibleJour === 'AUJOURDHUI') {
-            // Est valide si le texte contient explicitement le nom du jour actuel (ex: "mercredi") OU "aujourd'hui"
+            // Est valide si le texte contient explicitement le nom du jour actuel (ex: "mardi") OU "aujourd'hui"
             if (texteLivraison.includes(nomAuj) || texteLivraison.includes("aujourd'hui") || texteLivraison.includes("ce jour")) {
                 jourValide = true;
             }
         } else if (cibleJour === 'DEMAIN') {
-            // Est valide si le texte contient explicitement le nom du jour de demain (ex: "jeudi") OU "demain"
+            // Est valide si le texte contient explicitement le nom du jour de demain (ex: "mercredi") OU "demain"
             if (texteLivraison.includes(nomDemain) || texteLivraison.includes("demain")) {
                 jourValide = true;
             }
@@ -2996,7 +3020,7 @@ function analyserEtDispatcherLivraisons() {
         if (!jourValide) return;
 
         // --- FILTRE DE SÉCURITÉ 3 : DISPATCH HORAIRE (MATIN VS APRÈS-MIDI) ---
-        // Analyse stricte basée sur vos exemples : "9h et 11h", "matin", "14h et 17h", "après-midi"
+        // Analyse stricte basée sur vos exemples réels
         let estMatin = texteLivraison.includes("matin") || texteLivraison.includes("9h") || texteLivraison.includes("11h");
         let estAprem = texteLivraison.includes("après-midi") || texteLivraison.includes("aprem") || texteLivraison.includes("14h") || texteLivraison.includes("17h");
 
@@ -3035,13 +3059,17 @@ function analyserEtDispatcherLivraisons() {
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
-    zoneMatin.innerHTML = compteurMatin > 0 ? 
-        `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis à récupérer au grossiste ce matin.</p>` + htmlMatin : 
-        `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague du matin.</p>`;
+    if (zoneMatin) {
+        zoneMatin.innerHTML = compteurMatin > 0 ? 
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> ${compteurMatin} colis à récupérer au grossiste ce matin.</p>` + htmlMatin : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague du matin.</p>`;
+    }
     
-    zoneAprem.innerHTML = compteurAprem > 0 ? 
-        `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis à récupérer au grossiste cet après-midi.</p>` + htmlAprem : 
-        `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague de l'après-midi.</p>`;
+    if (zoneAprem) {
+        zoneAprem.innerHTML = compteurAprem > 0 ? 
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> ${compteurAprem} colis à récupérer au grossiste cet après-midi.</p>` + htmlAprem : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis à récupérer pour la vague de l'après-midi.</p>`;
+    }
     
     alert(`📊 Extraction Apps Script réussie !\n\nFeuille Matin : ${compteurMatin} colis\nFeuille Après-midi : ${compteurAprem} colis`);
 }
