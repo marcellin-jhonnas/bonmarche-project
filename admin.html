@@ -3158,112 +3158,83 @@ function analyserEtDispatcherLivraisons() {
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
-    let contenuZone = document.getElementById(idZone).innerHTML;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
+    const dateJour = new Date().toLocaleDateString('fr-FR');
 
-    if (contenuZone.includes("Aucun colis") || contenuZone.includes("Veuillez d'abord")) {
+    // 1. Sélection et validation de la zone ciblée
+    const zoneHTML = document.getElementById(idZone);
+    if (!zoneHTML || zoneHTML.innerText.includes("Aucun colis") || zoneHTML.innerText.includes("Veuillez d'abord") || zoneHTML.innerText.trim() === "") {
         alert("Erreur : Impossible de générer un fichier PDF sur une liste vide.");
         return;
     }
 
-    // --- CORRECTION CRITIQUE : FUSION ET CUMUL DES PRODUITS IDENTIQUES POUR LE PDF ---
-    // Création d'un conteneur temporaire pour analyser le HTML de la zone
-    const divTemporaire = document.createElement('div');
-    divTemporaire.innerHTML = contenuZone;
+    // 2. EXTRACTION ET CUMUL AUTOMATIQUE DES PRODUITS IDENTIQUES
+    const tableRows = [];
+    let cumulGrossistePDF = {};
 
-    // On cherche les lignes du tableau du grossiste (📌)
-    const lignesGrossiste = divTemporaire.querySelectorAll('table:first-of-type tbody tr');
-    
-    if (lignesGrossiste.length > 0) {
-        let cumulGrossistePDF = {};
+    // On cible le premier tableau (le tableau grossiste résumé) à l'intérieur de la zone
+    const lignesGrossiste = zoneHTML.querySelectorAll('table:first-of-type tbody tr');
 
-        // Extraction et cumul des produits
-        lignesGrossiste.forEach(tr => {
-            const cellules = tr.querySelectorAll('td');
-            if (cellules.length >= 2) {
-                let nomArt = cellules[0].innerText.replace('📌', '').trim();
-                let qteArt = parseInt(cellules[1].innerText.replace(/[^0-9]/g, '')) || 1;
+    lignesGrossiste.forEach(tr => {
+        const cellules = tr.querySelectorAll('td');
+        if (cellules.length >= 2) {
+            // Extraction du nom (on enlève l'émoji ou le picto 📌)
+            let nomArt = cellules[0].innerText.replace('📌', '').trim();
+            // Extraction de la quantité numérique (ex: "x2" ou "2" devient 2)
+            let qteArt = parseInt(cellules[1].innerText.replace(/[^0-9]/g, '')) || 1;
 
-                if (nomArt !== "" && !nomArt.toLowerCase().includes("aucun article")) {
-                    // On cumule si le produit existe déjà
-                    cumulGrossistePDF[nomArt] = (cumulGrossistePDF[nomArt] || 0) + qteArt;
-                }
-            }
-        });
-
-        // Reconstruction propre du tableau sans doublons avec les quantités augmentées
-        let nouveauCorpsTableau = "";
-        Object.entries(cumulGrossistePDF).forEach(([nom, qte]) => {
-            nouveauCorpsTableau += `
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px; font-weight:bold; color:#1e293b;">📌 ${nom}</td>
-                    <td style="padding:10px; font-weight:bold; color:#ea580c; text-align:center; font-size:15px; background:#fff7ed;">x${qte}</td>
-                </tr>`;
-        });
-
-        // Si on a réussi à cumuler, on met à jour le tableau du grossiste dans le HTML du PDF
-        if (nouveauCorpsTableau !== "") {
-            const tbodyGrossiste = divTemporaire.querySelector('table:first-of-type tbody');
-            if (tbodyGrossiste) {
-                tbodyGrossiste.innerHTML = nouveauCorpsTableau;
+            if (nomArt !== "" && !nomArt.toLowerCase().includes("aucun produit") && !nomArt.toLowerCase().includes("aucun article")) {
+                // Si l'article existe déjà, on additionne sa quantité, sinon on l'initialise
+                cumulGrossistePDF[nomArt] = (cumulGrossistePDF[nomArt] || 0) + qteArt;
             }
         }
+    });
+
+    // Insertion des données uniques et cumulées dans les lignes destinées au autoTable
+    Object.entries(cumulGrossistePDF).forEach(([nom, qte]) => {
+        tableRows.push([nom, `x${qte}`]);
+    });
+
+    if (tableRows.length === 0) {
+        alert("Erreur : Aucun produit valide n'a pu être extrait pour le cumul logistique.");
+        return;
     }
 
-    // On récupère le contenu final nettoyé et cumulé
-    const contenuFinalPourPDF = divTemporaire.innerHTML;
+    // 3. ARCHITECTURE ET DESIGN DU FICHIER PDF (Alignement jsPDF standard)
+    doc.setFontSize(18);
+    doc.text("🚀 SAFE-RUN EXPRESS", 105, 20, { align: "center" });
+    
+    doc.setFontSize(13);
+    doc.text(`BON DE RÉCUPÉRATION GROSSISTE : VAGUE ${fluxNom}`, 105, 30, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.text(`Date d'extraction : ${dateJour} à ${new Date().toLocaleTimeString('fr-FR')}`, 20, 42);
+    doc.text(`Période de filtrage : ${cibleJour}`, 20, 48);
 
-    // --- GÉNÉRATION DU PDF ---
-    const win = window.open('', '_blank');
-    win.document.write(`
-        <html>
-        <head>
-            <title>SafeRun_Bon_Grossiste_${fluxNom}_${cibleJour}</title>
-            <style>
-                @page { size: A4; margin: 15mm; }
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 10px; background: white; }
-                .pdf-header { border-bottom: 3px solid #ff6600; padding-bottom: 15px; margin-bottom: 25px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                th { background: #f8fafc !important; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; line-height: 1.5; }
-                small { color: #64748b; }
-                
-                /* Forçage d'impression des couleurs d'arrière-plan */
-                thead tr, th, .item-stock-prepare, strong {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="pdf-header">
-                <table style="width:100%; margin:0; border:none;">
-                    <tr>
-                        <td style="border:none; padding:0;">
-                            <h2 style="margin:0; color:#0f172a; font-size:24px; letter-spacing:0.5px;">🚀 SAFE-RUN EXPRESS</h2>
-                            <h3 style="margin:5px 0 0 0; color:#ff6600; text-transform: uppercase; font-size:16px;">BON DE RÉCUPÉRATION GROSSISTE : VAGUE ${fluxNom}</h3>
-                        </td>
-                        <td style="border:none; padding:0; text-align:right; vertical-align:top;">
-                            <span style="background:#0f172a; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:12px; text-transform: uppercase;">PÉRIODE : ${cibleJour}</span>
-                        </td>
-                    </tr>
-                </table>
-                <p style="margin:15px 0 0 0; font-size:11px; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
-                    Document logistique officiel extrait le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')} pour tri de marchandise.
-                </p>
-            </div>
-            <div>${contenuFinalPourPDF}</div>
-            <script>
-                window.onload = function() { 
-                    window.print(); 
-                    setTimeout(function() { window.close(); }, 500); 
-                };
-            <\/script>
-        </body>
-        </html>
-    `);
-    win.document.close();
+    // Utilisation de autoTable (Couleur Orange #ea580c de SafeRun Market / Express)
+    if (typeof doc.autoTable === 'function') {
+        doc.autoTable({
+            head: [['Désignation Produit', 'Quantité Totale à Prendre']],
+            body: tableRows,
+            startY: 55,
+            theme: 'striped',
+            headStyles: { fillColor: [234, 88, 12] }, // Orange SafeRun
+            styles: { fontSize: 11, cellPadding: 4 }
+        });
+    } else {
+        // Mode de secours brut si la bibliothèque autoTable met du temps à répondre
+        let y = 58;
+        tableRows.forEach(row => {
+            doc.text(`📌 ${row[0]} : ${row[1]}`, 20, y);
+            y += 8;
+        });
+    }
+
+    // 4. SAUVEGARDE ET TÉLÉCHARGEMENT DIRECT SANS POP-UP FANTÔME
+    doc.save(`SafeRun_Bon_Grossiste_${fluxNom}_${cibleJour.replace(/\//g, '-')}.pdf`);
 }
 </script>
 </body>
