@@ -2065,6 +2065,16 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     let cumulProduits = {};
     let totalArgentAPayer = 0;
 
+    // --- 1. DÉFINITION SÉCURISÉE DES DATES DU JOUR ---
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    // --- 2. DÉMARRAGE DES LOGS DE DIAGNOSTIC ---
     console.log(`=== DEBUT DIAGNOSTIC STOCK [${cibleJour} - ${cibleVague}] ===`);
     console.log(`Texte recherché pour Aujourd'hui : "${texteAujourdhui}"`);
     console.log(`Texte recherché pour Demain : "${texteDemain}"`);
@@ -2072,22 +2082,15 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     let totalLignesAnalysees = 0;
     let totalLignesValidees = 0;
 
+    // --- 3. BOUCLE DE TRI CLASSIQUE INCHANGÉE ---
     allData.forEach((c, index) => {
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
             totalLignesAnalysees++;
             
-            // --- DETECTEUR DE LOGS POUR LE FILTRAGE ---
-            const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-            const maintenant = new Date();
-            const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
-            const demain = new Date();
-            demain.setDate(maintenant.getDate() + 1);
-            const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
-
             const texteLivraison = (c.Livraison || "").toLowerCase();
             let jourValide = false;
 
-            // 1. Diagnostic de l'Étape A : Recherche du Jour
+            // Étape A : Vérification souple du jour
             if (cibleJour === 'AUJOURDHUI') {
                 if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) {
                     jourValide = true;
@@ -2099,12 +2102,11 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             }
 
             if (!jourValide) {
-                // Ce log vous dit exactement quel texte a bloqué la date
                 console.log(`❌ Ligne #${index + 2} [REJETÉ DATE] - Client: ${c.Client || 'Inconnu'} | Valeur reçue: "${c.Livraison}"`);
                 return; 
             }
 
-            // 2. Diagnostic de l'Étape B : Recherche de la Vague (Matin / Midi)
+            // Étape B : Vérification de la vague (Matin / Midi)
             let vagueDetectee = 'MIDI';
             if (texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
                 vagueDetectee = 'MATIN';
@@ -2113,7 +2115,6 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             }
 
             if (vagueDetectee !== cibleVague) {
-                // Ce log vous dit que la date était bonne mais que l'heure ou le créneau l'a envoyé dans l'autre vague
                 console.log(`⏳ Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé en [${vagueDetectee}] mais vous avez demandé [${cibleVague}] (Texte: "${c.Livraison}")`);
                 return; 
             }
@@ -2122,7 +2123,7 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             totalLignesValidees++;
             console.log(`✅ Ligne #${index + 2} [ACCEPTÉ 🎉] - Client: ${c.Client} | Match parfait pour ${cibleJour} - ${cibleVague}`);
 
-            // --- FIN DU DETECTEUR (Le reste de votre calcul d'origine reprend ici) ---
+            // --- FIN DU DETECTEUR (Votre logique d'origine sur les produits reprend ici) ---
 
             // 1. CALCUL DU MONTANT (GROSSISTE)
             let prixCommande = parseFloat(c.Montant) || 0; 
