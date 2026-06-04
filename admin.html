@@ -2925,7 +2925,7 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 // MOTEUR DE DISPATCHING ULTRA-PRO & LIEN DIRECT APPS SCRIPT (SAFERUN)
 // =========================================================================
 function analyserEtDispatcherLivraisons() {
-    console.log("=== DÉBUT DU DISPATCHING LOGISTIQUE AVEC CUMUL GROSSISTE (COLONNE D) ===");
+    console.log("=== DÉBUT DU DISPATCHING LOGISTIQUE (CORRECTION CRITIQUE) ===");
 
     // 1. VÉRIFICATION ET CHARGEMENT AUTOMATIQUE VIA VOTRE FONCTION SYSTEME
     const commandesEnMemoire = window.allData || window.currentSerieuses || [];
@@ -2953,7 +2953,7 @@ function analyserEtDispatcherLivraisons() {
         }
     }
 
-    // 2. PRÉPARATION DES PARAMÈTRES
+    // 2. PRÉPARATION DES PARAMÈTRES DE TEMPS
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
     const joursSemaine = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
     const maintenant = new Date();
@@ -2969,22 +2969,16 @@ function analyserEtDispatcherLivraisons() {
     } else {
         lignesTableauLogistique.forEach(tr => {
             const texteLigne = tr.innerText || "";
-            if(texteLigne.trim() !== "") {
-                // Ciblage strict de la Colonne D (Index 3 en JavaScript : tr.cells[3])
-                let produitExtrait = "Marchandise";
-                if (tr.cells.length > 3 && tr.cells[3]) {
-                    produitExtrait = tr.cells[3].innerText;
-                }
-
+            if(texteLigne.trim() !== "" && tr.cells.length >= 7) {
                 listeAAnalyser.push({
-                    ID: tr.cells[0] ? tr.cells[0].innerText : "---",
-                    Client: tr.cells[1] ? tr.cells[1].innerText : "Client SafeRun",
-                    Livraison: tr.cells[2] ? tr.cells[2].innerText : texteLigne, // Hypothèse : Colonne C pour la date de livraison
-                    Produit: produitExtrait, // Colonne D affectée ici
-                    "Lieu Exact": tr.cells[4] ? tr.cells[4].innerText : "", 
-                    Livreur: tr.cells[5] ? tr.cells[5].innerText : "Non assigné",
-                    Montant: tr.cells[6] ? tr.cells[6].innerText.replace(/[^0-9]/g, "") : "0",
-                    Statut: tr.cells[7] ? tr.cells[7].innerText : "VALIDE"
+                    ID: tr.cells[0] ? tr.cells[0].innerText.trim() : "---",
+                    Client: tr.cells[2] ? tr.cells[2].innerText.trim() : "Client SafeRun",
+                    Téléphone: tr.cells[3] ? tr.cells[3].innerText.trim() : "---",
+                    Livreur: tr.cells[4] ? tr.cells[4].innerText.trim() : "Non assigné",
+                    "Lieu Exact": tr.cells[5] ? tr.cells[5].innerText.trim() : "À préciser",
+                    Livraison: tr.cells[6] ? tr.cells[6].innerText.trim() : "", // Colonne 7 (Index 6)
+                    Montant: tr.cells[7] ? tr.cells[7].innerText.replace(/[^0-9]/g, "") : "0",
+                    Statut: tr.cells[8] ? tr.cells[8].innerText.trim() : "VALIDE"
                 });
             }
         });
@@ -3001,7 +2995,7 @@ function analyserEtDispatcherLivraisons() {
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 3. TRI CHIRURGICAL ET EXTRACTION DU CONTENU
+    // 3. TRI ET EXTRACTION INTELLIGENTE DE LA MARCHANDISE
     listeAAnalyser.forEach((cmd) => {
         const statut = (cmd.Statut || "").toUpperCase();
         const texteLivraison = (cmd.Livraison || "").toLowerCase();
@@ -3031,73 +3025,93 @@ function analyserEtDispatcherLivraisons() {
             estMatin = true; 
         }
 
-        // Nettoyage de la chaîne de texte du produit (colonne D) pour le cumul grossiste
-        let texteBrutProduit = (cmd.Produit || cmd.Articles || cmd.Designation || "").trim();
-        
-        // Sécurité si la cellule D est vide, on extrait depuis la ligne de Livraison
-        if (texteBrutProduit === "" || texteBrutProduit.toLowerCase().includes("marchandise") || texteBrutProduit === "VALIDE") {
-            texteBrutProduit = (cmd.Livraison || "").replace(/LIVRAISON\s*:/i, '').replace(/Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche|Lundi/i, '').replace(/\d+\s*mai|\d+\s*juin|\d+\s*juillet/i, '').trim();
+        // --- NOUVEL EXTRACTEUR DE PRODUIT ULTRA ROBUSTE ---
+        let texteBrut = cmd.Livraison || "";
+        let produitNettoye = "";
+
+        // Stratégie 1 : Si la ligne contient un tiret "-", le produit est presque toujours après le tiret
+        if (texteBrut.includes("-")) {
+            let parties = texteBrut.split("-");
+            produitNettoye = parties[parties.length - 1].trim(); // On prend la dernière partie
+        } 
+        // Stratégie 2 : Si pas de tiret, on nettoie manuellement les mots temporels connus
+        else {
+            produitNettoye = texteBrut
+                .replace(/LIVRAISON\s*:/i, '')
+                .replace(/lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche/gi, '')
+                .replace(/\d+\s*(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)/gi, '')
+                .replace(/ce jour|aujourd'hui|demain/gi, '')
+                .replace(/(entre\s*)?\d+h(\s*et\s*\d+h)?/gi, '')
+                .replace(/matin|après-midi|aprem/gi, '')
+                .trim();
         }
 
-        if (texteBrutProduit === "") {
-            texteBrutProduit = "Article Logistique SafeRun";
+        // Nettoyage final des caractères étranges restants au début ou à la fin du nom de produit
+        produitNettoye = produitNettoye.replace(/^[\s\-,.\(\)]+/, '').replace(/[\s\-,.\(\)]+$/, '').trim();
+
+        // Sécurité ultime si le texte est vide ou trop court
+        if (produitNettoye === "" || produitNettoye.length < 2) {
+            produitNettoye = "Marchandise non spécifiée";
         }
+
+        // Uniformisation de la casse (Première lettre en majuscule, le reste en minuscule) pour grouper correctement
+        produitNettoye = produitNettoye.charAt(0).toUpperCase() + produitNettoye.slice(1).toLowerCase();
 
         const prixUnitaire = Number(cmd.Montant || 0);
 
-        // Ligne de détail HTML pour le listing individuel par client
+        // Construction de la ligne individuelle client
         const ligneClientHTML = `
             <tr style="border-bottom:1px solid #e2e8f0; background:white;">
                 <td style="padding:10px;"><strong>${cmd.Client || 'Client'}</strong><br><small style="color:#64748b;">Ref: #${cmd.ID || '---'}</small></td>
                 <td style="padding:10px;">
-                    <span style="color:#1e293b; font-weight:600;">📦 ${texteBrutProduit}</span><br>
-                    <small style="color:#64748b;">📅 Spécification : ${cmd.Livraison || 'Non spécifié'}</small><br>
-                    <small style="color:#0f172a;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small>
+                    <span style="color:#ff6600; font-weight:600;">📦 ${produitNettoye}</span><br>
+                    <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${cmd["Lieu Exact"] || 'À préciser'}</small><br>
+                    <small style="color:#64748b;">📞 Tél : ${cmd.Téléphone || '---'}</small>
                 </td>
                 <td style="padding:10px; font-weight:bold; color:#0f172a;">💼 ${cmd.Livreur || 'En attente'}</td>
                 <td style="padding:10px; font-weight:bold; color:#16a34a;">${prixUnitaire.toLocaleString()} Ar</td>
             </tr>`;
 
-        // Rangement et cumul par produit
+        // Rangement et cumul des totaux de marchandises
         if (estMatin) {
             detailsClientsMatin += ligneClientHTML;
             compteurMatin++;
             
-            if (!inventaireMatin[texteBrutProduit]) {
-                inventaireMatin[texteBrutProduit] = { quantite: 0, montantCumule: 0 };
+            if (!inventaireMatin[produitNettoye]) {
+                inventaireMatin[produitNettoye] = { quantite: 0, montantCumule: 0 };
             }
-            inventaireMatin[texteBrutProduit].quantite += 1;
-            inventaireMatin[texteBrutProduit].montantCumule += prixUnitaire;
+            inventaireMatin[produitNettoye].quantite += 1;
+            inventaireMatin[produitNettoye].montantCumule += prixUnitaire;
         } else {
             detailsClientsAprem += ligneClientHTML;
             compteurAprem++;
             
-            if (!inventaireAprem[texteBrutProduit]) {
-                inventaireAprem[texteBrutProduit] = { quantite: 0, montantCumule: 0 };
+            if (!inventaireAprem[produitNettoye]) {
+                inventaireAprem[produitNettoye] = { quantite: 0, montantCumule: 0 };
             }
-            inventaireAprem[texteBrutProduit].quantite += 1;
-            inventaireAprem[texteBrutProduit].montantCumule += prixUnitaire;
+            inventaireAprem[produitNettoye].quantite += 1;
+            inventaireAprem[produitNettoye].montantCumule += prixUnitaire;
         }
     });
 
-    // 4. CONSTRUCTION DES TABLEAUX D'AFFICHAGE GRAPHISME (GROS LISTING GROSSISTE EN PREMIER)
+    // 4. CONSTRUCTION DU RENDU GRAPHIQUE (GROSSISTE EN PREMIER)
     function genererSectionHTML(inventaire, detailsClients) {
         let html = `
         <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:15px; margin-bottom:20px;">
-            <h4 style="margin:0 0 10px 0; color:#c2410c; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;"><i class="fas fa-list-ol"></i> À RETIRER CHEZ LE GROSSISTE (TOTAL CUMULÉ)</h4>
+            <h4 style="margin:0 0 10px 0; color:#c2410c; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;"><i class="fas fa-shopping-basket"></i> LISTE DE RETRAIT GROSSISTE CUMULÉE</h4>
             <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; background:white; border-radius:6px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                 <thead>
                     <tr style="background:#ea580c; color:white;">
-                        <th style="padding:10px; width:60%;">Désignation Marchandise</th>
+                        <th style="padding:10px; width:60%;">Désignation Produit</th>
                         <th style="padding:10px; width:20%; text-align:center;">Quantité Totale</th>
-                        <th style="padding:10px; width:20%; text-align:right;">Valeur Estimée</th>
+                        <th style="padding:10px; width:20%; text-align:right;">Valeur Marchandise</th>
                     </tr>
                 </thead>
                 <tbody>`;
 
         let articles = Object.keys(inventaire);
         if(articles.length === 0) {
-            html += `<tr><td colspan="3" style="padding:10px; text-align:center; color:#94a3b8;">Aucun article à extraire.</td></tr>`;
+            html += `<tr><td colspan="3" style="padding:10px; text-align:center; color:#94a3b8;">Aucun article détecté.</td></tr>`;
         } else {
             articles.forEach(art => {
                 html += `
@@ -3111,7 +3125,7 @@ function analyserEtDispatcherLivraisons() {
         html += `</tbody></table></div>`;
 
         html += `
-        <h4 style="margin:15px 0 10px 0; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-users"></i> DÉTAIL DE DISTRIBUTION PAR CLIENT</h4>
+        <h4 style="margin:15px 0 10px 0; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-truck-ramp-box"></i> TOURNÉE DE LIVRAISON INDIVIDUELLE</h4>
         <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
             <thead>
                 <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; color:#475569;">
@@ -3128,23 +3142,23 @@ function analyserEtDispatcherLivraisons() {
         return html;
     }
 
-    // 5. INJECTION FINALE DANS L'INTERFACE DE L'ADMIN OS
+    // 5. INJECTION FINALE DANS LES CONTENEURS DE L'ADMIN OS
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
     if (zoneMatin) {
         zoneMatin.innerHTML = compteurMatin > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-check-circle"></i> VAGUE MATIN : ${compteurMatin} colis à récupérer.</p>` + genererSectionHTML(inventaireMatin, detailsClientsMatin) : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun déstockage ce matin.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-clock"></i> FLUX DU MATIN : ${compteurMatin} colis prêts.</p>` + genererSectionHTML(inventaireMatin, detailsClientsMatin) : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis planifié pour le matin.</p>`;
     }
     
     if (zoneAprem) {
         zoneAprem.innerHTML = compteurAprem > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-check-circle"></i> VAGUE APRÈS-MIDI : ${compteurAprem} colis à récupérer.</p>` + genererSectionHTML(inventaireAprem, detailsClientsAprem) : 
-            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px;">Aucun déstockage cet après-midi.</p>`;
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-clock"></i> FLUX DE L'APRÈS-MIDI : ${compteurAprem} colis prêts.</p>` + genererSectionHTML(inventaireAprem, detailsClientsAprem) : 
+            `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis planifié pour l'après-midi.</p>`;
     }
 
-    alert(`📊 Extraction réussie basée sur la Colonne D !`);
+    alert(`✅ Tri et calcul grossiste réussis !`);
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
