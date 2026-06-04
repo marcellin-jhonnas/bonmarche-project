@@ -372,6 +372,11 @@
 <div class="nav-item" onclick="showSection('calendrier')">
     <i class="fas fa-calendar-alt"></i> <span>Calendrier & Promos</span>
 </div>
+<button onclick="genererAnalyseStockParJour('AUJOURDHUI')">📦 Stock Aujourd'hui</button>
+<button onclick="genererAnalyseStockParJour('DEMAIN')">⏳ Stock Demain</button>
+
+<button onclick="genererEtiquettesColisParJour('AUJOURDHUI')">🏷️ Tickets Aujourd'hui</button>
+<button onclick="genererEtiquettesColisParJour('DEMAIN')">⏳ Tickets Demain</button>
 <div class="nav-item" onclick="showTab('tab-pilote', this)">
     <i class="fas fa-route"></i> <span>Pilote Déstockage</span>
 </div>
@@ -3281,6 +3286,253 @@ function imprimerZonePDF(idZone, fluxNom) {
 
     // 4. SAUVEGARDE ET TÉLÉCHARGEMENT DIRECT
     doc.save(`SafeRun_Bon_Grossiste_${fluxNom}_${cibleJour.replace(/\//g, '-')}.pdf`);
+}
+// ==========================================
+// MODULE COMPLÉMENTAIRE : FILTRAGE & TICKETS
+// ==========================================
+
+/**
+ * Fonction indépendante pour générer l'analyse de stock cumulée par jour
+ * sans perturber la fonction d'origine.
+ * @param {string} cibleJour - 'AUJOURDHUI', 'DEMAIN' ou 'AUTRES'
+ */
+function genererAnalyseStockParJour(cibleJour = 'AUJOURDHUI') {
+    const conteneur = document.getElementById('liste-cumul-stock');
+    const panelResultat = document.getElementById('resultat-stock');
+    const panelFinance = document.getElementById('finance-grossiste');
+    const affichagePrix = document.getElementById('montant-grossiste-total');
+    
+    if (!conteneur || !panelResultat || !panelFinance || !affichagePrix) {
+        console.error("Erreur : Un élément HTML est manquant pour l'affichage du stock filtré.");
+        return;
+    }
+
+    let cumulProduits = {};
+    let totalArgentAPayer = 0;
+
+    // --- PRÉPARATION DES RECHERCHES DE DATE CHIRURGICALES (Ex: "5 juin") ---
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    allData.forEach(c => {
+        if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            
+            const texteLivraison = (c.Livraison || "").toLowerCase();
+            let jourValide = false;
+
+            // Analyse du jour selon les formats avec heure ou texte indicatif
+            if (cibleJour === 'AUJOURDHUI') {
+                if (texteLivraison.includes(texteAujourdhui)) jourValide = true;
+            } else if (cibleJour === 'DEMAIN') {
+                if (texteLivraison.includes(texteDemain)) jourValide = true;
+            } else if (cibleJour === 'AUTRES') {
+                if (!texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes(texteDemain)) jourValide = true;
+            }
+
+            if (!jourValide) return;
+
+            // 1. Calcul du montant cumulé pour le grossiste
+            let prixCommande = parseFloat(c.Montant) || 0; 
+            totalArgentAPayer += prixCommande;
+
+            // 2. Extraction et comptage des produits
+            let produitsStr = (c.Produits || "");
+            let items = produitsStr.split(/[,+]/);
+            
+            items.forEach(item => {
+                let txt = item.trim().toUpperCase();
+                if (txt === "") return;
+
+                let match = txt.match(/(\d+)\s*[xX]\s*(.*)/);
+                
+                if (match) {
+                    let qte = parseInt(match[1]);
+                    let nom = match[2].trim();
+                    cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
+                } else {
+                    cumulProduits[txt] = (cumulProduits[txt] || 0) + 1;
+                }
+            });
+        }
+    });
+
+    // --- RENDU ET AFFICHAGE DES RÉSULTATS À L'ÉCRAN ---
+    if (Object.keys(cumulProduits).length > 0) {
+        panelResultat.style.display = 'block';
+        panelFinance.style.display = 'block';
+        
+        conteneur.innerHTML = Object.entries(cumulProduits).map(([nom, qte]) => `
+            <div class="item-stock-prepare" style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="nom-produit-pdf" style="font-weight:500;">${nom}</span>
+                <strong class="qte-produit-pdf" style="color:var(--orange); background:#fff7ed; padding:2px 8px; border-radius:4px;">x${qte}</strong>
+            </div>
+        `).join('');
+
+        affichagePrix.innerText = new Intl.NumberFormat('fr-FR').format(totalArgentAPayer) + " Ar";
+        
+    } else {
+        panelResultat.style.display = 'none';
+        panelFinance.style.display = 'none';
+        alert(`Aucun produit trouvé en stock pour le filtre : ${cibleJour}`);
+    }
+}
+
+/**
+ * Génère un fichier PDF A4 contenant des fiches/tickets colis individuels.
+ * S'adapte dynamiquement aux formats de dates avec virgule ou heure précise.
+ * Laisse un vide propre si la colonne J (Livreur) n'est pas renseignée.
+ * @param {string} cibleJour - 'AUJOURDHUI', 'DEMAIN' ou 'AUTRES'
+ */
+function genererEtiquettesColisParJour(cibleJour = 'AUJOURDHUI') {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const dateJour = new Date().toLocaleDateString('fr-FR');
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    // 1. Filtrage initial des colis
+    let commandesAEtiqueter = [];
+
+    allData.forEach(c => {
+        if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            const texteLivraison = (c.Livraison || "").toLowerCase();
+            let jourValide = false;
+
+            if (cibleJour === 'AUJOURDHUI') {
+                if (texteLivraison.includes(texteAujourdhui)) jourValide = true;
+            } else if (cibleJour === 'DEMAIN') {
+                if (texteLivraison.includes(texteDemain)) jourValide = true;
+            } else if (cibleJour === 'AUTRES') {
+                if (!texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes(texteDemain)) jourValide = true;
+            }
+
+            if (jourValide) {
+                commandesAEtiqueter.push(c);
+            }
+        }
+    });
+
+    if (commandesAEtiqueter.length === 0) {
+        alert(`Aucun colis à étiqueter trouvé pour : ${cibleJour} (${cibleJour === 'AUJOURDHUI' ? texteAujourdhui : texteDemain})`);
+        return;
+    }
+
+    // 2. Configuration de la disposition en grille (2 colonnes x 4 lignes = 8 par page)
+    let itemX = 10;
+    let itemY = 12;
+    const largeurEtiquette = 92;
+    const hauteurEtiquette = 64;
+    const espaceX = 6;
+    const espaceY = 6;
+    
+    let compteurSurPage = 0;
+
+    commandesAEtiqueter.forEach((c) => {
+        if (compteurSurPage === 8) {
+            doc.addPage();
+            compteurSurPage = 0;
+        }
+
+        let col = compteurSurPage % 2;
+        let lig = Math.floor(compteurSurPage / 2);
+        
+        let posX = itemX + col * (largeurEtiquette + espaceX);
+        let posY = itemY + lig * (hauteurEtiquette + espaceY);
+
+        // --- BORDURE ET FOND DU TICKET ---
+        doc.setDrawColor(148, 163, 184); 
+        doc.setLineWidth(0.3);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(posX, posY, largeurEtiquette, hauteurEtiquette, 3, 3, "FD");
+
+        // --- BANDEAU SUPÉRIEUR ORANGE ---
+        doc.setFillColor(234, 88, 12); 
+        doc.rect(posX, posY, largeurEtiquette, 9, "F");
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "bold");
+        doc.text("🚀 SAFE-RUN EXPRESS - TICKET COLIS", posX + 4, posY + 6);
+
+        // --- COORDONNÉES DU DOSSIER CLIENT ---
+        doc.setTextColor(15, 23, 42); 
+        doc.setFontSize(11);
+        doc.setFont("Helvetica", "bold");
+        doc.text(`CLIENT : ${c.Client || 'Inconnu'}`, posX + 4, posY + 15);
+
+        doc.setFontSize(9);
+        doc.setFont("Helvetica", "normal");
+        doc.setTextColor(71, 85, 105); 
+        doc.text(`ID Commande : #${c.ID || '---'}`, posX + 4, posY + 20);
+        doc.text(`Téléphone : ${c.Téléphone || '---'}`, posX + 4, posY + 24);
+        
+        doc.setDrawColor(241, 245, 249);
+        doc.line(posX + 4, posY + 26, posX + largeurEtiquette - 4, posY + 26);
+
+        // --- BLOC CONTENU DE LA COMMANDE ---
+        doc.setFont("Helvetica", "bold");
+        doc.setTextColor(234, 88, 12); 
+        doc.text("📦 ARTICLES À LIVRER :", posX + 4, posY + 31);
+        
+        doc.setFont("Helvetica", "normal");
+        doc.setTextColor(15, 23, 42);
+        
+        let listeProduits = c.Produits || "Aucun détail produit spécifié";
+        let lignesProduits = doc.splitTextToSize(listeProduits, largeurEtiquette - 8);
+        
+        let positionTexteY = posY + 36;
+        lignesProduits.slice(0, 4).forEach(ligne => {
+            doc.text(ligne, posX + 4, positionTexteY);
+            positionTexteY += 4;
+        });
+
+        // --- PIED DU TICKET : CRÉNEAU HORAIRE & SÉCURITÉ COLONNE J ---
+        doc.setDrawColor(226, 232, 240);
+        doc.line(posX + 4, posY + hauteurEtiquette - 11, posX + largeurEtiquette - 4, posY + hauteurEtiquette - 11);
+        
+        doc.setFontSize(8.5);
+        doc.setFont("Helvetica", "bold");
+        doc.setTextColor(71, 85, 105);
+        
+        // Extraction intelligente selon la présence d'une heure ou d'une virgule explicative
+        let rawLivraison = c.Livraison || "";
+        let texteCreneau = "A définir";
+
+        if (rawLivraison.toLowerCase().includes("à")) {
+            texteCreneau = rawLivraison.split(/à/i)[1] || "A définir";
+        } else if (rawLivraison.includes(",")) {
+            texteCreneau = rawLivraison.split(",")[1] || "A définir";
+        } else {
+            texteCreneau = rawLivraison.replace(/LIVRAISON\s*:\s*/i, "");
+        }
+        
+        doc.text(`⏱️ Tranche : ${texteCreneau.trim()}`, posX + 4, posY + hauteurEtiquette - 7);
+
+        // Traitement de la Colonne J (Nom du livreur) : Si vide, on n'ajoute rien après les deux points
+        let nomLivreur = c.Livreur || ""; 
+        doc.text(`🛵 Livreur : ${nomLivreur.trim()}`, posX + 4, posY + hauteurEtiquette - 2);
+
+        compteurSurPage++;
+    });
+
+    doc.save(`Tickets_Colis_SafeRun_${cibleJour}_${dateJour.replace(/\//g, '-')}.pdf`);
 }
 </script>
 </body>
