@@ -1257,9 +1257,26 @@ allMsgs.forEach(m => {
                 const texte = m.message || m.Message || m.texte || ""; 
                 const exp = m.expediteur || m.Expediteur || "";
                 const side = (exp === "Admin") ? "sent" : "received";
-                if(texte) {
-                    msgHtml += `<div class="msg ${side}">${texte}</div>`;
-                }
+                //  NOUVEAU CODE CORRIGÉ ET ADAPTÉ :
+if(texte) {
+    // 1. Regex pour intercepter les liens d'images (PNG, JPG, JPEG, GIF, WEBP)
+    const regexImage = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))/i;
+    let contenuBulle = texte;
+
+    if (regexImage.test(texte)) {
+        // RENDU IMAGE : Conteneur scrollable horizontalement, idéal pour mobile et captures d'écran
+        contenuBulle = `
+            <div class="conteneur-image-chat" style="width:100%; max-width:100%; overflow-x:auto; padding:4px 0; -webkit-overflow-scrolling:touch;">
+                <a href="${texte}" target="_blank">
+                    <img src="${texte}" alt="Capture SafeRun" style="max-height:220px; max-width:100%; border-radius:6px; display:block; object-fit:contain; box-shadow:0 1px 3px rgba(0,0,0,0.15);" />
+                </a>
+                <small style="display:block; font-size:9px; opacity:0.7; margin-top:4px; font-style:italic; text-align:left;">📱 Cliquer pour agrandir</small>
+            </div>`;
+    }
+
+    // On applique le style max-width et word-wrap pour éviter que le texte ne déborde sur mobile
+    msgHtml += `<div class="msg ${side}" style="max-width:85%; word-wrap:break-word;">${contenuBulle}</div>`;
+}
             });
 
             const container = document.getElementById('msg-container');
@@ -1298,7 +1315,7 @@ allMsgs.forEach(m => {
         message: val, // On utilise "message" pour correspondre au GAS
         expediteur: "Admin" 
     };
-
+    
     await fetch(CONFIG.API, {
         method: "POST",
         mode: "no-cors",
