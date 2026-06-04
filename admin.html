@@ -372,11 +372,21 @@
 <div class="nav-item" onclick="showSection('calendrier')">
     <i class="fas fa-calendar-alt"></i> <span>Calendrier & Promos</span>
 </div>
-<button onclick="genererAnalyseStockParJour('AUJOURDHUI')">📦 Stock Aujourd'hui</button>
-<button onclick="genererAnalyseStockParJour('DEMAIN')">⏳ Stock Demain</button>
+<div class="section-actions-logistique">
+    <h3>📦 Extraction Stock Grossiste</h3>
+    <button onclick="genererAnalyseStockParVague('AUJOURDHUI', 'MATIN')">☀️ Stock Aujourd'hui - MATIN</button>
+    <button onclick="genererAnalyseStockParVague('AUJOURDHUI', 'MIDI')">🌤️ Stock Aujourd'hui - MIDI</button>
+    <button onclick="genererAnalyseStockParVague('DEMAIN', 'MATIN')">⏳ Stock Demain - MATIN</button>
+    <button onclick="genererAnalyseStockParVague('DEMAIN', 'MIDI')">⏳ Stock Demain - MIDI</button>
+</div>
 
-<button onclick="genererEtiquettesColisParJour('AUJOURDHUI')">🏷️ Tickets Aujourd'hui</button>
-<button onclick="genererEtiquettesColisParJour('DEMAIN')">⏳ Tickets Demain</button>
+<div class="section-actions-tickets">
+    <h3>🏷️ Impression Tickets Colis (10 par Page A4)</h3>
+    <button onclick="genererEtiquettesColisParVague('AUJOURDHUI', 'MATIN')">☀️ Tickets Aujourd'hui - MATIN</button>
+    <button onclick="genererEtiquettesColisParVague('AUJOURDHUI', 'MIDI')">🌤️ Tickets Aujourd'hui - MIDI</button>
+    <button onclick="genererEtiquettesColisParVague('DEMAIN', 'MATIN')">⏳ Tickets Demain - MATIN</button>
+    <button onclick="genererEtiquettesColisParVague('DEMAIN', 'MIDI')">⏳ Tickets Demain - MIDI</button>
+</div>
 <div class="nav-item" onclick="showTab('tab-pilote', this)">
     <i class="fas fa-route"></i> <span>Pilote Déstockage</span>
 </div>
@@ -2040,7 +2050,7 @@ function genererPDFPlanning() {
     // --- SAUVEGARDE ---
     doc.save(`ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`);
 }
-function genererAnalyseStock() {
+function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     const conteneur = document.getElementById('liste-cumul-stock');
     const panelResultat = document.getElementById('resultat-stock');
     const panelFinance = document.getElementById('finance-grossiste');
@@ -2058,11 +2068,43 @@ function genererAnalyseStock() {
     allData.forEach(c => {
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
             
-            // 1. CALCUL DU MONTANT (GROSSISTE)
+            // --- DEBUT DU RAJOUT DE SÉCURITÉ DATE & VAGUE ---
+            const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+            const maintenant = new Date();
+            const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+            const demain = new Date();
+            demain.setDate(maintenant.getDate() + 1);
+            const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+            const texteLivraison = (c.Livraison || "").toLowerCase();
+            let jourValide = false;
+
+            // Étape A : Vérification stricte du jour
+            if (cibleJour === 'AUJOURDHUI') {
+                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) jourValide = true;
+            } else if (cibleJour === 'DEMAIN') {
+                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) jourValide = true;
+            }
+
+            if (!jourValide) return; // On saute cette ligne si ce n'est pas le bon jour
+
+            // Étape B : Vérification de la vague (Matin / Midi)
+            let vagueDetectee = 'MIDI';
+            if (texteLivraison.includes("matin") || /à\s*0[7-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+                vagueDetectee = 'MATIN';
+            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-7]:/.test(texteLivraison)) {
+                vagueDetectee = 'MIDI';
+            }
+
+            if (vagueDetectee !== cibleVague) return; // On saute cette ligne si ce n'est pas la bonne vague
+            // --- FIN DU RAJOUT ---
+
+
+            // 1. CALCUL DU MONTANT (GROSSISTE) - (Votre code d'origine inchangé)
             let prixCommande = parseFloat(c.Montant) || 0; 
             totalArgentAPayer += prixCommande;
 
-            // 2. COMPTER LES PRODUITS
+            // 2. COMPTER LES PRODUITS - (Votre code d'origine inchangé)
             let produitsStr = (c.Produits || "");
             // On sépare par virgule ou par le signe +
             let items = produitsStr.split(/[,+]/);
@@ -3287,18 +3329,118 @@ function imprimerZonePDF(idZone, fluxNom) {
     // 4. SAUVEGARDE ET TÉLÉCHARGEMENT DIRECT
     doc.save(`SafeRun_Bon_Grossiste_${fluxNom}_${cibleJour.replace(/\//g, '-')}.pdf`);
 }
+// =========================================================================
+// MODULE LOGISTIQUE : TRI STRICT PAR JOUR (AUJ/DEMAIN) ET PAR VAGUE (MATIN/MIDI)
+// =========================================================================
+
 /**
- * Génère un fichier PDF A4 contenant exactement 10 tickets colis individuels par page (Grille 2x5).
- * Gère les formats de dates et laisse un espace vide si le livreur (colonne J) est absent.
- * @param {string} cibleJour - 'AUJOURDHUI', 'DEMAIN' ou 'AUTRES'
+ * Analyse le stock grossiste cumulé en séparant strictement par Jour ET par Vague.
+ * @param {string} cibleJour - 'AUJOURDHUI' ou 'DEMAIN'
+ * @param {string} cibleVague - 'MATIN' ou 'MIDI'
  */
-function genererEtiquettesColisParJour(cibleJour = 'AUJOURDHUI') {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
+function genererAnalyseStockParVague(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
+    const conteneur = document.getElementById('liste-cumul-stock');
+    const panelResultat = document.getElementById('resultat-stock');
+    const panelFinance = document.getElementById('finance-grossiste');
+    const affichagePrix = document.getElementById('montant-grossiste-total');
+    
+    if (!conteneur || !panelResultat || !panelFinance || !affichagePrix) {
+        console.error("Erreur : Un élément HTML est manquant pour l'affichage du stock.");
+        return;
+    }
+
+    let cumulProduits = {};
+    let totalArgentAPayer = 0;
+
+    // --- 1. PRÉPARATION DES FILTRES DE DATES ---
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    allData.forEach(c => {
+        if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            const texteLivraison = (c.Livraison || "").toLowerCase();
+            let jourValide = false;
+
+            // Filtrage étanche du jour
+            if (cibleJour === 'AUJOURDHUI') {
+                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) jourValide = true;
+            } else if (cibleJour === 'DEMAIN') {
+                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) jourValide = true;
+            }
+
+            if (!jourValide) return; // Écarte immédiatement si ce n'est pas le bon jour
+
+            // Filtrage étanche de la vague (Matin vs Midi)
+            let vagueDetectee = 'MIDI'; // Par défaut si non spécifié
+            
+            // Si le texte contient explicitement le mot matin ou une heure du matin (07h à 11h)
+            if (texteLivraison.includes("matin") || /à\s*0[7-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+                vagueDetectee = 'MATIN';
+            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || /à\s*1[2-7]:/.test(texteLivraison)) {
+                vagueDetectee = 'MIDI';
+            }
+
+            if (vagueDetectee !== cibleVague) return; // Écarte si ce n'est pas la vague demandée
+
+            // --- COLLECTE DES DONNÉES SÉCURISÉE ---
+            let prixCommande = parseFloat(c.Montant) || 0; 
+            totalArgentAPayer += prixCommande;
+
+            let produitsStr = (c.Produits || "");
+            if (!produitsStr || produitsStr.trim() === "") return;
+
+            let items = produitsStr.split(/[,+]/);
+            items.forEach(item => {
+                let txt = item.trim().toUpperCase();
+                // Sécurité critique anti-pollution de tableau
+                if (txt === "" || txt.startsWith("#") || txt.startsWith("SR") || txt.length > 60 || !isNaN(txt)) return;
+
+                let match = txt.match(/(\d+)\s*[xX]\s*(.*)/);
+                if (match) {
+                    let qte = parseInt(match[1]);
+                    let nom = match[2].trim();
+                    cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
+                } else {
+                    cumulProduits[txt] = (cumulProduits[txt] || 0) + 1;
+                }
+            });
+        }
     });
+
+    // --- INTERFACE DE RENDU ---
+    if (Object.keys(cumulProduits).length > 0) {
+        panelResultat.style.display = 'block';
+        panelFinance.style.display = 'block';
+        
+        conteneur.innerHTML = Object.entries(cumulProduits).map(([nom, qte]) => `
+            <div class="item-stock-prepare" style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="nom-produit-pdf" style="font-weight:500;">${nom}</span>
+                <strong class="qte-produit-pdf" style="color:var(--orange); background:#fff7ed; padding:2px 8px; border-radius:4px;">x${qte}</strong>
+            </div>
+        `).join('');
+
+        affichagePrix.innerText = new Intl.NumberFormat('fr-FR').format(totalArgentAPayer) + " Ar";
+    } else {
+        panelResultat.style.display = 'none';
+        panelFinance.style.display = 'none';
+        alert(`Aucun produit en stock pour : ${cibleJour} - Vague ${cibleVague}`);
+    }
+}
+
+/**
+ * Génère un fichier PDF A4 contenant exactement 10 tickets colis (Grille 2x5)
+ * triés strictement par Jour ET par Vague (Matin / Midi).
+ * @param {string} cibleJour - 'AUJOURDHUI' ou 'DEMAIN'
+ * @param {string} cibleVague - 'MATIN' ou 'MIDI'
+ */
+function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     const dateJour = new Date().toLocaleDateString('fr-FR');
     const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -3310,141 +3452,112 @@ function genererEtiquettesColisParJour(cibleJour = 'AUJOURDHUI') {
     demain.setDate(maintenant.getDate() + 1);
     const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
 
-    // 1. Filtrage étanche des colis selon le jour
     let commandesAEtiqueter = [];
 
+    // Tri croisé Jour + Vague
     allData.forEach(c => {
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
             const texteLivraison = (c.Livraison || "").toLowerCase();
             let jourValide = false;
 
             if (cibleJour === 'AUJOURDHUI') {
-                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) {
-                    jourValide = true;
-                }
+                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) jourValide = true;
             } else if (cibleJour === 'DEMAIN') {
-                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) {
-                    jourValide = true;
-                }
-            } else if (cibleJour === 'AUTRES') {
-                if (!texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes(texteDemain) && !texteLivraison.includes("demain")) {
-                    jourValide = true;
-                }
+                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) jourValide = true;
             }
 
-            if (jourValide) {
+            if (!jourValide) return;
+
+            let vagueDetectee = 'MIDI';
+            if (texteLivraison.includes("matin") || /à\s*0[7-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+                vagueDetectee = 'MATIN';
+            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || /à\s*1[2-7]:/.test(texteLivraison)) {
+                vagueDetectee = 'MIDI';
+            }
+
+            if (vagueDetectee === cibleVague) {
                 commandesAEtiqueter.push(c);
             }
         }
     });
 
     if (commandesAEtiqueter.length === 0) {
-        alert(`Aucun colis à étiqueter trouvé pour : ${cibleJour}`);
+        alert(`Aucun colis trouvé pour : ${cibleJour} - Vague ${cibleVague}`);
         return;
     }
 
-    // 2. CONFIGURATION DE LA GRILLE POUR 10 ÉTIQUETTES (2 colonnes x 5 lignes)
-    let itemX = 8;          // Marge gauche de la page
-    let itemY = 10;         // Marge haute de la page
-    const largeurEtiquette = 94; // Largeur de chaque ticket
-    const hauteurEtiquette = 53; // Hauteur ajustée pour faire entrer 5 lignes verticalement
-    const espaceX = 6;      // Espace entre les deux colonnes
-    const espaceY = 4;      // Espace entre les lignes
-    
+    // Configuration géométrique A4 pour 10 étiquettes (Grille 2x5)
+    let itemX = 8; let itemY = 10;         
+    const largeurEtiquette = 94; const hauteurEtiquette = 53; 
+    const espaceX = 6; const espaceY = 4;      
     let compteurSurPage = 0;
 
     commandesAEtiqueter.forEach((c) => {
-        // Si on a déjà placé 10 étiquettes sur la page en cours, on passe à la page suivante
         if (compteurSurPage === 10) {
             doc.addPage();
             compteurSurPage = 0;
         }
 
-        // Calcul de la colonne (0 ou 1) et de la ligne (0 à 4)
         let col = compteurSurPage % 2;
         let lig = Math.floor(compteurSurPage / 2);
-        
         let posX = itemX + col * (largeurEtiquette + espaceX);
         let posY = itemY + lig * (hauteurEtiquette + espaceY);
 
-        // --- BORDURE ET FOND DU TICKET ---
-        doc.setDrawColor(148, 163, 184); 
-        doc.setLineWidth(0.25);
-        doc.setFillColor(255, 255, 255);
+        // --- ENCADRÉ ---
+        doc.setDrawColor(148, 163, 184); doc.setLineWidth(0.25); doc.setFillColor(255, 255, 255);
         doc.roundedRect(posX, posY, largeurEtiquette, hauteurEtiquette, 2, 2, "FD");
 
-        // --- BANDEAU SUPÉRIEUR ORANGE (Hauteur légèrement réduite à 8mm) ---
+        // --- BANDEAU SUPERIEUR DYNAMIQUE (Indique la vague) ---
         doc.setFillColor(234, 88, 12); 
         doc.rect(posX, posY, largeurEtiquette, 8, "F");
         
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9.5);
-        doc.setFont("Helvetica", "bold");
-        doc.text("🚀 SAFE-RUN EXPRESS - TICKET COLIS", posX + 4, posY + 5.5);
+        doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.setFont("Helvetica", "bold");
+        doc.text(`🚀 SAFE-RUN - ${cibleVague} (${cibleJour})`, posX + 4, posY + 5.5);
 
-        // --- INFOS CLIENT ---
-        doc.setTextColor(15, 23, 42); 
-        doc.setFontSize(10.5);
-        doc.setFont("Helvetica", "bold");
+        // --- DOSSIER CLIENT ---
+        doc.setTextColor(15, 23, 42); doc.setFontSize(10.5); doc.setFont("Helvetica", "bold");
         doc.text(`CLIENT : ${c.Client || 'Inconnu'}`, posX + 4, posY + 13.5);
 
-        doc.setFontSize(8.5);
-        doc.setFont("Helvetica", "normal");
-        doc.setTextColor(71, 85, 105); 
-        doc.text(`ID Commande : #${c.ID || '---'}`, posX + 4, posY + 18);
-        doc.text(`Téléphone : ${c.Téléphone || '---'}`, posX + 4, posY + 22);
+        doc.setFontSize(8.5); doc.setFont("Helvetica", "normal"); doc.setTextColor(71, 85, 105); 
+        doc.text(`ID : #${c.ID || '---'}`, posX + 4, posY + 18);
+        doc.text(`Tél : ${c.Téléphone || '---'}`, posX + 4, posY + 22);
         
-        doc.setDrawColor(241, 245, 249);
-        doc.line(posX + 4, posY + 24, posX + largeurEtiquette - 4, posY + 24);
+        doc.setDrawColor(241, 245, 249); doc.line(posX + 4, posY + 24, posX + largeurEtiquette - 4, posY + 24);
 
-        // --- CONTENU DES PRODUITS (Articles) ---
-        doc.setFont("Helvetica", "bold");
-        doc.setTextColor(234, 88, 12); 
+        // --- ARTICLES ---
+        doc.setFont("Helvetica", "bold"); doc.setTextColor(234, 88, 12); 
         doc.text("📦 ARTICLES À LIVRER :", posX + 4, posY + 28.5);
         
-        doc.setFont("Helvetica", "normal");
-        doc.setTextColor(15, 23, 42);
-        
-        let listeProduits = c.Produits || "Aucun détail produit spécifié";
+        doc.setFont("Helvetica", "normal"); doc.setTextColor(15, 23, 42);
+        let listeProduits = c.Produits || "Aucun détail produit";
         let lignesProduits = doc.splitTextToSize(listeProduits, largeurEtiquette - 8);
         
         let positionTexteY = posY + 33;
-        // On affiche au maximum 3 lignes de produits pour maintenir la compacité des 10 étiquettes
         lignesProduits.slice(0, 3).forEach(ligne => {
             doc.text(ligne, posX + 4, positionTexteY);
             positionTexteY += 3.8;
         });
 
-        // --- PIED DU TICKET : CRÉNEAU HORAIRE & LIVREUR (COLONNE J) ---
-        doc.setDrawColor(226, 232, 240);
-        doc.line(posX + 4, posY + hauteurEtiquette - 9, posX + largeurEtiquette - 4, posY + hauteurEtiquette - 9);
+        // --- PIED DE PAGE ---
+        doc.setDrawColor(226, 232, 240); doc.line(posX + 4, posY + hauteurEtiquette - 9, posX + largeurEtiquette - 4, posY + hauteurEtiquette - 9);
+        
+        doc.setFontSize(8); doc.setFont("Helvetica", "bold"); doc.setTextColor(71, 85, 105);
+        
+        let rawLivraison = c.Livraison || "";
+        let dateReelleAffichee = rawLivraison.replace(/LIVRAISON\s*:\s*/i, "").trim();
+        if (dateReelleAffichee === "") dateReelleAffichee = "À définir";
+        
+        if (dateReelleAffichee.length > 38) doc.setFontSize(7);
+        doc.text(`📆 Date : ${dateReelleAffichee}`, posX + 4, posY + hauteurEtiquette - 5.5);
         
         doc.setFontSize(8);
-        doc.setFont("Helvetica", "bold");
-        doc.setTextColor(71, 85, 105);
-        
-        // Extraction intelligente du créneau horaire
-        let rawLivraison = c.Livraison || "";
-        let texteCreneau = "A définir";
-
-        if (rawLivraison.toLowerCase().includes("à")) {
-            texteCreneau = rawLivraison.split(/à/i)[1] || "A définir";
-        } else if (rawLivraison.includes(",")) {
-            texteCreneau = rawLivraison.split(",")[1] || "A définir";
-        } else {
-            texteCreneau = rawLivraison.replace(/LIVRAISON\s*:\s*/i, "");
-        }
-        
-        doc.text(`⏱️ Tranche : ${texteCreneau.trim()}`, posX + 4, posY + hauteurEtiquette - 5.5);
-
-        // Colonne J (Livreur) : Si vide, reste vide sans perturber l'alignement
         let nomLivreur = c.Livreur || ""; 
         doc.text(`🇲🇬 Livreur : ${nomLivreur.trim()}`, posX + 4, posY + hauteurEtiquette - 2);
 
         compteurSurPage++;
     });
 
-    doc.save(`Tickets_Colis_SafeRun_${cibleJour}_${dateJour.replace(/\//g, '-')}.pdf`);
+    doc.save(`Tickets_Colis_${cibleJour}_${cibleVague}_${dateJour.replace(/\//g, '-')}.pdf`);
 }
 </script>
 </body>
