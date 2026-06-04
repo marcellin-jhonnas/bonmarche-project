@@ -3158,7 +3158,7 @@ function analyserEtDispatcherLivraisons() {
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
-    const contenuZone = document.getElementById(idZone).innerHTML;
+    let contenuZone = document.getElementById(idZone).innerHTML;
     const cibleJour = document.getElementById('pilote-filtre-jour').value;
 
     if (contenuZone.includes("Aucun colis") || contenuZone.includes("Veuillez d'abord")) {
@@ -3166,6 +3166,54 @@ function imprimerZonePDF(idZone, fluxNom) {
         return;
     }
 
+    // --- CORRECTION CRITIQUE : FUSION ET CUMUL DES PRODUITS IDENTIQUES POUR LE PDF ---
+    // Création d'un conteneur temporaire pour analyser le HTML de la zone
+    const divTemporaire = document.createElement('div');
+    divTemporaire.innerHTML = contenuZone;
+
+    // On cherche les lignes du tableau du grossiste (📌)
+    const lignesGrossiste = divTemporaire.querySelectorAll('table:first-of-type tbody tr');
+    
+    if (lignesGrossiste.length > 0) {
+        let cumulGrossistePDF = {};
+
+        // Extraction et cumul des produits
+        lignesGrossiste.forEach(tr => {
+            const cellules = tr.querySelectorAll('td');
+            if (cellules.length >= 2) {
+                let nomArt = cellules[0].innerText.replace('📌', '').trim();
+                let qteArt = parseInt(cellules[1].innerText.replace(/[^0-9]/g, '')) || 1;
+
+                if (nomArt !== "" && !nomArt.toLowerCase().includes("aucun article")) {
+                    // On cumule si le produit existe déjà
+                    cumulGrossistePDF[nomArt] = (cumulGrossistePDF[nomArt] || 0) + qteArt;
+                }
+            }
+        });
+
+        // Reconstruction propre du tableau sans doublons avec les quantités augmentées
+        let nouveauCorpsTableau = "";
+        Object.entries(cumulGrossistePDF).forEach(([nom, qte]) => {
+            nouveauCorpsTableau += `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px; font-weight:bold; color:#1e293b;">📌 ${nom}</td>
+                    <td style="padding:10px; font-weight:bold; color:#ea580c; text-align:center; font-size:15px; background:#fff7ed;">x${qte}</td>
+                </tr>`;
+        });
+
+        // Si on a réussi à cumuler, on met à jour le tableau du grossiste dans le HTML du PDF
+        if (nouveauCorpsTableau !== "") {
+            const tbodyGrossiste = divTemporaire.querySelector('table:first-of-type tbody');
+            if (tbodyGrossiste) {
+                tbodyGrossiste.innerHTML = nouveauCorpsTableau;
+            }
+        }
+    }
+
+    // On récupère le contenu final nettoyé et cumulé
+    const contenuFinalPourPDF = divTemporaire.innerHTML;
+
+    // --- GÉNÉRATION DU PDF ---
     const win = window.open('', '_blank');
     win.document.write(`
         <html>
@@ -3181,7 +3229,7 @@ function imprimerZonePDF(idZone, fluxNom) {
                 td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; line-height: 1.5; }
                 small { color: #64748b; }
                 
-                /* Forçage d'impression des arrière-plans colorés (Orange et Gris de l'OS) */
+                /* Forçage d'impression des couleurs d'arrière-plan */
                 thead tr, th, .item-stock-prepare, strong {
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
@@ -3205,7 +3253,7 @@ function imprimerZonePDF(idZone, fluxNom) {
                     Document logistique officiel extrait le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')} pour tri de marchandise.
                 </p>
             </div>
-            <div>${contenuZone}</div>
+            <div>${contenuFinalPourPDF}</div>
             <script>
                 window.onload = function() { 
                     window.print(); 
