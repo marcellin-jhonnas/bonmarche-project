@@ -3170,14 +3170,22 @@ function imprimerZonePDF(idZone, fluxNom) {
     win.document.write(`
         <html>
         <head>
-            <title>SafeRun - Bon de Récupération Grossiste ${fluxNom}</title>
+            <title>SafeRun_Bon_Grossiste_${fluxNom}_${cibleJour}</title>
             <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; background: white; }
+                @page { size: A4; margin: 15mm; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 10px; background: white; }
                 .pdf-header { border-bottom: 3px solid #ff6600; padding-bottom: 15px; margin-bottom: 25px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
+                th { background: #f8fafc !important; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 td { padding: 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; line-height: 1.5; }
                 small { color: #64748b; }
+                
+                /* Forçage d'impression des arrière-plans colorés (Orange et Gris de l'OS) */
+                thead tr, th, .item-stock-prepare, strong {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
             </style>
         </head>
         <body>
@@ -3189,7 +3197,7 @@ function imprimerZonePDF(idZone, fluxNom) {
                             <h3 style="margin:5px 0 0 0; color:#ff6600; text-transform: uppercase; font-size:16px;">BON DE RÉCUPÉRATION GROSSISTE : VAGUE ${fluxNom}</h3>
                         </td>
                         <td style="border:none; padding:0; text-align:right; vertical-align:top;">
-                            <span style="background:#0f172a; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:12px;">PÉRIODE : ${cibleJour}</span>
+                            <span style="background:#0f172a; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:12px; text-transform: uppercase;">PÉRIODE : ${cibleJour}</span>
                         </td>
                     </tr>
                 </table>
@@ -3201,7 +3209,7 @@ function imprimerZonePDF(idZone, fluxNom) {
             <script>
                 window.onload = function() { 
                     window.print(); 
-                    setTimeout(function() { window.close(); }, 300); 
+                    setTimeout(function() { window.close(); }, 500); 
                 };
             <\/script>
         </body>
