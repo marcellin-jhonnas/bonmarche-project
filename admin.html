@@ -2091,6 +2091,7 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             let jourValide = false;
 
             // Étape A : Vérification souple du jour
+            // Étape A : Vérification souple du jour
             if (cibleJour === 'AUJOURDHUI') {
                 if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) {
                     jourValide = true;
