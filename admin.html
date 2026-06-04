@@ -2065,10 +2065,18 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     let cumulProduits = {};
     let totalArgentAPayer = 0;
 
-    allData.forEach(c => {
+    console.log(`=== DEBUT DIAGNOSTIC STOCK [${cibleJour} - ${cibleVague}] ===`);
+    console.log(`Texte recherché pour Aujourd'hui : "${texteAujourdhui}"`);
+    console.log(`Texte recherché pour Demain : "${texteDemain}"`);
+
+    let totalLignesAnalysees = 0;
+    let totalLignesValidees = 0;
+
+    allData.forEach((c, index) => {
         if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            totalLignesAnalysees++;
             
-            // --- DEBUT DU RAJOUT DE SÉCURITÉ DATE & VAGUE ---
+            // --- DETECTEUR DE LOGS POUR LE FILTRAGE ---
             const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
             const maintenant = new Date();
             const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
@@ -2079,54 +2087,68 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             const texteLivraison = (c.Livraison || "").toLowerCase();
             let jourValide = false;
 
-            // Étape A : Vérification stricte du jour
+            // 1. Diagnostic de l'Étape A : Recherche du Jour
             if (cibleJour === 'AUJOURDHUI') {
-                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) jourValide = true;
+                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) {
+                    jourValide = true;
+                }
             } else if (cibleJour === 'DEMAIN') {
-                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) jourValide = true;
+                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) {
+                    jourValide = true;
+                }
             }
 
-            if (!jourValide) return; // On saute cette ligne si ce n'est pas le bon jour
+            if (!jourValide) {
+                // Ce log vous dit exactement quel texte a bloqué la date
+                console.log(`❌ Ligne #${index + 2} [REJETÉ DATE] - Client: ${c.Client || 'Inconnu'} | Valeur reçue: "${c.Livraison}"`);
+                return; 
+            }
 
-            // Étape B : Vérification de la vague (Matin / Midi)
+            // 2. Diagnostic de l'Étape B : Recherche de la Vague (Matin / Midi)
             let vagueDetectee = 'MIDI';
-            if (texteLivraison.includes("matin") || /à\s*0[7-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+            if (texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
                 vagueDetectee = 'MATIN';
-            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-7]:/.test(texteLivraison)) {
+            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-8]:/.test(texteLivraison)) {
                 vagueDetectee = 'MIDI';
             }
 
-            if (vagueDetectee !== cibleVague) return; // On saute cette ligne si ce n'est pas la bonne vague
-            // --- FIN DU RAJOUT ---
+            if (vagueDetectee !== cibleVague) {
+                // Ce log vous dit que la date était bonne mais que l'heure ou le créneau l'a envoyé dans l'autre vague
+                console.log(`⏳ Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé en [${vagueDetectee}] mais vous avez demandé [${cibleVague}] (Texte: "${c.Livraison}")`);
+                return; 
+            }
 
+            // Si le colis passe tous les filtres :
+            totalLignesValidees++;
+            console.log(`✅ Ligne #${index + 2} [ACCEPTÉ 🎉] - Client: ${c.Client} | Match parfait pour ${cibleJour} - ${cibleVague}`);
 
-            // 1. CALCUL DU MONTANT (GROSSISTE) - (Votre code d'origine inchangé)
+            // --- FIN DU DETECTEUR (Le reste de votre calcul d'origine reprend ici) ---
+
+            // 1. CALCUL DU MONTANT (GROSSISTE)
             let prixCommande = parseFloat(c.Montant) || 0; 
             totalArgentAPayer += prixCommande;
 
-            // 2. COMPTER LES PRODUITS - (Votre code d'origine inchangé)
+            // 2. COMPTER LES PRODUITS
             let produitsStr = (c.Produits || "");
-            // On sépare par virgule ou par le signe +
             let items = produitsStr.split(/[,+]/);
             
             items.forEach(item => {
                 let txt = item.trim().toUpperCase();
                 if (txt === "") return;
 
-                // On cherche le format "2 x Produit" ou "2xProduit"
                 let match = txt.match(/(\d+)\s*[xX]\s*(.*)/);
-                
                 if (match) {
                     let qte = parseInt(match[1]);
                     let nom = match[2].trim();
                     cumulProduits[nom] = (cumulProduits[nom] || 0) + qte;
                 } else {
-                    // Si pas de chiffre, on compte 1
                     cumulProduits[txt] = (cumulProduits[txt] || 0) + 1;
                 }
             });
         }
     });
+
+    console.log(`=== FIN DIAGNOSTIC : ${totalLignesAnalysees} lignes analysées au statut valide | ${totalLignesValidees} colis retenus pour le stock ===`);
 
     // AFFICHAGE
     if (Object.keys(cumulProduits).length > 0) {
