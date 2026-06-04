@@ -2091,13 +2091,15 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
             let jourValide = false;
 
             // Étape A : Vérification souple du jour
-            // Étape A : Vérification souple du jour
+            // Étape A : Vérification stricte et simplifiée par la date numérique uniquement
             if (cibleJour === 'AUJOURDHUI') {
-                if (texteLivraison.includes(texteAujourdhui) && !texteLivraison.includes("demain")) {
+                // Si la cellule contient "4 juin", c'est obligatoirement AUJOURDHUI, peu importe le texte autour
+                if (texteLivraison.includes(texteAujourdhui)) {
                     jourValide = true;
                 }
             } else if (cibleJour === 'DEMAIN') {
-                if (texteLivraison.includes(texteDemain) || texteLivraison.includes("demain")) {
+                // Si la cellule contient "5 juin", c'est obligatoirement DEMAIN
+                if (texteLivraison.includes(texteDemain)) {
                     jourValide = true;
                 }
             }
