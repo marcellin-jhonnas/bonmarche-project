@@ -2925,7 +2925,7 @@ function filtrerEtExporterPDF(cibleJour, heureDebut, heureFin) {
 // MOTEUR DE DISPATCHING ULTRA-PRO & LIEN DIRECT APPS SCRIPT (SAFERUN)
 // =========================================================================
 function analyserEtDispatcherLivraisons() {
-    console.log("=== DÉBUT DU DISPATCHING LOGISTIQUE (CORRECTION CRITIQUE) ===");
+    console.log("=== DÉBUT DU DISPATCHING LOGISTIQUE AVEC CUMUL GROSSISTE FIN ===");
 
     // 1. VÉRIFICATION ET CHARGEMENT AUTOMATIQUE VIA VOTRE FONCTION SYSTEME
     const commandesEnMemoire = window.allData || window.currentSerieuses || [];
@@ -2995,7 +2995,7 @@ function analyserEtDispatcherLivraisons() {
     let compteurMatin = 0;
     let compteurAprem = 0;
 
-    // 3. TRI ET EXTRACTION INTELLIGENTE DE LA MARCHANDISE
+    // 3. TRI ET EXTRACTION DE LA MARCHANDISE PAR SÉPARATEUR DE CHAÎNE
     listeAAnalyser.forEach((cmd) => {
         const statut = (cmd.Statut || "").toUpperCase();
         const texteLivraison = (cmd.Livraison || "").toLowerCase();
@@ -3025,37 +3025,31 @@ function analyserEtDispatcherLivraisons() {
             estMatin = true; 
         }
 
-        // --- NOUVEL EXTRACTEUR DE PRODUIT ULTRA ROBUSTE ---
+        // --- ISOLATION DU PRODUIT (COUPURE DE LA CHAÎNE AU TIRET OU À LA PARENTHÈSE) ---
         let texteBrut = cmd.Livraison || "";
         let produitNettoye = "";
 
-        // Stratégie 1 : Si la ligne contient un tiret "-", le produit est presque toujours après le tiret
         if (texteBrut.includes("-")) {
-            let parties = texteBrut.split("-");
-            produitNettoye = parties[parties.length - 1].trim(); // On prend la dernière partie
-        } 
-        // Stratégie 2 : Si pas de tiret, on nettoie manuellement les mots temporels connus
-        else {
+            produitNettoye = texteBrut.substring(texteBrut.lastIndexOf("-") + 1).trim();
+        } else if (texteBrut.includes(")")) {
+            produitNettoye = texteBrut.substring(texteBrut.lastIndexOf(")") + 1).trim();
+        } else {
             produitNettoye = texteBrut
                 .replace(/LIVRAISON\s*:/i, '')
                 .replace(/lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche/gi, '')
                 .replace(/\d+\s*(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)/gi, '')
                 .replace(/ce jour|aujourd'hui|demain/gi, '')
-                .replace(/(entre\s*)?\d+h(\s*et\s*\d+h)?/gi, '')
-                .replace(/matin|après-midi|aprem/gi, '')
                 .trim();
         }
 
-        // Nettoyage final des caractères étranges restants au début ou à la fin du nom de produit
-        produitNettoye = produitNettoye.replace(/^[\s\-,.\(\)]+/, '').replace(/[\s\-,.\(\)]+$/, '').trim();
+        produitNettoye = produitNettoye.replace(/^[\s\-,.\(\)]+/, '').trim();
 
-        // Sécurité ultime si le texte est vide ou trop court
-        if (produitNettoye === "" || produitNettoye.length < 2) {
-            produitNettoye = "Marchandise non spécifiée";
+        if (produitNettoye.length < 2) {
+            produitNettoye = texteBrut.length > 20 ? texteBrut.substring(texteBrut.length - 20) : "Produit Indéterminé";
         }
 
-        // Uniformisation de la casse (Première lettre en majuscule, le reste en minuscule) pour grouper correctement
-        produitNettoye = produitNettoye.charAt(0).toUpperCase() + produitNettoye.slice(1).toLowerCase();
+        // Uniformisation : Première lettre en majuscule, le reste tel quel
+        produitNettoye = produitNettoye.charAt(0).toUpperCase() + produitNettoye.slice(1);
 
         const prixUnitaire = Number(cmd.Montant || 0);
 
@@ -3072,7 +3066,7 @@ function analyserEtDispatcherLivraisons() {
                 <td style="padding:10px; font-weight:bold; color:#16a34a;">${prixUnitaire.toLocaleString()} Ar</td>
             </tr>`;
 
-        // Rangement et cumul des totaux de marchandises
+        // Cumul dans les inventaires grossistes respectifs
         if (estMatin) {
             detailsClientsMatin += ligneClientHTML;
             compteurMatin++;
@@ -3094,7 +3088,7 @@ function analyserEtDispatcherLivraisons() {
         }
     });
 
-    // 4. CONSTRUCTION DU RENDU GRAPHIQUE (GROSSISTE EN PREMIER)
+    // 4. LE RENDU GRAPHIQUE DES DEUX BLOCS (GROSSISTE + TOURNÉE LIVREURS)
     function genererSectionHTML(inventaire, detailsClients) {
         let html = `
         <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:15px; margin-bottom:20px;">
@@ -3142,23 +3136,23 @@ function analyserEtDispatcherLivraisons() {
         return html;
     }
 
-    // 5. INJECTION FINALE DANS LES CONTENEURS DE L'ADMIN OS
+    // 5. INJECTION VISUELLE DANS L'ADMIN OS
     const zoneMatin = document.getElementById('zone-matin');
     const zoneAprem = document.getElementById('zone-aprem');
 
     if (zoneMatin) {
         zoneMatin.innerHTML = compteurMatin > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-clock"></i> FLUX DU MATIN : ${compteurMatin} colis prêts.</p>` + genererSectionHTML(inventaireMatin, detailsClientsMatin) : 
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#0284c7;"><i class="fas fa-clock"></i> FLUX DU MATIN : ${compteurMatin} colis.</p>` + genererSectionHTML(inventaireMatin, detailsClientsMatin) : 
             `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis planifié pour le matin.</p>`;
     }
     
     if (zoneAprem) {
         zoneAprem.innerHTML = compteurAprem > 0 ? 
-            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-clock"></i> FLUX DE L'APRÈS-MIDI : ${compteurAprem} colis prêts.</p>` + genererSectionHTML(inventaireAprem, detailsClientsAprem) : 
+            `<p style="margin:0 0 10px 0; font-weight:bold; color:#b45309;"><i class="fas fa-clock"></i> FLUX DE L'APRÈS-MIDI : ${compteurAprem} colis.</p>` + genererSectionHTML(inventaireAprem, detailsClientsAprem) : 
             `<p style="color:#94a3b8; text-align:center; padding:20px; border:1px dashed #cbd5e1; border-radius:8px; font-style:italic;">Aucun colis planifié pour l'après-midi.</p>`;
     }
 
-    alert(`✅ Tri et calcul grossiste réussis !`);
+    alert(`✅ Tri et calcul grossiste appliqués avec succès !`);
 }
 
 function imprimerZonePDF(idZone, fluxNom) {
