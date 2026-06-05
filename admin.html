@@ -3732,11 +3732,12 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
 }
 </script>
 <style>
+    /* ---- STYLE POUR PC / ORDINATEUR ---- */
     .btn-flottant-livre {
         position: fixed !important;
-        bottom: 235px !important; /* Ajusté à 235px pour se placer au-dessus des 3 autres boutons */
+        bottom: 235px !important; /* Se place à la 4ème position au-dessus des 3 autres */
         right: 25px !important;
-        background-color: #10b981 !important; /* Couleur Verte pour la livraison */
+        background-color: #10b981 !important; /* Vert succès */
         color: white !important;
         border: none !important;
         border-radius: 50% !important;
@@ -3745,7 +3746,7 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
         font-size: 24px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
         cursor: pointer !important;
-        z-index: 999999 !important; /* Reste au-dessus du panneau général */
+        z-index: 999999 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -3754,146 +3755,65 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
     .btn-flottant-livre:hover {
         transform: scale(1.1) !important;
     }
-    
-    /* La fenêtre popup s'ouvre juste à côté ou légèrement en dessous du bouton */
-    .popup-action-rapide {
-        display: none;
-        position: fixed !important;
-        bottom: 305px !important; /* Ajusté pour s'ouvrir juste au-dessus du bouton vert */
-        right: 25px !important;
-        background: white !important;
-        border-radius: 8px !important;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
-        padding: 15px !important;
-        width: 300px !important;
-        z-index: 999999 !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-    .popup-action-rapide h4 {
-        margin: 0 0 10px 0 !important;
-        color: #1e293b !important;
-        font-size: 14px !important;
-        font-family: sans-serif !important;
-    }
-    .popup-action-rapide input {
-        width: 100% !important;
-        padding: 8px !important;
-        margin-bottom: 10px !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 4px !important;
-        box-sizing: border-box !important;
-        color: #1e293b !important;
-        background: white !important;
-    }
-    .popup-action-rapide button {
-        width: 100% !important;
-        background: #1e293b !important;
-        color: white !important;
-        border: none !important;
-        padding: 8px !important;
-        border-radius: 4px !important;
-        cursor: pointer !important;
-        font-weight: bold !important;
+
+    /* ---- STYLE ADAPTATIF POUR MOBILE (SMARTPHONE) ---- */
+    @media (max-width: 768px) {
+        .btn-flottant-livre {
+            bottom: auto !important;
+            top: 15px !important; /* Se déplace en haut à droite sur mobile pour ne rien gêner */
+            right: 15px !important;
+            width: 45px !important;
+            height: 45px !important;
+            font-size: 18px !important;
+        }
     }
 </style>
 
-<button class="btn-flottant-livre" onclick="togglePopupLivre()" title="Passer un colis en LIVRÉ">
+<button class="btn-flottant-livre" onclick="ouvrirLivraisonRapide()" title="Passer une commande en LIVRÉ">
     <i class="fas fa-shipping-fast"></i>
 </button>
 
-<div id="popupLivreRapide" class="popup-action-rapide">
-    <h4>⚡ Validation Rapide Livraison</h4>
-    <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom du client..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
-    <button onclick="executerLivraisonRapide()">Marquer comme LIVRÉ</button>
-</div>
-
 <script>
-function togglePopupLivre() {
-    const popup = document.getElementById("popupLivreRapide");
-    if (!popup) return;
-    if (popup.style.display === "block") {
-        popup.style.display = "none";
-    } else {
-        popup.style.display = "block";
-        setTimeout(() => {
-            const inp = document.getElementById("rechercheCritereLivre");
-            if(inp) inp.focus();
-        }, 120);
-    }
-}
+async function ouvrirLivraisonRapide() {
+    // 1. Demander l'ID de la commande via un prompt natif (Exactement comme votre fonction paiement)
+    const idCommande = prompt("⚡ Entrez l'ID de la commande à marquer comme LIVRÉ (ex: SR123...) :");
+    if (!idCommande || idCommande.trim() === "") return;
 
-async function executerLivraisonRapide() {
-    const champ = document.getElementById("rechercheCritereLivre");
-    if (!champ) return;
-    const valeurRecherche = champ.value.trim().toLowerCase();
+    console.log("Validation Livraison en cours pour l'ID : " + idCommande);
 
-    if (!valeurRecherche) {
-        alert("Veuillez entrer une valeur (ID, Tél ou Nom).");
-        return;
-    }
-
-    // Vérifie si la base de données de l'application principale existe
-    if (typeof allData === 'undefined' || !Array.isArray(allData)) {
-        alert("La base de données n'est pas encore chargée. Connectez-vous d'abord.");
-        return;
-    }
-
-    // Recherche de la commande correspondante dans allData
-    const commandeTrouvee = allData.find(c => {
-        const idCmd = (c.ID || "").toString().toLowerCase();
-        const telCmd = (c.Téléphone || c.Telephone || "").toString().toLowerCase();
-        const clientCmd = (c.Client || "").toString().toLowerCase();
-        return idCmd === valeurRecherche || telCmd === valeurRecherche || clientCmd.includes(valeurRecherche);
-    });
-
-    if (!commandeTrouvee) {
-        alert(`❌ Aucune commande trouvée pour : "${champ.value}"`);
-        return;
-    }
-
-    const statutActuel = (commandeTrouvee.Statut || "").toUpperCase().trim();
-    if (statutActuel === "LIVRÉ" || statutActuel === "LIVRE") {
-        alert(`ℹ️ Le colis de ${commandeTrouvee.Client} est déjà marqué comme LIVRÉ.`);
-        champ.value = "";
-        togglePopupLivre();
-        return;
-    }
-
-    if (confirm(`Passer la commande de ${commandeTrouvee.Client} (ID: ${commandeTrouvee.ID}) au statut LIVRÉ ?`)) {
-        // 1. Passage du statut local à LIVRÉ pour mise à jour visuelle immédiate
-        commandeTrouvee.Statut = "LIVRÉ";
+    try {
+        // 2. Envoi direct sur CONFIG.API d'après la structure attendue par votre doPost
+        const response = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "updateStatut",
+                idCommande: idCommande.trim(),
+                nouveauStatut: "LIVRÉ" // "nouveauStatut" correspond à la variable lue dans votre GAS
+            })
+        });
         
-        // 2. Envoi de la requête au serveur Google Sheets (sans bloquer la page grâce au try/catch)
-        try {
-            let urlApi = (typeof CONFIG !== 'undefined' && CONFIG.API) ? CONFIG.API : "";
-            if (urlApi) {
-                await fetch(urlApi, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify({
-                        action: "updateStatut",
-                        idCommande: commandeTrouvee.ID,
-                        statut: "LIVRÉ"
-                    })
-                });
+        const res = await response.json();
+        
+        // 3. Gestion du retour et actualisation de l'affichage
+        if (res.status === "success") {
+            alert("✅ Statut mis à jour avec succès !");
+            
+            // Rechargement selon vos fonctions existantes
+            if (typeof refreshAll === "function") {
+                refreshAll(); 
+            } else if (typeof showSection === "function") {
+                // Si showSection existe, on peut re-charger la section active ou rafraîchir
+                location.reload();
+            } else {
+                location.reload();
             }
-        } catch (e) {
-            console.error("Erreur d'envoi en arrière-plan :", e);
-        }
-
-        // 3. Appel sécurisé des fonctions de rafraîchissement d'interface de votre application
-        if (typeof showTab === "function") {
-            // Force le rafraîchissement natif de l'onglet actif de votre panneau admin
-            showTab('tab-dash'); 
         } else {
-            if (typeof renderTable === "function") renderTable();
-            if (typeof renderDashboard === "function") renderDashboard();
-            if (typeof filtrerDonnees === "function") filtrerDonnees();
+            alert("❌ Erreur : " + res.message);
         }
-
-        alert(`✅ Succès ! Commande de ${commandeTrouvee.Client} passée à LIVRÉ.`);
-        champ.value = "";
-        togglePopupLivre();
+        
+    } catch (e) {
+        console.error("Erreur de connexion livraison :", e);
+        alert("⚠️ Problème de connexion avec le serveur SafeRun.");
     }
 }
 </script>
