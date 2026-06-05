@@ -376,15 +376,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-  <button class="btn-flottant-livre" onclick="togglePopupLivre()" title="Passer un colis en LIVRÉ">
-      <i class="fas fa-shipping-fast"></i>
-  </button>
-
-  <div id="popupLivreRapide" class="popup-action-rapide">
-      <h4>⚡ Validation Rapide Livraison</h4>
-      <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
-      <button onclick="executerLivraisonRapide()">Marquer comme LIVRÉ</button>
-  </div>
+  
   <div id="auth-screen">
 <div id="auth-screen">
     <div class="auth-card">
@@ -911,7 +903,17 @@
             </div>
         </div>
     </div>
-</section></main>
+</section>
+<button class="btn-flottant-livre" onclick="togglePopupLivre()" title="Passer un colis en LIVRÉ">
+      <i class="fas fa-shipping-fast"></i>
+  </button>
+
+  <div id="popupLivreRapide" class="popup-action-rapide">
+      <h4>⚡ Validation Rapide Livraison</h4>
+      <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
+      <button onclick="executerLivraisonRapide()">Marquer comme LIVRÉ</button>
+  </div>
+</main>
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
