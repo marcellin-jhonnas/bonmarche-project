@@ -3734,9 +3734,9 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
 <style>
     .btn-flottant-livre {
         position: fixed !important;
-        bottom: 25px !important;
+        bottom: 235px !important; /* Ajusté à 235px pour se placer au-dessus des 3 autres boutons */
         right: 25px !important;
-        background-color: #10b981 !important; /* Couleur Verte */
+        background-color: #10b981 !important; /* Couleur Verte pour la livraison */
         color: white !important;
         border: none !important;
         border-radius: 50% !important;
@@ -3745,15 +3745,21 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
         font-size: 24px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
         cursor: pointer !important;
-        z-index: 999999 !important; /* Reste au-dessus de tout */
+        z-index: 999999 !important; /* Reste au-dessus du panneau général */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        transition: transform 0.2s !important;
     }
+    .btn-flottant-livre:hover {
+        transform: scale(1.1) !important;
+    }
+    
+    /* La fenêtre popup s'ouvre juste à côté ou légèrement en dessous du bouton */
     .popup-action-rapide {
         display: none;
         position: fixed !important;
-        bottom: 95px !important;
+        bottom: 305px !important; /* Ajusté pour s'ouvrir juste au-dessus du bouton vert */
         right: 25px !important;
         background: white !important;
         border-radius: 8px !important;
@@ -3797,7 +3803,7 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
 
 <div id="popupLivreRapide" class="popup-action-rapide">
     <h4>⚡ Validation Rapide Livraison</h4>
-    <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
+    <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom du client..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
     <button onclick="executerLivraisonRapide()">Marquer comme LIVRÉ</button>
 </div>
 
