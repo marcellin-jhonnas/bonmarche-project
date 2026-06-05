@@ -2265,19 +2265,83 @@ async function genererEtiquettesColis() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     
-    // Filtrage des données
-    const commandesAPreparer = allData.filter(c => c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ");
+    // --- 1. PRÉPARATION DES DATES POUR LE FILTRAGE NUMÉRIQUE ---
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    // Récupération sécurisée du choix de l'onglet actif (Aujourd'hui par défaut, Matin par défaut)
+    const cibleJour = window.currentCibleJour || 'AUJOURDHUI'; 
+    const cibleVague = window.currentCibleVague || 'MATIN';
+
+    console.log(`=== DEBUT DIAGNOSTIC ETIQUETTES [${cibleJour} - ${cibleVague}] ===`);
+    console.log(`Recherche numérique Aujourd'hui : "${texteAujourdhui}" | Demain : "${texteDemain}"`);
+
+    let totalLignesFiltrees = 0;
+
+    // --- 2. FILTRAGE APPLIQUÉ EXACTEMENT COMME POUR LE STOCK ---
+    const commandesAPreparer = allData.filter((c, index) => {
+        if (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ") {
+            
+            const texteLivraison = (c.Livraison || "").toLowerCase();
+            let jourValide = false;
+
+            // Étape A : Filtrage par date numérique
+            if (cibleJour === 'AUJOURDHUI') {
+                if (texteLivraison.includes(texteAujourdhui)) {
+                    jourValide = true;
+                }
+            } else if (cibleJour === 'DEMAIN') {
+                if (texteLivraison.includes(texteDemain)) {
+                    jourValide = true;
+                }
+            }
+
+            if (!jourValide) {
+                console.log(`❌ Étiquette Ligne #${index + 2} [REJETÉ DATE] - Client: ${c.Client || 'Inconnu'} | Valeur: "${c.Livraison}"`);
+                return false;
+            }
+
+            // Étape B : Filtrage par vague (Matin / Midi)
+            let vagueDetectee = 'MIDI';
+            if (texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+                vagueDetectee = 'MATIN';
+            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-8]:/.test(texteLivraison)) {
+                vagueDetectee = 'MIDI';
+            }
+
+            if (vagueDetectee !== cibleVague) {
+                console.log(`⏳ Étiquette Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé [${vagueDetectee}] au lieu de [${cibleVague}]`);
+                return false;
+            }
+
+            // Si validé
+            totalLignesFiltrees++;
+            console.log(`✅ Étiquette Ligne #${index + 2} [ACCEPTÉ 🎉] - Client: ${c.Client}`);
+            return true;
+        }
+        return false;
+    });
+
+    console.log(`=== FIN DIAGNOSTIC ETIQUETTES : ${totalLignesFiltrees} colis retenus pour impression ===`);
 
     if (commandesAPreparer.length === 0) {
-        alert("Aucune commande SÉRIEUX ou PLANIFIÉ trouvée.");
+        alert(`Aucune commande SÉRIEUX ou PLANIFIÉ trouvée pour ${cibleJour} - ${cibleVague}.`);
         return;
     }
 
+    // --- 3. TOUT LE RESTE DU CODE CI-DESSOUS RESTE 100% INCHANGÉ ---
     // Indicateur de chargement sur le bouton
     const btn = document.querySelector("button[onclick='genererEtiquettesColis()']");
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Génération...";
-    btn.disabled = true;
+    const originalText = btn ? btn.innerHTML : "";
+    if (btn) {
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Génération...";
+        btn.disabled = true;
+    }
 
     // Configuration de la grille (2 colonnes x 3 lignes)
     const margin = 10;
@@ -2370,8 +2434,10 @@ async function genererEtiquettesColis() {
     }
 
     doc.save(`Etiquettes_SafeRun_${new Date().getTime()}.pdf`);
-    btn.innerHTML = originalText;
-    btn.disabled = false;
+    if (btn) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
 // 1. Détecter les livreurs qui ont des colis SÉRIEUX ou PLANIFIÉ
 function rafraichirLivreursActifs() {
