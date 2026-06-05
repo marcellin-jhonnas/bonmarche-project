@@ -2501,7 +2501,36 @@ function rafraichirLivreursActifs() {
 async function genererFeuilleRoute(nomLivreur) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
-    const commandes = allData.filter(c => c.Livreur === nomLivreur && (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ"));
+    
+    // --- 1. FILTRAGE INITIAL ET CONFIGURATION DES DATES ---
+    const toutesCommandesLivreur = allData.filter(c => c.Livreur === nomLivreur && (c.Statut === "SÉRIEUX" || c.Statut === "PLANIFIÉ"));
+
+    const moisAnnee = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const maintenant = new Date();
+    const texteAujourdhui = maintenant.getDate() + " " + moisAnnee[maintenant.getMonth()]; 
+    
+    const demain = new Date();
+    demain.setDate(maintenant.getDate() + 1);
+    const texteDemain = demain.getDate() + " " + moisAnnee[demain.getMonth()]; 
+
+    // --- 2. TRI ET CLASSEMENT DES COLIS (Aujourd'hui -> Demain -> Suivants) ---
+    let listeAujourdhui = [];
+    let listeDemain = [];
+    let listeSuivants = [];
+
+    toutesCommandesLivreur.forEach(c => {
+        const texteLivraison = (c.Livraison || "").toLowerCase();
+        if (texteLivraison.includes(texteAujourdhui)) {
+            listeAujourdhui.push(c);
+        } else if (texteLivraison.includes(texteDemain)) {
+            listeDemain.push(c);
+        } else {
+            listeSuivants.push(c);
+        }
+    });
+
+    // Fusion finale ordonnée pour reconstruire le tableau 'commandes' attendu par le reste du code
+    const commandes = [...listeAujourdhui, ...listeDemain, ...listeSuivants];
 
     // BANDEAU NOIR
     doc.setFillColor(15, 23, 42);
@@ -2510,9 +2539,9 @@ async function genererFeuilleRoute(nomLivreur) {
     doc.setFontSize(22);
     doc.text(`GUIDE DE TRAJET : ${nomLivreur}`, 15, 20);
     doc.setFontSize(11);
-    doc.text(`SafeRun Logistique - ${commandes.length} livraisons à faire aujourd'hui`, 15, 32);
+    doc.text(`SafeRun Logistique - ${commandes.length} livraisons au total`, 15, 32);
 
-    // QR CODE GPS TOURNÉE COMPLÈTE
+    // QR CODE GPS TOURNÉE COMPLÈTE (Suit l'ordre chronologique exact)
     let urlGPS = "https://www.google.com/maps/dir/";
     commandes.forEach(c => { if (c["Lieu Exact"]) urlGPS += encodeURIComponent(c["Lieu Exact"]) + "/"; });
     const qrImg = await genererQRCodeImage(urlGPS);
@@ -2522,16 +2551,30 @@ async function genererFeuilleRoute(nomLivreur) {
         doc.text("SCANNER LE TRAJET", 180, 38, {align: "center"});
     }
 
-    // LISTE DES CLIENTS
+    // LISTE DES CLIENTS ORDONNÉE
     doc.setTextColor(30, 41, 59);
     let y = 60;
     commandes.forEach((c, i) => {
         if (y > 250) { doc.addPage(); y = 25; }
         doc.setDrawColor(226, 232, 240);
         doc.roundedRect(10, y - 5, 190, 35, 3, 3);
+        
+        // --- DETECTION DE L'HEURE POUR AUJOURD'HUI SEULEMENT ---
+        let texteClient = `${i + 1}. CLIENT : ${c.Client}`;
+        const texteLivraisonBas = (c.Livraison || "").toLowerCase();
+        
+        if (texteLivraisonBas.includes(texteAujourdhui)) {
+            let heureLivr = "";
+            const matchHeure = (c.Livraison || "").match(/(entre\s*\d+h\s*et\s*\d+h|à\s*\d+[:h]\d*|matin|midi|après-midi)/i);
+            if (matchHeure) {
+                heureLivr = ` (${matchHeure[0]})`;
+            }
+            texteClient += heureLivr; // Ajoute l'heure à côté du nom du client (ex: CLIENT : MARCELLIN (entre 9h et 11h))
+        }
+
         doc.setFont(undefined, 'bold');
         doc.setFontSize(12);
-        doc.text(`${i + 1}. CLIENT : ${c.Client}`, 15, y + 4);
+        doc.text(texteClient, 15, y + 4);
         doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
         doc.text(`Tél : ${c.Téléphone || 'N/A'}`, 15, y + 10);
@@ -2542,7 +2585,10 @@ async function genererFeuilleRoute(nomLivreur) {
         doc.setDrawColor(15, 23, 42);
         doc.rect(140, y - 2, 55, 28);
         doc.setFont(undefined, 'bold');
-        doc.text(`${c.Montant} Ar`, 167.5, y + 6, {align: "center"});
+        
+        // Formatage propre du prix avec espace pour les milliers
+        const prix = (c.Montant || "0").toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        doc.text(`${prix} Ar`, 167.5, y + 6, {align: "center"});
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.text("Signature Client :", 143, y + 14);
