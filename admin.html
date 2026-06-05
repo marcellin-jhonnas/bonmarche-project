@@ -303,13 +303,90 @@
 .btn-demain:hover { border-color: #16a34a !important; color: #16a34a !important; background: #f0fdf4 !important; }
 .btn-futur:hover { border-color: #475569 !important; color: #475569 !important; background: #f1f5f9 !important; }
 .badge-pdf { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+/* ========================================== */
+  /* STYLE DU BOUTON FLOTTANT ET DE SA POPUP    */
+  /* ========================================== */
+  .btn-flottant-livre {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background-color: #10b981; /* Vert succès */
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 10005; /* Légèrement supérieur à la sidebar mobile */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, background-color 0.2s;
+  }
+  .btn-flottant-livre:hover {
+      transform: scale(1.1);
+      background-color: #059669;
+  }
+  .popup-action-rapide {
+      display: none;
+      position: fixed;
+      bottom: 95px;
+      right: 25px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      padding: 15px;
+      width: 300px;
+      z-index: 10005;
+      border: 1px solid #e2e8f0;
+  }
+  .popup-action-rapide h4 {
+      margin: 0 0 10px 0;
+      color: #1e293b;
+      font-size: 14px;
+      font-family: sans-serif;
+  }
+  .popup-action-rapide input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      box-sizing: border-box;
+      color: #1e293b;
+  }
+  .popup-action-rapide button {
+      width: 100%;
+      background: #1e293b;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+  }
+  .popup-action-rapide button:hover {
+      background: #0f172a;
+  }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+<body>
+  <button class="btn-flottant-livre" onclick="togglePopupLivre()" title="Passer un colis en LIVRÉ">
+      <i class="fas fa-shipping-fast"></i>
+  </button>
 
+  <div id="popupLivreRapide" class="popup-action-rapide">
+      <h4>⚡ Validation Rapide Livraison</h4>
+      <input type="text" id="rechercheCritereLivre" placeholder="ID, Téléphone ou Nom..." onkeypress="if(event.key === 'Enter') executerLivraisonRapide()">
+      <button onclick="executerLivraisonRapide()">Marquer comme LIVRÉ</button>
+  </div>
+  <div id="auth-screen">
 <div id="auth-screen">
     <div class="auth-card">
         <div style="font-size: 40px; color: var(--orange); margin-bottom: 15px;"><i class="fas fa-shield-halved"></i></div>
@@ -964,7 +1041,84 @@ async function envoyerReponseRapide(id, msg) {
     let lastMessageCount = 0; 
     let unreadByClient = {}; 
     // ----------------------------------
+    // ========================================================
+// LOGIQUE DU BOUTON FLOTTANT DE LIVRAISON RAPIDE
+// ========================================================
 
+function togglePopupLivre() {
+    const popup = document.getElementById("popupLivreRapide");
+    if (popup.style.display === "block") {
+        popup.style.display = "none";
+    } else {
+        popup.style.display = "block";
+        setTimeout(() => document.getElementById("rechercheCritereLivre").focus(), 100);
+    }
+}
+
+async function executerLivraisonRapide() {
+    const champ = document.getElementById("rechercheCritereLivre");
+    const valeurRecherche = champ.value.trim().toLowerCase();
+
+    if (!valeurRecherche) {
+        alert("Veuillez entrer une valeur (ID, Tél ou Nom).");
+        return;
+    }
+
+    // Recherche dans le tableau global de l'application
+    const commandeTrouvee = allData.find(c => {
+        const idCmd = (c.ID || "").toString().toLowerCase();
+        const telCmd = (c.Téléphone || c.Telephone || "").toString().toLowerCase();
+        const clientCmd = (c.Client || "").toString().toLowerCase();
+
+        return idCmd === valeurRecherche || telCmd === valeurRecherche || clientCmd.includes(valeurRecherche);
+    });
+
+    if (!commandeTrouvee) {
+        alert(`❌ Aucune commande trouvée correspondante à : "${champ.value}"`);
+        return;
+    }
+
+    const statutActuel = (commandeTrouvee.Statut || "").toUpperCase().trim();
+    if (statutActuel === "LIVRÉ" || statutActuel === "LIVRE") {
+        alert(`ℹ️ Le colis de ${commandeTrouvee.Client} est déjà marqué comme LIVRÉ.`);
+        champ.value = "";
+        togglePopupLivre();
+        return;
+    }
+
+    const confirmation = confirm(`Passer la commande de ${commandeTrouvee.Client} (ID: ${commandeTrouvee.ID}) au statut LIVRÉ ?`);
+    
+    if (confirmation) {
+        // 1. Mise à jour en mémoire locale locale pour affichage immédiat
+        commandeTrouvee.Statut = "LIVRÉ";
+        
+        // 2. Envoi de l'ordre de mise à jour au Google Apps Script (Action sécurisée native de votre backend)
+        try {
+            await fetch(CONFIG.API, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "updateStatut",
+                    idCommande: commandeTrouvee.ID,
+                    statut: "LIVRÉ"
+                })
+            });
+            
+            console.log(`⚡ Statut synchronisé avec le serveur pour l'ID : ${commandeTrouvee.ID}`);
+        } catch (e) {
+            console.error("Erreur de synchronisation Google Sheets :", e);
+        }
+
+        // 3. Lancement des rafraîchissements d'interface natifs de votre application
+        if (typeof refreshAll === "function") refreshAll();
+        if (typeof filtrerLogistique === "function") filtrerLogistique();
+
+        alert(`✅ Succès ! Commande de ${commandeTrouvee.Client} enregistrée comme LIVRÉ.`);
+        
+        champ.value = "";
+        togglePopupLivre();
+    }
+}
     let allData = []; 
     let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
     let annuaire = JSON.parse(localStorage.getItem('annuaire_livreurs')) || {};
