@@ -2558,9 +2558,10 @@ async function genererFeuilleRoute(nomLivreur) {
     doc.setTextColor(30, 41, 59);
     let y = 60;
     commandes.forEach((c, i) => {
-        if (y > 250) { doc.addPage(); y = 25; }
+        if (y > 240) { doc.addPage(); y = 25; }
         doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(10, y - 5, 190, 35, 3, 3);
+        // Augmentation légère de la hauteur du cadre (de 35 à 42) pour accueillir l'ID et les Produits confortablement
+        doc.roundedRect(10, y - 5, 190, 42, 3, 3);
         
         // --- LOGIQUE DE DÉTECTION ET DE SIGNALISATION UNIQUE ---
         let texteClient = `${i + 1}. CLIENT : ${c.Client}`;
@@ -2568,7 +2569,6 @@ async function genererFeuilleRoute(nomLivreur) {
         const valeurMinuscule = valeurOrigine.toLowerCase();
         
         if (valeurMinuscule.includes(texteAujourdhui)) {
-            // Extraction précise de l'horaire (ex: "entre 9h et 11h" ou "à 10h" ou "après-midi")
             let horaireMiseEnForme = " - Aujourd'hui";
             const matchHeureExacte = valeurOrigine.match(/à\s*\d+[:h]\d*/i);
             const matchCreneauHeure = valeurOrigine.match(/entre\s*\d+h\s*(à|et)\s*\d+h/i);
@@ -2584,10 +2584,8 @@ async function genererFeuilleRoute(nomLivreur) {
             texteClient += horaireMiseEnForme;
 
         } else if (valeurMinuscule.includes(texteDemain)) {
-            // Signal pour Demain avec la date exacte complète
             texteClient += ` [DEMAIN - ${dateCompleteDemain}]`;
         } else {
-            // Signal pour les jours suivants lointains (Correction de la variable ici)
             let dateSuivanteExtrait = valeurOrigine.replace(/LIVRAISON\s*:\s*/i, "").trim();
             texteClient += ` [SUIVANT - ${dateSuivanteExtrait}]`;
         }
@@ -2595,23 +2593,40 @@ async function genererFeuilleRoute(nomLivreur) {
         doc.setFont(undefined, 'bold');
         doc.setFontSize(12);
         doc.text(texteClient, 15, y + 4);
+        
         doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
-        doc.text(`Tél : ${c.Téléphone || 'N/A'}`, 15, y + 10);
+        
+        // 1. Ajout de l'ID de la commande juste en dessous du nom
+        doc.setFont(undefined, 'bold'); doc.text("ID Commande :", 15, y + 10);
+        doc.setFont(undefined, 'normal'); doc.text(`${c.ID || 'N/A'}`, 42, y + 10);
+        
+        // Téléphone et Lieu Exact
+        doc.text(`Tél : ${c.Téléphone || 'N/A'}`, 15, y + 15);
         const splitAdr = doc.splitTextToSize(`Lieu : ${c["Lieu Exact"] || 'N/A'}`, 120);
-        doc.text(splitAdr, 15, y + 16);
+        doc.text(splitAdr, 15, y + 20);
 
-        // BOX SIGNATURE ET PRIX
+        // 2. Ajout de la liste des choses achetées (Produits) tout en bas du cadre
+        doc.setFont(undefined, 'bold'); doc.text("Produits :", 15, y + 29);
+        doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+        const listeProduits = (c.Produits || "Aucun produit spécifié").split(',').join(', ');
+        const splitProd = doc.splitTextToSize(listeProduits, 120);
+        doc.text(splitProd, 32, y + 29);
+
+        // BOX SIGNATURE ET PRIX (Ajusté en hauteur pour s'aligner sur le nouveau cadre de 42)
+        doc.setFontSize(10);
         doc.setDrawColor(15, 23, 42);
-        doc.rect(140, y - 2, 55, 28);
+        doc.rect(140, y - 2, 55, 35);
         doc.setFont(undefined, 'bold');
         
         const prix = (c.Montant || "0").toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         doc.text(`${prix} Ar`, 167.5, y + 6, {align: "center"});
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
-        doc.text("Signature Client :", 143, y + 14);
-        y += 42;
+        doc.text("Signature Client :", 143, y + 16);
+        
+        // Décalage vertical augmenté à 49 pour espacer proprement les cadres
+        y += 49;
     });
 
     doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
