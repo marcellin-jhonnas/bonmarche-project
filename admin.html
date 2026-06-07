@@ -1966,82 +1966,84 @@ function genererPDFPlanning() {
     const nomLivreur = document.getElementById('filtre-livreur-logistique').value;
     console.log("Livreur sélectionné dans l'interface :", nomLivreur);
     
-    if (!nomLivreur || nomLivreur === "TOUS") {
-        alert("⚠️ Sélectionnez un livreur spécifique.");
+    if (!nomLivreur) {
+        alert("⚠️ Aucun filtre livreur détecté.");
         return;
     }
 
-    // --- EN-TÊTE ---
+    // --- EN-TÊTE DU PDF ---
     doc.setFontSize(18);
     doc.setTextColor(30, 41, 59);
-    doc.text(`FEUILLE DE ROUTE : ${nomLivreur.toUpperCase()}`, 14, 15);
+    
+    if (nomLivreur === "TOUS") {
+        doc.text("FEUILLE DE ROUTE GÉNÉRALE - TOUS LES LIVREURS", 14, 15);
+    } else {
+        doc.text(`FEUILLE DE ROUTE : ${nomLivreur.toUpperCase()}`, 14, 15);
+    }
     
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text(`Généré le : ${new Date().toLocaleString('fr-FR')}`, 14, 22);
 
-    // --- PRÉPARATION DES DONNÉES ---
+    // --- PRÉPARATION ET FILTRAGE DES DONNÉES ---
     if (typeof allData === 'undefined' || !Array.isArray(allData)) {
-        console.error("ERREUR : La variable globale 'allData' n'est pas accessible.");
         alert("⚠️ Les données ne sont pas chargées. Veuillez actualiser la page.");
         return;
     }
 
-    console.log("Nombre total de commandes en mémoire (allData) :", allData.length);
-
-    // Filtrage ultra-sécurisé qui tolère les variations de casse et d'accents pour "Livreur"
+    // FILTRE INTELLIGENT : Si TOUS, on prend tout le monde, sinon on filtre l'individu
     const dataFiltree = allData.filter(c => {
         const livreurCmd = (c["Livreur"] || c["livreur"] || "").toString().toLowerCase().trim();
+        if (nomLivreur === "TOUS") {
+            return livreurCmd !== ""; // Prend toutes les commandes qui ont un livreur attribué
+        }
         return livreurCmd === nomLivreur.toLowerCase().trim();
     });
 
-    console.log(`Nombre de commandes trouvées pour le livreur ${nomLivreur} :`, dataFiltree.length);
+    console.log("Nombre de livraisons retenues pour le PDF :", dataFiltree.length);
 
     if (dataFiltree.length === 0) {
-        alert(`ℹ️ Aucune commande en cours assignée à ${nomLivreur}.`);
+        alert(`ℹ️ Aucune commande en cours correspondante.`);
         return;
     }
 
+    // Tri par nom de livreur si l'option "TOUS" est active pour regrouper proprement
+    if (nomLivreur === "TOUS") {
+        dataFiltree.sort((a, b) => {
+            let livA = (a["Livreur"] || a["livreur"] || "").toString().toLowerCase();
+            let livB = (b["Livreur"] || b["livreur"] || "").toString().toLowerCase();
+            return livA.localeCompare(livB);
+        });
+    }
+
     const rows = [];
-    dataFiltree.forEach((c, index) => {
-        // Lecture adaptative et robuste de vos colonnes Google Sheets
+    dataFiltree.forEach((c) => {
         let id = (c["ID"] || c["id"] || "").toString().trim();
         let client = (c["Client"] || c["client"] || "Inconnu").toUpperCase().trim();
         let tel = (c["Téléphone"] || c["Telephone"] || c["téléphone"] || "-").toString().trim();
         let lieu = (c["Lieu Exact"] || c["Lieu exact"] || c["lieu exact"] || "Non précisé").split(" --")[0].trim();
-        let produits = (c["Produits"] || c["produits"] || "").split(" --")[0].trim();
         
+        // Si option TOUS, on écrit le nom du Livreur dans la colonne Produit pour s'y retrouver
+        let detailProduits = (c["Produits"] || c["produits"] || "").split(" --")[0].trim();
+        if (nomLivreur === "TOUS") {
+            let nomL = (c["Livreur"] || c["livreur"] || "Non assigné").toUpperCase();
+            detailProduits = `[LIVREUR: ${nomL}] — ` + detailProduits;
+        }
+
         let montantBrut = c["Montant"] || c["montant"] || "0";
         let m = montantBrut.toString().replace(/\s/g, '');
         let montantAffichage = parseInt(m || 0).toLocaleString('fr-FR') + " Ar";
 
-        console.log(`Ligne ${index + 1} préparée -> ID: ${id} | Client: ${client} | Montant: ${montantAffichage}`);
-
-        // Ajout dans le tableau du PDF (avec la dernière colonne vide pour la signature)
-        rows.push([
-            id, 
-            client, 
-            tel, 
-            lieu, 
-            produits, 
-            montantAffichage, 
-            "" 
-        ]);
+        rows.push([id, client, tel, lieu, detailProduits, montantAffichage, ""]);
     });
 
-    // --- GÉNÉRATION DU TABLEAU ---
-    console.log("Génération du tableau autoTable...");
+    // --- CONSTRUIRE LE TABLEAU SUR LE PDF ---
     doc.autoTable({
         startY: 30,
-        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS', 'MONTANT', 'SIGNATURE CLIENT']],
+        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS / DETAILS', 'MONTANT', 'SIGNATURE CLIENT']],
         body: rows,
         theme: 'grid',
-        styles: { 
-            fontSize: 7.5, 
-            cellPadding: 4, 
-            overflow: 'linebreak', 
-            valign: 'middle' 
-        },
+        styles: { fontSize: 7.5, cellPadding: 4, overflow: 'linebreak', valign: 'middle' },
         headStyles: { fillColor: [30, 41, 59], fontSize: 8, fontStyle: 'bold', halign: 'center' },
         columnStyles: {
             0: { cellWidth: 15 },
@@ -2050,12 +2052,12 @@ function genererPDFPlanning() {
             3: { cellWidth: 35 },
             4: { cellWidth: 80 },
             5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
-            6: { cellWidth: 40 } 
+            6: { cellWidth: 40 }
         },
         margin: { left: 10, right: 10 }
     });
 
-    // --- CALCUL DU TOTAL ---
+    // --- CALCUL DU TOTAL GÉNÉRAL ---
     const total = dataFiltree.reduce((sum, c) => {
         let montantBrut = c["Montant"] || c["montant"] || "0";
         let m = montantBrut.toString().replace(/\s/g, '');
@@ -2066,16 +2068,11 @@ function genererPDFPlanning() {
     doc.setFontSize(11);
     doc.setTextColor(0);
     doc.setFont(undefined, 'bold');
-    doc.text(`TOTAL À PERCEVOIR : ${total.toLocaleString('fr-FR')} Ar`, 14, finalY);
+    doc.text(`TOTAL GENERAL : ${total.toLocaleString('fr-FR')} Ar`, 14, finalY);
 
-    // --- ZONE DE VALIDATION FINALE ---
-    doc.setFontSize(9);
-    doc.text("Signature du Livreur : ____________________", 180, finalY);
-
-    // --- SAUVEGARDE DU FICHIER ---
-    const nomFichier = `ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`;
-    console.log("Sauvegarde et téléchargement du PDF :", nomFichier);
-    doc.save(nomFichier);
+    // --- ENREGISTREMENT ---
+    const formatNomFichier = nomLivreur === "TOUS" ? "PLANNING_GLOBAL.pdf" : `ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`;
+    doc.save(formatNomFichier);
     console.log("--- Fin de la génération du PDF avec succès ---");
 }
 function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
