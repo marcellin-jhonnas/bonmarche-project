@@ -1961,6 +1961,7 @@ function genererPDFPlanning() {
     console.log("--- Début de la génération du PDF Planning ---");
     
     const { jsPDF } = window.jspdf;
+    // Format A4 en Paysage ('l'), unités en millimètres ('mm') -> Largeur totale disponible = 297mm
     const doc = new jsPDF('l', 'mm', 'a4'); 
     
     const nomLivreur = document.getElementById('filtre-livreur-logistique').value;
@@ -1991,11 +1992,10 @@ function genererPDFPlanning() {
         return;
     }
 
-    // FILTRE INTELLIGENT : Si TOUS, on prend tout le monde, sinon on filtre l'individu
     const dataFiltree = allData.filter(c => {
         const livreurCmd = (c["Livreur"] || c["livreur"] || "").toString().toLowerCase().trim();
         if (nomLivreur === "TOUS") {
-            return livreurCmd !== ""; // Prend toutes les commandes qui ont un livreur attribué
+            return livreurCmd !== ""; 
         }
         return livreurCmd === nomLivreur.toLowerCase().trim();
     });
@@ -2007,7 +2007,6 @@ function genererPDFPlanning() {
         return;
     }
 
-    // Tri par nom de livreur si l'option "TOUS" est active pour regrouper proprement
     if (nomLivreur === "TOUS") {
         dataFiltree.sort((a, b) => {
             let livA = (a["Livreur"] || a["livreur"] || "").toString().toLowerCase();
@@ -2023,7 +2022,6 @@ function genererPDFPlanning() {
         let tel = (c["Téléphone"] || c["Telephone"] || c["téléphone"] || "-").toString().trim();
         let lieu = (c["Lieu Exact"] || c["Lieu exact"] || c["lieu exact"] || "Non précisé").split(" --")[0].trim();
         
-        // Si option TOUS, on écrit le nom du Livreur dans la colonne Produit pour s'y retrouver
         let detailProduits = (c["Produits"] || c["produits"] || "").split(" --")[0].trim();
         if (nomLivreur === "TOUS") {
             let nomL = (c["Livreur"] || c["livreur"] || "Non assigné").toUpperCase();
@@ -2037,22 +2035,23 @@ function genererPDFPlanning() {
         rows.push([id, client, tel, lieu, detailProduits, montantAffichage, ""]);
     });
 
-    // --- CONSTRUIRE LE TABLEAU SUR LE PDF ---
+    // --- CONSTRUIRE LE TABLEAU SUR LE PDF (LARGEURS AJUSTÉES POUR ÉVITER LE DÉBORDEMENT) ---
+    // Total des colonnes = 15 + 30 + 25 + 45 + 90 + 32 + 40 = 277mm. Avec 10mm de marge gauche/droite, cela fait pile 297mm (A4 paysage).
     doc.autoTable({
         startY: 30,
-        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS / DETAILS', 'MONTANT', 'SIGNATURE CLIENT']],
+        head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS / DETAILS', 'MONTANT', 'SIGNATURE LIVREUR']],
         body: rows,
         theme: 'grid',
-        styles: { fontSize: 7.5, cellPadding: 4, overflow: 'linebreak', valign: 'middle' },
+        styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak', valign: 'middle' },
         headStyles: { fillColor: [30, 41, 59], fontSize: 8, fontStyle: 'bold', halign: 'center' },
         columnStyles: {
-            0: { cellWidth: 15 },
-            1: { cellWidth: 25 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 35 },
-            4: { cellWidth: 80 },
-            5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
-            6: { cellWidth: 40 }
+            0: { cellWidth: 15, halign: 'center' }, // ID court
+            1: { cellWidth: 30 },                   // Nom du client
+            2: { cellWidth: 25, halign: 'center' }, // Numéro téléphone
+            3: { cellWidth: 45 },                   // Lieu de livraison
+            4: { cellWidth: 90 },                   // Description des articles + Livreur
+            5: { cellWidth: 32, halign: 'right', fontStyle: 'bold' }, // Élargi pour éviter les retours à la ligne sur les montants
+            6: { cellWidth: 40 }                    // Zone blanche pour l'émargement du coursier
         },
         margin: { left: 10, right: 10 }
     });
@@ -2068,7 +2067,11 @@ function genererPDFPlanning() {
     doc.setFontSize(11);
     doc.setTextColor(0);
     doc.setFont(undefined, 'bold');
-    doc.text(`TOTAL GENERAL : ${total.toLocaleString('fr-FR')} Ar`, 14, finalY);
+    doc.text(`TOTAL GÉNÉRAL : ${total.toLocaleString('fr-FR')} Ar`, 14, finalY);
+
+    // --- ZONE DE VALIDATION FINALE ---
+    doc.setFontSize(9);
+    doc.text("Signature Responsable Logistique : ____________________", 160, finalY);
 
     // --- ENREGISTREMENT ---
     const formatNomFichier = nomLivreur === "TOUS" ? "PLANNING_GLOBAL.pdf" : `ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`;
