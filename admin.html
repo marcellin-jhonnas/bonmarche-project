@@ -303,7 +303,63 @@
 .btn-demain:hover { border-color: #16a34a !important; color: #16a34a !important; background: #f0fdf4 !important; }
 .btn-futur:hover { border-color: #475569 !important; color: #475569 !important; background: #f1f5f9 !important; }
 .badge-pdf { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+/* ======================================================= */
+/* CORRECTIF DE SÉCURITÉ ET FLUIDITÉ CHAT MOBILE (ANDROID) */
+/* ======================================================= */
+@media screen and (max-width: 768px) {
+    /* Évite que le chat ne pousse l'interface vers le bas */
+    #tab-chat {
+        height: calc(100vh - 80px) !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden !important;
+    }
 
+    /* Force la boîte globale du chat à respecter l'écran */
+    .chat-box {
+        height: 100% !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    /* 1. Zone liste des clients : hauteur max fixe + défilement autonome */
+    #client-list, .chat-sidebar {
+        height: 140px !important;
+        max-height: 140px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        background: #fcfcfc !important;
+    }
+
+    /* 2. Zone des messages : prend le reste de la place et défile proprement */
+    #msg-container, .msg-list {
+        flex: 1 !important;
+        height: calc(100vh - 320px) !important; /* Hauteur dynamique calculée pour Android */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important; /* Défilement tactile fluide */
+        padding: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* 3. Sécurisation des bulles de messages sur petit écran */
+    .msg {
+        max-width: 85% !important; /* Plus large sur mobile */
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        margin-bottom: 4px !important;
+    }
+
+    .msg.sent {
+        align-self: flex-end !important;
+    }
+
+    .msg.received {
+        align-self: flex-start !important;
+    }
+}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
