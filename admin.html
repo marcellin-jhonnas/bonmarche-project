@@ -1958,10 +1958,13 @@ function ouvrirLienWhatsApp(nomLivreur, quartier, produits) {
     window.open(url, '_blank');
 }
 function genererPDFPlanning() {
+    console.log("--- Début de la génération du PDF Planning ---");
+    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4'); 
     
     const nomLivreur = document.getElementById('filtre-livreur-logistique').value;
+    console.log("Livreur sélectionné dans l'interface :", nomLivreur);
     
     if (!nomLivreur || nomLivreur === "TOUS") {
         alert("⚠️ Sélectionnez un livreur spécifique.");
@@ -1978,34 +1981,56 @@ function genererPDFPlanning() {
     doc.text(`Généré le : ${new Date().toLocaleString('fr-FR')}`, 14, 22);
 
     // --- PRÉPARATION DES DONNÉES ---
-    const rows = [];
+    if (typeof allData === 'undefined' || !Array.isArray(allData)) {
+        console.error("ERREUR : La variable globale 'allData' n'est pas accessible.");
+        alert("⚠️ Les données ne sont pas chargées. Veuillez actualiser la page.");
+        return;
+    }
+
+    console.log("Nombre total de commandes en mémoire (allData) :", allData.length);
+
+    // Filtrage ultra-sécurisé qui tolère les variations de casse et d'accents pour "Livreur"
     const dataFiltree = allData.filter(c => {
-        const livreurCmd = (c.Livreur || "").toString().toLowerCase().trim();
+        const livreurCmd = (c["Livreur"] || c["livreur"] || "").toString().toLowerCase().trim();
         return livreurCmd === nomLivreur.toLowerCase().trim();
     });
 
-    dataFiltree.forEach(c => {
-        let client = (c.Client || "Inconnu").toUpperCase().trim();
-        let tel = (c.Téléphone || "-").toString().trim();
-        let lieu = (c["Lieu Exact"] || "Non précisé").split(" --")[0].trim();
-        let produits = (c.Produits || "").split(" --")[0].trim();
-        
-        let m = c.Montant ? c.Montant.toString().replace(/\s/g, '') : "0";
-        let montantAffichage = parseInt(m).toLocaleString('fr-FR') + " Ar";
+    console.log(`Nombre de commandes trouvées pour le livreur ${nomLivreur} :`, dataFiltree.length);
 
-        // On ajoute une case vide ("") à la fin pour la signature
+    if (dataFiltree.length === 0) {
+        alert(`ℹ️ Aucune commande en cours assignée à ${nomLivreur}.`);
+        return;
+    }
+
+    const rows = [];
+    dataFiltree.forEach((c, index) => {
+        // Lecture adaptative et robuste de vos colonnes Google Sheets
+        let id = (c["ID"] || c["id"] || "").toString().trim();
+        let client = (c["Client"] || c["client"] || "Inconnu").toUpperCase().trim();
+        let tel = (c["Téléphone"] || c["Telephone"] || c["téléphone"] || "-").toString().trim();
+        let lieu = (c["Lieu Exact"] || c["Lieu exact"] || c["lieu exact"] || "Non précisé").split(" --")[0].trim();
+        let produits = (c["Produits"] || c["produits"] || "").split(" --")[0].trim();
+        
+        let montantBrut = c["Montant"] || c["montant"] || "0";
+        let m = montantBrut.toString().replace(/\s/g, '');
+        let montantAffichage = parseInt(m || 0).toLocaleString('fr-FR') + " Ar";
+
+        console.log(`Ligne ${index + 1} préparée -> ID: ${id} | Client: ${client} | Montant: ${montantAffichage}`);
+
+        // Ajout dans le tableau du PDF (avec la dernière colonne vide pour la signature)
         rows.push([
-            c.ID || "", 
+            id, 
             client, 
             tel, 
             lieu, 
             produits, 
             montantAffichage, 
-            "" // Colonne Signature vide
+            "" 
         ]);
     });
 
     // --- GÉNÉRATION DU TABLEAU ---
+    console.log("Génération du tableau autoTable...");
     doc.autoTable({
         startY: 30,
         head: [['ID', 'CLIENT', 'TÉLÉPHONE', 'LIEU', 'PRODUITS', 'MONTANT', 'SIGNATURE CLIENT']],
@@ -2013,7 +2038,7 @@ function genererPDFPlanning() {
         theme: 'grid',
         styles: { 
             fontSize: 7.5, 
-            cellPadding: 4, // Augmenté pour laisser de la place à la signature
+            cellPadding: 4, 
             overflow: 'linebreak', 
             valign: 'middle' 
         },
@@ -2025,14 +2050,15 @@ function genererPDFPlanning() {
             3: { cellWidth: 35 },
             4: { cellWidth: 80 },
             5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
-            6: { cellWidth: 40 } // Espace large pour la signature
+            6: { cellWidth: 40 } 
         },
         margin: { left: 10, right: 10 }
     });
 
-    // --- TOTAL ---
+    // --- CALCUL DU TOTAL ---
     const total = dataFiltree.reduce((sum, c) => {
-        let m = c.Montant ? c.Montant.toString().replace(/\s/g, '') : "0";
+        let montantBrut = c["Montant"] || c["montant"] || "0";
+        let m = montantBrut.toString().replace(/\s/g, '');
         return sum + (parseInt(m) || 0);
     }, 0);
 
@@ -2046,8 +2072,11 @@ function genererPDFPlanning() {
     doc.setFontSize(9);
     doc.text("Signature du Livreur : ____________________", 180, finalY);
 
-    // --- SAUVEGARDE ---
-    doc.save(`ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`);
+    // --- SAUVEGARDE DU FICHIER ---
+    const nomFichier = `ROUTE_${nomLivreur.replace(/\s/g, '_')}.pdf`;
+    console.log("Sauvegarde et téléchargement du PDF :", nomFichier);
+    doc.save(nomFichier);
+    console.log("--- Fin de la génération du PDF avec succès ---");
 }
 function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     const conteneur = document.getElementById('liste-cumul-stock');
