@@ -2,68 +2,56 @@
 <html lang="fr">
 <head>
     <script>
-        (async function () {
-            const emailLienMagique = "jhonnas.r@saferunmarket.com";
+    (function () {
+        const emailLienMagique = "jhonnas.r@saferunmarket.com";
+        
+        // 1. Fonction de blocage invisible et radicale en cas d'intrusion
+        function executerBlocageTotal() {
+            // On cache absolument tout le contenu de la page pour ne rien laisser de cliquable
+            document.documentElement.innerHTML = `
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Zone Sécurisée</title>
+                </head>
+                <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+                    <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Zone Sécurisée</h1>
+                    <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
+                        Je sais que vous n'êtes pas autorisé à accéder ici.
+                    </p>
+                    <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Anti-Intrusion Actif</p>
+                </body>
+                </html>
+            `;
+            throw new Error("🔒 [SÉCURITÉ] Accès non autorisé. Application gelée.");
+        }
+
+        // 2. Vérification immédiate du compteur d'essais
+        let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+        if (tentatives >= 5) {
+            executerBlocageTotal();
+        }
+
+        // 3. DETECTION DU LIEN MAGIQUE (Pour vous, Jhonnas)
+        const urlActuelle = window.location.href;
+        if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
+            sessionStorage.removeItem('secure_attempts'); // Réinitialise
             
-            function executerBlocageTotal() {
-                document.open();
-                document.write(`
-                    <!DOCTYPE html>
-                    <html lang="fr">
-                    <head><meta charset="UTF-8"><title>Zone Sécurisée</title></head>
-                    <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
-                        <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
-                        <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
-                            Je sais que vous n'êtes pas autorisé à accéder ici. 
-                            L'interface a été neutralisée par le protocole anti-intrusion.
-                        </p>
-                        <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
-                    </body>
-                    </html>
-                `);
-                document.close();
-                throw new Error("🔒 [SÉCURITÉ] Flux interrompu.");
-            }
+            // Nettoie la barre d'adresse proprement sans altérer la page
+            try {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch(e) {}
+            
+            // On met une clé spéciale pour dire au script d'en bas que l'Admin Suprême est là
+            sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
+            return; // On laisse le design intact, chargement normal !
+        }
 
-            let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
-            if (tentatives >= 5) executerBlocageTotal();
-
-            const urlActuelle = window.location.href;
-            if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
-                sessionStorage.removeItem('secure_attempts');
-                try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-                return; 
-            }
-
-            let authentifie = false;
-            while (tentatives < 5 && !authentifie) {
-                const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
-                
-                if (!userSaisi || userSaisi.trim().toLowerCase() === "admin") {
-                    tentatives++;
-                    sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`⚠️ Identifiant invalide ou réservé. Restant : ${5 - tentatives} essais.`);
-                    continue;
-                }
-
-                const passSaisi = prompt(`🔑 MOT DE PASSE\n\nEntrez le mot de passe pour '${userSaisi}' :`);
-                const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-                const compteTrouve = comptes.find(c => c.user.trim().toLowerCase() === userSaisi.trim().toLowerCase() && c.pass.trim() === passSaisi);
-
-                if (compteTrouve) {
-                    sessionStorage.removeItem('secure_attempts');
-                    sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
-                    authentifie = true;
-                } else {
-                    tentatives++;
-                    sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`❌ Identifiants incorrects. Restant : ${5 - tentatives} essais.`);
-                }
-            }
-
-            if (!authentifie) executerBlocageTotal();
-        })();
-    </script>
+        // 4. SI SIMPLE LIEN SANS EMAIL -> Le formulaire classique prend le relais
+        // On ne met PAS de prompt blanc ici pour ne pas dénaturer votre écran de connexion orange.
+    })();
+</script>
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SafeRun Admin OS</title>
@@ -1146,28 +1134,65 @@ afficherLivreurs();
         PASS: "1234"
     };
 
-    function login() {
-const u = document.getElementById('admin-user').value.trim();
-const p = document.getElementById('admin-pass').value.trim();
-const err = document.getElementById('auth-err');
+  function login() {
+    const u = document.getElementById('admin-user').value.trim();
+    const p = document.getElementById('admin-pass').value.trim();
+    const err = document.getElementById('auth-err');
 
-// A. Vérification de l'accès Maître (CONFIG)
-if(u === CONFIG.USER && p === CONFIG.PASS) {
-entrerDansApplication("ADMIN");
-return;
+    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+
+    // 1. REJET STRICT : Si quelqu'un essaie d'écrire "admin" manuellement dans la case
+    if (u.toLowerCase() === "admin") {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        
+        if (tentatives >= 5) {
+            // Si 5 erreurs : destruction immédiate de la page
+            document.documentElement.innerHTML = `<body style="background:#0f172a; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h1>🛑 Je sais que vous n'êtes pas autorisé à accéder ici.</h1></body>`;
+            return;
+        }
+
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = `Identifiant interdit. (${tentatives}/5 essais)`;
+        }
+        return;
+    }
+
+    // 2. VÉRIFICATION DE VOTRE ÉQUIPE (LocalStorage d'origine préservé)
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+    if (compteTrouve) {
+        // Succès : on nettoie les tentatives et on laisse entrer l'employé avec ses droits d'origine
+        sessionStorage.removeItem('secure_attempts');
+        sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
+        entrerDansApplication(compteTrouve.role);
+    } else {
+        // Échec : on augmente le compteur de fautes
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+
+        if (tentatives >= 5) {
+            document.documentElement.innerHTML = `<body style="background:#0f172a; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h1>🛑 Je sais que vous n'êtes pas autorisé à accéder ici.</h1></body>`;
+            return;
+        }
+
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = `Identifiants incorrects. (${tentatives}/5 essais)`;
+        }
+    }
 }
 
-// B. Vérification des comptes créés (LocalStorage)
-const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
-
-if(compteTrouve) {
-entrerDansApplication(compteTrouve.role);
-} else {
-err.style.display = 'block';
-err.innerText = "Identifiants incorrects";
-}
-}
+// 3. Déclencheur automatique au chargement pour votre lien magique
+window.addEventListener('DOMContentLoaded', () => {
+    const roleEnregistre = sessionStorage.getItem('role_connecte_temporaire');
+    // Si votre lien magique a injecté 'ADMIN' au tout début dans le <head>
+    if (roleEnregistre === 'ADMIN') {
+        entrerDansApplication("ADMIN");
+    }
+});
 
     // Fonction interne pour ne pas répéter le code de démarrage
     function entrerDansApplication(role) {
