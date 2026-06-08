@@ -2,80 +2,57 @@
 <html lang="fr">
 <head>
     <script>
-        (function () {
-            const emailLienMagique = "jhonnas.r@saferunmarket.com";
-            
-            function executerBlocageTotal() {
-                // On marque globalement que l'application est verrouillée pour stopper le chat
-                window.APPLICATION_VERROUILLEE = true;
-                
-                document.addEventListener("DOMContentLoaded", () => {
-                    document.body.innerHTML = `
-                        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; width:100vw; margin:0; position:fixed; inset:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px; z-index:999999;">
-                            <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
-                            <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
-                                L'interface a été neutralisée par le protocole anti-intrusion.
-                            </p>
-                            <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
-                        </div>
-                    `;
-                });
-                throw new Error("🔒 [SÉCURITÉ] Flux interrompu. Interface bloquée.");
-            }
+       /* =================================================================== */
+/* 🛡️ SÉCURITÉ INFAILLIBLE : VÉRIFICATION DU LIEN MAGIQUE DE SÉCURITÉ   */
+/* =================================================================== */
+(function() {
+    const emailLienMagique = "jhonnas.r@saferunmarket.com";
+    const urlActuelle = window.location.href.toLowerCase();
+    
+    // Extraction chirurgicale des paramètres
+    const params = new URLSearchParams(window.location.search);
+    const userParam = (params.get('user') || "").trim().toLowerCase();
 
-            // 1. Extraction propre du paramètre "user" dans l'URL
-            const params = new URLSearchParams(window.location.search);
-            const userParam = params.get('user') || "";
+    // 1. VÉRIFICATION DU BLOCAGE DES 5 ESSAIS
+    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+    if (tentatives >= 5) {
+        bloquerInterfaceDefinitif();
+        return;
+    }
 
-            // 2. Si le compteur d'erreurs est déjà à 5, blocage immédiat
-            let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
-            if (tentatives >= 5) {
-                executerBlocageTotal();
-            }
+    // 2. VÉRIFICATION INFAILLIBLE DE VOTRE ACCÈS (Par paramètre URL OU texte brut dans l'URL)
+    if (userParam === emailLienMagique || urlActuelle.includes("user=" + emailLienMagique)) {
+        // Succès total : On nettoie le compteur et on vous valide l'accès ADMIN
+        sessionStorage.removeItem('secure_attempts');
+        sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
+        
+        // Nettoie proprement la barre d'adresse sans recharger
+        try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+        
+        // On force l'entrée directe dans votre tableau de bord SafeRun
+        if (typeof entrarDansApplication === "function") {
+            // Un infime délai pour s'assurer que l'interface HTML est bien dessinée
+            setTimeout(() => entrarDansApplication("ADMIN"), 50);
+        }
+        return;
+    }
 
-            // 3. VÉRIFICATION DU LIEN MAGIQUE (Strict et insensible à la casse)
-            if (userParam.trim().toLowerCase() === emailLienMagique.toLowerCase()) {
-                sessionStorage.removeItem('secure_attempts');
-                sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
-                window.APPLICATION_VERROUILLEE = false;
-                
-                // Nettoyage de la barre d'adresse
-                try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-                return; // Arrivée de Jhonnas validée, on arrête le script de sécurité ici !
-            }
-
-            // 4. BOX DE SÉCURITÉ POUR LES EMPLOYÉS (Si pas de lien magique)
-            let authentifie = false;
-            while (tentatives < 5 && !authentifie) {
-                const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
-                
-                if (!userSaisi || userSaisi.trim().toLowerCase() === "admin") {
-                    tentatives++;
-                    sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`⚠️ Identifiant invalide ou réservé. Restant : ${5 - tentatives} essais.`);
-                    continue;
-                }
-
-                const passSaisi = prompt(`🔑 MOT DE PASSE\n\nEntrez le mot de passe pour '${userSaisi}' :`);
-                const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-                const compteTrouve = comptes.find(c => c.user.trim().toLowerCase() === userSaisi.trim().toLowerCase() && c.pass.trim() === passSaisi);
-
-                if (compteTrouve) {
-                    sessionStorage.removeItem('secure_attempts');
-                    sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
-                    window.APPLICATION_VERROUILLEE = false;
-                    authentifie = true;
-                } else {
-                    tentatives++;
-                    sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`❌ Identifiants incorrects. Restant : ${5 - tentatives} essais.`);
-                }
-            }
-
-            if (!authentifie) {
-                executerBlocageTotal();
-            }
-        })();
+    // 3. FONCTION DE BLOCAGE PROPRE (Ne casse pas la console ni le chat)
+    function bloquerInterfaceDefinitif() {
+        window.APPLICATION_VERROUILLEE = true; // Stoppe le chat en arrière-plan
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; width:100vw; margin:0; position:fixed; inset:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px; z-index:999999;">
+                    <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
+                    <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
+                        L'interface a été neutralisée par le protocole anti-intrusion.
+                    </p>
+                    <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
+                </div>
+            `;
+        });
+    }
+})();
     </script>
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1164,35 +1141,43 @@ afficherLivreurs();
     const p = document.getElementById('admin-pass').value.trim();
     const err = document.getElementById('auth-err');
 
-    const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
+    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
 
-    // A. Vérification de l'accès Maître (Si vous utilisez le formulaire orange)
+    // Sécurité contre l'utilisation manuelle de l'identifiant "admin"
+    if (u.toLowerCase() === "admin") {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        if (tentatives >= 5) { window.location.reload(); return; }
+        if(err) { err.style.display = 'block'; err.innerText = `Identifiant interdit. (${tentatives}/5)`; }
+        return;
+    }
+
+    // A. Vérification de l'accès Maître (CONFIG)
     if(u === CONFIG.USER && p === CONFIG.PASS) {
+        sessionStorage.removeItem('secure_attempts');
+        sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
         entrerDansApplication("ADMIN");
         return;
     }
 
-    // B. Vérification des comptes créés (LocalStorage)
+    // B. Vérification des comptes créés (LocalStorage d'origine)
     const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
     const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
 
-    if (compteTrouve && roleTemporaire === compteTrouve.role) {
+    if(compteTrouve) {
+        sessionStorage.removeItem('secure_attempts');
+        sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
         entrerDansApplication(compteTrouve.role);
     } else {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        if (tentatives >= 5) { window.location.reload(); return; }
         if(err) {
             err.style.display = 'block';
-            err.innerText = "Accès refusé ou session invalide.";
+            err.innerText = `Identifiants incorrects. (${tentatives}/5 essais)`;
         }
     }
 }
-
-// Redirection automatique immédiate pour votre lien magique
-window.addEventListener('DOMContentLoaded', () => {
-    const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
-    if (roleTemporaire === "ADMIN" && window.location.href.toLowerCase().includes("jhonnas.r@saferunmarket.com")) {
-        entrerDansApplication("ADMIN");
-    }
-});
 
 
     // Fonction interne pour ne pas répéter le code de démarrage
