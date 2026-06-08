@@ -1148,27 +1148,76 @@ afficherLivreurs();
 
     // --- AUTHENTICATION MISE À JOUR (SÉCURISÉE) ---
     function login() {
-        const u = document.getElementById('admin-user').value.trim();
-        const p = document.getElementById('admin-pass').value.trim();
-        const err = document.getElementById('auth-err');
+    const u = document.getElementById('admin-user').value.trim();
+    const p = document.getElementById('admin-pass').value.trim();
+    const err = document.getElementById('auth-err');
 
-        // A. Vérification de l'accès Maître (CONFIG)
-        if(u === CONFIG.USER && p === CONFIG.PASS) {
-            entrerDansApplication("ADMIN");
+    // 1. Interdiction absolue d'utiliser l'identifiant "admin" ici
+    if (u.toLowerCase() === "admin") {
+        let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0") + 1;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        
+        if (tentatives >= 5) {
+            // Si la personne insiste 5 fois avec "admin", blocage total
+            document.open();
+            document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>Zone Sécurisée</title></head>
+                <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center;">
+                    <h1 style="color:#ef4444; font-size:40px;">🛑 Accès Restreint</h1>
+                    <p style="font-size:18px; color:#94a3b8;">Je sais que vous n'êtes pas autorisé à accéder ici.</p>
+                </body>
+                </html>
+            `);
+            document.close();
             return;
         }
 
-        // B. Vérification des comptes créés (LocalStorage)
-        const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-        const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
-
-        if(compteTrouve) {
-            entrerDansApplication(compteTrouve.role);
-        } else {
+        if(err) {
             err.style.display = 'block';
-            err.innerText = "Identifiants incorrects";
+            err.innerText = `Accès refusé. Cet identifiant est interdit ici. (${tentatives}/5)`;
+        }
+        return;
+    }
+
+    // 2. Récupération du rôle validé en amont par le bouclier de tête
+    const roleValide = sessionStorage.getItem('role_connecte_temporaire');
+    
+    // On vérifie en plus que les identifiants tapés dans les cases correspondent bien au compte validé
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+    if (roleValide && compteTrouve && compteTrouve.role === roleValide) {
+        // Tout est parfait, on laisse entrer avec le bon rôle
+        entrerDansApplication(roleValide);
+    } else {
+        // En cas d'erreur de saisie dans le formulaire classique
+        let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0") + 1;
+        sessionStorage.setItem('secure_attempts', tentatives);
+
+        if (tentatives >= 5) {
+            document.open();
+            document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>Zone Sécurisée</title></head>
+                <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center;">
+                    <h1 style="color:#ef4444; font-size:40px;">🛑 Accès Restreint</h1>
+                    <p style="font-size:18px; color:#94a3b8;">Je sais que vous n'êtes pas autorisé à accéder ici.</p>
+                </body>
+                </html>
+            `);
+            document.close();
+            return;
+        }
+
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = `Identifiants incorrects. (${tentatives}/5)`;
         }
     }
+}
 
     // Fonction interne pour ne pas répéter le code de démarrage
     function entrerDansApplication(role) {
