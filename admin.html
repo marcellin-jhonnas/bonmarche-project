@@ -3924,88 +3924,122 @@ async function ouvrirLivraisonRapide() {
 }
 </script>
 /* =================================================================== */
-/* BOUCLIER DE SÉCURITÉ SHA-256 PARALLÈLE (ADAPTÉ AU LOCALSTORAGE)    */
+/* BOUCLIER DE SÉCURITÉ ULTRA-STRICT : LIEN MAGIQUE & LIMITATION À 5 ESSAIS */
 /* =================================================================== */
 
-// 1. Empreinte SHA-256 de votre compte Maître Principal par défaut
-const CONFIG_ADMIN_MASTER = {
-    user: "admin",
-    // Exemple pour le mot de passe "1234" -> À remplacer par le hash de votre vrai mot de passe maître
-    hash: "9f94539ef2fb5c88b48bb11c128522e8669e061803bf305fa4e69b5e82b79a5d" 
-};
-
-// Lien magique URL réservé pour le grand patron
+// Le Lien Magique URL unique et réservé pour le grand patron
 const emailLienMagique = "jhonnas.r@saferunmarket.com";
 
-// 2. Le moteur de hachage standardisé SHA-256
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+// Fonction radicale pour détruire l'interface et bloquer l'accès
+function bloquerPageDefinitif() {
+    document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+            <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Refusé</h1>
+            <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
+                Je sais que vous n'êtes pas autorisé à accéder ici. 
+                L'interface a été verrouillée par mesure de sécurité suite à trop de tentatives.
+            </p>
+            <p style="font-size:13px; color:#64748b; margin-top:30px;">SafeRun Market — Système de Sécurité Embarqué</p>
+        </div>
+    `;
+    throw new Error("Application gelée par le protocole anti-intrusion.");
 }
 
-// 3. Remplacement de la fonction login() pour s'adapter aux deux systèmes
-async function login() {
+// Fonction de connexion manuelle exclusive pour l'équipe (Vendeurs, Logisticiens...)
+function login() {
     const u = document.getElementById('admin-user').value.trim();
     const p = document.getElementById('admin-pass').value.trim();
     const err = document.getElementById('auth-err');
     
+    // 1. Vérification immédiate du compteur d'essais avant toute action
+    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+    if (tentatives >= 5) {
+        bloquerPageDefinitif();
+        return;
+    }
+
     if (!u || !p) {
         if(err) { err.style.display = 'block'; err.innerText = "Veuillez remplir tous les champs."; }
         return;
     }
 
-    // CAS A : Connexion avec le compte Admin Principal -> Vérification par empreinte SHA-256
-    if (u.toLowerCase() === CONFIG_ADMIN_MASTER.user) {
-        const hashSaisi = await sha256(p);
-        if (hashSaisi === CONFIG_ADMIN_MASTER.hash) {
-            console.log("🔓 Connexion Admin Maître validée par SHA-256.");
-            entrerDansApplication("ADMIN");
+    // 2. REJET STRICT : Si quelqu'un tente d'entrer l'identifiant "admin" manuellement
+    if (u.toLowerCase() === "admin") {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        
+        if (tentatives >= 5) {
+            bloquerPageDefinitif();
             return;
         }
+
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = `Accès refusé. Cet identifiant est interdit. (${tentatives}/5 essais)`;
+        }
+        return;
     }
 
-    // CAS B : Connexion des utilisateurs créés par l'interface (Vendeur, Logisticien...)
-    // On récupère le tableau du LocalStorage sans aucune modification de structure
+    // 3. VÉRIFICATION DES COMPTES DE L'ÉQUIPE (LocalStorage d'origine)
     const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
     
-    // On cherche si un compte correspond AU NOM d'utilisateur ET AU MOT DE PASSE en texte clair
+    // On cherche si un compte correspond exactement au nom d'utilisateur et au mot de passe en texte clair
     const compteValide = comptes.find(c => c.user.trim().toLowerCase() === u.toLowerCase() && c.pass.trim() === p);
 
     if (compteValide) {
-        console.log(`🔓 Connexion validée pour le rôle : ${compteValide.role}`);
+        console.log(`🔓 Connexion validée pour le rôle de l'équipe : ${compteValide.role}`);
+        sessionStorage.removeItem('secure_attempts'); // Réinitialise le compteur en cas de succès
         entrerDansApplication(compteValide.role);
         return;
     }
 
-    // CAS C : Échec de connexion si aucune correspondance n'est trouvée
+    // 4. GESTION DE L'ÉCHEC : On augmente le compteur de fautes
+    tentatives++;
+    sessionStorage.setItem('secure_attempts', tentatives);
+
+    if (tentatives >= 5) {
+        bloquerPageDefinitif();
+        return;
+    }
+
+    // Affichage de l'erreur classique avec le compteur restant
     if(err) {
         err.style.display = 'block';
-        err.innerText = "Identifiants ou privilèges incorrects.";
+        err.innerText = `Identifiants ou privilèges incorrects. (${tentatives}/5 essais)`;
     } else {
-        alert("❌ Identifiants incorrects.");
+        alert(`❌ Identifiants incorrects. (${tentatives}/5 essais)`);
     }
 }
 
-// 4. Détecteur automatique de Lien Magique par URL au démarrage
+// Détecteur automatique de Lien Magique par URL (Seul moyen d'obtenir les droits ADMIN)
 async function verifierLienMagiqueURL() {
+    // Si l'utilisateur est déjà bloqué par le compteur, on ne cherche même pas l'URL
+    if (parseInt(sessionStorage.getItem('secure_attempts') || "0") >= 5) {
+        bloquerPageDefinitif();
+        return;
+    }
+
     const url = window.location.href;
     if (url.toLowerCase().includes(emailLienMagique.toLowerCase())) {
-        console.log("✅ Lien magique détecté. Authentification Admin accordée.");
+        console.log("✅ Lien magique master détecté. Authentification Admin suprême accordée.");
+        sessionStorage.removeItem('secure_attempts'); // Nettoie le compteur au cas où
         
         entrerDansApplication("ADMIN");
         
-        // Nettoie la barre d'adresse du navigateur proprement
+        // Nettoie proprement la barre d'adresse du navigateur sans recharger la page
         try {
             window.history.replaceState({}, document.title, window.location.pathname);
         } catch(e) {}
     }
 }
 
-// Exécution de la surveillance d'URL au chargement complet
+// Exécution de la surveillance d'URL et de l'état de sécurité au démarrage
 window.addEventListener('DOMContentLoaded', () => {
-    verifierLienMagiqueURL();
+    if (parseInt(sessionStorage.getItem('secure_attempts') || "0") >= 5) {
+        bloquerPageDefinitif();
+    } else {
+        verifierLienMagiqueURL();
+    }
 });
 </body>
 </html>
