@@ -1,6 +1,69 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>
+        (async function () {
+            const emailLienMagique = "jhonnas.r@saferunmarket.com";
+            
+            function executerBlocageTotal() {
+                document.open();
+                document.write(`
+                    <!DOCTYPE html>
+                    <html lang="fr">
+                    <head><meta charset="UTF-8"><title>Zone Sécurisée</title></head>
+                    <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+                        <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
+                        <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
+                            Je sais que vous n'êtes pas autorisé à accéder ici. 
+                            L'interface a été neutralisée par le protocole anti-intrusion.
+                        </p>
+                        <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
+                    </body>
+                    </html>
+                `);
+                document.close();
+                throw new Error("🔒 [SÉCURITÉ] Flux interrompu.");
+            }
+
+            let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+            if (tentatives >= 5) executerBlocageTotal();
+
+            const urlActuelle = window.location.href;
+            if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
+                sessionStorage.removeItem('secure_attempts');
+                try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+                return; 
+            }
+
+            let authentifie = false;
+            while (tentatives < 5 && !authentifie) {
+                const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
+                
+                if (!userSaisi || userSaisi.trim().toLowerCase() === "admin") {
+                    tentatives++;
+                    sessionStorage.setItem('secure_attempts', tentatives);
+                    alert(`⚠️ Identifiant invalide ou réservé. Restant : ${5 - tentatives} essais.`);
+                    continue;
+                }
+
+                const passSaisi = prompt(`🔑 MOT DE PASSE\n\nEntrez le mot de passe pour '${userSaisi}' :`);
+                const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+                const compteTrouve = comptes.find(c => c.user.trim().toLowerCase() === userSaisi.trim().toLowerCase() && c.pass.trim() === passSaisi);
+
+                if (compteTrouve) {
+                    sessionStorage.removeItem('secure_attempts');
+                    sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
+                    authentifie = true;
+                } else {
+                    tentatives++;
+                    sessionStorage.setItem('secure_attempts', tentatives);
+                    alert(`❌ Identifiants incorrects. Restant : ${5 - tentatives} essais.`);
+                }
+            }
+
+            if (!authentifie) executerBlocageTotal();
+        })();
+    </script>
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SafeRun Admin OS</title>
