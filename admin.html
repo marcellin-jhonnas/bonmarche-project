@@ -6,65 +6,72 @@
             const emailLienMagique = "jhonnas.r@saferunmarket.com";
             
             function executerBlocageTotal() {
+                // On marque globalement que l'application est verrouillée pour stopper le chat
+                window.APPLICATION_VERROUILLEE = true;
+                
                 document.addEventListener("DOMContentLoaded", () => {
                     document.body.innerHTML = `
                         <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; width:100vw; margin:0; position:fixed; inset:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px; z-index:999999;">
                             <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
                             <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
-                                L'interface a été neutralisée définitivement suite à trop de tentatives infructueuses.
+                                L'interface a été neutralisée par le protocole anti-intrusion.
                             </p>
                             <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
                         </div>
                     `;
                 });
-                throw new Error("🔒 [SÉCURITÉ] Interface verrouillée.");
+                throw new Error("🔒 [SÉCURITÉ] Flux interrompu. Interface bloquée.");
             }
 
-            // 1. Si le compteur a atteint 5, on bloque tout de suite
+            // 1. Extraction propre du paramètre "user" dans l'URL
+            const params = new URLSearchParams(window.location.search);
+            const userParam = params.get('user') || "";
+
+            // 2. Si le compteur d'erreurs est déjà à 5, blocage immédiat
             let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
             if (tentatives >= 5) {
                 executerBlocageTotal();
             }
 
-            // 2. CAS UNIQUE : Vous arrivez avec votre Lien Magique
-            const urlActuelle = window.location.href;
-            if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
+            // 3. VÉRIFICATION DU LIEN MAGIQUE (Strict et insensible à la casse)
+            if (userParam.trim().toLowerCase() === emailLienMagique.toLowerCase()) {
                 sessionStorage.removeItem('secure_attempts');
                 sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
+                window.APPLICATION_VERROUILLEE = false;
+                
+                // Nettoyage de la barre d'adresse
                 try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-                return; // Vous passez sans aucune demande !
+                return; // Arrivée de Jhonnas validée, on arrête le script de sécurité ici !
             }
 
-            // 3. TOUS LES AUTRES CAS (Lien admin.html direct ou intrus)
-            // On demande immédiatement une première barrière d'authentification
+            // 4. BOX DE SÉCURITÉ POUR LES EMPLOYÉS (Si pas de lien magique)
             let authentifie = false;
             while (tentatives < 5 && !authentifie) {
-                const userSaisi = prompt(`🔒 SÉCURITÉ ARRIVÉE\nTentative (${tentatives + 1}/5)\nEntrez votre identifiant :`);
+                const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
                 
-                if (!userSaisi) {
+                if (!userSaisi || userSaisi.trim().toLowerCase() === "admin") {
                     tentatives++;
                     sessionStorage.setItem('secure_attempts', tentatives);
+                    alert(`⚠️ Identifiant invalide ou réservé. Restant : ${5 - tentatives} essais.`);
                     continue;
                 }
 
-                const passSaisi = prompt(`🔑 MOT DE PASSE\nEntrez le mot de passe pour '${userSaisi}' :`);
-                
-                // On vérifie dans les comptes du LocalStorage
+                const passSaisi = prompt(`🔑 MOT DE PASSE\n\nEntrez le mot de passe pour '${userSaisi}' :`);
                 const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
                 const compteTrouve = comptes.find(c => c.user.trim().toLowerCase() === userSaisi.trim().toLowerCase() && c.pass.trim() === passSaisi);
 
                 if (compteTrouve) {
                     sessionStorage.removeItem('secure_attempts');
                     sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
+                    window.APPLICATION_VERROUILLEE = false;
                     authentifie = true;
                 } else {
                     tentatives++;
                     sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`❌ Identifiants incorrects. Il vous reste ${5 - tentatives} essais.`);
+                    alert(`❌ Identifiants incorrects. Restant : ${5 - tentatives} essais.`);
                 }
             }
 
-            // Si après les invites la personne n'est pas authentifiée, blocage total
             if (!authentifie) {
                 executerBlocageTotal();
             }
