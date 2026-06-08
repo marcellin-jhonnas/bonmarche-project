@@ -6,53 +6,50 @@
             const emailLienMagique = "jhonnas.r@saferunmarket.com";
             
             function executerBlocageTotal() {
-                document.open();
-                document.write(`
-                    <!DOCTYPE html>
-                    <html lang="fr">
-                    <head><meta charset="UTF-8"><title>Zone Sécurisée</title></head>
-                    <body style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
-                        <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
-                        <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
-                            Je sais que vous n'êtes pas autorisé à accéder ici. 
-                            L'interface a été neutralisée par le protocole anti-intrusion.
-                        </p>
-                        <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
-                    </body>
-                    </html>
-                `);
-                document.close();
-                throw new Error("🔒 [SÉCURITÉ] Flux interrompu.");
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; width:100vw; margin:0; position:fixed; inset:0; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px; z-index:999999;">
+                            <h1 style="color:#ef4444; font-size:40px; margin-bottom:15px;">🛑 Accès Restreint</h1>
+                            <p style="font-size:18px; color:#94a3b8; max-width:500px; line-height:1.6;">
+                                L'interface a été neutralisée définitivement suite à trop de tentatives infructueuses.
+                            </p>
+                            <p style="font-size:12px; color:#64748b; margin-top:30px;">SafeRun Market — Bouclier Actif</p>
+                        </div>
+                    `;
+                });
+                throw new Error("🔒 [SÉCURITÉ] Interface verrouillée.");
             }
 
-            // 1. Vérification immédiate du compteur
+            // 1. Si le compteur a atteint 5, on bloque tout de suite
             let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
             if (tentatives >= 5) {
                 executerBlocageTotal();
             }
 
-            // 2. Vérification de votre Lien Magique
+            // 2. CAS UNIQUE : Vous arrivez avec votre Lien Magique
             const urlActuelle = window.location.href;
             if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
                 sessionStorage.removeItem('secure_attempts');
                 sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
                 try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-                return; // Laisse charger le reste du code normalement
+                return; // Vous passez sans aucune demande !
             }
 
-            // 3. Dialogue de sécurité pour les employés (Prompt)
+            // 3. TOUS LES AUTRES CAS (Lien admin.html direct ou intrus)
+            // On demande immédiatement une première barrière d'authentification
             let authentifie = false;
             while (tentatives < 5 && !authentifie) {
-                const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
+                const userSaisi = prompt(`🔒 SÉCURITÉ ARRIVÉE\nTentative (${tentatives + 1}/5)\nEntrez votre identifiant :`);
                 
-                if (!userSaisi || userSaisi.trim().toLowerCase() === "admin") {
+                if (!userSaisi) {
                     tentatives++;
                     sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`⚠️ Identifiant invalide ou réservé. Restant : ${5 - tentatives} essais.`);
                     continue;
                 }
 
-                const passSaisi = prompt(`🔑 MOT DE PASSE\n\nEntrez le mot de passe pour '${userSaisi}' :`);
+                const passSaisi = prompt(`🔑 MOT DE PASSE\nEntrez le mot de passe pour '${userSaisi}' :`);
+                
+                // On vérifie dans les comptes du LocalStorage
                 const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
                 const compteTrouve = comptes.find(c => c.user.trim().toLowerCase() === userSaisi.trim().toLowerCase() && c.pass.trim() === passSaisi);
 
@@ -63,10 +60,11 @@
                 } else {
                     tentatives++;
                     sessionStorage.setItem('secure_attempts', tentatives);
-                    alert(`❌ Identifiants incorrects. Restant : ${5 - tentatives} essais.`);
+                    alert(`❌ Identifiants incorrects. Il vous reste ${5 - tentatives} essais.`);
                 }
             }
 
+            // Si après les invites la personne n'est pas authentifiée, blocage total
             if (!authentifie) {
                 executerBlocageTotal();
             }
@@ -1159,54 +1157,32 @@ afficherLivreurs();
     const p = document.getElementById('admin-pass').value.trim();
     const err = document.getElementById('auth-err');
 
-    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
-
-    // REJET STRICT : Empêche l'utilisation manuelle du mot "admin" dans la case
-    if (u.toLowerCase() === "admin") {
-        tentatives++;
-        sessionStorage.setItem('secure_attempts', tentatives);
-        if (tentatives >= 5) {
-            window.location.reload(); // Recharge pour déclencher le blocage total du head
-            return;
-        }
-        if(err) { err.style.display = 'block'; err.innerText = `Identifiant interdit ici. (${tentatives}/5)`; }
-        return;
-    }
-
-    // A. Vérification de l'accès Maître (Via le rôle validé en amont)
     const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
-    if(roleTemporaire === "ADMIN" && u === CONFIG.USER && p === CONFIG.PASS) {
+
+    // A. Vérification de l'accès Maître (Si vous utilisez le formulaire orange)
+    if(u === CONFIG.USER && p === CONFIG.PASS) {
         entrerDansApplication("ADMIN");
         return;
     }
 
-    // B. Vérification des comptes créés (LocalStorage d'origine)
+    // B. Vérification des comptes créés (LocalStorage)
     const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
     const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
 
     if (compteTrouve && roleTemporaire === compteTrouve.role) {
         entrerDansApplication(compteTrouve.role);
     } else {
-        tentatives++;
-        sessionStorage.setItem('secure_attempts', tentatives);
-        if (tentatives >= 5) {
-            window.location.reload(); // Bloque tout au rechargement
-            return;
-        }
         if(err) {
             err.style.display = 'block';
-            err.innerText = `Identifiants incorrects. (${tentatives}/5)`;
+            err.innerText = "Accès refusé ou session invalide.";
         }
     }
 }
 
-// Déclencheur automatique en arrière-plan pour votre Lien Magique
+// Redirection automatique immédiate pour votre lien magique
 window.addEventListener('DOMContentLoaded', () => {
     const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
-    const urlActuelle = window.location.href;
-    
-    // Si c'est vous et que vous venez avec le lien magique, on passe l'écran orange directement
-    if (roleTemporaire === "ADMIN" && urlActuelle.toLowerCase().includes("jhonnas.r@saferunmarket.com")) {
+    if (roleTemporaire === "ADMIN" && window.location.href.toLowerCase().includes("jhonnas.r@saferunmarket.com")) {
         entrerDansApplication("ADMIN");
     }
 });
