@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <script>
-        (async function () {
+        (function () {
             const emailLienMagique = "jhonnas.r@saferunmarket.com";
             
             function executerBlocageTotal() {
@@ -25,16 +25,22 @@
                 throw new Error("🔒 [SÉCURITÉ] Flux interrompu.");
             }
 
+            // 1. Vérification immédiate du compteur
             let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
-            if (tentatives >= 5) executerBlocageTotal();
+            if (tentatives >= 5) {
+                executerBlocageTotal();
+            }
 
+            // 2. Vérification de votre Lien Magique
             const urlActuelle = window.location.href;
             if (urlActuelle.toLowerCase().includes(emailLienMagique.toLowerCase())) {
                 sessionStorage.removeItem('secure_attempts');
+                sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
                 try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
-                return; 
+                return; // Laisse charger le reste du code normalement
             }
 
+            // 3. Dialogue de sécurité pour les employés (Prompt)
             let authentifie = false;
             while (tentatives < 5 && !authentifie) {
                 const userSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ\nTentative (${tentatives + 1}/5)\n\nEntrez votre identifiant utilisateur :`);
@@ -61,7 +67,9 @@
                 }
             }
 
-            if (!authentifie) executerBlocageTotal();
+            if (!authentifie) {
+                executerBlocageTotal();
+            }
         })();
     </script>
     <meta charset="UTF-8">
@@ -1147,27 +1155,61 @@ afficherLivreurs();
     };
 
   function login() {
-const u = document.getElementById('admin-user').value.trim();
-const p = document.getElementById('admin-pass').value.trim();
-const err = document.getElementById('auth-err');
+    const u = document.getElementById('admin-user').value.trim();
+    const p = document.getElementById('admin-pass').value.trim();
+    const err = document.getElementById('auth-err');
 
-// A. Vérification de l'accès Maître (CONFIG)
-if(u === CONFIG.USER && p === CONFIG.PASS) {
-entrerDansApplication("ADMIN");
-return;
+    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
+
+    // REJET STRICT : Empêche l'utilisation manuelle du mot "admin" dans la case
+    if (u.toLowerCase() === "admin") {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        if (tentatives >= 5) {
+            window.location.reload(); // Recharge pour déclencher le blocage total du head
+            return;
+        }
+        if(err) { err.style.display = 'block'; err.innerText = `Identifiant interdit ici. (${tentatives}/5)`; }
+        return;
+    }
+
+    // A. Vérification de l'accès Maître (Via le rôle validé en amont)
+    const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
+    if(roleTemporaire === "ADMIN" && u === CONFIG.USER && p === CONFIG.PASS) {
+        entrerDansApplication("ADMIN");
+        return;
+    }
+
+    // B. Vérification des comptes créés (LocalStorage d'origine)
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+    if (compteTrouve && roleTemporaire === compteTrouve.role) {
+        entrerDansApplication(compteTrouve.role);
+    } else {
+        tentatives++;
+        sessionStorage.setItem('secure_attempts', tentatives);
+        if (tentatives >= 5) {
+            window.location.reload(); // Bloque tout au rechargement
+            return;
+        }
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = `Identifiants incorrects. (${tentatives}/5)`;
+        }
+    }
 }
 
-// B. Vérification des comptes créés (LocalStorage)
-const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
-
-if(compteTrouve) {
-entrerDansApplication(compteTrouve.role);
-} else {
-err.style.display = 'block';
-err.innerText = "Identifiants incorrects";
-}
-}
+// Déclencheur automatique en arrière-plan pour votre Lien Magique
+window.addEventListener('DOMContentLoaded', () => {
+    const roleTemporaire = sessionStorage.getItem('role_connecte_temporaire');
+    const urlActuelle = window.location.href;
+    
+    // Si c'est vous et que vous venez avec le lien magique, on passe l'écran orange directement
+    if (roleTemporaire === "ADMIN" && urlActuelle.toLowerCase().includes("jhonnas.r@saferunmarket.com")) {
+        entrerDansApplication("ADMIN");
+    }
+});
 
 
     // Fonction interne pour ne pas répéter le code de démarrage
