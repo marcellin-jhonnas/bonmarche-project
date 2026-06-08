@@ -3923,5 +3923,89 @@ async function ouvrirLivraisonRapide() {
     }
 }
 </script>
+/* =================================================================== */
+/* BOUCLIER DE SÉCURITÉ SHA-256 PARALLÈLE (ADAPTÉ AU LOCALSTORAGE)    */
+/* =================================================================== */
+
+// 1. Empreinte SHA-256 de votre compte Maître Principal par défaut
+const CONFIG_ADMIN_MASTER = {
+    user: "admin",
+    // Exemple pour le mot de passe "1234" -> À remplacer par le hash de votre vrai mot de passe maître
+    hash: "9f94539ef2fb5c88b48bb11c128522e8669e061803bf305fa4e69b5e82b79a5d" 
+};
+
+// Lien magique URL réservé pour le grand patron
+const emailLienMagique = "jhonnas.r@saferunmarket.com";
+
+// 2. Le moteur de hachage standardisé SHA-256
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 3. Remplacement de la fonction login() pour s'adapter aux deux systèmes
+async function login() {
+    const u = document.getElementById('admin-user').value.trim();
+    const p = document.getElementById('admin-pass').value.trim();
+    const err = document.getElementById('auth-err');
+    
+    if (!u || !p) {
+        if(err) { err.style.display = 'block'; err.innerText = "Veuillez remplir tous les champs."; }
+        return;
+    }
+
+    // CAS A : Connexion avec le compte Admin Principal -> Vérification par empreinte SHA-256
+    if (u.toLowerCase() === CONFIG_ADMIN_MASTER.user) {
+        const hashSaisi = await sha256(p);
+        if (hashSaisi === CONFIG_ADMIN_MASTER.hash) {
+            console.log("🔓 Connexion Admin Maître validée par SHA-256.");
+            entrerDansApplication("ADMIN");
+            return;
+        }
+    }
+
+    // CAS B : Connexion des utilisateurs créés par l'interface (Vendeur, Logisticien...)
+    // On récupère le tableau du LocalStorage sans aucune modification de structure
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    
+    // On cherche si un compte correspond AU NOM d'utilisateur ET AU MOT DE PASSE en texte clair
+    const compteValide = comptes.find(c => c.user.trim().toLowerCase() === u.toLowerCase() && c.pass.trim() === p);
+
+    if (compteValide) {
+        console.log(`🔓 Connexion validée pour le rôle : ${compteValide.role}`);
+        entrerDansApplication(compteValide.role);
+        return;
+    }
+
+    // CAS C : Échec de connexion si aucune correspondance n'est trouvée
+    if(err) {
+        err.style.display = 'block';
+        err.innerText = "Identifiants ou privilèges incorrects.";
+    } else {
+        alert("❌ Identifiants incorrects.");
+    }
+}
+
+// 4. Détecteur automatique de Lien Magique par URL au démarrage
+async function verifierLienMagiqueURL() {
+    const url = window.location.href;
+    if (url.toLowerCase().includes(emailLienMagique.toLowerCase())) {
+        console.log("✅ Lien magique détecté. Authentification Admin accordée.");
+        
+        entrerDansApplication("ADMIN");
+        
+        // Nettoie la barre d'adresse du navigateur proprement
+        try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch(e) {}
+    }
+}
+
+// Exécution de la surveillance d'URL au chargement complet
+window.addEventListener('DOMContentLoaded', () => {
+    verifierLienMagiqueURL();
+});
 </body>
 </html>
