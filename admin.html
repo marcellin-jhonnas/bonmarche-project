@@ -1147,64 +1147,28 @@ afficherLivreurs();
     };
 
   function login() {
-    const u = document.getElementById('admin-user').value.trim();
-    const p = document.getElementById('admin-pass').value.trim();
-    const err = document.getElementById('auth-err');
+const u = document.getElementById('admin-user').value.trim();
+const p = document.getElementById('admin-pass').value.trim();
+const err = document.getElementById('auth-err');
 
-    let tentatives = parseInt(sessionStorage.getItem('secure_attempts') || "0");
-
-    // 1. REJET STRICT : Si quelqu'un essaie d'écrire "admin" manuellement dans la case
-    if (u.toLowerCase() === "admin") {
-        tentatives++;
-        sessionStorage.setItem('secure_attempts', tentatives);
-        
-        if (tentatives >= 5) {
-            // Si 5 erreurs : destruction immédiate de la page
-            document.documentElement.innerHTML = `<body style="background:#0f172a; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h1>🛑 Je sais que vous n'êtes pas autorisé à accéder ici.</h1></body>`;
-            return;
-        }
-
-        if(err) {
-            err.style.display = 'block';
-            err.innerText = `Identifiant interdit. (${tentatives}/5 essais)`;
-        }
-        return;
-    }
-
-    // 2. VÉRIFICATION DE VOTRE ÉQUIPE (LocalStorage d'origine préservé)
-    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
-
-    if (compteTrouve) {
-        // Succès : on nettoie les tentatives et on laisse entrer l'employé avec ses droits d'origine
-        sessionStorage.removeItem('secure_attempts');
-        sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
-        entrerDansApplication(compteTrouve.role);
-    } else {
-        // Échec : on augmente le compteur de fautes
-        tentatives++;
-        sessionStorage.setItem('secure_attempts', tentatives);
-
-        if (tentatives >= 5) {
-            document.documentElement.innerHTML = `<body style="background:#0f172a; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h1>🛑 Je sais que vous n'êtes pas autorisé à accéder ici.</h1></body>`;
-            return;
-        }
-
-        if(err) {
-            err.style.display = 'block';
-            err.innerText = `Identifiants incorrects. (${tentatives}/5 essais)`;
-        }
-    }
+// A. Vérification de l'accès Maître (CONFIG)
+if(u === CONFIG.USER && p === CONFIG.PASS) {
+entrerDansApplication("ADMIN");
+return;
 }
 
-// 3. Déclencheur automatique au chargement pour votre lien magique
-window.addEventListener('DOMContentLoaded', () => {
-    const roleEnregistre = sessionStorage.getItem('role_connecte_temporaire');
-    // Si votre lien magique a injecté 'ADMIN' au tout début dans le <head>
-    if (roleEnregistre === 'ADMIN') {
-        entrerDansApplication("ADMIN");
-    }
-});
+// B. Vérification des comptes créés (LocalStorage)
+const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+if(compteTrouve) {
+entrerDansApplication(compteTrouve.role);
+} else {
+err.style.display = 'block';
+err.innerText = "Identifiants incorrects";
+}
+}
+
 
     // Fonction interne pour ne pas répéter le code de démarrage
     function entrerDansApplication(role) {
