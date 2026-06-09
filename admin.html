@@ -850,6 +850,12 @@
         <div id="liste-comptes-actifs" style="margin-top: 15px;">
             </div>
     </div>
+    <!-- Zone d'affichage du code 2FA (Visible uniquement par l'admin) -->
+<div id="zone-admin-2fa" style="display: none; margin-top: 20px; padding: 10px; background: #1e293b; border: 1px dashed #f59e0b; border-radius: 8px; text-align: center;">
+    <span style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 5px;">🔑 CODE DE SÉCURITÉ ACTUEL (ADMIN)</span>
+    <strong id="affichage-code-2fa" style="color: #f59e0b; font-size: 22px; letter-spacing: 2px;">000000</strong>
+    <span id="chrono-2fa" style="color: #64748b; font-size: 11px; display: block; margin-top: 3px;">Mise à jour dans --s</span>
+</div>
 </div>
 </div> 
 
@@ -3945,6 +3951,41 @@ function genererEtiquettesColisParVague(cibleJour = 'AUJOURDHUI', cibleVague = '
 
     doc.save(`Tickets_Colis_${cibleJour}_${cibleVague}_${dateJour.replace(/\//g, '-')}.pdf`);
 }
+/* =================================================================== */
+/* 🔄 AFFICHAGE DYNAMIQUE DU CODE SÉCURITÉ POUR L'ADMINISTRATEUR       */
+/* =================================================================== */
+function gererAffichageCodeAdmin() {
+    const zoneAdmin = document.getElementById('zone-admin-2fa');
+    const baliseCode = document.getElementById('affichage-code-2fa');
+    const baliseChrono = document.getElementById('chrono-2fa');
+
+    // Si les éléments HTML n'existent pas encore sur la page, on quitte sagement
+    if (!zoneAdmin || !baliseCode || !baliseChrono) return;
+
+    // SÉCURITÉ : On affiche le code SEULEMENT si c'est vous (reconnu par le système)
+    if (localStorage.getItem('saferun_statut_maitre') === 'OUI') {
+        zoneAdmin.style.display = 'block'; // On rend la boîte visible
+
+        // Fonction interne pour actualiser le code et le compte à rebours
+        function actualiser() {
+            const maintenant = Date.now();
+            const secondesRestantes = 60 - (Math.floor(maintenant / 1000) % 60);
+            
+            // On affiche le code de la minute en cours
+            baliseCode.innerText = obtenirCodeAuthentificationActuel();
+            
+            // On affiche le temps restant avant la prochaine minute
+            baliseChrono.innerText = `Prochain code dans ${secondesRestantes}s`;
+        }
+
+        // On lance l'actualisation immédiatement et on la répète chaque seconde
+        actualiser();
+        setInterval(actualiser, 1000);
+    }
+}
+
+// Lancement automatique dès que l'interface visuelle est chargée
+window.addEventListener('DOMContentLoaded', gererAffichageCodeAdmin);
 </script>
 <style>
     /* ---- STYLE POUR PC / ORDINATEUR ---- */
