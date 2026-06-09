@@ -850,11 +850,13 @@
         <div id="liste-comptes-actifs" style="margin-top: 15px;">
             </div>
     </div>
-    <!-- Zone d'affichage du code 2FA (Visible uniquement par l'admin) -->
-<div id="zone-admin-2fa" style="display: none; margin-top: 20px; padding: 10px; background: #1e293b; border: 1px dashed #f59e0b; border-radius: 8px; text-align: center;">
+    <div id="zone-admin-2fa" style="display: none; margin-top: 20px; padding: 15px; background: #1e293b; border: 1px dashed #f59e0b; border-radius: 8px; text-align: center;">
     <span style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 5px;">🔑 CODE DE SÉCURITÉ ACTUEL (ADMIN)</span>
-    <strong id="affichage-code-2fa" style="color: #f59e0b; font-size: 22px; letter-spacing: 2px;">000000</strong>
-    <span id="chrono-2fa" style="color: #64748b; font-size: 11px; display: block; margin-top: 3px;">Mise à jour dans --s</span>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0;">
+        <strong id="affichage-code-2fa" style="color: #f59e0b; font-size: 26px; letter-spacing: 2px;">000000</strong>
+        <button id="btn-copier-2fa" onclick="copierCodeSecurite()" style="background: #334155; border: none; color: #f59e0b; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">📋 Copier</button>
+    </div>
+    <span id="chrono-2fa" style="color: #64748b; font-size: 11px; display: block;">Mise à jour dans --s</span>
 </div>
 </div>
 </div> 
@@ -929,8 +931,20 @@
 // 1. Générateur unique de code (Change automatiquement toutes les 1 minute)
 function obtenirCodeAuthentificationActuel() {
     const minuteDepuisEpoque = Math.floor(Date.now() / 60000);
-    // Formule mathématique pour générer un code unique à 6 chiffres
-    const codeGenere = (minuteDepuisEpoque * 7919) % 900000 + 100000;
+    
+    // Votre clé ultra-secrète que personne ne peut deviner
+    const cleSecrete = "SafeRunMarket🛡️Antananarivo🇲🇬2026"; 
+    
+    // On transforme la clé textuelle en un nombre basé sur la valeur de ses caractères
+    let empreinteTexte = 0;
+    for (let i = 0; i < cleSecrete.length; i++) {
+        empreinteTexte += cleSecrete.charCodeAt(i) * (i + 1);
+    }
+    
+    // On mélange le temps et votre clé secrète
+    const calculMelange = (minuteDepuisEpoque * 7919) + empreinteTexte;
+    const codeGenere = (calculMelange % 900000) + 100000;
+    
     return codeGenere.toString();
 }
 
@@ -3986,6 +4000,24 @@ function gererAffichageCodeAdmin() {
 
 // Lancement automatique dès que l'interface visuelle est chargée
 window.addEventListener('DOMContentLoaded', gererAffichageCodeAdmin);
+
+function copierCodeSecurite() {
+    const code = document.getElementById('affichage-code-2fa').innerText;
+    const btn = document.getElementById('btn-copier-2fa');
+    
+    navigator.clipboard.writeText(code).then(() => {
+        btn.innerText = "✅ Copié !";
+        btn.style.backgroundColor = "#16a34a";
+        btn.style.color = "#ffffff";
+        
+        // Remet le bouton normal après 2 secondes
+        setTimeout(() => {
+            btn.innerText = "📋 Copier";
+            btn.style.backgroundColor = "#334155";
+            btn.style.color = "#f59e0b";
+        }, 2000);
+    });
+}
 </script>
 <style>
     /* ---- STYLE POUR PC / ORDINATEUR ---- */
