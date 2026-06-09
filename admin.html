@@ -916,6 +916,104 @@
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
 <script>
+    /* =================================================================== */
+/* 🛡️ INTERCEPTEUR DE SÉCURITÉ DOUBLE FACTEUR (2FA) AVANT CHARGEMENT    */
+/* =================================================================== */
+
+// 1. Générateur unique de code (Change automatiquement toutes les 1 minute)
+function obtenirCodeAuthentificationActuel() {
+    const minuteDepuisEpoque = Math.floor(Date.now() / 60000);
+    // Formule mathématique pour générer un code unique à 6 chiffres
+    const codeGenere = (minuteDepuisEpoque * 7919) % 900000 + 100000;
+    return codeGenere.toString();
+}
+
+(function() {
+    const emailLienMagique = "jhonnas.r@saferunmarket.com";
+    const urlActuelle = window.location.href.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const userParam = (params.get('user') || "").trim().toLowerCase();
+
+    // A. VÉRIFICATION DU BLOCAGE STRICT DE 24 HEURES
+    const tempsBloque = localStorage.getItem('saferun_temps_blocage');
+    if (tempsBloque) {
+        const maintenant = Date.now();
+        const tempsEcoule = maintenant - parseInt(tempsBloque);
+        const reste24h = 24 * 60 * 60 * 1000 - tempsEcoule;
+
+        if (reste24h > 0) {
+            const heuresRestantes = Math.ceil(reste24h / (1000 * 60 * 60));
+            window.APPLICATION_VERROUILLEE = true;
+            document.addEventListener("DOMContentLoaded", () => {
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+                        <h1 style="color:#ef4444; font-size:35px; margin-bottom:15px;">🛑 Interface Verrouillée</h1>
+                        <p style="font-size:18px; color:#94a3b8; max-width:500px;">Trop de initiatives infructueuses. Sécurité anti-intrusion active.</p>
+                        <p style="font-size:16px; color:#f59e0b; margin-top:10px;">Réessayez dans environ <strong>${heuresRestantes} heures</strong>.</p>
+                    </div>
+                `;
+            });
+            return;
+        } else {
+            localStorage.removeItem('saferun_temps_blocage');
+            localStorage.removeItem('saferun_login_attempts');
+        }
+    }
+
+    // B. RECONNAISSANCE DE L'ADMIN (VOUS) : Pas de pop-up !
+    if (userParam === emailLienMagique || urlActuelle.includes("user=" + emailLienMagique) || localStorage.getItem('saferun_statut_maitre') === 'OUI') {
+        localStorage.setItem('saferun_statut_maitre', 'OUI'); // Mémorisation permanente pour vous
+        sessionStorage.setItem('saferun_2fa_valide', 'OUI'); // Autorise l'accès au formulaire
+        
+        try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+        
+        // Affiche le code secret actuel dans votre console (F12)
+        console.log("🔑 [SafeRun Sécurité] Code 2FA actuel pour votre équipe :", obtenirCodeAuthentificationActuel());
+        return; 
+    }
+
+    // C. POUR LES AUTRES (Lien normal sans e-mail) : Pop-up immédiate !
+    let tentatives = parseInt(localStorage.getItem('saferun_login_attempts') || "0");
+    let codeValide = false;
+
+    while (tentatives < 5 && !codeValide) {
+        const codeSaisi = prompt(`🔒 CONTRÔLE DE SÉCURITÉ MANDATÉ\nTentative (${tentatives + 1}/5)\n\nEntrez le code de sécurité à 6 chiffres transmis par l'administrateur :`);
+        
+        if (!codeSaisi) {
+            tentatives++;
+            localStorage.setItem('saferun_login_attempts', tentatives);
+            continue;
+        }
+
+        // Vérification avec le jeton de la minute actuelle
+        if (codeSaisi.trim() === obtenirCodeAuthentificationActuel()) {
+            codeValide = true;
+            sessionStorage.setItem('saferun_2fa_valide', 'OUI'); // Autorisé à voir l'écran orange
+            localStorage.removeItem('saferun_login_attempts'); // Reset des erreurs
+        } else {
+            tentatives++;
+            localStorage.setItem('saferun_login_attempts', tentatives);
+            alert(`❌ Code de sécurité incorrect ou expiré. Il vous reste ${5 - tentatives} essais.`);
+        }
+    }
+
+    // Si les 5 essais échouent : verrouillage immédiat pour 24h
+    if (!codeValide) {
+        localStorage.setItem('saferun_temps_blocage', Date.now().toString());
+        window.APPLICATION_VERROUILLEE = true;
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; color:white; font-family:sans-serif; text-align:center;">
+                    <h1 style="color:#ef4444; font-size:35px;">🛑 Accès Refusé</h1>
+                    <p style="font-size:18px; color:#94a3b8;">Votre appareil a été banni pour 24 heures.</p>
+                </div>
+            `;
+        });
+    }
+})();
+/* =================================================================== */
+/* 🛡️ INTERCEPTEUR DE SÉCURITÉ DOUBLE FACTEUR (2FA) AVANT CHARGEMENT    */
+/* =================================================================== */
     const ANNUAIRE_LIVREURS = {
     "Livreur 1": "261340000000", // Remplace par les vrais numéros
     "Livreur 2": "261320000000",
@@ -1083,29 +1181,40 @@ afficherLivreurs();
         PASS: "1234"
     };
 
-  function login() {
-const u = document.getElementById('admin-user').value.trim();
-const p = document.getElementById('admin-pass').value.trim();
-const err = document.getElementById('auth-err');
+ function login() {
+    const u = document.getElementById('admin-user').value.trim();
+    const p = document.getElementById('admin-pass').value.trim();
+    const err = document.getElementById('auth-err');
 
-// A. Vérification de l'accès Maître (CONFIG)
-if(u === CONFIG.USER && p === CONFIG.PASS) {
-entrerDansApplication("ADMIN");
-return;
+    // Sécurité supplémentaire : On vérifie si la sécurité initiale a bien été validée
+    if (sessionStorage.getItem('saferun_2fa_valide') !== 'OUI') {
+        window.location.reload();
+        return;
+    }
+
+    // A. Vérification de l'accès Maître (CONFIG) d'origine -> Maintenant parfaitement fonctionnel !
+    if (u === CONFIG.USER && p === CONFIG.PASS) {
+        sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
+        entrerDansApplication("ADMIN");
+        return;
+    }
+
+    // B. Vérification des comptes créés (LocalStorage d'origine pour l'équipe)
+    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
+    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+
+    if (compteTrouve) {
+        sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
+        entrerDansApplication(compteTrouve.role);
+    } else {
+        if(err) {
+            err.style.display = 'block';
+            err.innerText = "Identifiants invalides.";
+        }
+    }
 }
 
-// B. Vérification des comptes créés (LocalStorage)
-const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
-
-if(compteTrouve) {
-entrerDansApplication(compteTrouve.role);
-} else {
-err.style.display = 'block';
-err.innerText = "Identifiants incorrects";
-}
-}
-
+// Nettoyage de l'ancien listener DOMContentLoaded automatique pour éviter les conflits d'entrée directe
 
     // Fonction interne pour ne pas répéter le code de démarrage
     function entrerDansApplication(role) {
