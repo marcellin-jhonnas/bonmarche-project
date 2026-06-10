@@ -3842,3 +3842,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         mask-image: radial-gradient(white, black);
     }
 }
+@media (max-width: 768px) {
+    .promo-slide img {
+        width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block;
+    }
+}
