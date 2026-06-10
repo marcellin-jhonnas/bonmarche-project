@@ -3823,11 +3823,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 .promo-slide img {
     width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important; 
+    height: auto !important;
+    object-fit: contain !important;
     object-position: center;
     display: block;
-    border-radius: inherit; 
+    border-radius: inherit;
 }
 
 /* --- ADAPTATION MOBILE --- */
