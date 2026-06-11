@@ -3834,46 +3834,47 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     /* Empêche les espaces blancs */
     min-width: 100%;
 }
+/* --- ADAPTATION MOBILE --- */
 @media (max-width:768px){
 
+    .card-saferun{
+        overflow:hidden !important;
+        border-radius:15px !important;
+
+        /* IMPORTANT : supprimer la hauteur forcée */
+        min-height:auto !important;
+    }
+
+    .promo-slide{
+
+        width:100% !important;
+
+        /* Laisse le cadre décider */
+        height:auto !important;
+
+        padding:0 !important;
+
+        overflow:hidden !important;
+
+        display:flex !important;
+        justify-content:center !important;
+        align-items:center !important;
+    }
+
     .promo-slide img{
-        object-position:center top !important;
-    }
 
-}
+        width:100% !important;
 
-/* --- ADAPTATION MOBILE --- */
-@media (max-width: 768px) {
+        /* ← LE CHANGEMENT IMPORTANT */
+        height:auto !important;
 
-    .card-saferun {
-        min-height: 300px !important;
-        overflow: hidden !important;
-        border-radius: 15px !important;
+        max-width:100% !important;
 
-        -webkit-mask-image: -webkit-radial-gradient(white, black);
-        mask-image: radial-gradient(white, black);
-    }
+        object-fit:cover !important;
 
-    .promo-slide {
-        width: 100% !important;
-        height: 300px !important;
+        display:block !important;
 
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-
-        overflow: hidden !important;
-    }
-
-    .promo-slide img {
-
-        width: 100% !important;
-        height: 100% !important;
-
-        /* Garde l'image entière sans déborder */
-        object-fit: contain !important;
-
-        display: block !important;
+        border-radius:inherit;
     }
 
 }
