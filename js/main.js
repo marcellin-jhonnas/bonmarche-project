@@ -156,6 +156,22 @@ function rendreProduits(liste) {
         creerBarrePagination(produitsMarche.length);
     }
 }
+document.addEventListener('DOMContentLoaded', () => {
+    // --- INSERTION ICI ---
+    // Lance la vérification de la pop-up dès que l'écran est chargé et prêt
+    if (typeof verifierEtAfficherAnnoncesSafeRun === "function") {
+        // On attend 2 petites secondes après l'ouverture pour un effet visuel parfait
+        setTimeout(verifierEtAfficherAnnoncesSafeRun, 2000); 
+    }
+    // ---------------------
+
+    // Le reste de votre code de chargement existant...
+    chargerBoutique();
+    rafraichirSidebar();
+    
+    const themeSauve = localStorage.getItem('saferun_theme') || 'blanc';
+    changerTheme(themeSauve);
+});
 // --- INITIALISATION SAFERUN MARKET ---
 // --- CONFIGURATION ---
 const MON_URL_GAS = "https://script.google.com/macros/s/AKfycbxKuyJphzDyu7C1jUyADrad3YujTLuLBgKe3pBrdpp-Zk-P9A4XExexu0ejXMb5T0df/exec";
@@ -3243,9 +3259,14 @@ setInterval(function() {
     }
 }, 3000);
 
+// ===================================================================
+// SYSTEME DE POP-UP DYNAMIQUE ET RELANCE DE PAIEMENT (SAFERUN MARKET)
+// ===================================================================
 function verifierEtAfficherAnnoncesSafeRun() {
     // 1. Récupération des données du profil et de l'historique
-    const profil = JSON.parse(localStorage.getItem('saferun_user_profile') || "{}");
+    // ATTENTION : On utilise vos vrais mots-clés du localStorage détectés dans js.pdf
+    const nomClient = localStorage.getItem('saferun_nom') || "";
+    const quartierClient = localStorage.getItem('saferun_quartier') || "";
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
 
     // Éléments HTML de la pop-up
@@ -3259,7 +3280,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
 
     // ==========================================
     // CAS N°1 : RE-LANCE DE PAIEMENT (Prioritaire)
-    // On cherche s'il y a une commande au statut "NOUVEAU" (pas encore Sérieux/Payé)
+    // On cherche s'il y a une commande au statut "NOUVEAU"
     // ==========================================
     const commandeEnAttente = historique.find(cmd => {
         const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
@@ -3267,6 +3288,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
     });
 
     if (commandeEnAttente) {
+        // Adaptation selon vos structures de commandes lues dans votre fichier
         const dateLivr = commandeEnAttente.dateLivraison || commandeEnAttente.Date || "bientôt";
         const heureLivr = commandeEnAttente.heureLivraison || "l'heure prévue";
 
@@ -3276,39 +3298,34 @@ function verifierEtAfficherAnnoncesSafeRun() {
         titreZone.innerText = "🔒 Finalisez votre commande !";
         
         messageZone.innerHTML = `
-            Votre commande <b>#${commandeEnAttente.id}</b> est enregistrée ! Pour valider définitivement et sécuriser votre livraison, effectuez votre paiement sécurisé via <b>Mvola</b> ou <b>Visa</b>.<br><br>
-            🚀 Le livreur vous attendra le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Suivez l'avancée directement dans l'onglet "Mes Reçus".
+            Votre commande <b>#${commandeEnAttente.id}</b> est enregistrée ! Pour valider définitivement et sécuriser votre livraison, effectuez votre paiement sécurisé via <b>Mvola</b>.<br><br>
+            🚀 Le livreur vous attendra le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Suivez l'avancée directement dans vos reçus.
         `;
         
         btnAction.innerText = "💳 Payer maintenant";
         btnAction.style.background = "#ff6600";
         btnAction.style.color = "white";
-        // Si vous avez une fonction pour ouvrir le paiement direct, vous pouvez la lier ici :
         btnAction.onclick = function() {
             fermerPopupDynamique();
-            // Exemple : ouvrirZonePaiement('${commandeEnAttente.id}');
+            // Ici, on ouvre vos reçus valides pour qu'il procède au paiement
+            if (typeof ouvrirAchatsValides === "function") ouvrirAchatsValides();
         };
 
         popup.style.display = "flex";
-        return; // On arrête là pour ne pas afficher la pub si un paiement attend
+        return; // Prioritaire, on s'arrête ici
     }
 
     // ==========================================
-    // CAS N°2 : PROFIL COMPLET ➡️ OFFRE LIVRAISON GRATUITE
-    // Si le profil contient une adresse et un nom complets
+    // CAS N°2 : PROFIL DE LIVRAISON VALIDE (Publicité)
     // ==========================================
-    const nomClient = profil.nom || profil.Name || "";
-    const adresseClient = profil.adresse || profil.Address || "";
-
-    if (nomClient.trim() !== "" && adresseClient.trim() !== "") {
-        // Configuration visuelle : Mode Publicité Attrayante
+    if (nomClient.trim() !== "" && quartierClient.trim() !== "") {
         iconeZone.innerHTML = '<i class="fas fa-gift" style="color:#22c55e;"></i>';
         iconeZone.style.background = '#dcfce7';
         titreZone.innerText = `🎁 Offre Spéciale pour ${nomClient} !`;
         
         messageZone.innerHTML = `
-            Bonne nouvelle ! Votre profil étant complet, vous êtes éligible à la <b>Livraison Gratuite</b> directement à votre adresse à <b>${adresseClient}</b>.<br><br>
-            🛒 Atteignez simplement le <b>panier minimum</b> lors de vos achats pour débloquer les frais de port offerts et profitez de nos offres grossistes exclusives !
+            Bonne nouvelle ! Votre profil étant complété à <b>${quartierClient}</b>, vous êtes éligible à la <b>Livraison Gratuite</b> sur votre lieu.<br><br>
+            🛒 Atteignez le panier minimum lors de vos achats pour débloquer les frais de port offerts et profitez de nos prix grossistes exclusifs !
         `;
         
         btnAction.innerText = "🛍️ Commencer mes achats";
@@ -3316,8 +3333,8 @@ function verifierEtAfficherAnnoncesSafeRun() {
         btnAction.style.color = "white";
         btnAction.onclick = function() {
             fermerPopupDynamique();
-            // Rediriger vers l'onglet du marché
-            if(typeof showTab === "function") showTab('tab-market');
+            // Redirige vers la boutique si la fonction existe
+            if (typeof chargerBoutique === "function") chargerBoutique();
         };
 
         popup.style.display = "flex";
@@ -3325,7 +3342,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
     }
 }
 
-// Fonction utilitaire pour fermer la pop-up proprement
 function fermerPopupDynamique() {
     const popup = document.getElementById('saferun-popup-dynamique');
     if (popup) popup.style.display = "none";
