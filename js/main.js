@@ -2393,7 +2393,7 @@ async function ouvrirAchatsValides() {
   // On harmonise le texte du statut
   const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
   // On affiche le reçu si c'est l'un de ces 3 mots
-  return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ";
+  return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ"|| s === "LIVRÉ";
 });
 
     let html = `
@@ -2409,6 +2409,14 @@ async function ouvrirAchatsValides() {
     } else {
         valides.forEach(cmd => {
             const montant = cmd.Montant || cmd.montant || cmd.total || 0;
+const statutBrut = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+let badgeTexte = "CONFIRMÉ";
+let badgeStyle = "background:#dcfce7; color:#15803d;"; // Vert par défaut
+
+if (statutBrut === "LIVRÉ") {
+    badgeTexte = "CLÔTURÉ"; // Devient TERMINÉ (ou CLÔTURÉ)
+    badgeStyle = "background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"; // Devient gris
+}
             html += `
                 <div class="recu-card">
                     <div class="recu-header">
@@ -2416,7 +2424,7 @@ async function ouvrirAchatsValides() {
                             <small style="color:#aaa; display:block;">REF</small>
                             <b>#${cmd.id}</b>
                         </div>
-                        <div class="recu-status">CONFIRMÉ</div>
+                        <div class="recu-status" style="${badgeStyle} font-size:11px; padding:3px 8px; border-radius:20px; font-weight:bold;">${badgeTexte}</div>
                     </div>
                     <p style="font-size:0.85rem; color:#666; margin:10px 0;">${cmd.produits}</p>
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f9f9f9; pt:10px; padding-top:10px;">
