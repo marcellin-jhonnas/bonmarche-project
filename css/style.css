@@ -3843,22 +3843,23 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     }
 
     .promo-slide {
+        width: 100% !important;
+        height: 300px !important;
+
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+
         overflow: hidden !important;
     }
 
     .promo-slide img {
+
         width: 100% !important;
+        height: 100% !important;
 
-        /* Rend l'image flexible */
-        height: auto !important;
-
-        /* Supprime le recadrage agressif */
-        object-fit: unset !important;
-
-        max-width: 100% !important;
+        /* Garde l'image entière sans déborder */
+        object-fit: contain !important;
 
         display: block !important;
     }
