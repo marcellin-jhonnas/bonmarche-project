@@ -3242,3 +3242,91 @@ setInterval(function() {
         }
     }
 }, 3000);
+
+function verifierEtAfficherAnnoncesSafeRun() {
+    // 1. Récupération des données du profil et de l'historique
+    const profil = JSON.parse(localStorage.getItem('saferun_user_profile') || "{}");
+    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+
+    // Éléments HTML de la pop-up
+    const popup = document.getElementById('saferun-popup-dynamique');
+    const iconeZone = document.getElementById('popup-icone-zone');
+    const titreZone = document.getElementById('popup-titre');
+    const messageZone = document.getElementById('popup-message');
+    const btnAction = document.getElementById('popup-btn-action');
+
+    if (!popup) return; // Sécurité si l'élément n'existe pas encore
+
+    // ==========================================
+    // CAS N°1 : RE-LANCE DE PAIEMENT (Prioritaire)
+    // On cherche s'il y a une commande au statut "NOUVEAU" (pas encore Sérieux/Payé)
+    // ==========================================
+    const commandeEnAttente = historique.find(cmd => {
+        const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+        return s === "NOUVEAU";
+    });
+
+    if (commandeEnAttente) {
+        const dateLivr = commandeEnAttente.dateLivraison || commandeEnAttente.Date || "bientôt";
+        const heureLivr = commandeEnAttente.heureLivraison || "l'heure prévue";
+
+        // Configuration visuelle : Mode Alerte de paiement
+        iconeZone.innerHTML = '<i class="fas fa-wallet" style="color:#ff6600;"></i>';
+        iconeZone.style.background = '#fff0e6';
+        titreZone.innerText = "🔒 Finalisez votre commande !";
+        
+        messageZone.innerHTML = `
+            Votre commande <b>#${commandeEnAttente.id}</b> est enregistrée ! Pour valider définitivement et sécuriser votre livraison, effectuez votre paiement sécurisé via <b>Mvola</b> ou <b>Visa</b>.<br><br>
+            🚀 Le livreur vous attendra le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Suivez l'avancée directement dans l'onglet "Mes Reçus".
+        `;
+        
+        btnAction.innerText = "💳 Payer maintenant";
+        btnAction.style.background = "#ff6600";
+        btnAction.style.color = "white";
+        // Si vous avez une fonction pour ouvrir le paiement direct, vous pouvez la lier ici :
+        btnAction.onclick = function() {
+            fermerPopupDynamique();
+            // Exemple : ouvrirZonePaiement('${commandeEnAttente.id}');
+        };
+
+        popup.style.display = "flex";
+        return; // On arrête là pour ne pas afficher la pub si un paiement attend
+    }
+
+    // ==========================================
+    // CAS N°2 : PROFIL COMPLET ➡️ OFFRE LIVRAISON GRATUITE
+    // Si le profil contient une adresse et un nom complets
+    // ==========================================
+    const nomClient = profil.nom || profil.Name || "";
+    const adresseClient = profil.adresse || profil.Address || "";
+
+    if (nomClient.trim() !== "" && adresseClient.trim() !== "") {
+        // Configuration visuelle : Mode Publicité Attrayante
+        iconeZone.innerHTML = '<i class="fas fa-gift" style="color:#22c55e;"></i>';
+        iconeZone.style.background = '#dcfce7';
+        titreZone.innerText = `🎁 Offre Spéciale pour ${nomClient} !`;
+        
+        messageZone.innerHTML = `
+            Bonne nouvelle ! Votre profil étant complet, vous êtes éligible à la <b>Livraison Gratuite</b> directement à votre adresse à <b>${adresseClient}</b>.<br><br>
+            🛒 Atteignez simplement le <b>panier minimum</b> lors de vos achats pour débloquer les frais de port offerts et profitez de nos offres grossistes exclusives !
+        `;
+        
+        btnAction.innerText = "🛍️ Commencer mes achats";
+        btnAction.style.background = "#22c55e";
+        btnAction.style.color = "white";
+        btnAction.onclick = function() {
+            fermerPopupDynamique();
+            // Rediriger vers l'onglet du marché
+            if(typeof showTab === "function") showTab('tab-market');
+        };
+
+        popup.style.display = "flex";
+        return;
+    }
+}
+
+// Fonction utilitaire pour fermer la pop-up proprement
+function fermerPopupDynamique() {
+    const popup = document.getElementById('saferun-popup-dynamique');
+    if (popup) popup.style.display = "none";
+}
