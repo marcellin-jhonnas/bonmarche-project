@@ -3812,33 +3812,34 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* --- Style rectifié pour supprimer le débordement --- */
 /* --- Style rectifié pour supprimer le débordement --- */
 .promo-slide {
-    padding: 0 !important;
-    margin: 0 !important;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    /* Empêche l'image de sortir du cadre */
-    overflow: hidden !important; 
-    
-    /* Force l'image à respecter les arrondis */
-    border-radius: 15px !important; 
-    background-color: #1e3a8a;
-
-    /* FIX DÉBORDEMENT MOBILE (L'erreur que tu avais) */
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: radial-gradient(white, black);
+    overflow: hidden;
 }
 
 .promo-slide img {
     width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-    object-position: center;
+
+    /* Remplir largeur et hauteur */
+    height: 100% !important;
+
+    /* Coupe légèrement mais remplit le cadre */
+    object-fit: cover !important;
+
+    /* Centre l'image */
+    object-position: center center !important;
+
     display: block;
-    border-radius: inherit;
+
+    /* Empêche les espaces blancs */
+    min-width: 100%;
+}
+@media (max-width:768px){
+
+    .promo-slide img{
+        object-position:center top !important;
+    }
+
 }
 
 /* --- ADAPTATION MOBILE --- */
