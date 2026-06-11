@@ -3832,21 +3832,35 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 /* --- ADAPTATION MOBILE --- */
 @media (max-width: 768px) {
+
     .card-saferun {
         min-height: 300px !important;
         overflow: hidden !important;
         border-radius: 15px !important;
-        
-        /* On répète le fix ici pour le conteneur mobile */
+
         -webkit-mask-image: -webkit-radial-gradient(white, black);
         mask-image: radial-gradient(white, black);
     }
-}
-@media (max-width: 768px) {
+
+    .promo-slide {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+    }
+
     .promo-slide img {
         width: 100% !important;
+
+        /* Rend l'image flexible */
         height: auto !important;
-        object-fit: contain !important;
-        display: block;
+
+        /* Supprime le recadrage agressif */
+        object-fit: unset !important;
+
+        max-width: 100% !important;
+
+        display: block !important;
     }
+
 }
