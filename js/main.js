@@ -3417,7 +3417,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
             action: function() { fermerPopupDynamique(); if (typeof rafraichirSidebar === "function") rafraichirSidebar(); }
         };
 
-    } else if (statutCmd === "CLÔTURÉ" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
+    } else if (statutCmd === "LIVRÉ" || statutCmd === "CLÔTURÉ" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
         // -----------------------------------------------------------------
         // CAS N°4 : COMMANDE CLÔTURÉE OU EXPIREE (Relance et Fidélité)
         // -----------------------------------------------------------------
