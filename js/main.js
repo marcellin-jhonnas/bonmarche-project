@@ -2384,6 +2384,13 @@ async function synchroniserAchats() {
                         modification = true;
                     }
                 }
+                else if (statutSheet.includes("LIVRÉ") || statutSheet.includes("LIVRE")) {
+                    if (maCmd.statut !== "LIVRÉ") {
+                        maCmd.statut = "LIVRÉ"; 
+                        maCmd.id = match.ID || match.id || maCmd.id;
+                        modification = true;
+                    }
+                }
             }
         });
 
