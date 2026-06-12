@@ -34,6 +34,7 @@ async function chargerBoutique() {
         const response = await fetch(API_URL);
         tousLesProduits = await response.json();
         window.listeLocaleSafeRun = tousLesProduits;
+        
         // 2. On génère les produits (mais ils sont encore invisibles)
         rendreProduits(tousLesProduits);
 
@@ -45,18 +46,21 @@ async function chargerBoutique() {
                 
                 setTimeout(() => {
                     loader.style.display = 'none';
+                    
                     if (boutique) {
                         boutique.style.display = 'grid';
                         // Petit délai pour l'effet de fondu (Fade-in)
                         setTimeout(() => boutique.style.opacity = '1', 50);
-
-                        // --- TON INSERTION ICI ---
-                        setTimeout(() => {
-                            if (typeof verifierEtAfficherAnnoncesSafeRun === "function") {
-                                verifierEtAfficherAnnoncesSafeRun();
-                            }
-                        }, 1500);
                     }
+
+                    // --- POP-UP SAFERUN EXÉCUTÉE AU BON ENDROIT ---
+                    // On la sort du "if (boutique)" pour ne pas bloquer les scripts frères
+                    setTimeout(() => {
+                        if (typeof verifierEtAfficherAnnoncesSafeRun === "function") {
+                            verifierEtAfficherAnnoncesSafeRun();
+                        }
+                    }, 1500);
+
                 }, 500);
             }
         }, 800); // On laisse le skeleton 0.8s pour un effet visuel pro
