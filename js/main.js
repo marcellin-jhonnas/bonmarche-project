@@ -3317,6 +3317,9 @@ function verifierEtAfficherAnnoncesSafeRun() {
     // DÉTERMINATION DU CAS MARKETING ET REMPLISSAGE DES SLIDES ROTATIFS
     // =========================================================================
 
+    // Récupération dynamique du seuil de gratuité configuré sur SafeRun (par défaut 100000 Ariary si non défini)
+    const seuilGratuite = window.saferun_seuil_gratuite || 100000; 
+
     if (!derniereCommande) {
         // -----------------------------------------------------------------
         // CAS N°1 : AUCUNE COMMANDE (Pousser à l'achat / Livraison Gratuite)
@@ -3325,110 +3328,111 @@ function verifierEtAfficherAnnoncesSafeRun() {
         slidesData = [
             {
                 icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
-                titre: `🎁 Livraison Gratuite sur ${lieu} !`,
-                msg: `Complétez simplement votre panier sur <b>SafeRun Market</b> pour débloquer automatiquement la livraison 100% offerte directement chez vous.`
+                titre: `🎁 Livraison 100% Gratuite sur ${lieu} !`,
+                msg: `Atteignez simplement le seuil de <b>${seuilGratuite.toLocaleString()} Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
             },
             {
                 icone: '<i class="fas fa-tags" style="color:#3b82f6;"></i>', background: '#dbeafe',
                 titre: "🛒 Prix Grossistes Exclusifs",
-                msg: "Profitez de nos tarifs ultra-compétitifs et gagnez plus de marge sur tous vos produits préférés de la capitale."
+                msg: "Profitez de nos tarifs de gros ultra-compétitifs et maximisez vos marges sur tous vos produits préférés à Antananarivo."
             },
             {
                 icone: '<i class="fas fa-shipping-fast" style="color:#eab308;"></i>', background: '#fef9c3',
-                titre: "⚡ Flotte Express Connectée",
-                msg: "Nos livreurs certifiés SafeRun Express attendent vos commandes pour s'élancer à toute vitesse vers votre adresse !"
+                titre: "⚡ Flotte Connectée SafeRun Express",
+                msg: "Nos livreurs certifiés s'élancent vers votre adresse dès validation de votre commande. Suivez leur trajet en temps réel !"
             }
         ];
         actionBouton = {
-            texte: "🛍️ Ouvrir le Marché", couleur: "#22c55e",
+            texte: "🛍️ Acheter sur SafeRun Market", couleur: "#22c55e",
             action: function() { fermerPopupDynamique(); if (typeof chargerBoutique === "function") chargerBoutique(); }
         };
 
     } else if (statutCmd === "NOUVEAU" && !dateCmdDepassee) {
         // -----------------------------------------------------------------
-        // CAS N°2 : COMMANDE NOUVELLE (Relance de Paiement MVola Urgente)
+        // CAS N°2 : COMMANDE NOUVELLE (Relance de Paiement MVola Prioritaire)
         // -----------------------------------------------------------------
-        const dateLivr = derniereCommande.dateLivraison || derniereCommande.Date || "bientôt";
-        const heureLivr = derniereCommande.heureLivraison || "l'heure prévue";
+        const dateLivr =应用 || derniereCommande.dateLivraison || derniereCommande.Date || "bientôt";
+        const heureLivr =应用 || derniereCommande.heureLivraison || "l'heure prévue";
 
-        configurationTracker = { visible: true, etape: 1 }; // Étape 1 : Commande passée mais non payée
+        configurationTracker = { visible: true, etape: 1 }; // Étape 1 : En attente de paiement
         slidesData = [
             {
                 icone: '<i class="fas fa-wallet" style="color:#ff6600;"></i>', background: '#fff0e6',
-                titre: "🔒 Finalisez votre paiement",
-                msg: `Votre commande <b>#${derniereCommande.id || ''}</b> est bien reçue ! Validez-la immédiatement en effectuant votre dépôt sécurisé via <b>MVola</b>.`
+                titre: "🔥 Recommandé : Payez par MVola !",
+                msg: `Pour accélérer le traitement, envoyez votre règlement par <b>MVola</b> au <b>+261 38 24 536 10</b>. C'est le moyen le plus rapide et le plus sécurisé pour réserver votre créneau.`
             },
             {
-                icone: '<i class="fas fa-shield-alt" style="color:#0ea5e9;"></i>', background: '#e0f2fe',
-                titre: "🛡️ Transactions 100% Sécurisées",
-                msg: "Le protocole de paiement par API MVola ou Carte Visa vous garantit une sécurité maximale. Votre argent est protégé jusqu'à destination."
+                icone: '<i class="fas fa-info-circle" style="color:#0ea5e9;"></i>', background: '#e0f2fe',
+                titre: "💡 Comment valider votre facture ?",
+                msg: "Une fois le dépôt effectué, allez dans le <b>Menu Paiement</b> puis cliquez sur <b>Valider</b>. Votre facture passera instantanément en statut Payé."
             },
             {
                 icone: '<i class="fas fa-clock" style="color:#ef4444;"></i>', background: '#fee2e2',
-                titre: "🚀 Votre Livreur Planifié",
-                msg: `Tout est programmé pour le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Ne perdez pas votre créneau, confirmez le paiement !`
+                titre: "⏰ Livraison Planifiée",
+                msg: `Votre colis est planifié pour le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Confirmez via MVola maintenant pour que le livreur prenne la route.`
             }
         ];
         actionBouton = {
-            texte: "💳 Payer par MVola / Visa", couleur: "#ff6600",
+            texte: "💳 Valider mon Paiement MVola", couleur: "#ff6600",
             action: function() { fermerPopupDynamique(); if (typeof ouvrirAchatsValides === "function") ouvrirAchatsValides(); }
         };
 
     } else if (statutCmd === "PAYÉ" || statutCmd === "VALIDÉ" || statutCmd === "EN COURS") {
         // -----------------------------------------------------------------
-        // CAS N°3 : COMMANDE VALIDÉE & PAYÉE (Fidélisation & Suivi Actif)
+        // CAS N°3 : COMMANDE VALIDÉE & PAYÉE (Suivi des étapes jusqu'à Clôturé)
         // -----------------------------------------------------------------
-        const etapeTracker = (statutCmd === "EN COURS") ? 3 : 2; // Étape 2 (Payé) ou Étape 3 (En cours de livraison)
-        const messageSuivi = (statutCmd === "EN COURS") 
-            ? "⚠️ Notre livreur roule actuellement vers votre quartier ! Gardez votre téléphone à portée de main."
-            : "Votre paiement a été reçu avec succès. L'équipe prépare votre colis avec le plus grand soin.";
+        const etapeTracker = (statutCmd === "EN COURS") ? 3 : 2; 
+        let messageSuivi = "Votre facture est bien validée ! Votre paiement MVola a été reçu. Notre équipe prépare votre livraison.";
+        
+        if (statutCmd === "EN COURS") {
+            messageSuivi = "⚡ <b>Livraison en cours !</b> Notre livreur SafeRun Express fait route vers votre secteur. Gardez votre téléphone allumé.";
+        }
 
         configurationTracker = { visible: true, etape: etapeTracker };
         slidesData = [
             {
-                icone: '<i class="fas fa-heart" style="color:#22c55e;"></i>', background: '#dcfce7',
-                titre: "🎉 Merci pour votre confiance !",
-                msg: `Marcellin et toute l'équipe SafeRun vous remercient. Nous mettons tout en œuvre pour vous satisfaire à 100%.`
-            },
-            {
-                icone: '<i class="fas fa-check-double" style="color:#10b981;"></i>', background: '#e6f4ea',
-                titre: "✅ Statut de Livraison Garanti",
+                icone: '<i class="fas fa-check-circle" style="color:#10b981;"></i>', background: '#e6f4ea',
+                titre: "📄 Facture Payée & Validée",
                 msg: messageSuivi
             },
             {
+                icone: '<i class="fas fa-truck" style="color:#3b82f6;"></i>', background: '#dbeafe',
+                titre: "📦 Suivez vos achats en direct",
+                msg: "Consultez l'évolution de vos livraisons depuis votre espace client, de la sortie des entrepôts jusqu'au statut final <b>Clôturé</b>."
+            },
+            {
                 icone: '<i class="fas fa-star" style="color:#eab308;"></i>', background: '#fef9c3',
-                titre: "⭐ Devenez Client Privilégié",
-                msg: "Chaque commande validée augmente vos avantages de fidélité pour débloquer encore plus de réductions grossistes !"
+                titre: "⭐ Satisfaction SafeRun",
+                msg: "À la réception de vos cartons, le statut passera à <b>Clôturé</b>. Merci de faire grandir votre commerce à nos côtés !"
             }
         ];
         actionBouton = {
-            texte: "📦 Suivre sur mon Tableau de Bord", couleur: "#10b981",
+            texte: "📦 Suivre mes achats en cours", couleur: "#10b981",
             action: function() { fermerPopupDynamique(); if (typeof rafraichirSidebar === "function") rafraichirSidebar(); }
         };
 
-    } else if (dateCmdDepassee || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
+    } else if (statutCmd === "CLÔTURÉ" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
         // -----------------------------------------------------------------
-        // CAS N°4 : DATE DÉPASSÉE OU COMMANDE EXPIREE (Relancer l'intérêt)
+        // CAS N°4 : COMMANDE CLÔTURÉE OU EXPIREE (Relance et Fidélité)
         // -----------------------------------------------------------------
+        const estCloture = (statutCmd === "CLÔTURÉ");
         slidesData = [
             {
-                icone: '<i class="fas fa-hourglass-end" style="color:#64748b;"></i>', background: '#f1f5f9',
-                titre: "⌛ Oups ! Votre offre a expiré",
-                msg: "Le créneau de livraison prévu pour votre commande précédente est dépassé avant la validation du paiement."
+                icone: estCloture ? '<i class="fas fa-handshake" style="color:#a855f7;"></i>' : '<i class="fas fa-hourglass-end" style="color:#64748b;"></i>', 
+                background: estCloture ? '#f3e8ff' : '#f1f5f9',
+                titre: estCloture ? "✅ Commande Clôturée avec succès !" : "⌛ Votre offre a expiré",
+                msg: estCloture 
+                    ? "Vos achats ont bien été livrés et clôturés. Prêt pour de nouveaux arrivages au meilleur prix de Tana ?" 
+                    : "Le créneau de livraison prévu est dépassé avant la validation du paiement de votre facture."
             },
             {
-                icone: '<i class="fas fa-sparkles" style="color:#a855f7;"></i>', background: '#f3e8ff',
-                titre: "✨ Nouveaux Arrivages Disponibles !",
-                msg: "Ne restez pas sur un échec ! De nouveaux stocks exclusifs viennent d'atterrir sur notre catalogue à Antananarivo."
-            },
-            {
-                icone: '<i class="fas fa-calendar-plus" style="color:#3b82f6;"></i>', background: '#dbeafe',
-                titre: "📅 Planifiez une nouvelle livraison",
-                msg: "Repassez commande en quelques clics et choisissez un tout nouveau jour et heure de livraison qui vous conviennent."
+                icone: '<i class="fas fa-sparkles" style="color:#22c55e;"></i>', background: '#dcfce7',
+                titre: "🎉 Livraison Gratuite réactivée !",
+                msg: `Repassez commande pour un montant supérieur à <b>${seuilGratuite.toLocaleString()} Ar</b> et bénéficiez à nouveau des frais de port offerts.`
             }
         ];
         actionBouton = {
-            texte: "🔄 Recommencer une Commande", couleur: "#3b82f6",
+            texte: "🔄 Faire de nouveaux achats", couleur: "#3b82f6",
             action: function() { fermerPopupDynamique(); if (typeof chargerBoutique === "function") chargerBoutique(); }
         };
     }
