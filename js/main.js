@@ -3328,7 +3328,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
         slidesData = [
             {
                 icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
-                titre: `🎁 Livraison 100% Gratuite sur ${lieu} !`,
+                titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
                 msg: `Atteignez simplement le seuil de <b>${seuilGratuite.toLocaleString()} Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
             },
             {
