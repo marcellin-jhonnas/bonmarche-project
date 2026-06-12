@@ -3417,24 +3417,29 @@ function verifierEtAfficherAnnoncesSafeRun() {
             action: function() { fermerPopupDynamique(); if (typeof rafraichirSidebar === "function") rafraichirSidebar(); }
         };
 
-    } else if (statutCmd === "LIVRÉ" || statutCmd === "CLÔTURÉ" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
+    } } else if (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
         // -----------------------------------------------------------------
-        // CAS N°4 : COMMANDE CLÔTURÉE OU EXPIREE (Relance et Fidélité)
+        // CAS N°4 : COMMANDE CLÔTURÉE / LIVRÉE OU EXPIREE (Version Corrigée)
         // -----------------------------------------------------------------
-        const estCloture = (statutCmd === "CLÔTURÉ");
+        // On s'assure que "LIVRÉ" active bien le mode succès
+        const estCloture = (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE");
+        
+        // Sécurité pour éviter le plantage si la variable globale n'est pas chargée
+        const monSeuil = window.saferun_seuil_gratuite || 100000;
+
         slidesData = [
             {
                 icone: estCloture ? '<i class="fas fa-handshake" style="color:#a855f7;"></i>' : '<i class="fas fa-hourglass-end" style="color:#64748b;"></i>', 
                 background: estCloture ? '#f3e8ff' : '#f1f5f9',
-                titre: estCloture ? "✅ Commande Clôturée avec succès !" : "⌛ Votre offre a expiré",
+                titre: estCloture ? "✅ Commande Livrée avec succès !" : "⌛ Votre offre a expiré",
                 msg: estCloture 
-                    ? "Vos achats ont bien été livrés et clôturés. Prêt pour de nouveaux arrivages au meilleur prix de Tana ?" 
+                    ? "Vos achats ont bien été livrés et clôturés par l'équipe SafeRun. Prêt pour de nouveaux arrivages au meilleur prix de Tana ?" 
                     : "Le créneau de livraison prévu est dépassé avant la validation du paiement de votre facture."
             },
             {
                 icone: '<i class="fas fa-sparkles" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: "🎉 Livraison Gratuite réactivée !",
-                msg: `Repassez commande pour un montant supérieur à <b>${seuilGratuite.toLocaleString()} Ar</b> et bénéficiez à nouveau des frais de port offerts.`
+                msg: `Repassez commande pour un montant supérieur à <b>${monSeuil.toLocaleString()} Ar</b> et bénéficiez à nouveau des frais de port offerts.`
             }
         ];
         actionBouton = {
