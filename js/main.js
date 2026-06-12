@@ -3351,9 +3351,8 @@ function verifierEtAfficherAnnoncesSafeRun() {
         // -----------------------------------------------------------------
         // CAS N°2 : COMMANDE NOUVELLE (Relance de Paiement MVola Prioritaire)
         // -----------------------------------------------------------------
-        const dateLivr =应用 || derniereCommande.dateLivraison || derniereCommande.Date || "bientôt";
-        const heureLivr =应用 || derniereCommande.heureLivraison || "l'heure prévue";
-
+        const dateLivr = derniereCommande.dateLivraison || derniereCommande.Date || "bientôt";
+        const heureLivr = derniereCommande.heureLivraison || "l'heure prévue";
         configurationTracker = { visible: true, etape: 1 }; // Étape 1 : En attente de paiement
         slidesData = [
             {
