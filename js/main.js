@@ -3542,3 +3542,40 @@ function fermerPopupDynamique() {
     // Arrête le timer pour économiser la batterie du smartphone client
     if (intervalleSliderSafeRun) clearInterval(intervalleSliderSafeRun);
 }
+
+// ===================================================================
+// DÉTECTION D'INACTIVITÉ CLIENT (RELANCE DE LA POP-UP SAFERUN)
+// ===================================================================
+(function() {
+    let timerInactiviteSafeRun;
+    // Temps d'inactivité avant de relancer la pop-up : 30000 ms = 30 secondes
+    const TEMPS_INACTIVITE = 30000; 
+
+    function reinitialiserMinuteurInactivite() {
+        // Dès que le client bouge, on annule le compte à rebours précédent
+        clearTimeout(timerInactiviteSafeRun);
+        
+        // Et on en relance un nouveau
+        timerInactiviteSafeRun = setTimeout(() => {
+            console.log("[SafeRun] Aucune activité détectée. Relance marketing...");
+            
+            // On vérifie si la pop-up n'est pas déjà affichée à l'écran
+            const popup = document.getElementById('saferun-popup-dynamique');
+            const popupVisible = popup && (popup.style.display === 'flex' || window.getComputedStyle(popup).display === 'flex');
+
+            if (!popupVisible && typeof verifierEtAfficherAnnoncesSafeRun === "function") {
+                verifierEtAfficherAnnoncesSafeRun();
+            }
+        }, TEMPS_INACTIVITE);
+    }
+
+    // Événements à surveiller pour savoir si le client est actif
+    window.addEventListener('mousemove', reinitialiserMinuteurInactivite); // Mouvement souris
+    window.addEventListener('click', reinitialiserMinuteurInactivite);     // Clic
+    window.addEventListener('scroll', reinitialiserMinuteurInactivite);    // Défilement de la page
+    window.addEventListener('keypress', reinitialiserMinuteurInactivite);  // Touche clavier
+    window.addEventListener('touchstart', reinitialiserMinuteurInactivite); // Toucher sur smartphone
+
+    // On démarre le premier compte à rebours dès le chargement du script
+    reinitialiserMinuteurInactivite();
+})();
