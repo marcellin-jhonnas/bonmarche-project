@@ -3879,31 +3879,3 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 }
 
-/* ANIMATION RADICALE POUR LES PRODUITS SAFERUN */
-@keyframes clignotementForce { 
-    0%, 100% { 
-        border-color: #ffcc00 !important; 
-        box-shadow: 0 0 12px #ffcc00 !important; 
-    } 
-    33% { 
-        border-color: #1a1a1a !important; 
-        box-shadow: 0 0 12px rgba(0, 0, 0, 0.6) !important; 
-    } 
-    66% { 
-        border-color: #0ea5e9 !important; 
-        box-shadow: 0 0 12px #0ea5e9 !important; 
-    } 
-}
-
-/* On cible directement la classe existante de tes cartes */
-.product-card { 
-    border-width: 3px !important;
-    border-style: solid !important;
-    animation: clignotementForce 1s infinite ease-in-out !important; 
-    
-    /* Cadrage à l'écran (PC et Mobile) */
-    min-width: 100% !important; 
-    max-width: 100% !important; 
-    width: 100% !important; 
-    box-sizing: border-box !important;
-}
