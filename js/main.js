@@ -355,24 +355,6 @@ const actionClicPanier = quartierValide
     // ... (début de ta fonction identique)
 
     return `
-    <style>
-    @keyframes clig { 
-        0%, 100% { 
-            border-color: #ffcc00 !important; 
-            box-shadow: 0 0 4px #ffcc0033 !important; 
-        } 
-
-        33% { 
-            border-color: #1a1a1a !important; 
-            box-shadow: 0 0 4px #1a1a1a22 !important; 
-        } 
-
-        66% { 
-            border-color: #0ea5e9 !important; 
-            box-shadow: 0 0 4px #0ea5e933 !important; 
-        } 
-    }
-</style>
     <div class="product-card ${p.Categorie === 'PPN' ? 'ppn-card-fix' : ''}" 
          style="display: flex; flex-direction: column; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: all 0.3s ease; height: 100%; position: relative; flex: 0 0 auto; min-width: 240px; max-width: 240px;"
          onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" 
