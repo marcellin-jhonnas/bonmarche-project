@@ -3417,7 +3417,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
             action: function() { fermerPopupDynamique(); if (typeof rafraichirSidebar === "function") rafraichirSidebar(); }
         };
 
-    } } else if (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
+    }  else if (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
         // -----------------------------------------------------------------
         // CAS N°4 : COMMANDE CLÔTURÉE / LIVRÉE OU EXPIREE (Version Corrigée)
         // -----------------------------------------------------------------
