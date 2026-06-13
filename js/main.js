@@ -357,18 +357,9 @@ const actionClicPanier = quartierValide
     return `
     <style>
         @keyframes clig { 
-            0%, 100% { border-color: #ffcc00; box-shadow: 0 0 8px #ffcc0066; } 
-            33% { border-color: #1a1a1a; box-shadow: 0 0 8px #1a1a1a44; } 
-            66% { border-color: #0ea5e9; box-shadow: 0 0 8px #0ea5e966; } 
-        } 
-        .product-card { 
-            border: 3px solid #ffcc00 !important; 
-            border-radius: 8px; 
-            animation: clig 2.5s infinite ease-in-out; 
-            min-width: 100% !important; 
-            max-width: 100% !important; 
-            width: 100% !important; 
-            box-sizing: border-box; 
+            0%, 100% { border-color: #ffcc00 !important; box-shadow: 0 0 8px #ffcc0066; } 
+            33% { border-color: #1a1a1a !important; box-shadow: 0 0 8px #1a1a1a44; } 
+            66% { border-color: #0ea5e9 !important; box-shadow: 0 0 8px #0ea5e966; } 
         }
     </style>
     <div class="product-card ${p.Categorie === 'PPN' ? 'ppn-card-fix' : ''}" 
