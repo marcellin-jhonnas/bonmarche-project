@@ -3271,6 +3271,42 @@ let intervalleSliderSafeRun = null;
 function verifierEtAfficherAnnoncesSafeRun() {
     console.log("=== [SafeRun] Analyse marketing lancée ===");
     
+    // --- INJECTION DIRECTE DES ANIMATIONS CSS DANS LA PAGE ---
+    if (!document.getElementById('saferun-animation-styles')) {
+        const styleSheet = document.createElement("style");
+        styleSheet.id = "saferun-animation-styles";
+        styleSheet.innerText = `
+            /* Animation Coucou / Main qui fait signe */
+            @keyframes saferunWavingHand {
+                0%, 100% { transform: rotate(0deg); }
+                20%, 60% { transform: rotate(14deg); }
+                40%, 80% { transform: rotate(-8deg); }
+            }
+            /* Animation Zoom / Pulsation d'attention (Bouche / Promo) */
+            @keyframes saferunPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.12); }
+            }
+            /* Animation Camion de livraison en mouvement */
+            @keyframes saferunTruckDrive {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(8px); }
+            }
+            /* Animation Portefeuille qui tremble (Urgence MVola) */
+            @keyframes saferunWalletShake {
+                0%, 100% { transform: rotate(0deg) scale(1); }
+                10%, 30%, 50% { transform: rotate(-5deg) scale(1.05); }
+                20%, 40%, 60% { transform: rotate(5deg) scale(1.05); }
+            }
+            /* Classes d'application */
+            .saferun-anim-hand { animation: saferunWavingHand 1.5s infinite ease-in-out; display: inline-block; transform-origin: bottom right; }
+            .saferun-anim-pulse { animation: saferunPulse 1.8s infinite ease-in-out; display: inline-block; }
+            .saferun-anim-truck { animation: saferunTruckDrive 1.2s infinite ease-in-out; display: inline-block; }
+            .saferun-anim-wallet { animation: saferunWalletShake 2s infinite ease-in-out; display: inline-block; }
+        `;
+        document.head.appendChild(styleSheet);
+    }
+    
     // --- GESTION PROFESSIONNELLE DU SEUIL DE GRATUITÉ ---
     const seuilStocke = localStorage.getItem('saferun_seuil_gratuite');
     let seuilAffiche = "";
@@ -3301,24 +3337,19 @@ function verifierEtAfficherAnnoncesSafeRun() {
 
     if (!popup) return;
 
-    // Arrêter un éventuel slider déjà actif pour éviter les conflits de mémoire
     if (intervalleSliderSafeRun) clearInterval(intervalleSliderSafeRun);
 
-    let slidesData = []; // Contiendra les slides correspondants au cas trouvé
+    let slidesData = []; 
     let actionBouton = { texte: "", couleur: "", action: null };
     let configurationTracker = { visible: false, etape: 1 };
-
-    // Vérification des dates actuelles pour identifier le dépassement
     const maintenant = new Date();
 
     // --- CORRECTION DU BUG DES COMMANDES MULTIPLES ---
-    // On cherche d'abord s'il y a une commande ACTIVE (Nouveau, Validé, En cours) dans tout l'historique
     let derniereCommande = historique.find(cmd => {
         const st = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
         return st === "NOUVEAU" || st === "VALIDÉ" || st === "VALIDE" || st === "EN COURS";
     });
 
-    // Si aucune commande n'est active, on prend la toute dernière (Livrée, Clôturée ou Annulée)
     if (!derniereCommande && historique.length > 0) {
         derniereCommande = historique[historique.length - 1];
     }
@@ -3329,12 +3360,11 @@ function verifierEtAfficherAnnoncesSafeRun() {
     if (derniereCommande) {
         statutCmd = String(derniereCommande.statut || derniereCommande.Statut || "").toUpperCase().trim();
         
-        // Calcul de vérification de validité de la date
         const dateLivrBrute = derniereCommande.dateLivraison || derniereCommande.Date || "";
         if (dateLivrBrute) {
             const dateLivrFormatee = new Date(dateLivrBrute);
             if (!isNaN(dateLivrFormatee) && dateLivrFormatee < maintenant && statutCmd === "NOUVEAU") {
-                dateCmdDepassee = true; // La date est passée et le client n'a pas payé
+                dateCmdDepassee = true; 
             }
         }
     }
@@ -3350,19 +3380,22 @@ function verifierEtAfficherAnnoncesSafeRun() {
         const lieu = quartierClient || "votre quartier";
         slidesData = [
             {
-                icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
+                // Animation : Main qui fait un signe amical d'accueil
+                icone: '<div class="saferun-anim-hand"><i class="fas fa-hand-holding-heart" style="color:#22c55e;"></i></div>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
                 msg: seuilAffiche.includes("Ar")
                     ? `Atteignez simplement le seuil de <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
                     : `Bénéficiez de la livraison offerte <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> dès aujourd'hui.`
             },
             {
-                icone: '<i class="fas fa-tags" style="color:#3b82f6;"></i>', background: '#dbeafe',
+                // Animation : Bouche / Mégaphone qui pulse pour l'offre grossiste
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-bullhorn" style="color:#3b82f6;"></i></div>', background: '#dbeafe',
                 titre: "🛒 Prix Grossistes Exclusifs",
                 msg: "Profitez de nos tarifs de gros ultra-compétitifs et maximisez vos marges sur tous vos produits préférés à Antananarivo."
             },
             {
-                icone: '<i class="fas fa-shipping-fast" style="color:#eab308;"></i>', background: '#fef9c3',
+                // Animation : Camion de livraison qui roule vers la droite
+                icone: '<div class="saferun-anim-truck"><i class="fas fa-shipping-fast" style="color:#eab308;"></i></div>', background: '#fef9c3',
                 titre: "⚡ Flotte Connectée SafeRun Express",
                 msg: "Nos livreurs certifiés s'élancent vers votre adresse dès validation de votre commande. Suivez leur trajet en temps réel !"
             }
@@ -3378,20 +3411,21 @@ function verifierEtAfficherAnnoncesSafeRun() {
         // -----------------------------------------------------------------
         const dateLivr = derniereCommande.dateLivraison || derniereCommande.Date || "bientôt";
         const heureLivr = derniereCommande.heureLivraison || "l'heure prévue";
-        configurationTracker = { visible: true, etape: 1 }; // Étape 1 : En attente de paiement
+        configurationTracker = { visible: true, etape: 1 };
         slidesData = [
             {
-                icone: '<i class="fas fa-wallet" style="color:#ff6600;"></i>', background: '#fff0e6',
+                // Animation : Portefeuille MVola qui vibre / tremble pour attirer l'oeil
+                icone: '<div class="saferun-anim-wallet"><i class="fas fa-wallet" style="color:#ff6600;"></i></div>', background: '#fff0e6',
                 titre: "🔥 Recommandé : Payez par MVola !",
                 msg: `Pour accélérer le traitement, envoyez votre règlement par <b>MVola</b> au <b>+261 38 24 536 10</b>. C'est le moyen le plus rapide et le plus sécurisé pour réserver votre créneau.`
             },
             {
-                icone: '<i class="fas fa-info-circle" style="color:#0ea5e9;"></i>', background: '#e0f2fe',
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-info-circle" style="color:#0ea5e9;"></i></div>', background: '#e0f2fe',
                 titre: "💡 Comment valider votre facture ?",
                 msg: "Une fois le dépôt effectué, allez dans le <b>Menu Paiement</b> puis cliquez sur <b>Valider</b>. Votre facture passera instantanément en statut Payé."
             },
             {
-                icone: '<i class="fas fa-clock" style="color:#ef4444;"></i>', background: '#fee2e2',
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-clock" style="color:#ef4444;"></i></div>', background: '#fee2e2',
                 titre: "⏰ Livraison Planifiée",
                 msg: `Votre colis est planifié pour le <b>${dateLivr}</b> à <b>${heureLivr}</b>. Confirmez via MVola maintenant pour que le livreur prenne la route.`
             }
@@ -3415,17 +3449,17 @@ function verifierEtAfficherAnnoncesSafeRun() {
         configurationTracker = { visible: true, etape: etapeTracker };
         slidesData = [
             {
-                icone: '<i class="fas fa-check-circle" style="color:#10b981;"></i>', background: '#e6f4ea',
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-check-circle" style="color:#10b981;"></i></div>', background: '#e6f4ea',
                 titre: "📄 Facture Payée & Validée",
                 msg: messageSuivi
             },
             {
-                icone: '<i class="fas fa-truck" style="color:#3b82f6;"></i>', background: '#dbeafe',
+                icone: '<div class="saferun-anim-truck"><i class="fas fa-truck" style="color:#3b82f6;"></i></div>', background: '#dbeafe',
                 titre: "📦 Suivez vos achats en direct",
                 msg: "Consultez l'évolution de vos livraisons depuis votre espace client, de la sortie des entrepôts jusqu'au statut final <b>Clôturé</b>."
             },
             {
-                icone: '<i class="fas fa-star" style="color:#eab308;"></i>', background: '#fef9c3',
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-star" style="color:#eab308;"></i></div>', background: '#fef9c3',
                 titre: "⭐ Satisfaction SafeRun",
                 msg: "À la réception de vos cartons, le statut passera à <b>Clôturé</b>. Merci de faire grandir votre commerce à nos côtés !"
             }
@@ -3443,7 +3477,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
         
         slidesData = [
             {
-                icone: estCloture ? '<i class="fas fa-handshake" style="color:#a855f7;"></i>' : '<i class="fas fa-hourglass-end" style="color:#64748b;"></i>', 
+                icone: estCloture ? '<div class="saferun-anim-hand"><i class="fas fa-handshake" style="color:#a855f7;"></i></div>' : '<div class="saferun-anim-pulse"><i class="fas fa-hourglass-end" style="color:#64748b;"></i></div>', 
                 background: estCloture ? '#f3e8ff' : '#f1f5f9',
                 titre: estCloture ? "✅ Commande Livrée avec succès !" : "⌛ Votre offre a expiré",
                 msg: estCloture 
@@ -3451,7 +3485,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
                     : "Le créneau de livraison prévu est dépassé avant la validation du paiement de votre facture."
             },
             {
-                icone: '<i class="fas fa-sparkles" style="color:#22c55e;"></i>', background: '#dcfce7',
+                icone: '<div class="saferun-anim-pulse"><i class="fas fa-sparkles" style="color:#22c55e;"></i></div>', background: '#dcfce7',
                 titre: "🎉 Livraison Gratuite réactivée !",
                 msg: seuilAffiche.includes("Ar")
                     ? `Repassez commande pour un montant supérieur à <b>${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
@@ -3468,14 +3502,12 @@ function verifierEtAfficherAnnoncesSafeRun() {
     // EXECUTION ET AFFICHAGE DU CARROUSEL DYNAMIQUE (ANIMATIONS)
     // =========================================================================
     
-    // Gérer l'affichage visuel de la barre d'étapes (Tracker)
     if (configurationTracker.visible) {
         trackerZone.style.display = "block";
         const etapesTotal = 3;
         const pourcentage = ((configurationTracker.etape - 1) / (etapesTotal - 1)) * 100;
         progressLine.style.width = `${pourcentage}%`;
         
-        // Mettre en surbrillance les cercles d'étapes validées
         for (let i = 1; i <= 3; i++) {
             const cercle = document.getElementById(`step-${i}-circle`);
             if (cercle) {
@@ -3492,13 +3524,11 @@ function verifierEtAfficherAnnoncesSafeRun() {
         trackerZone.style.display = "none";
     }
 
-    // Configurer le bouton d'action principal
     btnAction.innerText = actionBouton.texte;
     btnAction.style.background = actionBouton.couleur;
     btnAction.style.color = "white";
     btnAction.onclick = actionBouton.action;
 
-    // Gestion de la boucle de rotation des diapositives (Slides)
     let indexSlideActuel = 0;
 
     function deployerSlide(index) {
@@ -3509,7 +3539,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
         const titreZone = document.getElementById('popup-titre');
         const messageZone = document.getElementById('popup-message');
 
-        // Effet de transition fluide en fondu
         if(iconeZone) {
             iconeZone.style.opacity = 0;
             titreZone.style.opacity = 0;
@@ -3527,7 +3556,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
             }, 150);
         }
 
-        // Mettre à jour les petits indicateurs (Dots)
         dots.forEach((dot, idx) => {
             if (idx === index) {
                 dot.classList.add('active');
@@ -3539,23 +3567,19 @@ function verifierEtAfficherAnnoncesSafeRun() {
         });
     }
 
-    // Afficher le premier slide immédiatement au démarrage
     deployerSlide(indexSlideActuel);
 
-    // Lancement du timer automatique : changement de slide toutes les 4 secondes
     intervalleSliderSafeRun = setInterval(() => {
         indexSlideActuel = (indexSlideActuel + 1) % slidesData.length;
         deployerSlide(indexSlideActuel);
     }, 4000);
 
-    // Rendre enfin l'overlay visible au centre de l'écran
     popup.style.setProperty('display', 'flex', 'important');
 }
 
 function fermerPopupDynamique() {
     const popup = document.getElementById('saferun-popup-dynamique');
     if (popup) popup.style.setProperty('display', 'none', 'important');
-    // Arrête le timer pour économiser la batterie du smartphone client
     if (intervalleSliderSafeRun) clearInterval(intervalleSliderSafeRun);
 }
 
@@ -3564,18 +3588,13 @@ function fermerPopupDynamique() {
 // ===================================================================
 (function() {
     let timerInactiviteSafeRun;
-    // Temps d'inactivité avant de relancer la pop-up : 30000 ms = 30 secondes
     const TEMPS_INACTIVITE = 30000; 
 
     function reinitialiserMinuteurInactivite() {
-        // Dès que le client bouge, on annule le compte à rebours précédent
         clearTimeout(timerInactiviteSafeRun);
-        
-        // Et on en relance un nouveau
         timerInactiviteSafeRun = setTimeout(() => {
             console.log("[SafeRun] Aucune activité détectée. Relance marketing...");
             
-            // On vérifie si la pop-up n'est pas déjà affichée à l'écran
             const popup = document.getElementById('saferun-popup-dynamique');
             const popupVisible = popup && (popup.style.display === 'flex' || window.getComputedStyle(popup).display === 'flex');
 
@@ -3585,13 +3604,11 @@ function fermerPopupDynamique() {
         }, TEMPS_INACTIVITE);
     }
 
-    // Événements à surveiller pour savoir si le client est actif
-    window.addEventListener('mousemove', reinitialiserMinuteurInactivite); // Mouvement souris
-    window.addEventListener('click', reinitialiserMinuteurInactivite);     // Clic
-    window.addEventListener('scroll', reinitialiserMinuteurInactivite);    // Défilement de la page
-    window.addEventListener('keypress', reinitialiserMinuteurInactivite);  // Touche clavier
-    window.addEventListener('touchstart', reinitialiserMinuteurInactivite); // Toucher sur smartphone
+    window.addEventListener('mousemove', reinitialiserMinuteurInactivite);
+    window.addEventListener('click', reinitialiserMinuteurInactivite);
+    window.addEventListener('scroll', reinitialiserMinuteurInactivite);
+    window.addEventListener('keypress', reinitialiserMinuteurInactivite);
+    window.addEventListener('touchstart', reinitialiserMinuteurInactivite);
 
-    // On démarre le premier compte à rebours dès le chargement du script
     reinitialiserMinuteurInactivite();
 })();
