@@ -3337,7 +3337,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
             {
                 icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
-                msg: `Atteignez simplement le seuil de <b>${seuilAffiche}</b> Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
+                msg: `Atteignez simplement le seuil de <b>${seuilAffiche} Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
             },
             {
                 icone: '<i class="fas fa-tags" style="color:#3b82f6;"></i>', background: '#dbeafe',
@@ -3426,8 +3426,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
         const estCloture = (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE");
         
         // Sécurité pour éviter le plantage si la variable globale n'est pas chargée
-        const monSeuil = window.saferun_seuil_gratuite || 100000;
-
+        
         slidesData = [
             {
                 icone: estCloture ? '<i class="fas fa-handshake" style="color:#a855f7;"></i>' : '<i class="fas fa-hourglass-end" style="color:#64748b;"></i>', 
@@ -3440,7 +3439,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
             {
                 icone: '<i class="fas fa-sparkles" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: "🎉 Livraison Gratuite réactivée !",
-                msg: `Repassez commande pour un montant supérieur à <b>${monSeuil.toLocaleString()} Ar</b> et bénéficiez à nouveau des frais de port offerts.`
+                msg: `Repassez commande pour un montant supérieur à <b>${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
             }
         ];
         actionBouton = {
