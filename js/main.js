@@ -3270,7 +3270,9 @@ let intervalleSliderSafeRun = null;
 
 function verifierEtAfficherAnnoncesSafeRun() {
     console.log("=== [SafeRun] Analyse marketing lancée ===");
-
+    // Récupération dynamique du vrai seuil depuis le localStorage
+    const seuilStocke = localStorage.getItem('saferun_seuil_gratuite') || "100000";
+    const seuilAffiche = seuilStocke.includes("Ar") ? seuilStocke : `${Number(seuilStocke).toLocaleString()} Ar`;
     // 1. Récupération et nettoyage des données locales
     const nomClient = (localStorage.getItem('saferun_nom') || "").replace(/"/g, '').trim();
     const quartierClient = (localStorage.getItem('saferun_quartier') || "").replace(/"/g, '').trim();
@@ -3325,7 +3327,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
     // =========================================================================
 
     // Récupération dynamique du seuil de gratuité configuré sur SafeRun (par défaut 100000 Ariary si non défini)
-    const seuilGratuite = window.saferun_seuil_gratuite || 100000; 
 
     if (!derniereCommande) {
         // -----------------------------------------------------------------
@@ -3336,7 +3337,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
             {
                 icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
-                msg: `Atteignez simplement le seuil de <b>${seuilGratuite.toLocaleString()} Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
+                msg: `Atteignez simplement le seuil de <b>${seuilAffiche}</b> Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
             },
             {
                 icone: '<i class="fas fa-tags" style="color:#3b82f6;"></i>', background: '#dbeafe',
