@@ -3270,9 +3270,17 @@ let intervalleSliderSafeRun = null;
 
 function verifierEtAfficherAnnoncesSafeRun() {
     console.log("=== [SafeRun] Analyse marketing lancée ===");
-    // Récupération dynamique du vrai seuil depuis le localStorage
-    const seuilStocke = localStorage.getItem('saferun_seuil_gratuite') || "100000";
-    const seuilAffiche = seuilStocke.includes("Ar") ? seuilStocke : `${Number(seuilStocke).toLocaleString()} Ar`;
+    
+    // --- GESTION PROFESSIONNELLE DU SEUIL DE GRATUITÉ ---
+    const seuilStocke = localStorage.getItem('saferun_seuil_gratuite');
+    let seuilAffiche = "";
+    
+    if (seuilStocke && seuilStocke.trim() !== "" && seuilStocke !== "0") {
+        seuilAffiche = seuilStocke.includes("Ar") ? seuilStocke : `${Number(seuilStocke).toLocaleString()} Ar`;
+    } else {
+        seuilAffiche = "selon la zone sélectionnée";
+    }
+
     // 1. Récupération et nettoyage des données locales
     const nomClient = (localStorage.getItem('saferun_nom') || "").replace(/"/g, '').trim();
     const quartierClient = (localStorage.getItem('saferun_quartier') || "").replace(/"/g, '').trim();
@@ -3303,8 +3311,17 @@ function verifierEtAfficherAnnoncesSafeRun() {
     // Vérification des dates actuelles pour identifier le dépassement
     const maintenant = new Date();
 
-    // On cherche d'abord s'il y a une commande en cours
-    const derniereCommande = historique.length > 0 ? historique[historique.length - 1] : null;
+    // --- CORRECTION DU BUG DES COMMANDES MULTIPLES ---
+    // On cherche d'abord s'il y a une commande ACTIVE (Nouveau, Validé, En cours) dans tout l'historique
+    let derniereCommande = historique.find(cmd => {
+        const st = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+        return st === "NOUVEAU" || st === "VALIDÉ" || st === "VALIDE" || st === "EN COURS";
+    });
+
+    // Si aucune commande n'est active, on prend la toute dernière (Livrée, Clôturée ou Annulée)
+    if (!derniereCommande && historique.length > 0) {
+        derniereCommande = historique[historique.length - 1];
+    }
 
     let statutCmd = "";
     let dateCmdDepassee = false;
@@ -3326,8 +3343,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
     // DÉTERMINATION DU CAS MARKETING ET REMPLISSAGE DES SLIDES ROTATIFS
     // =========================================================================
 
-    // Récupération dynamique du seuil de gratuité configuré sur SafeRun (par défaut 100000 Ariary si non défini)
-
     if (!derniereCommande) {
         // -----------------------------------------------------------------
         // CAS N°1 : AUCUNE COMMANDE (Pousser à l'achat / Livraison Gratuite)
@@ -3337,7 +3352,9 @@ function verifierEtAfficherAnnoncesSafeRun() {
             {
                 icone: '<i class="fas fa-gift" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
-                msg: `Atteignez simplement le seuil de <b>${seuilAffiche} Ar</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
+                msg: seuilAffiche.includes("Ar")
+                    ? `Atteignez simplement le seuil de <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
+                    : `Bénéficiez de la livraison offerte <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> dès aujourd'hui.`
             },
             {
                 icone: '<i class="fas fa-tags" style="color:#3b82f6;"></i>', background: '#dbeafe',
@@ -3418,14 +3435,11 @@ function verifierEtAfficherAnnoncesSafeRun() {
             action: function() { fermerPopupDynamique(); if (typeof rafraichirSidebar === "function") rafraichirSidebar(); }
         };
 
-    }  else if (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE" || statutCmd === "EXPIRÉ" || statutCmd === "ANNULÉ") {
+    } else {
         // -----------------------------------------------------------------
-        // CAS N°4 : COMMANDE CLÔTURÉE / LIVRÉE OU EXPIREE (Version Corrigée)
+        // CAS N°4 : COMMANDE CLÔTURÉE / LIVRÉE OU EXPIREE / ANNULÉE
         // -----------------------------------------------------------------
-        // On s'assure que "LIVRÉ" active bien le mode succès
         const estCloture = (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE");
-        
-        // Sécurité pour éviter le plantage si la variable globale n'est pas chargée
         
         slidesData = [
             {
@@ -3439,7 +3453,9 @@ function verifierEtAfficherAnnoncesSafeRun() {
             {
                 icone: '<i class="fas fa-sparkles" style="color:#22c55e;"></i>', background: '#dcfce7',
                 titre: "🎉 Livraison Gratuite réactivée !",
-                msg: `Repassez commande pour un montant supérieur à <b>${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
+                msg: seuilAffiche.includes("Ar")
+                    ? `Repassez commande pour un montant supérieur à <b>${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
+                    : `Repassez commande dès aujourd'hui et bénéficiez à nouveau de nos conditions de livraison avantageuses.`
             }
         ];
         actionBouton = {
