@@ -3298,11 +3298,35 @@ function verifierEtAfficherAnnoncesSafeRun() {
                 10%, 30%, 50% { transform: rotate(-5deg) scale(1.05); }
                 20%, 40%, 60% { transform: rotate(5deg) scale(1.05); }
             }
+            /* EFFET STICKER MAGIQUE / EXPLOSION EN CONTINU */
+            @keyframes saferunMagicExplosion {
+                0%, 100% { 
+                    transform: scale(1) rotate(-1deg);
+                    box-shadow: 0 0 8px rgba(255, 102, 0, 0.6), 0 0 15px rgba(234, 179, 8, 0.4);
+                }
+                50% { 
+                    transform: scale(1.08) rotate(2deg);
+                    box-shadow: 0 0 18px rgba(239, 68, 68, 0.9), 0 0 25px rgba(34, 197, 94, 0.7);
+                    background-color: #ffffcc;
+                }
+            }
             /* Classes d'application */
             .saferun-anim-hand { animation: saferunWavingHand 1.5s infinite ease-in-out; display: inline-block; transform-origin: bottom right; }
             .saferun-anim-pulse { animation: saferunPulse 1.8s infinite ease-in-out; display: inline-block; }
             .saferun-anim-truck { animation: saferunTruckDrive 1.2s infinite ease-in-out; display: inline-block; }
             .saferun-anim-wallet { animation: saferunWalletShake 2s infinite ease-in-out; display: inline-block; }
+            
+            /* Classe Spécifique pour l'effet Sticker Magique Explosif */
+            .saferun-magic-sticker {
+                display: inline-block;
+                animation: saferunMagicExplosion 0.8s infinite ease-in-out;
+                padding: 2px 6px;
+                border-radius: 4px;
+                border: 2px dashed #ff6600;
+                background: #fffdf0;
+                color: #111827 !important;
+                font-weight: 900 !important;
+            }
         `;
         document.head.appendChild(styleSheet);
     }
@@ -3384,8 +3408,8 @@ function verifierEtAfficherAnnoncesSafeRun() {
                 icone: '<div class="saferun-anim-hand"><i class="fas fa-hand-holding-heart" style="color:#22c55e;"></i></div>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
                 msg: seuilAffiche.includes("Ar")
-                    ? `Atteignez simplement le seuil de <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
-                    : `Bénéficiez de la livraison offerte <b>${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> dès aujourd'hui.`
+                    ? `Atteignez simplement le seuil de <b class="saferun-magic-sticker">${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> pour débloquer automatiquement la livraison offerte sans aucun frais supplémentaire.`
+                    : `Bénéficiez de la livraison offerte <b class="saferun-magic-sticker">${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> dès aujourd'hui.`
             },
             {
                 // Animation : Bouche / Mégaphone qui pulse pour l'offre grossiste
@@ -3417,7 +3441,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
                 // Animation : Portefeuille MVola qui vibre / tremble pour attirer l'oeil
                 icone: '<div class="saferun-anim-wallet"><i class="fas fa-wallet" style="color:#ff6600;"></i></div>', background: '#fff0e6',
                 titre: "🔥 Recommandé : Payez par MVola !",
-                msg: `Pour accélérer le traitement, envoyez votre règlement par <b>MVola</b> au <b>+261 38 24 536 10</b>. C'est le moyen le plus rapide et le plus sécurisé pour réserver votre créneau.`
+                msg: `Pour accélérer le traitement, envoyez votre règlement par <b class="saferun-magic-sticker">MVola</b> au <b class="saferun-magic-sticker">+261 38 24 536 10</b>. C'est le moyen le plus rapide et le plus sécurisé pour réserver votre créneau.`
             },
             {
                 icone: '<div class="saferun-anim-pulse"><i class="fas fa-info-circle" style="color:#0ea5e9;"></i></div>', background: '#e0f2fe',
@@ -3488,7 +3512,7 @@ function verifierEtAfficherAnnoncesSafeRun() {
                 icone: '<div class="saferun-anim-pulse"><i class="fas fa-sparkles" style="color:#22c55e;"></i></div>', background: '#dcfce7',
                 titre: "🎉 Livraison Gratuite réactivée !",
                 msg: seuilAffiche.includes("Ar")
-                    ? `Repassez commande pour un montant supérieur à <b>${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
+                    ? `Repassez commande pour un montant supérieur à <b class="saferun-magic-sticker">${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
                     : `Repassez commande dès aujourd'hui et bénéficiez à nouveau de nos conditions de livraison avantageuses.`
             }
         ];
