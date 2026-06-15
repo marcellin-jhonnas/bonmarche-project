@@ -2816,24 +2816,30 @@ section.saferun-pro-chat .btn-boutique-secondary {
     min-height: 150px;
 }
 
-.card-saferun {
-    background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);
-    min-height: 280px;
-    position: sticky;
-    top: 10px;
-    padding: 0 !important;
-    display: flex;
-    flex-direction: column;
-    isolation: isolate;
+.card-saferun{
+background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);
 
-    /* ANCHOR: Correction du débordement & Compatibilité */
-    border-radius: 15px !important;
-    overflow: hidden !important;
+min-height: 380px;
 
-    /* Version pour Safari/Chrome (ton erreur actuelle) */
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    /* Version Standard (ce que l'éditeur demande d'ajouter) */
-    mask-image: radial-gradient(white, black);
+position: sticky;
+top: 10px;
+
+padding: 0 !important;
+
+display: flex;
+flex-direction: column;
+
+isolation: isolate;
+
+border-radius: 15px !important;
+
+overflow: hidden !important;
+
+position: relative;
+
+/* Correction Safari / Chrome */
+-webkit-mask-image: -webkit-radial-gradient(white, black);
+mask-image: radial-gradient(white, black);
 }
 
 /* --- PAGINATION --- */
@@ -2929,16 +2935,34 @@ section.saferun-pro-chat .btn-boutique-secondary {
 }
 
 /* --- ANIMATION DU SLIDER (FADE) --- */
-.slide {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.8s ease-in-out, visibility 0.8s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+.slide{
+
+position:absolute;
+
+inset:0;
+
+width:100%;
+
+height:100%;
+
+opacity:0;
+
+visibility:hidden;
+
+transition:
+opacity .8s ease-in-out,
+visibility .8s;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+text-align:center;
+
+overflow:hidden;
+
 }
 
 .slide.active {
@@ -3817,22 +3841,22 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     overflow: hidden;
 }
 
-.promo-slide img {
-    width: 100% !important;
+.promo-slide img{
 
-    /* Remplir largeur et hauteur */
-    height: 100% !important;
+width:100% !important;
 
-    /* Coupe légèrement mais remplit le cadre */
-    object-fit: cover !important;
+height:100% !important;
 
-    /* Centre l'image */
-    object-position: center center !important;
+display:block;
 
-    display: block;
+object-fit:cover !important;
 
-    /* Empêche les espaces blancs */
-    min-width: 100%;
+object-position:center center !important;
+
+max-width:none !important;
+
+min-width:100%;
+
 }
 /* --- ADAPTATION MOBILE --- */
 @media (max-width:768px){
@@ -3863,19 +3887,19 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
     .promo-slide img{
 
-        width:100% !important;
+width:100% !important;
 
-        /* ← LE CHANGEMENT IMPORTANT */
-        height:auto !important;
+height:100% !important;
 
-        max-width:100% !important;
+object-fit:cover !important;
 
-        object-fit:cover !important;
+object-position:center center !important;
 
-        display:block !important;
+display:block !important;
 
-        border-radius:inherit;
-    }
+border-radius:inherit;
+
+}
 
 }
 
