@@ -3298,34 +3298,60 @@ function verifierEtAfficherAnnoncesSafeRun() {
                 10%, 30%, 50% { transform: rotate(-5deg) scale(1.05); }
                 20%, 40%, 60% { transform: rotate(5deg) scale(1.05); }
             }
-            /* EFFET STICKER MAGIQUE / EXPLOSION EN CONTINU */
-            @keyframes saferunMagicExplosion {
-                0%, 100% { 
-                    transform: scale(1) rotate(-1deg);
-                    box-shadow: 0 0 8px rgba(255, 102, 0, 0.6), 0 0 15px rgba(234, 179, 8, 0.4);
+            
+            /* ANIMATION "DÉTONATION & PANIQUE DE PIGEONS" */
+            @keyframes saferunFrightenedPigeons {
+                0% { 
+                    transform: scale(0.3) rotate(0deg); 
+                    opacity: 0;
+                    filter: blur(10px);
                 }
-                50% { 
-                    transform: scale(1.08) rotate(2deg);
-                    box-shadow: 0 0 18px rgba(239, 68, 68, 0.9), 0 0 25px rgba(34, 197, 94, 0.7);
-                    background-color: #ffffcc;
+                5% { 
+                    /* Le coup de feu : explosion brutale et sursaut énorme */
+                    transform: scale(1.6) rotate(-15deg); 
+                    opacity: 1;
+                    filter: blur(0);
+                    box-shadow: 0 0 40px #ff3300, 0 0 60px #ffaa00;
+                    background-color: #ff3300;
+                    color: #ffffff !important;
+                }
+                12% { 
+                    /* Contre-coup du choc */
+                    transform: scale(0.8) rotate(12deg); 
+                    box-shadow: 0 0 30px #ffea00;
+                }
+                20% { 
+                    /* Retour à la taille normale */
+                    transform: scale(1) rotate(-3deg); 
+                }
+                /* De 20% à 100% : Tremblement de terre / Frénésie de peur continue */
+                22%, 26%, 30%, 34%, 38%, 42%, 46%, 50%, 54%, 58%, 62%, 66%, 70%, 74%, 78%, 82%, 86%, 90%, 94%, 98% {
+                    transform: translate(2px, -1px) rotate(3deg) scale(1.03);
+                    box-shadow: 0 0 15px rgba(255, 51, 0, 0.8);
+                }
+                24%, 28%, 32%, 36%, 40%, 44%, 48%, 52%, 56%, 60%, 64%, 68%, 72%, 76%, 80%, 84%, 88%, 92%, 96%, 100% {
+                    transform: translate(-2px, 2px) rotate(-3deg) scale(0.97);
+                    box-shadow: 0 0 25px rgba(234, 179, 8, 0.9);
                 }
             }
+            
             /* Classes d'application */
             .saferun-anim-hand { animation: saferunWavingHand 1.5s infinite ease-in-out; display: inline-block; transform-origin: bottom right; }
             .saferun-anim-pulse { animation: saferunPulse 1.8s infinite ease-in-out; display: inline-block; }
             .saferun-anim-truck { animation: saferunTruckDrive 1.2s infinite ease-in-out; display: inline-block; }
             .saferun-anim-wallet { animation: saferunWalletShake 2s infinite ease-in-out; display: inline-block; }
             
-            /* Classe Spécifique pour l'effet Sticker Magique Explosif */
+            /* Classe du Sticker avec l'effet de Panique Balistique */
             .saferun-magic-sticker {
                 display: inline-block;
-                animation: saferunMagicExplosion 0.8s infinite ease-in-out;
-                padding: 2px 6px;
-                border-radius: 4px;
-                border: 2px dashed #ff6600;
-                background: #fffdf0;
-                color: #111827 !important;
+                animation: saferunFrightenedPigeons 4s infinite ease-in-out;
+                padding: 3px 8px;
+                border-radius: 6px;
+                border: 2px solid #ff3300;
+                background: #fff0f0;
+                color: #d62828 !important;
                 font-weight: 900 !important;
+                transform-origin: center;
             }
         `;
         document.head.appendChild(styleSheet);
@@ -3404,7 +3430,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
         const lieu = quartierClient || "votre quartier";
         slidesData = [
             {
-                // Animation : Main qui fait un signe amical d'accueil
                 icone: '<div class="saferun-anim-hand"><i class="fas fa-hand-holding-heart" style="color:#22c55e;"></i></div>', background: '#dcfce7',
                 titre: `🎁 Profitez de la livraison offerte à : ${lieu} !`,
                 msg: seuilAffiche.includes("Ar")
@@ -3412,13 +3437,11 @@ function verifierEtAfficherAnnoncesSafeRun() {
                     : `Bénéficiez de la livraison offerte <b class="saferun-magic-sticker">${seuilAffiche}</b> sur votre panier <b>SafeRun Market</b> dès aujourd'hui.`
             },
             {
-                // Animation : Bouche / Mégaphone qui pulse pour l'offre grossiste
                 icone: '<div class="saferun-anim-pulse"><i class="fas fa-bullhorn" style="color:#3b82f6;"></i></div>', background: '#dbeafe',
                 titre: "🛒 Prix Grossistes Exclusifs",
                 msg: "Profitez de nos tarifs de gros ultra-compétitifs et maximisez vos marges sur tous vos produits préférés à Antananarivo."
             },
             {
-                // Animation : Camion de livraison qui roule vers la droite
                 icone: '<div class="saferun-anim-truck"><i class="fas fa-shipping-fast" style="color:#eab308;"></i></div>', background: '#fef9c3',
                 titre: "⚡ Flotte Connectée SafeRun Express",
                 msg: "Nos livreurs certifiés s'élancent vers votre adresse dès validation de votre commande. Suivez leur trajet en temps réel !"
@@ -3438,7 +3461,6 @@ function verifierEtAfficherAnnoncesSafeRun() {
         configurationTracker = { visible: true, etape: 1 };
         slidesData = [
             {
-                // Animation : Portefeuille MVola qui vibre / tremble pour attirer l'oeil
                 icone: '<div class="saferun-anim-wallet"><i class="fas fa-wallet" style="color:#ff6600;"></i></div>', background: '#fff0e6',
                 titre: "🔥 Recommandé : Payez par MVola !",
                 msg: `Pour accélérer le traitement, envoyez votre règlement par <b class="saferun-magic-sticker">MVola</b> au <b class="saferun-magic-sticker">+261 38 24 536 10</b>. C'est le moyen le plus rapide et le plus sécurisé pour réserver votre créneau.`
