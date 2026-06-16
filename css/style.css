@@ -762,7 +762,13 @@ body {
         padding: 20px !important;
     }
     .slide-content {
-        text-align: center !important;
+        padding: 15px !important;
+    }
+    .slide-content h2 {
+        font-size: 1.3rem !important;
+    }
+    .slide-content p {
+        font-size: 0.9rem !important;
     }
     .slide-image {
         display: none; /* Cache l'image sur mobile pour gagner de la place */
