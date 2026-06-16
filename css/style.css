@@ -2819,8 +2819,8 @@ section.saferun-pro-chat .btn-boutique-secondary {
 .card-saferun
 {
 background:linear-gradient(180deg,#f36f21 0%,#1e3a8a 100%);
-min-height:280px;
-height: 100% !important; /* ← AJOUTE CETTE LIGNE */
+/* Remplacer min-height par une hauteur fixe ou adapter à la hauteur de ton image */
+height: 400px !important; 
 position:sticky;
 top:10px;
 padding:0 !important;
@@ -2930,8 +2930,8 @@ mask-image:radial-gradient(white,black);
 {
 position:absolute;
 inset:0;
-width: 100% !important;  /* ← AJOUTE CECI */
-height: 100% !important; /* ← AJOUTE CECI */
+width: 100% !important;
+height: 100% !important;
 opacity:0;
 visibility:hidden;
 transition: opacity 0.8s ease-in-out, visibility 0.8s;
@@ -2939,7 +2939,6 @@ display:flex;
 align-items:center;
 justify-content:center;
 text-align:center;
-overflow: hidden;        /* ← AJOUTE CECI */
 }
 
 .slide.active {
@@ -3812,10 +3811,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* ty ndray lou ty */
 /* --- Style rectifié pour supprimer le débordement --- */
 /* --- Style rectifié pour supprimer le débordement --- */
-.promo-slide {
+.promo-slide, .slide-content {
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
+    flex-direction: column !important;
 }
 
 .promo-slide img{
