@@ -2755,17 +2755,28 @@ section.saferun-pro-chat .btn-boutique-secondary {
     z-index: 2; 
 }
 
-.slide-content h2 { 
-    margin: 5px 0; 
-    font-size: 1.3rem; 
-    font-weight: 700; 
-    color: #ffcc00; 
+/* Style global pour les titres dans les slides */
+.slide-content h2, .slide-content h3 {
+    margin: 10px 0 !important;
+    width: 100% !important;
 }
 
-.slide-content p { 
-    margin: 0; 
-    font-size: 0.9rem; 
-    color: #e2e8f0; 
+/* Style pour les paragraphes (Ambatobe, Ivandry, Tarifs...) */
+.slide-content p {
+    margin: 8px 0 !important;
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+    width: 100% !important;
+}
+
+/* Gestion des petites images/logos internes (comme le logo Chating ou le repère jaune) */
+.slide-content img:not(.promo-slide img) {
+    position: relative !important; /* Annule l'effet plein écran pour les petits logos */
+    width: auto !important;
+    height: auto !important;
+    max-width: 120px !important; /* Limite la taille des logos internes */
+    margin: 10px auto !important;
+    display: inline-block !important;
 }
 
 /* --- PRODUITS --- */
@@ -3815,15 +3826,29 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* --- Style rectifié pour supprimer le débordement --- */
 /* --- Style rectifié pour supprimer le débordement --- */
 /* CORRECTION TECHNIQUE : Force les conteneurs intermédiaires à occuper tout l'espace de la carte */
-.promo-slide, .slide-content {
+.promo-slide {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1; /* L'image reste en arrière-plan */
+}
+
+.slide-content {
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    justify-content: center !important; /* Centre verticalement */
+    align-items: center !important;     /* Centre horizontalement */
+    padding: 20px 30px !important;      /* Aligne le texte loin des bords */
+    box-sizing: border-box !important;
+    z-index: 2; /* Force le texte à passer DEVANT l'image */
+    text-align: center !important;
 }
 
 .promo-slide img {
