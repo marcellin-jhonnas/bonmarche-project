@@ -3871,85 +3871,25 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 
 /* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
-@media (max-width: 768px) {
-
-    /* 1. LE CONTENEUR PRINCIPAL (HAUTEUR FIXE MOBILE) */
-    .card-saferun,
-    .promo-slider {
-        display: block !important;
-        position: relative !important;
-        width: 100% !important;
-        height: 350px !important;      /* Hauteur idéale pour voir le livreur à moto */
-        overflow: hidden !important;
-        border-radius: 15px !important;
-    }
-
-    /* 2. LES SLIDES (S'ADAPTENT EN PLEIN ÉCRAN DANS LE CONTENEUR) */
-    .slide-container,
-    .slide, 
-    .promo-slide {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* 3. L'IMAGE DE FOND : COUVERTURE PARFAITE SANS DÉFORMATION */
-    .card-saferun img,
-    .promo-slide img,
-    .slide img {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        
-        /* Rend l'image adaptative et préserve les proportions du livreur */
-        object-fit: cover !important;  
-        object-position: center center !important;
-        
-        display: block !important;
-        z-index: 1 !important;
-    }
-
-    /* 4. LE TEXTE ET BOUTONS : SUPERPOSÉS PAR-DESSUS L'IMAGE */
-    .slide-content {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important; /* Aligne le texte en haut et le bouton en bas */
-        align-items: center !important;
-        
-        padding: 20px !important;
-        box-sizing: border-box !important;
-        z-index: 2 !important; /* Passe devant le livreur */
-        background: rgba(0, 0, 0, 0.25) !important; /* Ombre légère pour rendre le texte lisible */
-    }
-
-    /* 5. TEXTES ET PETITS LOGOS */
-    .slide-content h2 {
-        color: #ffffff !important;
-        font-size: 1.3rem !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
-        margin: 5px 0 !important;
-    }
-
-    .slide-content p {
-        color: #ffffff !important;
-        font-size: 0.9rem !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
-    }
-
-    /* Cache l'image secondaire pour garder uniquement le fond propre */
-    .slide-image {
-        display: none !important;
-    }
+@media (max-width:768px){
+.card-saferun {
+overflow: hidden !important;
+border-radius: 15px !important;
+height: 320px !important;
+min-height: auto !important;
+}
+.promo-slide, .slide-content {
+position: absolute !important;
+inset: 0 !important;
+width: 100% !important;
+height: 100% !important;
+}
+.promo-slide img {
+width: 100% !important;
+height: 100% !important;
+object-fit: cover !important;
+object-position: center center !important;
+display: block !important;
+border-radius: inherit;
+}
 }
