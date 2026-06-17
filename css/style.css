@@ -3870,30 +3870,90 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     min-width: 100% !important;
 }
 
-/* --- ADAPTATION MOBILE --- */
-@media (max-width:768px){
+/* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
+@media (max-width: 768px) {
 
+    /* Empêche la carte de s'étirer anormalement et bloque l'image à l'intérieur */
     .card-saferun {
-        overflow: hidden !important;
-        border-radius: 15px !important;
-        height: 320px !important;
+        display: block !important; 
+        position: relative !important;
+        width: 100% !important;
+        height: 340px !important; /* Fixe une hauteur stable pour contenir tout ton texte */
         min-height: auto !important;
+        overflow: hidden !important; 
+        border-radius: 15px !important;
     }
 
-    .promo-slide, .slide-content {
+    /* Aligne et empile les éléments internes du conteneur sans casser le slider */
+    .slide-container {
         position: absolute !important;
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        display: block !important;
+        padding: 0 !important;
     }
 
-    .promo-slide img {
+    /* Force l'image de fond marketing et le texte à se superposer comme des calques */
+    .slide, 
+    .promo-slide, 
+    .slide-content {
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        object-fit: cover !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Gère le texte pour qu'il ne déborde pas et reste lisible */
+    .slide-content {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important; /* Laisse le bas libre pour ton bouton de commande */
+        align-items: center !important;
+        text-align: center !important;
+        padding: 15px !important;
+        z-index: 2 !important; /* Reste devant l'image */
+    }
+
+    /* Ajustement homothétique des tailles de police sur mobile */
+    .slide-content h2, .card-saferun h2 {
+        font-size: 1.2rem !important;
+        margin: 5px 0 3px 0 !important;
+    }
+
+    .slide-content p {
+        font-size: 0.85rem !important;
+        margin: 3px 0 !important;
+    }
+
+    /* Redimensionne proprement les petits logos internes (comme SafeRun Chating) */
+    .slide-content img:not(.promo-slide img) {
+        max-width: 75px !important;
+        height: auto !important;
+        margin: 5px auto !important;
+        display: inline-block !important;
+    }
+
+    /* L'IMAGE DE FOND MARKETING : Elle s'adapte sans déborder ni se déformer */
+    .promo-slide img {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important; 
         object-position: center center !important;
         display: block !important;
+        z-index: 1 !important; /* Reste sagement en arrière-plan */
         border-radius: inherit;
+    }
+
+    /* Conserve ta fonctionnalité actuelle : cache l'image secondaire sur mobile */
+    .slide-image {
+        display: none !important; 
     }
 }
 
