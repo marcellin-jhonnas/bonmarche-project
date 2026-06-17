@@ -3873,33 +3873,28 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
 @media (max-width: 768px) {
 
-    /* Empêche la carte de s'étirer anormalement et bloque l'image à l'intérieur */
-    .card-saferun {
+    /* 1. FORCE LE CADRE GLOBAL À VERROUILLER SA HAUTEUR */
+    div.card-saferun, .card-saferun {
         display: block !important; 
         position: relative !important;
         width: 100% !important;
-        height: 340px !important; /* Fixe une hauteur stable pour contenir tout ton texte */
-        min-height: auto !important;
+        height: 340px !important; /* Hauteur fixe stricte */
+        min-height: 340px !important;
+        max-height: 340px !important;
         overflow: hidden !important; 
         border-radius: 15px !important;
     }
 
-    /* Aligne et empile les éléments internes du conteneur sans casser le slider */
-    .slide-container {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        display: block !important;
-        padding: 0 !important;
-    }
-
-    /* Force l'image de fond marketing et le texte à se superposer comme des calques */
-    .slide, 
-    .promo-slide, 
+    /* 2. FORCE TOUS LES CONTENEURS INTERMÉDIAIRES À PRENDRE 100% */
+    .slide-container,
+    .slide,
+    .promo-slide,
     .slide-content {
         position: absolute !important;
-        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         width: 100% !important;
         height: 100% !important;
         margin: 0 !important;
@@ -3907,18 +3902,19 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         box-sizing: border-box !important;
     }
 
-    /* Gère le texte pour qu'il ne déborde pas et reste lisible */
+    /* 3. ALIGNEMENT DU TEXTE EN HAUT POUR ÉVITER LE DÉBORDEMENT */
     .slide-content {
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important; /* Laisse le bas libre pour ton bouton de commande */
+        justify-content: flex-start !important; 
         align-items: center !important;
         text-align: center !important;
         padding: 15px !important;
-        z-index: 2 !important; /* Reste devant l'image */
+        z-index: 2 !important; /* Passe obligatoirement devant */
+        background: transparent !important;
     }
 
-    /* Ajustement homothétique des tailles de police sur mobile */
+    /* 4. REDIMENSIONNEMENT DES TEXTES */
     .slide-content h2, .card-saferun h2 {
         font-size: 1.2rem !important;
         margin: 5px 0 3px 0 !important;
@@ -3929,28 +3925,33 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         margin: 3px 0 !important;
     }
 
-    /* Redimensionne proprement les petits logos internes (comme SafeRun Chating) */
     .slide-content img:not(.promo-slide img) {
         max-width: 75px !important;
         height: auto !important;
         margin: 5px auto !important;
         display: inline-block !important;
+        position: relative !important;
     }
 
-    /* L'IMAGE DE FOND MARKETING : Elle s'adapte sans déborder ni se déformer */
-    .promo-slide img {
+    /* 5. LE CORRECTIF RADICAL POUR L'IMAGE DE FOND
+       On cible TOUTES les possibilités pour être sûr que le navigateur l'applique */
+    .card-saferun img,
+    .promo-slide img,
+    .slide img {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        height: 100% !important; /* Force l'image à s'étirer sur toute la hauteur des 320px */
-        object-fit: cover !important; /* Zoom et découpe pour éliminer les bandes vides */
-        object-position: center center !important; /* Centre le livreur */
+        height: 100% !important; /* Force l'étirement vertical complet */
+        min-height: 100% !important;
+        max-height: 100% !important;
+        object-fit: cover !important; /* Zoom et découpe obligatoire */
+        object-position: center center !important;
         display: block !important;
-        z-index: 1 !important;
+        z-index: 1 !important; /* Reste en arrière-plan */
     }
 
-    /* Conserve ta fonctionnalité actuelle : cache l'image secondaire sur mobile */
+    /* Cache l'image secondaire */
     .slide-image {
         display: none !important; 
     }
