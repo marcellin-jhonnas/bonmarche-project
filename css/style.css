@@ -3943,12 +3943,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important; 
-        object-position: center center !important;
+        height: 100% !important; /* Force l'image à s'étirer sur toute la hauteur des 320px */
+        object-fit: cover !important; /* Zoom et découpe pour éliminer les bandes vides */
+        object-position: center center !important; /* Centre le livreur */
         display: block !important;
-        z-index: 1 !important; /* Reste sagement en arrière-plan */
-        border-radius: inherit;
+        z-index: 1 !important;
     }
 
     /* Conserve ta fonctionnalité actuelle : cache l'image secondaire sur mobile */
