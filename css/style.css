@@ -3875,28 +3875,32 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     .card-saferun {
         overflow: hidden !important;
         border-radius: 15px !important;
-        height: auto !important;
-        min-height: 220px !important;
-        max-height: 320px !important; /* Correction ici */
+        /* On garde une hauteur fixe mais légèrement réduite pour le mobile */
+        height: 280px !important; 
     }
 
+    /* On remet en absolute pour que le script du slider s'y retrouve */
     .promo-slide, .slide-content {
-        position: relative !important;
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
-        height: auto !important;
+        height: 100% !important;
     }
 
     .slide-content {
-        position: absolute !important;
-        inset: 0 !important;
-        height: 100% !important;
         z-index: 2;
+        background: rgba(0, 0, 0, 0.15) !important; /* Léger voile */
     }
 
     .promo-slide img {
         width: 100% !important;
-        height: auto !important;
-        object-fit: contain !important;
+        height: 100% !important; /* Reprend tout l'espace du cadre */
+        
+        /* TON IDÉE CLÉ : On change 'cover' par 'contain' */
+        /* L'image va se redimensionner entièrement sans être coupée, */
+        /* et s'adaptera au cadre de 280px */
+        object-fit: contain !important; 
+        
         display: block !important;
         border-radius: inherit;
         z-index: 1;
