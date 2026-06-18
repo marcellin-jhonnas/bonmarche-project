@@ -3884,8 +3884,6 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     .slide{
         position: absolute !important;
         inset: 0;
-        width: 100% !important;
-        height: 100% !important;
         display: none;
     }
 
@@ -3899,36 +3897,33 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         overflow: hidden !important;
     }
 
-    /* 🔥 IMPORTANT : fond basé sur la MÊME image du <img> */
+    /* 🔥 FOND ULTRA PRO (image étendue + flou réel) */
     .promo-slide::before{
-        content: "";
-        position: absolute;
-        inset: -20px;
+        content:"";
+        position:absolute;
+        inset:0;
 
-        background: inherit;
-        background-size: cover;
-        background-position: center;
+        background-size:cover;
+        background-position:center;
 
-        filter: blur(40px) brightness(0.9);
-        transform: scale(1.4);
+        /* IMPORTANT : copie directe du rendu image via current element */
+        background-image: var(--img);
 
-        z-index: 0;
+        filter: blur(45px) brightness(0.7);
+        transform: scale(1.5);
+
+        z-index:0;
     }
 
-    /* image principale */
+    /* IMAGE PRINCIPALE */
     .promo-slide img{
-        position: relative !important;
+        position:relative !important;
 
-        width: 100% !important;
-        height: 100% !important;
+        width:100% !important;
+        height:100% !important;
 
-        object-fit: contain !important;
+        object-fit:contain !important;
 
-        z-index: 1;
-    }
-
-    .slide-content{
-        position: relative;
-        z-index: 2;
+        z-index:1;
     }
 }
