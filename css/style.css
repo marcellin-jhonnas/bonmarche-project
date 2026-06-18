@@ -3872,37 +3872,41 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 /* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
 @media (max-width:768px){
-    .card-saferun {
+
+    .card-saferun{
+        position: relative !important; /* IMPORTANT */
         overflow: hidden !important;
         border-radius: 15px !important;
-        /* On garde une hauteur fixe mais légèrement réduite pour le mobile */
-        height: 280px !important; 
+        height: 280px !important;
     }
 
-    /* On remet en absolute pour que le script du slider s'y retrouve */
-    .promo-slide, .slide-content {
+    .promo-slide,
+    .slide-content{
         position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
+        top:0;
+        left:0;
+        width:100% !important;
+        height:100% !important;
     }
 
-    .slide-content {
-        z-index: 2;
-        background: rgba(0, 0, 0, 0.15) !important; /* Léger voile */
+    .slide-content{
+        z-index:2;
+        background:rgba(0,0,0,.15);
     }
 
-    .promo-slide img {
-        width: 100% !important;
-        height: 100% !important; /* Reprend tout l'espace du cadre */
-        
-        /* TON IDÉE CLÉ : On change 'cover' par 'contain' */
-        /* L'image va se redimensionner entièrement sans être coupée, */
-        /* et s'adaptera au cadre de 280px */
-        object-fit: contain !important; 
-        
-        display: block !important;
-        border-radius: inherit;
-        z-index: 1;
+    .promo-slide img{
+        width:100% !important;
+        height:100% !important;
+
+        object-fit:contain !important;
+
+        display:block !important;
+
+        position:absolute; /* ajoute ceci */
+        top:0;
+        left:0;
+
+        z-index:1;
     }
+
 }
