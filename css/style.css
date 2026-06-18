@@ -3897,20 +3897,18 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         overflow: hidden !important;
     }
 
-    /* 🔥 FOND ULTRA PRO (image étendue + flou réel) */
+    /* 🔥 FOND FLUO basé sur URL réelle */
     .promo-slide::before{
         content:"";
         position:absolute;
         inset:0;
 
-        background-size:cover;
-        background-position:center;
+        background-image: url("https://i.imgur.com/blyeDGp.png");
+        background-size: cover;
+        background-position: center;
 
-        /* IMPORTANT : copie directe du rendu image via current element */
-        background-image: var(--img);
-
-        filter: blur(45px) brightness(0.7);
-        transform: scale(1.5);
+        filter: blur(45px) brightness(0.8);
+        transform: scale(1.4);
 
         z-index:0;
     }
@@ -3922,7 +3920,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         width:100% !important;
         height:100% !important;
 
-        object-fit:contain !important;
+        object-fit: contain !important;
 
         z-index:1;
     }
