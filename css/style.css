@@ -3888,28 +3888,42 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         height:100% !important;
     }
 
-    /* Copie floue derrière */
+    /* Fond pour cacher les bandes */
+    .promo-slide{
+        background:
+            radial-gradient(
+                circle,
+                rgba(255,255,255,.18),
+                rgba(0,0,0,.25)
+            ) !important;
+
+        backdrop-filter: blur(30px);
+    }
+
+    /* Copie floue derrière l'image */
     .promo-slide::before{
         content:"";
-
         position:absolute;
-        inset:-20px;
+
+        top:-20px;
+        left:-20px;
+        right:-20px;
+        bottom:-20px;
 
         background:inherit;
 
-        filter:blur(35px);
+        filter:blur(45px);
 
-        transform:scale(1.3);
+        transform:scale(1.25);
 
         z-index:0;
     }
 
     .slide-content{
         z-index:2;
-        background:rgba(0,0,0,.10);
+        background:rgba(0,0,0,.12);
     }
 
-    /* Image principale nette */
     .promo-slide img{
         position:absolute !important;
 
@@ -3920,7 +3934,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         height:100% !important;
 
         object-fit:contain !important;
-        object-position:center center !important;
+        object-position:center !important;
 
         display:block !important;
 
