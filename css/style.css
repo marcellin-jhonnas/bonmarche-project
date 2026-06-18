@@ -3874,70 +3874,66 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 @media (max-width:768px){
 
     .card-saferun{
-        position:relative !important;
-        overflow:hidden !important;
-        border-radius:15px !important;
-        height:280px !important;
+        position: sticky !important;
+        top: 10px;
+        overflow: hidden !important;
+        border-radius: 15px !important;
+
+        /* IMPORTANT : évite bug hauteur mobile */
+        min-height: 280px !important;
     }
 
+    /* Chaque slide prend correctement le cadre */
+    .slide{
+        position: absolute !important;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+
+        display: none;
+    }
+
+    .slide.active{
+        display: block !important;
+    }
+
+    /* SLIDE IMAGE (fond flou + structure propre) */
     .promo-slide{
-        position:absolute !important;
-        inset:0 !important;
+        position: absolute !important;
+        inset: 0 !important;
 
-        display:flex !important;
-        justify-content:center !important;
-        align-items:center !important;
-
-        overflow:hidden !important;
+        overflow: hidden !important;
+        display: block !important;
     }
 
-    /* Copie floue derrière */
+    /* 🔥 fond flou basé sur l’image */
     .promo-slide::before{
-        content:"";
+        content: "";
+        position: absolute;
+        inset: 0;
 
-        position:absolute;
-        inset:-30px;
+        background: url("https://i.imgur.com/blyeDGp.png") center/cover no-repeat;
 
-        background:inherit;
+        filter: blur(30px);
+        transform: scale(1.3);
 
-        backdrop-filter:blur(30px);
-
-        z-index:0;
+        z-index: 0;
     }
 
-    /* Image floue derrière */
+    /* image principale */
     .promo-slide img{
-        position:absolute !important;
+        position: relative !important;
 
-        width:100% !important;
-        height:100% !important;
+        width: 100% !important;
+        height: 100% !important;
 
-        object-fit:cover !important;
+        object-fit: contain !important;
 
-        filter:blur(22px);
-        transform:scale(1.25);
-
-        opacity:.75;
-
-        z-index:0;
-    }
-
-    /* Image nette au dessus */
-    .promo-slide img:last-child{
-        object-fit:contain !important;
-
-        filter:none !important;
-
-        transform:none !important;
-
-        opacity:1 !important;
-
-        z-index:1;
+        z-index: 1;
     }
 
     .slide-content{
-        z-index:2;
-        background:rgba(0,0,0,.10);
+        position: relative;
+        z-index: 2;
     }
-
 }
