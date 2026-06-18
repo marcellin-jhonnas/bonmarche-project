@@ -2792,29 +2792,38 @@ function validerAjoutZoom(nom, prix) {
 }
 
 function discuterDepuisZoom(nom) {
-// 1. Fermer proprement le zoom
-const modalZoom = document.getElementById('modal-zoom-produit');
-if (modalZoom) modalZoom.style.display = 'none';
+    // 1. Fermer proprement le zoom du produit
+    const modalZoom = document.getElementById('modal-zoom-produit');
+    if (modalZoom) modalZoom.style.display = 'none';
 
-// 2. Ouvrir ton interface de chat (si la fonction existe)
-if (typeof ouvrirChat === "function") {
-ouvrirChat(); 
-} else {
-// Si tu n'as pas de fonction ouvrirChat, on affiche juste le bloc chat
-const fenetreChat = document.getElementById('chat-window'); // Vérifie ton ID
-if (fenetreChat) fenetreChat.style.display = 'block';
-}
+    // 2. Ouvrir la fenêtre de chat avec son style d'origine (FLEX)
+    const chatWindow = document.getElementById('chat-window');
+    if (chatWindow) {
+        chatWindow.style.display = 'flex'; // Force le format flex indispensable pour le layout du chat
+    }
 
-// 3. Cibler l'input et envoyer le texte du produit
-setTimeout(() => {
-const inputChat = document.querySelector('.chat-input');
-if (inputChat) {
-inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
-inputChat.focus();
-// Optionnel : on peut même ajouter un petit effet visuel pour montrer que c'est prêt
-inputChat.style.border = "2px solid #ffcc00";
-}
-}, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
+    // 3. Forcer la réinitialisation du compteur pour obliger le chat à se recharger immédiatement
+    dernierNombreMessages = -1; 
+    if (typeof chargerMessagesChat === "function") {
+        chargerMessagesChat(); // Lance la synchronisation tout de suite sans attendre les 3 secondes du setInterval
+    }
+
+    // 4. Injecter le message marketing du produit dans le bon ID de saisie
+    setTimeout(() => {
+        // Ton code utilise précisément id="chat-input"
+        const inputChat = document.getElementById('chat-input');
+        
+        if (inputChat) {
+            inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
+            inputChat.focus();
+            
+            // Forcer le conteneur des messages à défiler tout en bas pour remettre l'input à sa place
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    }, 300); // Laisse un court instant au DOM pour appliquer le display: flex
 }
 async function piloterBanniereDynamique() {
     try {
