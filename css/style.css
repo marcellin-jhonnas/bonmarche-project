@@ -3872,24 +3872,33 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 /* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
 @media (max-width:768px){
-.card-saferun {
-overflow: hidden !important;
-border-radius: 15px !important;
-height: 320px !important;
-min-height: auto !important;
-}
-.promo-slide, .slide-content {
-position: absolute !important;
-inset: 0 !important;
-width: 100% !important;
-height: 100% !important;
-}
-.promo-slide img {
-width: 100% !important;
-height: 100% !important;
-object-fit: cover !important;
-object-position: center center !important;
-display: block !important;
-border-radius: inherit;
-}
+    .card-saferun {
+        overflow: hidden !important;
+        border-radius: 15px !important;
+        height: auto !important;
+        min-height: 220px !important;
+        max-height: 320px !important; /* Correction ici */
+    }
+
+    .promo-slide, .slide-content {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    .slide-content {
+        position: absolute !important;
+        inset: 0 !important;
+        height: 100% !important;
+        z-index: 2;
+    }
+
+    .promo-slide img {
+        width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
+        border-radius: inherit;
+        z-index: 1;
+    }
 }
