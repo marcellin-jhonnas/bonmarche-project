@@ -2792,29 +2792,32 @@ function validerAjoutZoom(nom, prix) {
 }
 
 function discuterDepuisZoom(nom) {
-// 1. Fermer proprement le zoom
-const modalZoom = document.getElementById('modal-zoom-produit');
-if (modalZoom) modalZoom.style.display = 'none';
+    // 1. Fermer proprement le zoom du produit
+    const modalZoom = document.getElementById('modal-zoom-produit');
+    if (modalZoom) modalZoom.style.display = 'none';
 
-// 2. Ouvrir ton interface de chat (si la fonction existe)
-if (typeof ouvrirChat === "function") {
-ouvrirChat(); 
-} else {
-// Si tu n'as pas de fonction ouvrirChat, on affiche juste le bloc chat
-const fenetreChat = document.getElementById('chat-window'); // Vérifie ton ID
-if (fenetreChat) fenetreChat.style.display = 'block';
-}
+    // 2. Déclencher le VRAI bouton de chat en simulant un clic
+    // Remplace '.widget-chat-toggle' par la vraie classe ou l'ID de ton bouton vert en bas à droite
+    const boutonVertChat = document.querySelector('.widget-chat-toggle') || 
+                           document.getElementById('chat-toggle-btn') ||
+                           document.querySelector('.fa-comments')?.parentElement; 
 
-// 3. Cibler l'input et envoyer le texte du produit
-setTimeout(() => {
-const inputChat = document.querySelector('.chat-input');
-if (inputChat) {
-inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
-inputChat.focus();
-// Optionnel : on peut même ajouter un petit effet visuel pour montrer que c'est prêt
-inputChat.style.border = "2px solid #ffcc00";
-}
-}, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
+    if (boutonVertChat) {
+        boutonVertChat.click(); // Le navigateur fait exactement comme si tu avais cliqué sur le bouton vert
+    }
+
+    // 3. Insérer le texte une fois le chat ouvert par ton script
+    setTimeout(() => {
+        // On cherche l'input par son attribut placeholder qui est visible sur ta photo
+        const inputChat = document.querySelector('input[placeholder*="message"]') || 
+                          document.querySelector('textarea[placeholder*="message"]') ||
+                          document.querySelector('.chat-input');
+
+        if (inputChat) {
+            inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
+            inputChat.focus();
+        }
+    }, 400); // Laisse 400ms à ton script d'origine pour afficher proprement la fenêtre
 }
 async function piloterBanniereDynamique() {
     try {
