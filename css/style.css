@@ -3874,24 +3874,32 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 @media (max-width:768px){
 
     .card-saferun{
-        position: relative !important; /* IMPORTANT */
-        overflow: hidden !important;
-        border-radius: 15px !important;
-        height: 280px !important;
+        position:relative !important;
+        overflow:hidden !important;
+        border-radius:15px !important;
+        height:280px !important;
     }
 
     .promo-slide,
     .slide-content{
-        position: absolute !important;
-        top:0;
-        left:0;
+        position:absolute !important;
+        inset:0 !important;
         width:100% !important;
         height:100% !important;
     }
 
+    /* Couleur derrière l'image pour masquer les côtés vides */
+    .promo-slide{
+        background:linear-gradient(
+            180deg,
+            #f36f21 0%,
+            #1e3a8a 100%
+        ) !important;
+    }
+
     .slide-content{
         z-index:2;
-        background:rgba(0,0,0,.15);
+        background:rgba(0,0,0,.15) !important;
     }
 
     .promo-slide img{
@@ -3899,12 +3907,12 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         height:100% !important;
 
         object-fit:contain !important;
+        object-position:center center !important;
 
         display:block !important;
 
-        position:absolute; /* ajoute ceci */
-        top:0;
-        left:0;
+        position:absolute !important;
+        inset:0;
 
         z-index:1;
     }
