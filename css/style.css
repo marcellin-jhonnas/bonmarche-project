@@ -3874,7 +3874,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 @media (max-width:768px){
 
     .card-saferun{
-        position: relative !important; /* IMPORTANT */
+        position: relative !important;
         overflow: hidden !important;
         border-radius: 15px !important;
         height: 280px !important;
@@ -3889,6 +3889,15 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         height:100% !important;
     }
 
+    /* AJOUT : remplit les espaces vides */
+    .promo-slide{
+        background: linear-gradient(
+            180deg,
+            #f36f21 0%,
+            #1e3a8a 100%
+        ) !important;
+    }
+
     .slide-content{
         z-index:2;
         background:rgba(0,0,0,.15);
@@ -3899,10 +3908,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         height:100% !important;
 
         object-fit:contain !important;
+        object-position:center center !important;
 
         display:block !important;
 
-        position:absolute; /* ajoute ceci */
+        position:absolute;
         top:0;
         left:0;
 
