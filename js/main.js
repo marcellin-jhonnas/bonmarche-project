@@ -2792,43 +2792,29 @@ function validerAjoutZoom(nom, prix) {
 }
 
 function discuterDepuisZoom(nom) {
-    // 1. Fermer proprement le zoom du produit
-    const modalZoom = document.getElementById('modal-zoom-produit');
-    if (modalZoom) modalZoom.style.display = 'none';
+// 1. Fermer proprement le zoom
+const modalZoom = document.getElementById('modal-zoom-produit');
+if (modalZoom) modalZoom.style.display = 'none';
 
-    // 2. Ouvrir l'interface de chat (Support SR-Market)
-    // On cible l'ID de la fenêtre ou le bouton vert en bas à droite pour simuler le clic naturel
-    const boutonChatDirect = document.querySelector('.widget-chat-toggle') || document.getElementById('chat-window'); 
-    
-    if (typeof ouvrirChat === "function") {
-        ouvrirChat(); 
-    } else if (boutonChatDirect) {
-        // Si le bouton vert existe, on simule un clic dessus pour exécuter l'ouverture standard complète
-        boutonChatDirect.click();
-    } else {
-        const fenetreChat = document.getElementById('chat-container') || document.getElementById('chat-window');
-        if (fenetreChat) fenetreChat.style.display = 'block';
-    }
+// 2. Ouvrir ton interface de chat (si la fonction existe)
+if (typeof ouvrirChat === "function") {
+ouvrirChat(); 
+} else {
+// Si tu n'as pas de fonction ouvrirChat, on affiche juste le bloc chat
+const fenetreChat = document.getElementById('chat-window'); // Vérifie ton ID
+if (fenetreChat) fenetreChat.style.display = 'block';
+}
 
-    // 3. Injecter le texte dans le champ "Taper un message..."
-    setTimeout(() => {
-        // Stratégie de recherche : on cherche par classe, par ID ou par l'attribut placeholder
-        const inputChat = document.querySelector('.chat-input') || 
-                          document.querySelector('input[placeholder*="message"]') || 
-                          document.querySelector('textarea[placeholder*="message"]');
-
-        if (inputChat) {
-            // Injection du message lié au produit
-            inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
-            inputChat.focus();
-            
-            // Événement de sécurité : force le script du chat à détecter que le texte a changé
-            // (très important pour que le conteneur se repositionne en bas)
-            inputChat.dispatchEvent(new Event('input', { bubbles: true }));
-        } else {
-            console.warn("Le champ de saisie du chat n'a pas été trouvé dans le DOM.");
-        }
-    }, 400); // 400ms pour s'assurer que le widget de chat a fini son animation d'ouverture
+// 3. Cibler l'input et envoyer le texte du produit
+setTimeout(() => {
+const inputChat = document.querySelector('.chat-input');
+if (inputChat) {
+inputChat.value = "Bonjour, je voudrais plus d'infos sur : " + nom;
+inputChat.focus();
+// Optionnel : on peut même ajouter un petit effet visuel pour montrer que c'est prêt
+inputChat.style.border = "2px solid #ffcc00";
+}
+}, 300); // Un léger délai pour laisser le temps au chat de s'ouvrir
 }
 async function piloterBanniereDynamique() {
     try {
