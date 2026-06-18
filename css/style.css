@@ -3873,7 +3873,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* --- ADAPTATION MOBILE (CORRIGÉE ET SÉCURISÉE) --- */
 @media (max-width:768px){
 
-    .card-saferun{
+    .card-saferun {
         position: relative !important;
         overflow: hidden !important;
         border-radius: 15px !important;
@@ -3881,42 +3881,55 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     }
 
     .promo-slide,
-    .slide-content{
+    .slide-content {
         position: absolute !important;
-        top:0;
-        left:0;
-        width:100% !important;
-        height:100% !important;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    /* AJOUT : remplit les espaces vides */
-    .promo-slide{
-        background: linear-gradient(
-            180deg,
-            #f36f21 0%,
-            #1e3a8a 100%
-        ) !important;
+    /* 1. L'EXCEPTION ICI : On crée le fond flouté magique */
+    .promo-slide::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        
+        /* On récupère dynamiquement l'image du slider pour le fond */
+        background-image: inherit; 
+        /* Si l'image est injectée en dur, tu peux aussi pointer vers ton image de secours ou garder ton dégradé actuel en fallback */
+        background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);
+        
+        /* Si tu utilises une image de fond spécifique, décommente la ligne suivante : */
+        /* background-image: url('Images/hero/ton-image.png'); */
+        
+        background-size: cover;
+        background-position: center;
+        
+        /* Effet de flou et zoom pour un rendu décoratif */
+        filter: blur(15px) brightness(0.8); 
+        transform: scale(1.1); /* Évite les bords blancs du flou */
+        z-index: 0;
     }
 
-    .slide-content{
-        z-index:2;
-        background:rgba(0,0,0,.15);
+    .slide-content {
+        z-index: 3; /* On le monte d'un cran pour passer devant tout le monde */
+        background: rgba(0,0,0,.15);
     }
 
-    .promo-slide img{
-        width:100% !important;
-        height:100% !important;
+    .promo-slide img {
+        width: 100% !important;
+        height: 100% !important;
 
-        object-fit:contain !important;
-        object-position:center center !important;
+        object-fit: contain !important;
+        object-position: center center !important;
 
-        display:block !important;
+        display: block !important;
 
-        position:absolute;
-        top:0;
-        left:0;
+        position: absolute;
+        top: 0;
+        left: 0;
 
-        z-index:1;
+        z-index: 2; /* Passe DEVANT le fond flouté (z-index: 0) */
     }
-
 }
