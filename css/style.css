@@ -3937,11 +3937,3 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         z-index: 2;
     }
 }
-/* andramana aloha le defilement amle affichage boutton mfiltrer produi ppn sns reny */
-/* Crée un espace vide de secours après le dernier bouton *//* Crée un espace vide de secours après le dernier bouton */
-.category-filter-container::after {
-    content: "";
-    display: block;
-    min-width: 150px; /* Crée un espace vide de secours après le dernier bouton */
-    height: 1px;
-}
