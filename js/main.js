@@ -3666,3 +3666,32 @@ function fermerPopupDynamique() {
 
     reinitialiserMinuteurInactivite();
 })();
+
+// --- SYSTÈME DE ROTATION INFINIE SANS TOUCHER AU CODE EXISTANT ---
+window.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('category-slider');
+    if (!slider) return;
+
+    // 1. On clone les boutons existants pour créer la suite logique du tapis roulant
+    const boutonsOriginaux = Array.from(slider.children);
+    
+    // On duplique au début et à la fin pour permettre la rotation dans les deux sens
+    boutonsOriginaux.forEach(btn => {
+        const cloneFin = btn.cloneNode(true);
+        slider.appendChild(cloneFin);
+    });
+
+    // 2. Fonction magique qui réaligne le scroll instantanément quand on arrive au bout
+    slider.addEventListener('scroll', () => {
+        const scrollMax = slider.scrollWidth / 2;
+        
+        // Si on dépasse la moitié (la fin des vrais boutons), on revient au début du tapis roulant
+        if (slider.scrollLeft >= scrollMax) {
+            slider.scrollLeft = 1; // Retour instantané et invisible
+        }
+        // Si on recule trop au début
+        else if (slider.scrollLeft <= 0) {
+            slider.scrollLeft = scrollMax - 1;
+        }
+    });
+});
