@@ -3667,31 +3667,41 @@ function fermerPopupDynamique() {
     reinitialiserMinuteurInactivite();
 })();
 
-// --- SYSTÈME DE ROTATION INFINIE SANS TOUCHER AU CODE EXISTANT ---
+// --- SYSTÈME DE ROTATION INFINIE SÉCURISÉ (V2 - TOURS INFINIS) ---
 window.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('category-slider');
     if (!slider) return;
 
-    // 1. On clone les boutons existants pour créer la suite logique du tapis roulant
+    // 1. On désactive temporairement le smooth scroll du CSS durant la réinitialisation 
+    // pour éviter que le navigateur ne panique en recalculant les positions
     const boutonsOriginaux = Array.from(slider.children);
     
-    // On duplique au début et à la fin pour permettre la rotation dans les deux sens
+    // On triple la piste (on ajoute les boutons deux fois à la suite) pour donner une marge immense
     boutonsOriginaux.forEach(btn => {
-        const cloneFin = btn.cloneNode(true);
-        slider.appendChild(cloneFin);
+        const clone1 = btn.cloneNode(true);
+        slider.appendChild(clone1);
+    });
+    boutonsOriginaux.forEach(btn => {
+        const clone2 = btn.cloneNode(true);
+        slider.appendChild(clone2);
     });
 
-    // 2. Fonction magique qui réaligne le scroll instantanément quand on arrive au bout
+    // 2. Gestion de la boucle infinie sans fin
     slider.addEventListener('scroll', () => {
-        const scrollMax = slider.scrollWidth / 2;
-        
-        // Si on dépasse la moitié (la fin des vrais boutons), on revient au début du tapis roulant
-        if (slider.scrollLeft >= scrollMax) {
-            slider.scrollLeft = 1; // Retour instantané et invisible
+        const tpsTotal = slider.scrollWidth;
+        const tiersLargeur = tpsTotal / 3;
+
+        // Si l'utilisateur avance trop loin (au delà des 2/3), on le renvoie invisiblement au milieu (1/3)
+        if (slider.scrollLeft >= tiersLargeur * 2) {
+            slider.style.scrollBehavior = 'auto'; // On coupe le smooth une milliseconde
+            slider.scrollLeft = slider.scrollLeft - tiersLargeur;
+            slider.style.scrollBehavior = 'smooth'; // On remet le smooth
         }
-        // Si on recule trop au début
-        else if (slider.scrollLeft <= 0) {
-            slider.scrollLeft = scrollMax - 1;
+        // Si l'utilisateur recule trop vers le début
+        else if (slider.scrollLeft <= 5) {
+            slider.style.scrollBehavior = 'auto';
+            slider.scrollLeft = slider.scrollLeft + tiersLargeur;
+            slider.style.scrollBehavior = 'smooth';
         }
     });
 });
