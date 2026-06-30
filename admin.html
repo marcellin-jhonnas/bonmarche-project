@@ -4140,19 +4140,19 @@ function extraireDateDepuisTexte(texteLivraison) {
 
             // RÈGLE : Si la date de livraison est déjà passée (hier ou avant)
             if (jourLivraison < jourJ) {
-                dateConstruite.setHours(0, 0, 0, 0); // Expire immédiatement
+                dateConstruite.setHours(0, 0, 0, 0); 
                 return dateConstruite;
             }
 
             // RÈGLES HORAIRES : Si c'est aujourd'hui ou dans le futur
             if (texte.includes("matin") || texte.includes("9h")) {
-                dateConstruite.setHours(9, 0, 0, 0); // Expire à 09h00
+                dateConstruite.setHours(9, 0, 0, 0); 
             } 
             else if (texte.includes("après-midi") || texte.includes("aprem") || texte.includes("14h")) {
-                dateConstruite.setHours(14, 0, 0, 0); // Expire à 14h00
+                dateConstruite.setHours(14, 0, 0, 0); 
             } 
             else {
-                dateConstruite.setHours(0, 0, 0, 0); // Heure précise ou par défaut (00h00)
+                dateConstruite.setHours(0, 0, 0, 0); 
             }
             return dateConstruite;
         }
@@ -4163,6 +4163,7 @@ function extraireDateDepuisTexte(texteLivraison) {
 async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
     if (!Array.isArray(tableauCommandes) || tableauCommandes.length === 0) return;
 
+    console.log(`🔎 [SafeRun Moteur] Scanner actif sur ${tableauCommandes.length} commandes...`);
     const heureActuelle = new Date();
     const statutExpire = "En attente de paiement";
     let changementsDetectes = false;
@@ -4172,7 +4173,6 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
         const statut = (cmd.Statut || cmd.statut || "").toString().trim();
         const rawLivraison = cmd.Livraison || cmd.livraison || "";
 
-        // On cible uniquement les commandes à l'état "Nouveau"
         if (statut.toLowerCase() === "nouveau") {
             const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
 
@@ -4180,12 +4180,10 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
                 console.log(`🚨 [SafeRun Moteur] Commande #${id} expirée. Envoi automatique...`);
                 changementsDetectes = true;
 
-                // Neutralisation locale en mémoire pour éviter d'envoyer plusieurs fois la même requête
                 cmd.Statut = statutExpire;
                 cmd.statut = statutExpire;
 
                 try {
-                    // COPIE CONFORME DU FETCH DE "ouvrirLivraisonRapide"
                     const response = await fetch(CONFIG.API, {
                         method: "POST",
                         body: JSON.stringify({
@@ -4201,18 +4199,17 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
                     }
                 } catch (err) {
                     console.error(`❌ [SafeRun Moteur] Échec réseau pour #${id}:`, err);
-                    cmd.Statut = "Nouveau"; // Rétablissement si échec
+                    cmd.Statut = "Nouveau"; 
                 }
             }
         }
     }
 
-    // Si le script a modifié des statuts obsolètes, on relance refreshAll pour mettre à jour l'écran
     if (changementsDetectes) {
-        console.log("🔄 [SafeRun Moteur] Actualisation des tableaux admin...");
+        console.log("🔄 [SafeRun Moteur] Mises à jour effectuées, rafraîchissement visuel...");
         setTimeout(() => {
             if (typeof refreshAll === "function") refreshAll();
-        }, 1500); // Pause de 1.5s pour laisser le temps à Google Sheets d'enregistrer
+        }, 1500);
     }
 }
 </script>
