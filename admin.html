@@ -4111,5 +4111,126 @@ async function ouvrirLivraisonRapide() {
     }
 }
 </script>
+<script>
+// --- CONFIGURATION DU MOTEUR DE VÉRIFICATION AUTOMATIQUE SAFERUN ---
+(function() {
+    // Statut cible : le mot exact que vous souhaitez appliquer dans votre colonne Statut
+    const statutExpire = "En attente de paiement"; 
+
+    // Dictionnaire de conversion des mois textuels
+    const moisIndex = {
+        "janvier": 0, "février": 1, "fevrier": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5,
+        "juillet": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
+    };
+
+    // Date actuelle purifiée
+    const aujourdHui = new Date();
+    aujourdHui.setHours(0, 0, 0, 0);
+    const anneeActuelle = aujourdHui.getFullYear();
+
+    // Analyseur et extracteur intelligent de la colonne "Livraison"
+    function extraireDateDepuisTexte(texteLivraison) {
+        if (!texteLivraison) return null;
+        const texte = texteLivraison.toLowerCase();
+
+        // Capture le numéro du jour et le nom du mois (ex: "1 juillet")
+        const matchDate = texte.match(/(\d+)\s+([a-záéûôè]+)/);
+        if (matchDate) {
+            const jour = parseInt(matchDate[1], 10);
+            const nomMois = matchDate[2];
+
+            if (moisIndex[nomMois] !== undefined) {
+                const dateConstruite = new Date(anneeActuelle, moisIndex[nomMois], jour);
+                
+                const jourJ = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), aujourdHui.getDate());
+                const jourLivraison = new Date(dateConstruite.getFullYear(), dateConstruite.getMonth(), dateConstruite.getDate());
+
+                // RÈGLE SÉCURITÉ : Si la date de livraison est déjà passée (hier ou avant) -> Expire immédiatement
+                if (jourLivraison < jourJ) {
+                    dateConstruite.setHours(0, 0, 0, 0);
+                    return dateConstruite;
+                }
+
+                // RÈGLE 1 : Tranche du Matin -> Expire à 09h00
+                if (texte.includes("matin") || texte.includes("9h")) {
+                    dateConstruite.setHours(9, 0, 0, 0);
+                } 
+                // RÈGLE 2 : Tranche de l'Après-midi -> Expire à 14h00
+                else if (texte.includes("après-midi") || texte.includes("14h")) {
+                    dateConstruite.setHours(14, 0, 0, 0);
+                } 
+                // RÈGLE 3 : Heure précise (contient "à") -> Expire à 00h00 du jour même
+                else if (texte.includes("à") || texte.includes(":")) {
+                    dateConstruite.setHours(0, 0, 0, 0);
+                } 
+                // Par défaut
+                else {
+                    dateConstruite.setHours(0, 0, 0, 0);
+                }
+                return dateConstruite;
+            }
+        }
+        return null;
+    }
+
+    // Moteur de traitement connecté à votre allData et CONFIG.API
+    async function executerVerificationAutomatique() {
+        // Validation de la présence de vos variables globales d'admin.pdf
+        if (typeof allData === 'undefined' || !Array.isArray(allData) || allData.length === 0) {
+            return; 
+        }
+
+        let changementsEffectues = false;
+        const heureActuelle = new Date(); // Heure précise de tests (ex: s'il est 09h05)
+
+        for (const commande of allData) {
+            // Extraction stricte selon la structure lue dans admin.pdf (ID, Statut, Livraison)
+            const id = commande.ID || commande.id;
+            const statut = (commande.Statut || commande.statut || "").toString().trim();
+            const rawLivraison = commande.Livraison || commande.livraison || "";
+
+            // On cible uniquement la colonne qui contient "Nouveau"
+            if (statut.toLowerCase() === "nouveau") {
+                const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
+
+                // Si la date limite calculée est inférieure ou égale à l'heure actuelle de votre téléphone
+                if (dateLimiteExpiration && heureActuelle >= dateLimiteExpiration) {
+                    console.log(`[SafeRun OS] Échéance atteinte pour ID: ${id}. Envoi de la mise à jour...`);
+                    changementsEffectues = true;
+
+                    try {
+                        // Envoi exact vers votre Google Apps Script
+                        await fetch(CONFIG.API, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                action: "updateStatut",
+                                idCommande: id.toString().trim(),
+                                nouveauStatut: statutExpire // Change le statut en "En attente de paiement"
+                            })
+                        });
+                    } catch (err) {
+                        console.error(`[SafeRun OS] Erreur réseau pour la commande ${id}:`, err);
+                    }
+                }
+            }
+        }
+
+        // Si le serveur a modifié des statuts, on rafraîchit votre interface d'administration
+        if (changementsEffectues) {
+            console.log("[SafeRun OS] Statuts mis à jour sur Google Sheets. Actualisation...");
+            if (typeof refreshAll === "function") {
+                refreshAll(); // Appelle votre fonction de rechargement globale
+            } else {
+                location.reload();
+            }
+        }
+    }
+
+    // Lancement de la surveillance en arrière-plan toutes les 5 secondes
+    window.addEventListener('load', () => {
+        setInterval(executerVerificationAutomatique, 5000);
+    });
+})();
+</script>
 </body>
 </html>
