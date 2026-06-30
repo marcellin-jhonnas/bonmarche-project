@@ -1354,7 +1354,10 @@ if (id === 'tab-users') {
         const data = await res.json();
         
         allData = data; // Stockage global
-
+        // >>> EXÉCUTION DU SCAN AUTOMATIQUE DES ÉCHÉANCES
+        if (typeof scruterEtMettreAJourCommandesDirectes === "function") {
+            scruterEtMettreAJourCommandesDirectes(data);
+        }
         let total = 0;
         let rows = "";
 
@@ -4112,156 +4115,106 @@ async function ouvrirLivraisonRapide() {
 }
 </script>
 <script>
-// --- CONFIGURATION DU MOTEUR SAFERUN AVEC SYSTÈME DE DIAGNOSTIC AVANCÉ ---
-(function() {
-    const statutExpire = "En attente de paiement"; 
+// --- SYSTÈME AUTOMATIQUE DE TRAITEMENT DES COMMANDES EXPIRÉES ---
+const moisIndex = {
+    "janvier": 0, "février": 1, "fevrier": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5,
+    "juillet": 6, "juille": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
+};
 
-    const moisIndex = {
-        "janvier": 0, "février": 1, "fevrier": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5,
-        "juillet": 6, "juille": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
-    };
+function extraireDateDepuisTexte(texteLivraison) {
+    if (!texteLivraison) return null;
+    const texte = texteLivraison.toLowerCase().trim();
+    const matchDate = texte.match(/(\d+)\s+([a-záéûôè]+)/);
+    
+    if (matchDate) {
+        const jour = parseInt(matchDate[1], 10);
+        const nomMois = matchDate[2].trim();
 
-    // Analyseur et extracteur intelligent de dates
-    function extraireDateDepuisTexte(texteLivraison) {
-        if (!texteLivraison) {
-            console.warn("🔍 [SafeRun Diagnostic] Texte de livraison vide ou non défini.");
-            return null;
-        }
-        
-        const texte = texteLivraison.toLowerCase().trim();
-        const matchDate = texte.match(/(\d+)\s+([a-záéûôè]+)/);
-        
-        if (matchDate) {
-            const jour = parseInt(matchDate[1], 10);
-            const nomMois = matchDate[2].trim();
+        if (moisIndex[nomMois] !== undefined) {
+            const aujourdHui = new Date();
+            const anneeActuelle = aujourdHui.getFullYear();
+            const dateConstruite = new Date(anneeActuelle, moisIndex[nomMois], jour);
+            
+            const jourJ = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), aujourdHui.getDate());
+            const jourLivraison = new Date(dateConstruite.getFullYear(), dateConstruite.getMonth(), dateConstruite.getDate());
 
-            if (moisIndex[nomMois] !== undefined) {
-                const aujourdHui = new Date();
-                const anneeActuelle = aujourdHui.getFullYear();
-                const dateConstruite = new Date(anneeActuelle, moisIndex[nomMois], jour);
-                
-                const jourJ = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), aujourdHui.getDate());
-                const jourLivraison = new Date(dateConstruite.getFullYear(), dateConstruite.getMonth(), dateConstruite.getDate());
-
-                // RÈGLE SÉCURITÉ FLASH : Date déjà passée (hier ou avant)
-                if (jourLivraison < jourJ) {
-                    dateConstruite.setHours(0, 0, 0, 0);
-                    return dateConstruite;
-                }
-
-                // RÈGLES DES TRANCHES HORAIRES (Aujourd'hui ou Futur)
-                if (texte.includes("matin") || texte.includes("9h")) {
-                    dateConstruite.setHours(9, 0, 0, 0);
-                } 
-                else if (texte.includes("après-midi") || texte.includes("aprem") || texte.includes("14h")) {
-                    dateConstruite.setHours(14, 0, 0, 0);
-                } 
-                else {
-                    dateConstruite.setHours(0, 0, 0, 0);
-                }
+            // RÈGLE : Si la date de livraison est déjà passée (hier ou avant)
+            if (jourLivraison < jourJ) {
+                dateConstruite.setHours(0, 0, 0, 0); // Expire immédiatement
                 return dateConstruite;
-            } else {
-                console.warn(`⚠️ [SafeRun Diagnostic] Mois non reconnu dans le dictionnaire : "${nomMois}"`);
             }
-        } else {
-            console.warn(`⚠️ [SafeRun Diagnostic] Impossible d'extraire un jour et un mois du texte : "${texteLivraison}"`);
+
+            // RÈGLES HORAIRES : Si c'est aujourd'hui ou dans le futur
+            if (texte.includes("matin") || texte.includes("9h")) {
+                dateConstruite.setHours(9, 0, 0, 0); // Expire à 09h00
+            } 
+            else if (texte.includes("après-midi") || texte.includes("aprem") || texte.includes("14h")) {
+                dateConstruite.setHours(14, 0, 0, 0); // Expire à 14h00
+            } 
+            else {
+                dateConstruite.setHours(0, 0, 0, 0); // Heure précise ou par défaut (00h00)
+            }
+            return dateConstruite;
         }
-        return null;
     }
+    return null;
+}
 
-    async function executerVerificationAutomatique() {
-        console.log("🔄 [SafeRun Diagnostic] Lancement du scan des commandes en arrière-plan...");
+async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
+    if (!Array.isArray(tableauCommandes) || tableauCommandes.length === 0) return;
 
-        // 1. Détection de la source des données locales
-        const sourceDonnees = window.allData || [];
-        if (!Array.isArray(sourceDonnees) || sourceDonnees.length === 0) {
-            console.log("ℹ️ [SafeRun Diagnostic] Le tableau global 'allData' n'est pas encore chargé ou est vide. En attente...");
-            return;
-        }
+    const heureActuelle = new Date();
+    const statutExpire = "En attente de paiement";
+    let changementsDetectes = false;
 
-        console.log(`📊 [SafeRun Diagnostic] ${sourceDonnees.length} commande(s) trouvée(s) au total dans l'application. Analyse des statuts...`);
+    for (const cmd of tableauCommandes) {
+        const id = cmd.ID || cmd.id;
+        const statut = (cmd.Statut || cmd.statut || "").toString().trim();
+        const rawLivraison = cmd.Livraison || cmd.livraison || "";
 
-        const heureActuelle = new Date(); 
-        let requeteLancee = false;
+        // On cible uniquement les commandes à l'état "Nouveau"
+        if (statut.toLowerCase() === "nouveau") {
+            const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
 
-        for (const commande of sourceDonnees) {
-            const id = commande.ID || commande.id;
-            const statut = (commande.Statut || commande.statut || "").toString().trim();
-            const rawLivraison = commande.Livraison || commande.livraison || "";
+            if (dateLimiteExpiration && heureActuelle >= dateLimiteExpiration) {
+                console.log(`🚨 [SafeRun Moteur] Commande #${id} expirée. Envoi automatique...`);
+                changementsDetectes = true;
 
-            // On cible uniquement les statuts "Nouveau"
-            if (statut.toLowerCase() === "nouveau") {
-                console.log(`🔎 [SafeRun Diagnostic] Commande #${id} est à l'état "Nouveau". Analyse de sa date : "${rawLivraison}"`);
-                
-                const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
+                // Neutralisation locale en mémoire pour éviter d'envoyer plusieurs fois la même requête
+                cmd.Statut = statutExpire;
+                cmd.statut = statutExpire;
 
-                if (dateLimiteExpiration) {
-                    console.log(`📅 [SafeRun Diagnostic] Commande #${id} - Heure actuelle : ${heureActuelle.toLocaleTimeString()} | Date Limite calculée : ${dateLimiteExpiration.toLocaleString()}`);
-
-                    // Vérification du dépassement
-                    if (heureActuelle >= dateLimiteExpiration) {
-                        console.log(`🚨 [SafeRun Diagnostic] CRITIQUE : La commande #${id} a dépassé son échéance ! Préparation de l'envoi Google Sheets...`);
-                        requeteLancee = true;
-
-                        // Modification locale immédiate en mémoire pour bloquer l'envoi en boucle
-                        commande.Statut = statutExpire;
-                        commande.statut = statutExpire;
-
-                        try {
-                            console.log(`🌐 [SafeRun Diagnostic] Envoi de la requête POST vers l'API URL : ${CONFIG.API}`);
-                            
-                            const reponse = await fetch(CONFIG.API, {
-                                method: "POST",
-                                mode: "no-cors", // Aligné sur votre configuration logistique
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                    action: "updateStatut",
-                                    idCommande: id.toString().trim(),
-                                    ID: id.toString().trim(),
-                                    nouveauStatut: statutExpire
-                                })
-                            });
-
-                            console.log(`✅ [SafeRun Diagnostic] Requête réseau transmise avec succès pour #${id} ! (Note: En mode no-cors, la réponse brute n'est pas lisible mais le signal est envoyé).`);
-
-                        } catch (err) {
-                            console.error(`❌ [SafeRun Diagnostic] ERREUR RÉSEAU MAJEURE lors de la mise à jour de #${id} :`, err);
-                            // En cas d'échec réseau, on remet à Nouveau pour retenter au prochain cycle
-                            commande.Statut = "Nouveau";
-                            commande.statut = "Nouveau";
-                        }
-                    } else {
-                        console.log(`⏳ [SafeRun Diagnostic] Commande #${id} est conforme. Elle n'a pas encore atteint son heure limite.`);
+                try {
+                    // COPIE CONFORME DU FETCH DE "ouvrirLivraisonRapide"
+                    const response = await fetch(CONFIG.API, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            action: "updateStatut",
+                            idCommande: id.toString().trim(),
+                            nouveauStatut: statutExpire
+                        })
+                    });
+                    
+                    const res = await response.json();
+                    if (res.status === "success") {
+                        console.log(`✅ [SafeRun Moteur] Google Sheets mis à jour pour #${id}`);
                     }
+                } catch (err) {
+                    console.error(`❌ [SafeRun Moteur] Échec réseau pour #${id}:`, err);
+                    cmd.Statut = "Nouveau"; // Rétablissement si échec
                 }
             }
         }
-
-        // Si des requêtes ont été envoyées, on actualise l'affichage après une courte attente
-        if (requeteLancee) {
-            console.log("⏱️ [SafeRun Diagnostic] Attente de 2 secondes avant de rafraîchir l'interface pour laisser Google Sheets enregistrer...");
-            setTimeout(() => {
-                if (typeof refreshAll === "function") {
-                    console.log("🔄 [SafeRun Diagnostic] Exécution de refreshAll() pour mettre à jour vos tableaux...");
-                    refreshAll();
-                } else {
-                    console.log("🔄 [SafeRun Diagnostic] refreshAll() introuvable, rechargement complet via location.reload()...");
-                    location.reload();
-                }
-            }, 2000);
-        } else {
-            console.log("🏁 [SafeRun Diagnostic] Scan terminé. Aucune commande 'Nouveau' n'est dépassée à ce cycle.");
-        }
     }
 
-    // Lancement du cycle toutes les 10 secondes
-    window.addEventListener('load', () => {
-        console.log("🚀 [SafeRun Diagnostic] Système de traçabilité automatique activé.");
-        setInterval(executerVerificationAutomatique, 10000);
-    });
-})();
+    // Si le script a modifié des statuts obsolètes, on relance refreshAll pour mettre à jour l'écran
+    if (changementsDetectes) {
+        console.log("🔄 [SafeRun Moteur] Actualisation des tableaux admin...");
+        setTimeout(() => {
+            if (typeof refreshAll === "function") refreshAll();
+        }, 1500); // Pause de 1.5s pour laisser le temps à Google Sheets d'enregistrer
+    }
+}
 </script>
 </body>
 </html>
