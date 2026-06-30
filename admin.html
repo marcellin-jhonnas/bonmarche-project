@@ -4114,56 +4114,49 @@ async function ouvrirLivraisonRapide() {
 <script>
 // --- CONFIGURATION DU MOTEUR DE VÉRIFICATION AUTOMATIQUE SAFERUN ---
 (function() {
-    // Statut cible : le mot exact que vous souhaitez appliquer dans votre colonne Statut
+    // Le statut exact que vous souhaitez attribuer à vos commandes périmées
     const statutExpire = "En attente de paiement"; 
 
-    // Dictionnaire de conversion des mois textuels
     const moisIndex = {
         "janvier": 0, "février": 1, "fevrier": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5,
-        "juillet": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
+        "juillet": 6, "juille": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
     };
 
-    // Date actuelle purifiée
-    const aujourdHui = new Date();
-    aujourdHui.setHours(0, 0, 0, 0);
-    const anneeActuelle = aujourdHui.getFullYear();
-
-    // Analyseur et extracteur intelligent de la colonne "Livraison"
     function extraireDateDepuisTexte(texteLivraison) {
         if (!texteLivraison) return null;
-        const texte = texteLivraison.toLowerCase();
+        
+        // Nettoyage complet du texte pour éviter les pièges de majuscules
+        const texte = texteLivraison.toLowerCase().trim();
 
-        // Capture le numéro du jour et le nom du mois (ex: "1 juillet")
+        // Capture le numéro du jour et le nom du mois (ex: "1 juillet" ou "02 juillet")
         const matchDate = texte.match(/(\d+)\s+([a-záéûôè]+)/);
         if (matchDate) {
             const jour = parseInt(matchDate[1], 10);
-            const nomMois = matchDate[2];
+            const nomMois = matchDate[2].trim();
 
             if (moisIndex[nomMois] !== undefined) {
+                const aujourdHui = new Date();
+                const anneeActuelle = aujourdHui.getFullYear();
+                
                 const dateConstruite = new Date(anneeActuelle, moisIndex[nomMois], jour);
                 
+                // Comparaison pure sur les jours (sans les heures)
                 const jourJ = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), aujourdHui.getDate());
                 const jourLivraison = new Date(dateConstruite.getFullYear(), dateConstruite.getMonth(), dateConstruite.getDate());
 
-                // RÈGLE SÉCURITÉ : Si la date de livraison est déjà passée (hier ou avant) -> Expire immédiatement
+                // RÈGLE SÉCURITÉ FLASH : Si la date est strictement passée (hier ou avant)
                 if (jourLivraison < jourJ) {
                     dateConstruite.setHours(0, 0, 0, 0);
                     return dateConstruite;
                 }
 
-                // RÈGLE 1 : Tranche du Matin -> Expire à 09h00
+                // RÈGLES DES TRANCHES HORAIRES (Pour AUJOURD'HUI ou le FUTUR)
                 if (texte.includes("matin") || texte.includes("9h")) {
                     dateConstruite.setHours(9, 0, 0, 0);
                 } 
-                // RÈGLE 2 : Tranche de l'Après-midi -> Expire à 14h00
-                else if (texte.includes("après-midi") || texte.includes("14h")) {
+                else if (texte.includes("après-midi") || texte.includes("aprem") || texte.includes("14h")) {
                     dateConstruite.setHours(14, 0, 0, 0);
                 } 
-                // RÈGLE 3 : Heure précise (contient "à") -> Expire à 00h00 du jour même
-                else if (texte.includes("à") || texte.includes(":")) {
-                    dateConstruite.setHours(0, 0, 0, 0);
-                } 
-                // Par défaut
                 else {
                     dateConstruite.setHours(0, 0, 0, 0);
                 }
@@ -4173,62 +4166,63 @@ async function ouvrirLivraisonRapide() {
         return null;
     }
 
-    // Moteur de traitement connecté à votre allData et CONFIG.API
     async function executerVerificationAutomatique() {
-        // Validation de la présence de vos variables globales d'admin.pdf
-        if (typeof allData === 'undefined' || !Array.isArray(allData) || allData.length === 0) {
-            return; 
-        }
+        // Recherche dynamique dans votre variable de données globale allData
+        const sourceDonnees = window.allData || [];
+        if (!Array.isArray(sourceDonnees) || sourceDonnees.length === 0) return;
 
         let changementsEffectues = false;
-        const heureActuelle = new Date(); // Heure précise de tests (ex: s'il est 09h05)
+        const heureActuelle = new Date(); 
 
-        for (const commande of allData) {
-            // Extraction stricte selon la structure lue dans admin.pdf (ID, Statut, Livraison)
+        for (const commande of sourceDonnees) {
             const id = commande.ID || commande.id;
             const statut = (commande.Statut || commande.statut || "").toString().trim();
             const rawLivraison = commande.Livraison || commande.livraison || "";
 
-            // On cible uniquement la colonne qui contient "Nouveau"
-            if (statut.toLowerCase() === "nouveau") {
+            // Analyse stricte de votre colonne "Nouveau"
+            if (statut.toUpperCase() === "NOUVEAU") {
                 const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
 
-                // Si la date limite calculée est inférieure ou égale à l'heure actuelle de votre téléphone
                 if (dateLimiteExpiration && heureActuelle >= dateLimiteExpiration) {
-                    console.log(`[SafeRun OS] Échéance atteinte pour ID: ${id}. Envoi de la mise à jour...`);
+                    console.log(`[SafeRun Moteur] Expiration détectée pour l'ID: ${id}`);
                     changementsEffectues = true;
 
                     try {
-                        // Envoi exact vers votre Google Apps Script
+                        // REQUÊTE SÉCURISÉE AVEC MODE NO-CORS ALIGNÉE SUR VOTRE CONFIGURATION GAS
                         await fetch(CONFIG.API, {
                             method: "POST",
+                            mode: "no-cors",
                             body: JSON.stringify({
                                 action: "updateStatut",
                                 idCommande: id.toString().trim(),
-                                nouveauStatut: statutExpire // Change le statut en "En attente de paiement"
+                                nouveauStatut: statutExpire
                             })
                         });
+                        console.log(`[SafeRun Moteur] Requête envoyée pour #${id}`);
                     } catch (err) {
-                        console.error(`[SafeRun OS] Erreur réseau pour la commande ${id}:`, err);
+                        console.error(`[SafeRun Moteur] Échec de l'envoi pour #${id}:`, err);
                     }
                 }
             }
         }
 
-        // Si le serveur a modifié des statuts, on rafraîchit votre interface d'administration
+        // Si des lignes ont été modifiées, on force le rafraîchissement visuel de votre OS
         if (changementsEffectues) {
-            console.log("[SafeRun OS] Statuts mis à jour sur Google Sheets. Actualisation...");
-            if (typeof refreshAll === "function") {
-                refreshAll(); // Appelle votre fonction de rechargement globale
-            } else {
-                location.reload();
-            }
+            console.log("[SafeRun Moteur] Modifications enregistrées. Rechargement des listes...");
+            setTimeout(() => {
+                if (typeof refreshAll === "function") {
+                    refreshAll();
+                } else {
+                    location.reload();
+                }
+            }, 1200); // Laisse une seconde à Google Sheets pour inscrire la donnée
         }
     }
 
-    // Lancement de la surveillance en arrière-plan toutes les 5 secondes
+    // Lancement automatique du scan toutes les 7 secondes après chargement de la page
     window.addEventListener('load', () => {
-        setInterval(executerVerificationAutomatique, 5000);
+        console.log("[SafeRun Moteur] Système de surveillance des échéances activé.");
+        setInterval(executerVerificationAutomatique, 7000);
     });
 })();
 </script>
