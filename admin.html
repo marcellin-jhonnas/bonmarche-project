@@ -4112,9 +4112,8 @@ async function ouvrirLivraisonRapide() {
 }
 </script>
 <script>
-// --- CONFIGURATION DU MOTEUR DE VÉRIFICATION AUTOMATIQUE SAFERUN ---
+// --- CONFIGURATION DU MOTEUR SAFERUN AVEC SYSTÈME DE DIAGNOSTIC AVANCÉ ---
 (function() {
-    // Le statut exact que vous souhaitez attribuer à vos commandes périmées
     const statutExpire = "En attente de paiement"; 
 
     const moisIndex = {
@@ -4122,14 +4121,16 @@ async function ouvrirLivraisonRapide() {
         "juillet": 6, "juille": 6, "août": 7, "aout": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11, "decembre": 11
     };
 
+    // Analyseur et extracteur intelligent de dates
     function extraireDateDepuisTexte(texteLivraison) {
-        if (!texteLivraison) return null;
+        if (!texteLivraison) {
+            console.warn("🔍 [SafeRun Diagnostic] Texte de livraison vide ou non défini.");
+            return null;
+        }
         
-        // Nettoyage complet du texte pour éviter les pièges de majuscules
         const texte = texteLivraison.toLowerCase().trim();
-
-        // Capture le numéro du jour et le nom du mois (ex: "1 juillet" ou "02 juillet")
         const matchDate = texte.match(/(\d+)\s+([a-záéûôè]+)/);
+        
         if (matchDate) {
             const jour = parseInt(matchDate[1], 10);
             const nomMois = matchDate[2].trim();
@@ -4137,20 +4138,18 @@ async function ouvrirLivraisonRapide() {
             if (moisIndex[nomMois] !== undefined) {
                 const aujourdHui = new Date();
                 const anneeActuelle = aujourdHui.getFullYear();
-                
                 const dateConstruite = new Date(anneeActuelle, moisIndex[nomMois], jour);
                 
-                // Comparaison pure sur les jours (sans les heures)
                 const jourJ = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), aujourdHui.getDate());
                 const jourLivraison = new Date(dateConstruite.getFullYear(), dateConstruite.getMonth(), dateConstruite.getDate());
 
-                // RÈGLE SÉCURITÉ FLASH : Si la date est strictement passée (hier ou avant)
+                // RÈGLE SÉCURITÉ FLASH : Date déjà passée (hier ou avant)
                 if (jourLivraison < jourJ) {
                     dateConstruite.setHours(0, 0, 0, 0);
                     return dateConstruite;
                 }
 
-                // RÈGLES DES TRANCHES HORAIRES (Pour AUJOURD'HUI ou le FUTUR)
+                // RÈGLES DES TRANCHES HORAIRES (Aujourd'hui ou Futur)
                 if (texte.includes("matin") || texte.includes("9h")) {
                     dateConstruite.setHours(9, 0, 0, 0);
                 } 
@@ -4161,68 +4160,106 @@ async function ouvrirLivraisonRapide() {
                     dateConstruite.setHours(0, 0, 0, 0);
                 }
                 return dateConstruite;
+            } else {
+                console.warn(`⚠️ [SafeRun Diagnostic] Mois non reconnu dans le dictionnaire : "${nomMois}"`);
             }
+        } else {
+            console.warn(`⚠️ [SafeRun Diagnostic] Impossible d'extraire un jour et un mois du texte : "${texteLivraison}"`);
         }
         return null;
     }
 
     async function executerVerificationAutomatique() {
-        // Recherche dynamique dans votre variable de données globale allData
-        const sourceDonnees = window.allData || [];
-        if (!Array.isArray(sourceDonnees) || sourceDonnees.length === 0) return;
+        console.log("🔄 [SafeRun Diagnostic] Lancement du scan des commandes en arrière-plan...");
 
-        let changementsEffectues = false;
+        // 1. Détection de la source des données locales
+        const sourceDonnees = window.allData || [];
+        if (!Array.isArray(sourceDonnees) || sourceDonnees.length === 0) {
+            console.log("ℹ️ [SafeRun Diagnostic] Le tableau global 'allData' n'est pas encore chargé ou est vide. En attente...");
+            return;
+        }
+
+        console.log(`📊 [SafeRun Diagnostic] ${sourceDonnees.length} commande(s) trouvée(s) au total dans l'application. Analyse des statuts...`);
+
         const heureActuelle = new Date(); 
+        let requeteLancee = false;
 
         for (const commande of sourceDonnees) {
             const id = commande.ID || commande.id;
             const statut = (commande.Statut || commande.statut || "").toString().trim();
             const rawLivraison = commande.Livraison || commande.livraison || "";
 
-            // Analyse stricte de votre colonne "Nouveau"
-            if (statut.toUpperCase() === "NOUVEAU") {
+            // On cible uniquement les statuts "Nouveau"
+            if (statut.toLowerCase() === "nouveau") {
+                console.log(`🔎 [SafeRun Diagnostic] Commande #${id} est à l'état "Nouveau". Analyse de sa date : "${rawLivraison}"`);
+                
                 const dateLimiteExpiration = extraireDateDepuisTexte(rawLivraison);
 
-                if (dateLimiteExpiration && heureActuelle >= dateLimiteExpiration) {
-                    console.log(`[SafeRun Moteur] Expiration détectée pour l'ID: ${id}`);
-                    changementsEffectues = true;
+                if (dateLimiteExpiration) {
+                    console.log(`📅 [SafeRun Diagnostic] Commande #${id} - Heure actuelle : ${heureActuelle.toLocaleTimeString()} | Date Limite calculée : ${dateLimiteExpiration.toLocaleString()}`);
 
-                    try {
-                        // REQUÊTE SÉCURISÉE AVEC MODE NO-CORS ALIGNÉE SUR VOTRE CONFIGURATION GAS
-                        await fetch(CONFIG.API, {
-                            method: "POST",
-                            mode: "no-cors",
-                            body: JSON.stringify({
-                                action: "updateStatut",
-                                idCommande: id.toString().trim(),
-                                nouveauStatut: statutExpire
-                            })
-                        });
-                        console.log(`[SafeRun Moteur] Requête envoyée pour #${id}`);
-                    } catch (err) {
-                        console.error(`[SafeRun Moteur] Échec de l'envoi pour #${id}:`, err);
+                    // Vérification du dépassement
+                    if (heureActuelle >= dateLimiteExpiration) {
+                        console.log(`🚨 [SafeRun Diagnostic] CRITIQUE : La commande #${id} a dépassé son échéance ! Préparation de l'envoi Google Sheets...`);
+                        requeteLancee = true;
+
+                        // Modification locale immédiate en mémoire pour bloquer l'envoi en boucle
+                        commande.Statut = statutExpire;
+                        commande.statut = statutExpire;
+
+                        try {
+                            console.log(`🌐 [SafeRun Diagnostic] Envoi de la requête POST vers l'API URL : ${CONFIG.API}`);
+                            
+                            const reponse = await fetch(CONFIG.API, {
+                                method: "POST",
+                                mode: "no-cors", // Aligné sur votre configuration logistique
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    action: "updateStatut",
+                                    idCommande: id.toString().trim(),
+                                    ID: id.toString().trim(),
+                                    nouveauStatut: statutExpire
+                                })
+                            });
+
+                            console.log(`✅ [SafeRun Diagnostic] Requête réseau transmise avec succès pour #${id} ! (Note: En mode no-cors, la réponse brute n'est pas lisible mais le signal est envoyé).`);
+
+                        } catch (err) {
+                            console.error(`❌ [SafeRun Diagnostic] ERREUR RÉSEAU MAJEURE lors de la mise à jour de #${id} :`, err);
+                            // En cas d'échec réseau, on remet à Nouveau pour retenter au prochain cycle
+                            commande.Statut = "Nouveau";
+                            commande.statut = "Nouveau";
+                        }
+                    } else {
+                        console.log(`⏳ [SafeRun Diagnostic] Commande #${id} est conforme. Elle n'a pas encore atteint son heure limite.`);
                     }
                 }
             }
         }
 
-        // Si des lignes ont été modifiées, on force le rafraîchissement visuel de votre OS
-        if (changementsEffectues) {
-            console.log("[SafeRun Moteur] Modifications enregistrées. Rechargement des listes...");
+        // Si des requêtes ont été envoyées, on actualise l'affichage après une courte attente
+        if (requeteLancee) {
+            console.log("⏱️ [SafeRun Diagnostic] Attente de 2 secondes avant de rafraîchir l'interface pour laisser Google Sheets enregistrer...");
             setTimeout(() => {
                 if (typeof refreshAll === "function") {
+                    console.log("🔄 [SafeRun Diagnostic] Exécution de refreshAll() pour mettre à jour vos tableaux...");
                     refreshAll();
                 } else {
+                    console.log("🔄 [SafeRun Diagnostic] refreshAll() introuvable, rechargement complet via location.reload()...");
                     location.reload();
                 }
-            }, 1200); // Laisse une seconde à Google Sheets pour inscrire la donnée
+            }, 2000);
+        } else {
+            console.log("🏁 [SafeRun Diagnostic] Scan terminé. Aucune commande 'Nouveau' n'est dépassée à ce cycle.");
         }
     }
 
-    // Lancement automatique du scan toutes les 7 secondes après chargement de la page
+    // Lancement du cycle toutes les 10 secondes
     window.addEventListener('load', () => {
-        console.log("[SafeRun Moteur] Système de surveillance des échéances activé.");
-        setInterval(executerVerificationAutomatique, 7000);
+        console.log("🚀 [SafeRun Diagnostic] Système de traçabilité automatique activé.");
+        setInterval(executerVerificationAutomatique, 10000);
     });
 })();
 </script>
