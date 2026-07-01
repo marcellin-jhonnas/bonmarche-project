@@ -2391,6 +2391,13 @@ async function synchroniserAchats() {
                         modification = true;
                     }
                 }
+                else if (statutSheet.includes("EN ATTENTE DE PAIEMENT")) {
+                    if (maCmd.statut !== "EXPIRÉ") {
+                        maCmd.statut = "EXPIRÉ";
+                        maCmd.id = match.ID || match.id || maCmd.id;
+                        modification = true;
+                    }
+                }
             }
         });
 
@@ -2435,6 +2442,10 @@ let badgeStyle = "background:#dcfce7; color:#15803d;"; // Vert par défaut
 if (statutBrut === "LIVRÉ") {
     badgeTexte = "CLÔTURÉ"; // Devient TERMINÉ (ou CLÔTURÉ)
     badgeStyle = "background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"; // Devient gris
+}
+else if (statutBrut === "EXPIRÉ") {
+    badgeTexte = "COMMANDE EXPIRÉE";
+    badgeStyle = "background:#fee2e2; color:#ef4444; border:1px solid #fca5a5;"; // Badge Rouge Rouge
 }
             html += `
                 <div class="recu-card">
