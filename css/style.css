@@ -3937,3 +3937,21 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         z-index: 2;
     }
 }
+
+/* et le refa expirer n cmmd */
+@keyframes saferun-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.03); }
+}
+
+@keyframes saferun-wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-6deg); }
+    75% { transform: rotate(6deg); }
+}
+
+@keyframes saferun-pulse-magique {
+    0% { transform: scale(0.96); opacity: 0.9; }
+    100% { transform: scale(1.04); opacity: 1; }
+}
+/* atreto */

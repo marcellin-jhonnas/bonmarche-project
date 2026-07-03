@@ -3539,22 +3539,35 @@ function verifierEtAfficherAnnoncesSafeRun() {
         // CAS N°4 : COMMANDE CLÔTURÉE / LIVRÉE OU EXPIREE / ANNULÉE
         // -----------------------------------------------------------------
         const estCloture = (statutCmd === "LIVRÉ" || statutCmd === "LIVRE" || statutCmd === "CLÔTURÉ" || statutCmd === "CLOTURE");
+        const estExpire = (statutCmd === "EXPIRÉ" || statutCmd === "EXPIRE");
         
         slidesData = [
             {
-                icone: estCloture ? '<div class="saferun-anim-hand"><i class="fas fa-handshake" style="color:#a855f7;"></i></div>' : '<div class="saferun-anim-pulse"><i class="fas fa-hourglass-end" style="color:#64748b;"></i></div>', 
-                background: estCloture ? '#f3e8ff' : '#f1f5f9',
-                titre: estCloture ? "✅ Commande Livrée avec succès !" : "⌛ Votre offre a expiré",
+                // Animation : rebond doux pour le succès, ou oscillation d'alerte pour l'expiration
+                icone: estCloture 
+                    ? '<div style="animation: saferun-bounce 2s infinite ease-in-out; display: inline-block;"><i class="fas fa-handshake" style="color:#a855f7; font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(168,85,247,0.2));"></i></div>' 
+                    : '<div style="animation: saferun-wobble 1.5s infinite ease-in-out; display: inline-block;"><i class="fas fa-hourglass-end" style="color:#ef4444; font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(239,68,68,0.2));"></i></div>', 
+                
+                background: estCloture 
+                    ? 'linear-gradient(135deg, #f3e8ff 0%, #fae8ff 100%)' 
+                    : 'linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%)',
+                
+                titre: estCloture 
+                    ? '<span style="color:#6b21a8; font-weight:800; font-size:1.3rem;">✅ Commande Livrée !</span>' 
+                    : '<span style="color:#991b1b; font-weight:800; font-size:1.3rem;">⌛ Créneau Expiré</span>',
+                
                 msg: estCloture 
-                    ? "Vos achats ont bien été livrés et clôturés par l'équipe SafeRun. Prêt pour de nouveaux arrivages au meilleur prix de Tana ?" 
-                    : "Le créneau de livraison prévu est dépassé avant la validation du paiement de votre facture."
+                    ? `<div style="line-height:1.6; color:#581c87;">Vos achats ont bien été <b style="background:#e9d5ff; padding:2px 6px; border-radius:4px;">livrés et clôturés</b> par l'équipe SafeRun. Prêt pour de nouveaux arrivages au meilleur prix de Tana ?</div>` 
+                    : `<div style="line-height:1.6; color:#7f1d1d;">Le créneau de livraison prévu a <b style="background:#fecaca; padding:2px 6px; border-radius:4px;">expiré</b> avant la validation du paiement de votre facture.</div>`
             },
             {
-                icone: '<div class="saferun-anim-pulse"><i class="fas fa-sparkles" style="color:#22c55e;"></i></div>', background: '#dcfce7',
-                titre: "🎉 Livraison Gratuite réactivée !",
+                // Deuxième slide : Animation de pulsation magique verte pour inciter à commander à nouveau
+                icone: '<div style="animation: saferun-pulse-magique 2s infinite alternative; display: inline-block;"><i class="fas fa-sparkles" style="color:#22c55e; font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(34,197,94,0.2));"></i></div>', 
+                background: 'linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%)',
+                titre: '<span style="color:#166534; font-weight:800; font-size:1.3rem;">🎉 Livraison Offerte Réactivée !</span>',
                 msg: seuilAffiche.includes("Ar")
-                    ? `Repassez commande pour un montant supérieur à <b class="saferun-magic-sticker">${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.`
-                    : `Repassez commande dès aujourd'hui et bénéficiez à nouveau de nos conditions de livraison avantageuses.`
+                    ? `<div style="line-height:1.6; color:#14532d;">Repassez commande pour un montant supérieur à <b class="saferun-magic-sticker" style="box-shadow: 0 2px 8px rgba(34,197,94,0.3); border-radius:6px; background:#22c55e; color:white; padding:2px 6px;">${seuilAffiche}</b> et bénéficiez à nouveau des frais de port offerts.</div>`
+                    : `<div style="line-height:1.6; color:#14532d;">Repassez commande dès aujourd'hui et bénéficiez à nouveau de nos conditions de livraison avantageuses.</div>`
             }
         ];
         actionBouton = {
