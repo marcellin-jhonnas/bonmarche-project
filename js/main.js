@@ -3731,74 +3731,69 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - ROUTAGE INTELLIGENT ET SYNC SÉCURISÉE (TOUT EN BAS)
+// SAFERUN MARKET - FINALISATION BLINDÉE ET ISOLATION RÉSEAU
 // =========================================================================
 
-/**
- * Détection de l'appareil (Mobile vs Ordinateur)
- */
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
 
 /**
- * Fonction maîtresse de finalisation
- * Utilise une sécurité temporelle pour empêcher le plantage du Fetch de synchronisation
+ * Force la finalisation en isolant l'application des requêtes asynchrones en arrière-plan
  */
 function executerActionFinalisation() {
-    console.log("[SafeRun Pay] Clic détecté. Nettoyage de l'interface...");
-    
-    // 1. On masque immédiatement le modal pour une sensation de rapidité
+    console.log("[SafeRun Pay] Initialisation de la sortie sécurisée...");
+
+    // 1. Nettoyage immédiat du DOM pour le client
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         modalPay.remove();
     }
 
-    console.log("[SafeRun Pay] Temporisation réseau active pour préserver la synchro du chat...");
+    // 2. Désactivation des écoutes réseau globales de secours pour éviter le freeze (CORS / PWA)
+    if (typeof window.stop === 'function') {
+        window.stop(); // Stoppe proprement toutes les requêtes asynchrones fetch/XHR en cours (Ligne 2408)
+    }
 
-    // 2. On laisse un sursis de 400ms au fetch du chat pour envoyer ses paquets avant la coupure
+    console.log("[SafeRun Pay] Redirection forcée avec nettoyage du cache...");
+
+    // 3. Redirection directe par contournement du Service Worker instable (sw.js)
     setTimeout(function() {
-        console.log("[SafeRun Pay] Force la redirection et contourne le ServiceWorker...");
-        // Injection d'un timestamp unique pour forcer le bypass de sw.js en panne
         const urlPropre = window.location.href.split('?')[0];
-        window.location.href = urlPropre + "?refresh=" + new Date().getTime();
-    }, 400);
+        window.location.href = urlPropre + "?status=success&t=" + new Date().getTime();
+    }, 100);
 }
 
-// Enregistrement global de secours
+// Export global pour le bouton injecté
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Nouvelle fonction centrale appelée lors du clic sur le choix MVola (Page 12)
+ * Gestionnaire intelligent MVola
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
-    
     if (!isMobileDevice) {
-        // === CAS 1 : ORDINATEUR ===
+        // --- MODE PC ---
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, idCommande);
             
-            // Injection de sécurité : Attache l'écouteur directement sur le bouton de votre fonction du haut
+            // On attend l'injection du HTML pour lier notre écouteur isolé
             setTimeout(function() {
                 const modalPay = document.getElementById('temp-modal-pay');
                 if (modalPay) {
-                    // Cible le bouton vert de transfert
                     const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
                     if (btnVert) {
-                        btnVert.removeAttribute('onclick'); // Nettoie l'ancien onclick instable
+                        btnVert.removeAttribute('onclick'); // Nettoie le vieux comportement
                         btnVert.addEventListener('click', function(e) {
                             e.preventDefault();
+                            e.stopPropagation();
                             executerActionFinalisation();
                         });
                     }
                 }
-            }, 200);
-        } else {
-            console.error("La fonction afficherInstructionsMvola d'origine est introuvable.");
+            }, 250);
         }
     } else {
-        // === CAS 2 : MOBILE ===
+        // --- MODE MOBILE ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
-
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
         const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
 
@@ -3815,30 +3810,25 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;"> 
                     <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button> 
-                    <img src="https://marcellin-jhonnas.github.io/logo-mvola.png" style="height:40px;margin-bottom:10px;" alt="MVola" onerror="this.style.display='none'"> 
                     <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Lancement MVola...</h3> 
                 </div> 
                 <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
-                    <div style="background:#f0fdf4; padding:15px; border-radius:20px; border:2px dashed #22c55e; margin-bottom:20px; text-align:left;">
-                        <p style="margin:0 0 5px 0; font-size:0.85rem; font-weight:bold; color:#16a34a;">⚡ Action Mobile :</p>
-                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre avec le code pré-rempli. Saisissez votre code secret pour valider.</p>
-                    </div>
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:25px;"> 
                         <p style="margin:0;font-size:0.85rem;color:#666;">Si l'application ne s'ouvre pas, composez :</p> 
                         <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:6px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;">${codeBrut}</b> 
                     </div> 
-                    <button id="btn-finaliser-mobile" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                    <button id="btn-finaliser-mobile" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3);">
                         J'AI EFFECTUÉ LE TRANSFERT
                     </button>
                 </div> 
             </div>
         `;
         
-        // Attachement de l'événement sur mobile
         const btnMobile = document.getElementById('btn-finaliser-mobile');
         if (btnMobile) {
             btnMobile.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 executerActionFinalisation();
             });
         }
@@ -3849,18 +3839,13 @@ function gererPaiementMvolaSmart(montant, idCommande) {
     }
 }
 
-/**
- * Écouteur de charge pour persistance de l'USSD sur mobile
- */
+// Persistance du chargement USSD
 window.addEventListener("load", function () {
     const trigger = sessionStorage.getItem("trigger_ussd");
     if (trigger === "1" && isMobileDevice) {
         sessionStorage.removeItem("trigger_ussd");
         const montant = sessionStorage.getItem("last_montant") || 0;
-        const numero = "0382453610";
-        const code = `*111*1*2*${numero}*${Math.floor(montant)}%23`;
-        setTimeout(() => {
-            window.location.href = "tel:" + code;
-        }, 800);
+        const code = `*111*1*2*0382453610*${Math.floor(montant)}%23`;
+        setTimeout(() => { window.location.href = "tel:" + code; }, 800);
     }
 });
