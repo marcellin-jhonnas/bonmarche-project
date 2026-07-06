@@ -1150,30 +1150,6 @@ function afficherInstructionsMvola(montant, idCommande) {
         </style>
     `;
 }
- // --- eto lou no andramana  ---
- function traiterPaiementSafe(montant, idCommande, btn) {
-
-    // 🔒 blocage immédiat du double clic
-    btn.disabled = true;
-    btn.style.opacity = "0.6";
-    btn.style.pointerEvents = "none";
-
-    const modalPay = document.getElementById("temp-modal-pay");
-    if (modalPay) modalPay.remove();
-
-    // 💻 PC = comportement identique à avant (stable)
-    if (!isMobileDevice) {
-        window.location.reload();
-        return;
-    }
-
-    // 📱 MOBILE = USSD direct (sans passer par autre fonction)
-    const numero = "0382453610";
-    const code = `*111*1*2*${numero}*${Math.floor(montant)}%23`;
-
-    window.location.href = "tel:" + code;
-}
- // eto no farany
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
@@ -3755,47 +3731,79 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - ROUTAGE INTELLIGENT (MOBILE VS ORDINATEUR)
+// SAFERUN MARKET - ROUTAGE INTELLIGENT & DÉTECTEUR DE LOGS
 // =========================================================================
+
+/**
+ * Détecteur de Logs Intelligent pour SafeRun Market
+ * Affiche les erreurs directement dans la console du navigateur (F12)
+ */
+function safeLog(etape, message, statut = "ℹ️") {
+    console.log(`%c[SafeRun Pay - ${statut}] ${etape} : ${message}`, "color: #ff9900; font-weight: bold; font-size: 11px;");
+}
 
 /**
  * Détection de l'appareil (Mobile vs Ordinateur)
  */
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
+safeLog("DÉTECTION APPAREIL", isMobileDevice ? "📱 Mode MOBILE activé" : "🖥️ Mode ORDINATEUR activé");
 
 /**
- * Fonction déclenchée par le bouton "J'AI EFFECTUÉ LE TRANSFERT"
- * Elle ferme le modal proprement et recharge la page du client
- * ATTACHÉE À WINDOW pour être accessible depuis le HTML onclick
+ * Action unique de finalisation : Ferme le modal et recharge la page
  */
-window.finaliserClientOrdinateur = function() {
+function executerActionFinalisation() {
+    safeLog("BOUTON CLIQUÉ", "L'utilisateur a cliqué sur 'J'AI EFFECTUÉ LE TRANSFERT'", "⚡");
+    
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
-        modalPay.remove(); // Supprime le modal de l'affichage
+        safeLog("FERMETURE MODAL", "Fermeture de la fenêtre MVola...");
+        modalPay.remove();
+    } else {
+        safeLog("ALERTE MODAL", "Le modal 'temp-modal-pay' n'a pas pu être trouvé dans le DOM", "⚠️");
     }
-    window.location.reload(); // Recharge la page instantanément
-};
+
+    safeLog("RECHARGEMENT", "Déclenchement immédiat de window.location.reload()...", "🔄");
+    window.location.reload();
+}
+
+// Sécurité : On lie la fonction à window au cas où l'ancien onclick est resté
+window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
  * Nouvelle fonction centrale appelée lors du clic sur le choix MVola (Page 12)
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
+    safeLog("INITIALISATION", `Lancement du flux de paiement pour la commande ${idCommande} (${montant} Ar)`);
     
     if (!isMobileDevice) {
-        // === CAS 1 : ORDINATEUR ===
-        // Appelle votre fonction d'origine du haut (avec vos styles, animations et astuce capture)
+        safeLog("ROUTAGE PC", "Redirection vers la fonction d'origine afficherInstructionsMvola()");
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, idCommande);
+            
+            // --- PROTECTION ET INJECTION DYNAMIQUE DU BOUTON SUR PC ---
+            // On attend que le HTML soit injecté, puis on attache l'événement proprement par le script
+            setTimeout(() => {
+                const modalPay = document.getElementById('temp-modal-pay');
+                if (modalPay) {
+                    const boutonVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
+                    if (boutonVert) {
+                        safeLog("LIAISON BOUTON PC", "Bouton vert détecté avec succès ! Injection de l'écouteur de clic.");
+                        boutonVert.removeAttribute('onclick'); // On nettoie l'ancien onclick instable
+                        boutonVert.addEventListener('click', executerActionFinalisation);
+                    } else {
+                        safeLog("ERREUR INTEGRATION", "Le bouton vert de transfert est introuvable dans le modal", "❌");
+                    }
+                }
+            }, 150);
+
         } else {
-            console.error("La fonction afficherInstructionsMvola d'origine est introuvable.");
+            safeLog("ERREUR CRITIQUE", "La fonction originale 'afficherInstructionsMvola' est introuvable au sommet du fichier !", "❌");
         }
     } else {
-        // === CAS 2 : MOBILE ===
-        // Interface simplifiée pour Smartphone avec déclenchement automatique de l'USSD
-        const numeroMarcellin = "0382453610"; // Votre numéro sans espaces
+        safeLog("ROUTAGE MOBILE", "Génération de l'interface simplifiée smartphone et préparation USSD");
+        const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
 
-        // Encodage du code USSD pour l'application Téléphone
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
         const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
 
@@ -3818,21 +3826,24 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                 <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
                     <div style="background:#f0fdf4; padding:15px; border-radius:20px; border:2px dashed #22c55e; margin-bottom:20px; text-align:left;">
                         <p style="margin:0 0 5px 0; font-size:0.85rem; font-weight:bold; color:#16a34a;">⚡ Action Mobile :</p>
-                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre avec le code pré-rempli. Saisissez votre code secret pour valider.</p>
+                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre. Saisissez votre code secret MVola pour finaliser.</p>
                     </div>
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:25px;"> 
                         <p style="margin:0;font-size:0.85rem;color:#666;">Si l'application ne s'ouvre pas, composez :</p> 
                         <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:6px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;">${codeBrut}</b> 
                     </div> 
-                    
-                    <button onclick="window.finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                    <button id="btn-finaliser-mobile" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
                         J'AI EFFECTUÉ LE TRANSFERT
                     </button>
                 </div> 
             </div>
         `;
         
-        // Lancement de l'application d'appel sur smartphone
+        // Liaison sécurisée par ID pour le mode mobile
+        const btnMobile = document.getElementById('btn-finaliser-mobile');
+        if (btnMobile) btnMobile.addEventListener('click', executerActionFinalisation);
+
+        safeLog("USSD SATELLITE", "Déclenchement de la redirection d'appel tel: dans 500ms");
         setTimeout(function() {
             window.location.href = "tel:" + codeEncode;
         }, 500);
@@ -3840,19 +3851,15 @@ function gererPaiementMvolaSmart(montant, idCommande) {
 }
 
 /**
- * Gestion du rechargement de la page et relance automatique du code USSD
+ * Gestion du rechargement et maintien de session
  */
 window.addEventListener("load", function () {
     const trigger = sessionStorage.getItem("trigger_ussd");
-
     if (trigger === "1" && isMobileDevice) {
         sessionStorage.removeItem("trigger_ussd");
-
         const montant = sessionStorage.getItem("last_montant") || 0;
         const numero = "0382453610";
-
         const code = `*111*1*2*${numero}*${Math.floor(montant)}%23`;
-
         setTimeout(() => {
             window.location.href = "tel:" + code;
         }, 800);
