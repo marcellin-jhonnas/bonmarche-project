@@ -3747,12 +3747,9 @@ function safeLog(etape, message, statut = "ℹ️") {
  */
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
 safeLog("DÉTECTION APPAREIL", isMobileDevice ? "📱 Mode MOBILE activé" : "🖥️ Mode ORDINATEUR activé");
-
 /**
- * Action unique de finalisation : Ferme le modal et recharge la page
- */
-/**
- * Action unique de finalisation : Ferme le modal et recharge la page après un court délai
+ * Action unique de finalisation : Ferme le modal et FORCE le rechargement
+ * en contournant le Service Worker défaillant.
  */
 function executerActionFinalisation() {
     safeLog("BOUTON CLIQUÉ", "L'utilisateur a cliqué sur 'J'AI EFFECTUÉ LE TRANSFERT'", "⚡");
@@ -3760,14 +3757,15 @@ function executerActionFinalisation() {
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         safeLog("FERMETURE MODAL", "Fermeture de la fenêtre MVola...");
-        modalPay.remove(); // Cache immédiatement l'interface pour le client
+        modalPay.remove(); // Cache immédiatement l'interface
     }
 
-    // Laisse 250ms aux requêtes réseau (synchro chat / Google Sheet) pour se terminer proprement
-    safeLog("RECHARGEMENT", "Déclenchement du rechargement dans 250ms...", "⏳");
-    setTimeout(() => {
-        window.location.reload();
-    }, 250);
+    safeLog("RECHARGEMENT SÉCURISÉ", "Force le rafraîchissement via bypass d'URL...", "🔄");
+    
+    // Astuce absolue : ajouter un paramètre unique à l'URL pour forcer le navigateur
+    // à recharger la page sans passer par le cache ou le Service Worker planté.
+    const urlActuelle = window.location.href.split('?')[0];
+    window.location.href = urlActuelle + "?refresh=" + new Date().getTime();
 }
 
 // Sécurité : On lie la fonction à window au cas où l'ancien onclick est resté
