@@ -1153,20 +1153,27 @@ function afficherInstructionsMvola(montant, idCommande) {
  // --- eto lou no andramana  ---
  function traiterPaiement(montant, idCommande) {
 
-    // Ferme le premier modal
-    const modalPay = document.getElementById('temp-modal-pay');
+    // Ferme le modal
+    const modalPay = document.getElementById("temp-modal-pay");
     if (modalPay) {
         modalPay.remove();
     }
 
-    // Si le client est sur smartphone
-    if (isMobileDevice) {
-        gererPaiementMvolaSmart(montant, idCommande);
-    } 
-    // Si le client est sur ordinateur
-    else {
-        finaliserClientOrdinateur();
+    // Si ordinateur → comportement actuel
+    if (!isMobileDevice) {
+        window.location.reload();
+        return;
     }
+
+    // Si mobile → lancer directement le code USSD
+    const numeroMarcellin = "0382453610";
+    const montantPur = Math.floor(montant);
+
+    const codeEncode = `*111*1*2*${numeroMarcellin}*${montantPur}%23`;
+
+    setTimeout(() => {
+        window.location.href = "tel:" + codeEncode;
+    }, 300);
 }
  // eto no farany
 async function lancerPayUnit(id, montant) {
