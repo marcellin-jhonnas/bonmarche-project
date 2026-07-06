@@ -3731,53 +3731,58 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - EXTENSION COMPORTEMENT CLIENT MVOLA (MOBILE & PC)
+// SAFERUN MARKET - ROUTAGE INTELLIGENT (MOBILE VS ORDINATEUR)
 // =========================================================================
 
 /**
- * Détection de l'appareil utilisé par le client (Mobile vs Ordinateur)
+ * Détection de l'appareil (Mobile vs Ordinateur)
  */
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
 
 /**
- * Fonction pour ordinateur : Recharge simplement la page du client
- * (Garde le comportement exact que vous souhaitiez d'origine)
+ * Fonction déclenchée par le bouton "J'AI EFFECTUÉ LE TRANSFERT"
+ * Elle ferme le modal proprement et recharge la page du client
  */
 function finaliserClientOrdinateur() {
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
-        modalPay.remove();
+        modalPay.remove(); // Supprime le modal de l'affichage
     }
-    // Rechargement simple de la page du client
-    window.location.reload();
+    window.location.reload(); // Recharge la page instantanément
 }
 
 /**
- * Gestion de l'affichage MVola avec lancement automatique sur Mobile
+ * Nouvelle fonction centrale appelée lors du clic sur le choix MVola (Page 12)
  */
-function afficherInstructionsMvola(montant, idCommande) { 
-    const quartier = localStorage.getItem('saferun_quartier') || "Non précisé"; 
-    const infoLivraison = typeof calcularLivraison === "function" ? calcularLivraison() : "Livraison SafeRun"; 
-    const numeroMarcellin = "0382453610"; // Votre numéro MVola
+function gererPaiementMvolaSmart(montant, idCommande) {
     
-    // Formatage du montant pour l'USSD
-    const montantPur = Math.floor(montant);
+    if (!isMobileDevice) {
+        // === CAS 1 : ORDINATEUR ===
+        // Appelle votre fonction d'origine du haut (avec vos styles, animations et astuce capture)
+        if (typeof afficherInstructionsMvola === "function") {
+            afficherInstructionsMvola(montant, idCommande);
+        } else {
+            console.error("La fonction afficherInstructionsMvola d'origine est introuvable.");
+        }
+    } else {
+        // === CAS 2 : MOBILE ===
+        // Interface simplifiée pour Smartphone avec déclenchement automatique de l'USSD
+        const numeroMarcellin = "0382453610"; // Votre numéro sans espaces
+        const montantPur = Math.floor(montant);
 
-    // Préparation des codes USSD (Brut pour affichage, Encodé pour l'application téléphone)
-    const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
-    const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
+        // Encodage du code USSD pour l'application Téléphone
+        const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
+        const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
 
-    let modalPay = document.getElementById('temp-modal-pay'); 
-    if (!modalPay) { 
-        modalPay = document.createElement('div'); 
-        modalPay.id = 'temp-modal-pay'; 
-        document.body.appendChild(modalPay); 
-    } 
-    
-    modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
+        let modalPay = document.getElementById('temp-modal-pay'); 
+        if (!modalPay) { 
+            modalPay = document.createElement('div'); 
+            modalPay.id = 'temp-modal-pay'; 
+            document.body.appendChild(modalPay); 
+        } 
+        
+        modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
 
-    if (isMobileDevice) {
-        // --- AFFICHAGE SMARTPHONE ---
         modalPay.innerHTML = `
             <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;"> 
@@ -3787,13 +3792,15 @@ function afficherInstructionsMvola(montant, idCommande) {
                 </div> 
                 <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
                     <div style="background:#f0fdf4; padding:15px; border-radius:20px; border:2px dashed #22c55e; margin-bottom:20px; text-align:left;">
-                        <p style="margin:0 0 5px 0; font-size:0.85rem; font-weight:bold; color:#16a34a;">⚡ Action en cours :</p>
-                        <p style="margin:0; font-size:0.8rem; color:#374151;">Votre application Téléphone s'ouvre avec le code pré-rempli. Saisissez votre code secret pour valider.</p>
+                        <p style="margin:0 0 5px 0; font-size:0.85rem; font-weight:bold; color:#16a34a;">⚡ Action Mobile :</p>
+                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre avec le code pré-rempli. Saisissez votre code secret pour valider.</p>
                     </div>
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:25px;"> 
                         <p style="margin:0;font-size:0.85rem;color:#666;">Si l'application ne s'ouvre pas, composez :</p> 
                         <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:6px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;">${codeBrut}</b> 
                     </div> 
+                    
+                    <!-- Le bouton déclenche tout ici aussi -->
                     <button onclick="finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
                         J'AI EFFECTUÉ LE TRANSFERT
                     </button>
@@ -3801,34 +3808,9 @@ function afficherInstructionsMvola(montant, idCommande) {
             </div>
         `;
         
-        // Lance automatiquement le pavé numérique du smartphone du client
+        // Lancement de l'application d'appel sur smartphone
         setTimeout(function() {
             window.location.href = "tel:" + codeEncode;
         }, 500);
-
-    } else {
-        // --- AFFICHAGE ORDINATEUR (Votre fonctionnement d'origine préservé) ---
-        modalPay.innerHTML = ` 
-            <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
-                <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;"> 
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width: 30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button> 
-                    <img src="https://www.mvola.mg/wp-content/uploads/2021/03/Logo-MVola.png" style="height:40px;margin-bottom:10px;" alt="MVola"> 
-                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Instructions de Paiement</h3> 
-                </div> 
-                <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
-                    <div style="display:flex;justify-content:space-between;background:#f8f9fa;padding:12px;border-radius:15px;margin-bottom:20px;font-size:0.85rem;border:1px solid #eee;"> 
-                        <span><b>${quartier}</b></span> <span><b>${infoLivraison}</b></span> 
-                    </div> 
-                    <div style="background:#fffdf0;padding:20px;border-radius:20px;border:2px solid #ffcc00;margin-bottom:25px;"> 
-                        <p style="margin:0;font-size:0.9rem;color:#666;">Composez sur votre mobile :</p> 
-                        <h3 style="margin:10px 0;color:#d35400;font-size:1.3rem;word-break:break-all;">${codeBrut}</h3> 
-                        <p style="margin:0;font-size:0.8rem;color:#7f8c8d;">(Montant : ${montant.toLocaleString()} Ar vers ${numeroMarcellin})</p> 
-                    </div> 
-                    <button onclick="finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
-                        J'AI EFFECTUÉ LE TRANSFERT
-                    </button>
-                </div> 
-            </div> 
-        `;
     }
 }
