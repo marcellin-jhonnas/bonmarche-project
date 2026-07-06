@@ -1135,7 +1135,7 @@ function afficherInstructionsMvola(montant, idCommande) {
                 </div>
 
                 <button onclick="traiterPaiement(${montant}, '${idCommande}')" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
-    J'AI EFFECTUÉ LE TRANSFERT
+J'AI EFFECTUÉ LE TRANSFERT
 </button>
                 
                 <p style="margin-top:15px; font-size:0.75rem; color:#95a5a6;">SafeRun Market - Livraison sécurisée</p>
@@ -1153,27 +1153,24 @@ function afficherInstructionsMvola(montant, idCommande) {
  // --- eto lou no andramana  ---
  function traiterPaiement(montant, idCommande) {
 
-    // Ferme le modal
-    const modalPay = document.getElementById("temp-modal-pay");
-    if (modalPay) {
-        modalPay.remove();
-    }
+    // 1. fermer popup
+    const modalPay = document.getElementById('temp-modal-pay');
+    if (modalPay) modalPay.remove();
 
-    // Si ordinateur → comportement actuel
-    if (!isMobileDevice) {
+    // 2. stocker infos pour éviter perte + usage mobile
+    sessionStorage.setItem("last_montant", montant);
+
+    // 3. MOBILE → reload + déclenche USSD après reload
+    if (isMobileDevice) {
+
+        sessionStorage.setItem("trigger_ussd", "1");
+
         window.location.reload();
         return;
     }
 
-    // Si mobile → lancer directement le code USSD
-    const numeroMarcellin = "0382453610";
-    const montantPur = Math.floor(montant);
-
-    const codeEncode = `*111*1*2*${numeroMarcellin}*${montantPur}%23`;
-
-    setTimeout(() => {
-        window.location.href = "tel:" + codeEncode;
-    }, 300);
+    // 4. PC → simple reload
+    window.location.reload();
 }
  // eto no farany
 async function lancerPayUnit(id, montant) {
@@ -3840,3 +3837,21 @@ function gererPaiementMvolaSmart(montant, idCommande) {
         }, 500);
     }
 }
+window.addEventListener("load", function () {
+
+    const trigger = sessionStorage.getItem("trigger_ussd");
+
+    if (trigger === "1" && isMobileDevice) {
+
+        sessionStorage.removeItem("trigger_ussd");
+
+        const montant = sessionStorage.getItem("last_montant") || 0;
+        const numero = "0382453610";
+
+        const code = `*111*1*2*${numero}*${Math.floor(montant)}%23`;
+
+        setTimeout(() => {
+            window.location.href = "tel:" + code;
+        }, 800);
+    }
+});
