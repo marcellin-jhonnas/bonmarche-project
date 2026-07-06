@@ -3731,83 +3731,71 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - ROUTAGE INTELLIGENT & DÉTECTEUR DE LOGS
+// SAFERUN MARKET - ROUTAGE INTELLIGENT ET SYNC SÉCURISÉE (TOUT EN BAS)
 // =========================================================================
-
-/**
- * Détecteur de Logs Intelligent pour SafeRun Market
- * Affiche les erreurs directement dans la console du navigateur (F12)
- */
-function safeLog(etape, message, statut = "ℹ️") {
-    console.log(`%c[SafeRun Pay - ${statut}] ${etape} : ${message}`, "color: #ff9900; font-weight: bold; font-size: 11px;");
-}
 
 /**
  * Détection de l'appareil (Mobile vs Ordinateur)
  */
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
-safeLog("DÉTECTION APPAREIL", isMobileDevice ? "📱 Mode MOBILE activé" : "🖥️ Mode ORDINATEUR activé");
+
 /**
- * Action unique de finalisation asynchrone : 
- * Attend que la synchronisation réseau du chat/Sheets se termine avant de recharger.
+ * Fonction maîtresse de finalisation
+ * Utilise une sécurité temporelle pour empêcher le plantage du Fetch de synchronisation
  */
-async function executerActionFinalisation() {
-    safeLog("BOUTON CLIQUÉ", "L'utilisateur a cliqué sur 'J'AI EFFECTUÉ LE TRANSFERT'", "⚡");
+function executerActionFinalisation() {
+    console.log("[SafeRun Pay] Clic détecté. Nettoyage de l'interface...");
     
+    // 1. On masque immédiatement le modal pour une sensation de rapidité
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
-        safeLog("FERMETURE MODAL", "Fermeture de la fenêtre MVola...");
-        modalPay.remove(); // Supprime visuellement le modal immédiatement pour le client
+        modalPay.remove();
     }
 
-    safeLog("ATTENTE RÉSEAU", "Pause de sécurité pour laisser la synchronisation du chat se terminer...");
-    
-    // On attend 800ms que les requêtes asynchrones en cours (fetch, Google Sheets, Chat) 
-    // écrivent leurs données sur le serveur sans être coupées.
-    await new Promise(resolve => setTimeout(resolve, 800));
+    console.log("[SafeRun Pay] Temporisation réseau active pour préserver la synchro du chat...");
 
-    safeLog("RECHARGEMENT SÉCURISÉ", "Force le rafraîchissement via bypass d'URL...", "🔄");
-    
-    // Redirection directe pour contourner le Service Worker (sw.js) qui a planté
-    const urlActuelle = window.location.href.split('?')[0];
-    window.location.href = urlActuelle + "?refresh=" + new Date().getTime();
+    // 2. On laisse un sursis de 400ms au fetch du chat pour envoyer ses paquets avant la coupure
+    setTimeout(function() {
+        console.log("[SafeRun Pay] Force la redirection et contourne le ServiceWorker...");
+        // Injection d'un timestamp unique pour forcer le bypass de sw.js en panne
+        const urlPropre = window.location.href.split('?')[0];
+        window.location.href = urlPropre + "?refresh=" + new Date().getTime();
+    }, 400);
 }
 
-// Liaison à window pour le bouton onclick
+// Enregistrement global de secours
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
  * Nouvelle fonction centrale appelée lors du clic sur le choix MVola (Page 12)
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
-    safeLog("INITIALISATION", `Lancement du flux de paiement pour la commande ${idCommande} (${montant} Ar)`);
     
     if (!isMobileDevice) {
-        safeLog("ROUTAGE PC", "Redirection vers la fonction d'origine afficherInstructionsMvola()");
+        // === CAS 1 : ORDINATEUR ===
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, idCommande);
             
-            // --- PROTECTION ET INJECTION DYNAMIQUE DU BOUTON SUR PC ---
-            // On attend que le HTML soit injecté, puis on attache l'événement proprement par le script
-            setTimeout(() => {
+            // Injection de sécurité : Attache l'écouteur directement sur le bouton de votre fonction du haut
+            setTimeout(function() {
                 const modalPay = document.getElementById('temp-modal-pay');
                 if (modalPay) {
-                    const boutonVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
-                    if (boutonVert) {
-                        safeLog("LIAISON BOUTON PC", "Bouton vert détecté avec succès ! Injection de l'écouteur de clic.");
-                        boutonVert.removeAttribute('onclick'); // On nettoie l'ancien onclick instable
-                        boutonVert.addEventListener('click', executerActionFinalisation);
-                    } else {
-                        safeLog("ERREUR INTEGRATION", "Le bouton vert de transfert est introuvable dans le modal", "❌");
+                    // Cible le bouton vert de transfert
+                    const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
+                    if (btnVert) {
+                        btnVert.removeAttribute('onclick'); // Nettoie l'ancien onclick instable
+                        btnVert.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            executerActionFinalisation();
+                        });
                     }
                 }
-            }, 150);
-
+            }, 200);
         } else {
-            safeLog("ERREUR CRITIQUE", "La fonction originale 'afficherInstructionsMvola' est introuvable au sommet du fichier !", "❌");
+            console.error("La fonction afficherInstructionsMvola d'origine est introuvable.");
         }
     } else {
-        safeLog("ROUTAGE MOBILE", "Génération de l'interface simplifiée smartphone et préparation USSD");
+        // === CAS 2 : MOBILE ===
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
 
@@ -3827,13 +3815,13 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;"> 
                     <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button> 
-                    <img src="https://www.mvola.mg/wp-content/uploads/2021/03/Logo-MVola.png" style="height:40px;margin-bottom:10px;" alt="MVola"> 
+                    <img src="https://marcellin-jhonnas.github.io/logo-mvola.png" style="height:40px;margin-bottom:10px;" alt="MVola" onerror="this.style.display='none'"> 
                     <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Lancement MVola...</h3> 
                 </div> 
                 <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
                     <div style="background:#f0fdf4; padding:15px; border-radius:20px; border:2px dashed #22c55e; margin-bottom:20px; text-align:left;">
                         <p style="margin:0 0 5px 0; font-size:0.85rem; font-weight:bold; color:#16a34a;">⚡ Action Mobile :</p>
-                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre. Saisissez votre code secret MVola pour finaliser.</p>
+                        <p style="margin:0; font-size:0.8rem; color:#374151;">L'application Téléphone s'ouvre avec le code pré-rempli. Saisissez votre code secret pour valider.</p>
                     </div>
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:25px;"> 
                         <p style="margin:0;font-size:0.85rem;color:#666;">Si l'application ne s'ouvre pas, composez :</p> 
@@ -3846,11 +3834,15 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             </div>
         `;
         
-        // Liaison sécurisée par ID pour le mode mobile
+        // Attachement de l'événement sur mobile
         const btnMobile = document.getElementById('btn-finaliser-mobile');
-        if (btnMobile) btnMobile.addEventListener('click', executerActionFinalisation);
-
-        safeLog("USSD SATELLITE", "Déclenchement de la redirection d'appel tel: dans 500ms");
+        if (btnMobile) {
+            btnMobile.addEventListener('click', function(e) {
+                e.preventDefault();
+                executerActionFinalisation();
+            });
+        }
+        
         setTimeout(function() {
             window.location.href = "tel:" + codeEncode;
         }, 500);
@@ -3858,7 +3850,7 @@ function gererPaiementMvolaSmart(montant, idCommande) {
 }
 
 /**
- * Gestion du rechargement et maintien de session
+ * Écouteur de charge pour persistance de l'USSD sur mobile
  */
 window.addEventListener("load", function () {
     const trigger = sessionStorage.getItem("trigger_ussd");
