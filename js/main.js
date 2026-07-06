@@ -1134,7 +1134,7 @@ function afficherInstructionsMvola(montant, idCommande) {
                     </div>
                 </div>
 
-                <button onclick="traiterPaiement(${montant}, '${idCommande}')" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                <button onclick="traiterPaiementSafe(${montant}, '${idCommande}', this)" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
 J'AI EFFECTUÉ LE TRANSFERT
 </button>
                 
@@ -1151,26 +1151,27 @@ J'AI EFFECTUÉ LE TRANSFERT
     `;
 }
  // --- eto lou no andramana  ---
- function traiterPaiement(montant, idCommande) {
+ function traiterPaiementSafe(montant, idCommande, btn) {
 
-    // 1. fermer popup
-    const modalPay = document.getElementById('temp-modal-pay');
+    // 🔒 blocage immédiat du double clic
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+    btn.style.pointerEvents = "none";
+
+    const modalPay = document.getElementById("temp-modal-pay");
     if (modalPay) modalPay.remove();
 
-    // 2. stocker infos pour éviter perte + usage mobile
-    sessionStorage.setItem("last_montant", montant);
-
-    // 3. MOBILE → reload + déclenche USSD après reload
-    if (isMobileDevice) {
-
-        sessionStorage.setItem("trigger_ussd", "1");
-
+    // 💻 PC = comportement identique à avant (stable)
+    if (!isMobileDevice) {
         window.location.reload();
         return;
     }
 
-    // 4. PC → simple reload
-    window.location.reload();
+    // 📱 MOBILE = USSD direct (sans passer par autre fonction)
+    const numero = "0382453610";
+    const code = `*111*1*2*${numero}*${Math.floor(montant)}%23`;
+
+    window.location.href = "tel:" + code;
 }
  // eto no farany
 async function lancerPayUnit(id, montant) {
