@@ -3748,27 +3748,32 @@ function safeLog(etape, message, statut = "ℹ️") {
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
 safeLog("DÉTECTION APPAREIL", isMobileDevice ? "📱 Mode MOBILE activé" : "🖥️ Mode ORDINATEUR activé");
 /**
- * Action unique de finalisation : Ferme le modal et FORCE le rechargement
- * en contournant le Service Worker défaillant.
+ * Action unique de finalisation asynchrone : 
+ * Attend que la synchronisation réseau du chat/Sheets se termine avant de recharger.
  */
-function executerActionFinalisation() {
+async function executerActionFinalisation() {
     safeLog("BOUTON CLIQUÉ", "L'utilisateur a cliqué sur 'J'AI EFFECTUÉ LE TRANSFERT'", "⚡");
     
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         safeLog("FERMETURE MODAL", "Fermeture de la fenêtre MVola...");
-        modalPay.remove(); // Cache immédiatement l'interface
+        modalPay.remove(); // Supprime visuellement le modal immédiatement pour le client
     }
+
+    safeLog("ATTENTE RÉSEAU", "Pause de sécurité pour laisser la synchronisation du chat se terminer...");
+    
+    // On attend 800ms que les requêtes asynchrones en cours (fetch, Google Sheets, Chat) 
+    // écrivent leurs données sur le serveur sans être coupées.
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     safeLog("RECHARGEMENT SÉCURISÉ", "Force le rafraîchissement via bypass d'URL...", "🔄");
     
-    // Astuce absolue : ajouter un paramètre unique à l'URL pour forcer le navigateur
-    // à recharger la page sans passer par le cache ou le Service Worker planté.
+    // Redirection directe pour contourner le Service Worker (sw.js) qui a planté
     const urlActuelle = window.location.href.split('?')[0];
     window.location.href = urlActuelle + "?refresh=" + new Date().getTime();
 }
 
-// Sécurité : On lie la fonction à window au cas où l'ancien onclick est resté
+// Liaison à window pour le bouton onclick
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
