@@ -1134,8 +1134,8 @@ function afficherInstructionsMvola(montant, idCommande) {
                     </div>
                 </div>
 
-                <button onclick="traiterPaiementSafe(${montant}, '${idCommande}', this)" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
-J'AI EFFECTUÉ LE TRANSFERT
+                <button onclick="window.finaliserClientOrdinateur ? window.finaliserClientOrdinateur() : window.location.reload()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+    J'AI EFFECTUÉ LE TRANSFERT
 </button>
                 
                 <p style="margin-top:15px; font-size:0.75rem; color:#95a5a6;">SafeRun Market - Livraison sécurisée</p>
@@ -3766,14 +3766,15 @@ const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navi
 /**
  * Fonction déclenchée par le bouton "J'AI EFFECTUÉ LE TRANSFERT"
  * Elle ferme le modal proprement et recharge la page du client
+ * ATTACHÉE À WINDOW pour être accessible depuis le HTML onclick
  */
-function finaliserClientOrdinateur() {
+window.finaliserClientOrdinateur = function() {
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         modalPay.remove(); // Supprime le modal de l'affichage
     }
     window.location.reload(); // Recharge la page instantanément
-}
+};
 
 /**
  * Nouvelle fonction centrale appelée lors du clic sur le choix MVola (Page 12)
@@ -3824,8 +3825,7 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                         <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:6px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;">${codeBrut}</b> 
                     </div> 
                     
-                    <!-- Le bouton déclenche tout ici aussi -->
-                    <button onclick="finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                    <button onclick="window.finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
                         J'AI EFFECTUÉ LE TRANSFERT
                     </button>
                 </div> 
@@ -3838,12 +3838,14 @@ function gererPaiementMvolaSmart(montant, idCommande) {
         }, 500);
     }
 }
-window.addEventListener("load", function () {
 
+/**
+ * Gestion du rechargement de la page et relance automatique du code USSD
+ */
+window.addEventListener("load", function () {
     const trigger = sessionStorage.getItem("trigger_ussd");
 
     if (trigger === "1" && isMobileDevice) {
-
         sessionStorage.removeItem("trigger_ussd");
 
         const montant = sessionStorage.getItem("last_montant") || 0;
