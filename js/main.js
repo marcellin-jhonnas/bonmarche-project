@@ -1134,7 +1134,7 @@ function afficherInstructionsMvola(montant, idCommande) {
                     </div>
                 </div>
 
-                <button onclick="finaliserClientOrdinateur()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
+                <button onclick="traiterPaiement(${montant}, '${idCommande}')" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
     J'AI EFFECTUÉ LE TRANSFERT
 </button>
                 
@@ -1150,6 +1150,25 @@ function afficherInstructionsMvola(montant, idCommande) {
         </style>
     `;
 }
+ // --- eto lou no andramana  ---
+ function traiterPaiement(montant, idCommande) {
+
+    // Ferme le premier modal
+    const modalPay = document.getElementById('temp-modal-pay');
+    if (modalPay) {
+        modalPay.remove();
+    }
+
+    // Si le client est sur smartphone
+    if (isMobileDevice) {
+        gererPaiementMvolaSmart(montant, idCommande);
+    } 
+    // Si le client est sur ordinateur
+    else {
+        finaliserClientOrdinateur();
+    }
+}
+ // eto no farany
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
     
