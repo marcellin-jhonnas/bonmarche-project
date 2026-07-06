@@ -3751,19 +3751,23 @@ safeLog("DÉTECTION APPAREIL", isMobileDevice ? "📱 Mode MOBILE activé" : "�
 /**
  * Action unique de finalisation : Ferme le modal et recharge la page
  */
+/**
+ * Action unique de finalisation : Ferme le modal et recharge la page après un court délai
+ */
 function executerActionFinalisation() {
     safeLog("BOUTON CLIQUÉ", "L'utilisateur a cliqué sur 'J'AI EFFECTUÉ LE TRANSFERT'", "⚡");
     
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         safeLog("FERMETURE MODAL", "Fermeture de la fenêtre MVola...");
-        modalPay.remove();
-    } else {
-        safeLog("ALERTE MODAL", "Le modal 'temp-modal-pay' n'a pas pu être trouvé dans le DOM", "⚠️");
+        modalPay.remove(); // Cache immédiatement l'interface pour le client
     }
 
-    safeLog("RECHARGEMENT", "Déclenchement immédiat de window.location.reload()...", "🔄");
-    window.location.reload();
+    // Laisse 250ms aux requêtes réseau (synchro chat / Google Sheet) pour se terminer proprement
+    safeLog("RECHARGEMENT", "Déclenchement du rechargement dans 250ms...", "⏳");
+    setTimeout(() => {
+        window.location.reload();
+    }, 250);
 }
 
 // Sécurité : On lie la fonction à window au cas où l'ancien onclick est resté
