@@ -3731,56 +3731,66 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - FINALISATION BLINDÉE ET ISOLATION RÉSEAU
+// SAFERUN MARKET - ARCHITECTURE DE FINALISATION SÉCURISÉE ET ANTI-CONFLIT
 // =========================================================================
 
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
 
 /**
- * Force la finalisation en isolant l'application des requêtes asynchrones en arrière-plan
+ * Fonction de finalisation absolue : neutralise les requêtes asynchrones en cours
+ * pour éviter le plantage réseau (NetworkError) à la ligne 3236.
  */
 function executerActionFinalisation() {
-    console.log("[SafeRun Pay] Initialisation de la sortie sécurisée...");
+    console.log("[SafeRun Pay] Initialisation du protocole de fermeture sécurisé...");
 
-    // 1. Nettoyage immédiat du DOM pour le client
+    // 1. Suppression visuelle immédiate du modal pour le confort utilisateur
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         modalPay.remove();
     }
 
-    // 2. Désactivation des écoutes réseau globales de secours pour éviter le freeze (CORS / PWA)
+    // 2. NEUTRALISATION RÉSEAU : Redéfinition locale de fetch pour étouffer les requêtes fantômes du chat
+    // Cela empêche le thread asynchrone de la ligne 3236 de lever une exception lors de la déconnexion.
+    window.fetch = function() {
+        return new Promise(function(resolve) {
+            resolve(new Response(JSON.stringify({ status: "aborted_by_safe_run" })));
+        });
+    };
+
+    // Stoppe les téléchargements actifs ou les requêtes d'arrière-plan résiduelles
     if (typeof window.stop === 'function') {
-        window.stop(); // Stoppe proprement toutes les requêtes asynchrones fetch/XHR en cours (Ligne 2408)
+        window.stop();
     }
 
-    console.log("[SafeRun Pay] Redirection forcée avec nettoyage du cache...");
+    console.log("[SafeRun Pay] Redirection propre avec contournement du Service Worker...");
 
-    // 3. Redirection directe par contournement du Service Worker instable (sw.js)
+    // 3. Forçage de la navigation directe hors du scope de sw.js
     setTimeout(function() {
-        const urlPropre = window.location.href.split('?')[0];
-        window.location.href = urlPropre + "?status=success&t=" + new Date().getTime();
-    }, 100);
+        const urlNettoyee = window.location.href.split('?')[0];
+        window.location.href = urlNettoyee + "?action=complete&timestamp=" + new Date().getTime();
+    }, 150);
 }
 
-// Export global pour le bouton injecté
+// Liaison globale pour sécuriser les anciens gestionnaires d'événements
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Gestionnaire intelligent MVola
+ * Point d'entrée principal pour la gestion du bouton de paiement MVola
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
     if (!isMobileDevice) {
-        // --- MODE PC ---
+        // --- LOGIQUE ORDINATEUR ---
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, idCommande);
             
-            // On attend l'injection du HTML pour lier notre écouteur isolé
+            // Attente de l'injection du DOM pour intercepter l'événement du bouton d'origine
             setTimeout(function() {
                 const modalPay = document.getElementById('temp-modal-pay');
                 if (modalPay) {
+                    // Cible le bouton vert de validation d'instructions
                     const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
                     if (btnVert) {
-                        btnVert.removeAttribute('onclick'); // Nettoie le vieux comportement
+                        btnVert.removeAttribute('onclick'); // Élimine l'ancien écouteur inline instable
                         btnVert.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -3788,10 +3798,10 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                         });
                     }
                 }
-            }, 250);
+            }, 300); // Léger sursis pour garantir que le DOM est prêt
         }
     } else {
-        // --- MODE MOBILE ---
+        // --- LOGIQUE MOBILE ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
@@ -3839,7 +3849,9 @@ function gererPaiementMvolaSmart(montant, idCommande) {
     }
 }
 
-// Persistance du chargement USSD
+/**
+ * Écouteur pour la persistance du déclenchement automatique USSD (Mobile)
+ */
 window.addEventListener("load", function () {
     const trigger = sessionStorage.getItem("trigger_ussd");
     if (trigger === "1" && isMobileDevice) {
