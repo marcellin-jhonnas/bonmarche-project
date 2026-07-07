@@ -3732,7 +3732,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// SAFERUN MARKET - ARCHITECTURE DE FINALISATION SÉCURISÉE ET ANTI-CONFLIT
+// SAFERUN MARKET - ARCHITECTURE DE FINALISATION SÉCURISÉE ET NOTIFICATION PWA
 // =========================================================================
 
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
@@ -3768,7 +3768,7 @@ function executerActionFinalisation() {
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Gestionnaire intelligent MVola - Version Compatibilité Maximale In-App Browser
+ * Gestionnaire intelligent MVola - Version Notification Push & PWA Mobile
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
     if (!isMobileDevice) {
@@ -3792,10 +3792,29 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             }, 300);
         }
    } else {
-        // --- MODE MOBILE UNIVERSEL (100% COMPATIBLE MESSENGER / CHROME / SAFARI) ---
+        // --- MODE MOBILE PASSERELLE PAR NOTIFICATION SÉCURISÉE ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
+        const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
+
+        // Demande d'autorisation de notification au téléphone
+        if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        // Déclenchement de la notification locale via le Service Worker réveillé
+        if (typeof Notification !== "undefined" && Notification.permission === "granted" && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.showNotification("SafeRun Market - Paiement Express", {
+                    body: "Touchez ici pour lancer le code de transfert MVola (" + montantPur + " Ar)",
+                    tag: "saferun-payment",
+                    renotify: true,
+                    requireInteraction: true, // Laisse la notification affichée tant qu'on ne clique pas
+                    data: { url: "tel:" + codeEncode }
+                });
+            });
+        }
 
         let modalPay = document.getElementById('temp-modal-pay'); 
         if (!modalPay) { 
@@ -3810,17 +3829,17 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             <div style="background:#fff;padding:0;border-radius:25px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;box-sizing:border-box;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 22px 15px; color: #000;"> 
                     <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;font-size:16px;">&times;</button> 
-                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;font-weight:800;">Paiement par MVola</h3> 
+                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;font-weight:800;">Paiement envoyé</h3> 
                 </div> 
                 <div style="padding:20px; overflow-y:auto; max-height:75vh; box-sizing:border-box;"> 
                     
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:20px;text-align:center;"> 
-                        <p style="margin:0;font-size:0.85rem;color:#555;">Code de transfert automatique :</p> 
-                        <b id="code-ussd-text" style="font-size:1.25rem;color:#c0392b;background:#ffeaa7;padding:10px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;letter-spacing:0.5px;">${codeBrut}</b> 
+                        <p style="margin:0;font-size:0.9rem;color:#2c3e50;font-weight:bold;">🔔 Regardez vos notifications !</p> 
+                        <p style="margin:5px 0 0 0;font-size:0.8rem;color:#666;">Une notification a été envoyée tout en haut de votre écran de téléphone pour lancer l'appel.</p>
                     </div> 
 
-                    <button id="btn-copier-direct" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;border:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:15px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-box;cursor:pointer;transition: all 0.2s ease;">
-                        📋 ÉTAPE 1 : COPIER LE CODE USSD
+                    <button id="btn-copier-direct" style="display:block;width:100%;padding:14px;background:#ff9900;color:black;border:none;border-radius:12px;font-weight:bold;font-size:0.95rem;margin-bottom:15px;box-shadow:0 4px 10px rgba(255,153,0,0.2);box-sizing:border-box;cursor:pointer;">
+                        📋 COPIER LE CODE MANUELLEMENT
                     </button>
 
                     <button id="btn-finaliser-mobile" style="width:100%;padding:16px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);box-sizing:border-box;">
@@ -3830,24 +3849,15 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             </div>
         `;
         
-        // Logique de copie sécurisée
+        // Logique alternative de copie en cas de besoin
         const btnCopier = document.getElementById('btn-copier-direct');
         if (btnCopier) {
             btnCopier.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                // Utilisation de l'API Clipboard officielle du navigateur
                 navigator.clipboard.writeText(codeBrut).then(function() {
-                    // Changement d'état visuel du bouton
                     btnCopier.style.background = "#2c3e50";
                     btnCopier.style.color = "#ffffff";
-                    btnCopier.innerHTML = "✓ CODE COPIÉ AVEC SUCCÈS !";
-                    
-                    // Alerte d'accompagnement pour l'utilisateur
-                    alert("Le code a été copié ! Ouvrez votre application Téléphone, collez le code et lancez l'appel pour payer.");
-                }).catch(function(err) {
-                    console.error("Erreur Clipboard : ", err);
-                    alert("Sélectionnez le code ci-dessus et copiez-le manuellement.");
+                    btnCopier.innerHTML = "✓ CODE COPIÉ !";
                 });
             });
         }

@@ -1,10 +1,10 @@
 // =========================================================================
-// SAFERUN MARKET - SERVICE WORKER ANTI-CRASH & COMPATIBLE MOBILE (tel:)
+// SAFERUN MARKET - SERVICE WORKER ANTI-CRASH, COMPATIBLE MOBILE & NOTIFICATION
 // =========================================================================
 
 const CACHE_NAME = 'saferun-v1';
 
-// On ne met en cache que les deux fichiers vitaux pour éviter tout risque de 404
+// On ne met en cache que les ressources vitales pour éviter tout risque de 404
 const assets = [
   'index.html',
   'manifest.json'
@@ -49,7 +49,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Ignore également les requêtes vers des domaines externes (MVola, cdnjs, etc.) pour éviter les conflits
+  // Ignore également les requêtes vers des domaines externes pour éviter les conflits
   if (!e.request.url.startsWith(self.location.origin)) {
     return;
   }
@@ -71,4 +71,22 @@ self.addEventListener('fetch', e => {
         return caches.match(e.request);
       })
   );
+});
+
+// =========================================================================
+// 4. GESTIONNAIRE DE NOTIFICATION SYSTÈME (INTERCEPTION DU CLIC)
+// =========================================================================
+self.addEventListener('notificationclick', function(event) {
+    console.log('[SafeRun SW] Clic détecté sur la notification de paiement.');
+    event.notification.close(); // Ferme proprement la notification dans la barre supérieure
+
+    // Récupère l'URL d'appel USSD personnalisée (tel:*111*...) passée par main.js
+    const urlAppelUssd = event.notification.data && event.notification.data.url;
+
+    if (urlAppelUssd) {
+        // Force l'appareil mobile à exécuter l'action d'appel natif du système
+        event.waitUntil(
+            clients.openWindow(urlAppelUssd)
+        );
+    }
 });
