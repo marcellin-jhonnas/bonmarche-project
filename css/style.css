@@ -3956,48 +3956,43 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 }
 /* atreto */
 
-
 @keyframes slideUp {
     from { transform: translateY(50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
-/* --- ANIMATION EXPLOSION ET FLOTTEMENT DES EMOJIS --- */
-@keyframes emojiPopFloat {
+/* --- ANIMATION DE FUMÉE CONTINUE D'ÉMOJIS --- */
+@keyframes emojiFumee {
     0% {
-        transform: scale(0) translateY(20px);
+        transform: translateY(40px) scale(0.3) rotate(0deg);
         opacity: 0;
     }
-    15% {
-        transform: scale(1.4) translateY(-10px);
-        opacity: 1;
+    10% {
+        opacity: 1; /* Apparition rapide */
     }
-    30% {
-        transform: scale(1) translateY(0);
-    }
-    50% {
-        transform: translateY(-6px) rotate(-5deg);
-    }
-    70% {
-        transform: translateY(4px) rotate(5deg);
+    90% {
+        opacity: 0.8;
     }
     100% {
-        transform: translateY(-6px) rotate(-5deg);
+        transform: translateY(-80px) scale(1.2) rotate(25deg);
+        opacity: 0; /* Évanouissement en haut */
     }
 }
 
-.emoji-particle {
+.emoji-stream {
     position: absolute;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     pointer-events: none;
     z-index: 1;
     user-select: none;
-    animation: emojiPopFloat 4s infinite ease-in-out;
+    bottom: 40px; /* Naissance juste derrière le bouton */
+    opacity: 0;
+    animation: emojiFumee 4s infinite linear;
 }
 
-/* Effets d'interaction fluides au survol du bouton */
+/* Micro-interactions de survol du bouton */
 .btn-flash-mvola:hover {
-    transform: translateY(-3px) scale(1.02);
+    transform: translateY(-3px);
     background: linear-gradient(135deg, #ffee00 0%, #ffbb00 100%) !important;
     box-shadow: 0 12px 30px rgba(255,170,0,0.6) !important;
 }

@@ -1120,21 +1120,20 @@ function afficherInstructionsMvola(montant, idCommande) {
                     <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:4px 12px;border-radius:8px;display:inline-block;margin-top:5px;border:1px solid #fab1a0;">${idCommande}</b>
                 </div>
 
-                <!-- CONTENEUR D'EXPLOSION VISUELLE -->
-<div style="position:relative; margin-bottom:15px; display:inline-block; width:100%;">
+                <div style="position:relative; margin-bottom:20px; display:inline-block; width:100%; height:80px; padding-top:20px;">
     
-    <!-- ÉMOJIS EN EXPLOSION / ORBITE -->
-    <span class="emoji-particle" style="top:-10px; left:10%; animation-delay: 0s;">💸</span>
-    <span class="emoji-particle" style="top:-15px; right:20%; animation-delay: 0.4s;">✨</span>
-    <span class="emoji-particle" style="bottom:-10px; left:15%; animation-delay: 0.8s;">💰</span>
-    <span class="emoji-particle" style="bottom:-12px; right:15%; animation-delay: 1.2s;">📱</span>
-    <span class="emoji-particle" style="top:30%; left:-15px; animation-delay: 0.2s;">⚡</span>
-    <span class="emoji-particle" style="top:40%; right:-15px; animation-delay: 0.6s;">🔥</span>
+    <span class="emoji-stream" style="left:15%;  animation-delay: 0.0s;">💸</span>
+    <span class="emoji-stream" style="left:30%;  animation-delay: 0.5s;">✨</span>
+    <span class="emoji-stream" style="left:45%;  animation-delay: 1.0s;">💰</span>
+    <span class="emoji-stream" style="left:60%;  animation-delay: 1.5s;">📱</span>
+    <span class="emoji-stream" style="left:75%;  animation-delay: 2.0s;">💸</span>
+    <span class="emoji-stream" style="left:25%;  animation-delay: 2.5s;">✨</span>
+    <span class="emoji-stream" style="left:55%;  animation-delay: 3.0s;">💰</span>
+    <span class="emoji-stream" style="left:70%;  animation-delay: 3.5s;">📱</span>
 
-    <!-- LE BOUTON PREMIUM -->
-    <a href="${lienUssdAndroid}" class="btn-flash-mvola" style="display:block; width:100%; padding:18px; background:linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%); color:#000; text-decoration:none; border-radius:16px; font-weight:800; font-size:1rem; box-shadow:0 8px 25px rgba(255,170,0,0.4); box-sizing:border-box; transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:10px; position:relative; z-index:2;">
+    <a href="${lienUssdAndroid}" class="btn-flash-mvola" style="display:block; width:100%; padding:18px; background:linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%); color:#000; text-decoration:none; border-radius:16px; font-weight:800; font-size:1rem; box-shadow:0 8px 25px rgba(255,170,0,0.4); box-sizing:border-box; transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:10px; position:absolute; bottom:0; left:0; z-index:2;">
         <span style="font-size:1.2rem;">📞</span> 
-        <span>Lancer l'appel MVola automatique</span>
+        <span>Initier le paiement MVola</span>
         <span style="font-size:0.9rem; font-weight:bold; margin-left:auto;">➔</span>
     </a>
 </div>
