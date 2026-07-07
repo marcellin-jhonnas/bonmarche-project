@@ -3739,43 +3739,36 @@ const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navi
 
 /**
  * Fonction de finalisation absolue : neutralise les requêtes asynchrones en cours
- * pour éviter le plantage réseau (NetworkError) à la ligne 3236.
+ * pour éviter le plantage réseau (NetworkError).
  */
 function executerActionFinalisation() {
     console.log("[SafeRun Pay] Initialisation du protocole de fermeture sécurisé...");
 
-    // 1. Suppression visuelle immédiate du modal pour le confort utilisateur
     const modalPay = document.getElementById('temp-modal-pay');
     if (modalPay) {
         modalPay.remove();
     }
 
-    // 2. NEUTRALISATION RÉSEAU : Redéfinition locale de fetch pour étouffer les requêtes fantômes du chat
     window.fetch = function() {
         return new Promise(function(resolve) {
             resolve(new Response(JSON.stringify({ status: "aborted_by_safe_run" })));
         });
     };
 
-    // Stoppe les téléchargements actifs ou les requêtes d'arrière-plan résiduelles
     if (typeof window.stop === 'function') {
         window.stop();
     }
 
-    console.log("[SafeRun Pay] Redirection propre avec contournement du Service Worker...");
-
-    // 3. Forçage de la navigation directe hors du scope de sw.js
     setTimeout(function() {
         const urlNettoyee = window.location.href.split('?')[0];
         window.location.href = urlNettoyee + "?action=complete&timestamp=" + new Date().getTime();
     }, 150);
 }
 
-// Liaison globale pour sécuriser les anciens gestionnaires d'événements
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Gestionnaire intelligent MVola révisé - Version INTENT CONTOURNE BLOCAGE MOBILE
+ * Gestionnaire intelligent MVola - Version Compatibilité Maximale In-App Browser
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
     if (!isMobileDevice) {
@@ -3799,16 +3792,10 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             }, 300);
         }
    } else {
-        // --- MODE MOBILE SÉCURISÉ (UTILISE LE CONTOURNE INTERNE INTENT://) ---
+        // --- MODE MOBILE UNIVERSEL (100% COMPATIBLE MESSENGER / CHROME / SAFARI) ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
-        
-        // Encodage complet du code USSD pour l'injecter proprement dans la commande système
-        const codeEncode = encodeURIComponent(codeBrut);
-
-        // Architecture du lien d'intention Android (Hack "太空" pour tromper le filtre de Chrome Mobile)
-        const lienIntentAndroid = "intent://太空" + codeEncode + "#Intent;scheme=tel;action=android.intent.action.DIAL;end";
 
         let modalPay = document.getElementById('temp-modal-pay'); 
         if (!modalPay) { 
@@ -3819,7 +3806,6 @@ function gererPaiementMvolaSmart(montant, idCommande) {
         
         modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
 
-        // Injection du HTML mis à jour avec le lien d'intention direct
         modalPay.innerHTML = `
             <div style="background:#fff;padding:0;border-radius:25px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;box-sizing:border-box;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 22px 15px; color: #000;"> 
@@ -3829,22 +3815,44 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                 <div style="padding:20px; overflow-y:auto; max-height:75vh; box-sizing:border-box;"> 
                     
                     <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:20px;text-align:center;"> 
-                        <p style="margin:0;font-size:0.85rem;color:#555;">Code de transfert généré :</p> 
-                        <b style="font-size:1.15rem;color:#c0392b;background:#ffeaa7;padding:8px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;letter-spacing:0.5px;">${codeBrut}</b> 
+                        <p style="margin:0;font-size:0.85rem;color:#555;">Code de transfert automatique :</p> 
+                        <b id="code-ussd-text" style="font-size:1.25rem;color:#c0392b;background:#ffeaa7;padding:10px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;letter-spacing:0.5px;">${codeBrut}</b> 
                     </div> 
 
-                    <a href="${lienIntentAndroid}" id="lien-appel-ussd" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;text-decoration:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:12px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-box;text-align:center;">
-                        📞 ÉTAPE 1 : LANCER L'APPEL
-                    </a>
+                    <button id="btn-copier-direct" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;border:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:15px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-box;cursor:pointer;transition: all 0.2s ease;">
+                        📋 ÉTAPE 1 : COPIER LE CODE USSD
+                    </button>
 
                     <button id="btn-finaliser-mobile" style="width:100%;padding:16px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);box-sizing:border-box;">
-                        ✅ ÉTAPE 2 : J'AI VALIDÉ LE CODE
+                        ✅ ÉTAPE 2 : J'AI VALIDÉ LE PAIEMENT
                     </button>
                 </div> 
             </div>
         `;
         
-        // Gestion du clic de finalisation (Étape 2)
+        // Logique de copie sécurisée
+        const btnCopier = document.getElementById('btn-copier-direct');
+        if (btnCopier) {
+            btnCopier.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Utilisation de l'API Clipboard officielle du navigateur
+                navigator.clipboard.writeText(codeBrut).then(function() {
+                    // Changement d'état visuel du bouton
+                    btnCopier.style.background = "#2c3e50";
+                    btnCopier.style.color = "#ffffff";
+                    btnCopier.innerHTML = "✓ CODE COPIÉ AVEC SUCCÈS !";
+                    
+                    // Alerte d'accompagnement pour l'utilisateur
+                    alert("Le code a été copié ! Ouvrez votre application Téléphone, collez le code et lancez l'appel pour payer.");
+                }).catch(function(err) {
+                    console.error("Erreur Clipboard : ", err);
+                    alert("Sélectionnez le code ci-dessus et copiez-le manuellement.");
+                });
+            });
+        }
+
+        // Gestion du bouton de finalisation
         const btnMobile = document.getElementById('btn-finaliser-mobile');
         if (btnMobile) {
             btnMobile.addEventListener('click', function(e) {
@@ -3855,14 +3863,6 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                 } else {
                     location.reload();
                 }
-            });
-        }
-
-        // Suivi console du clic
-        const lienUssd = document.getElementById('lien-appel-ussd');
-        if (lienUssd) {
-            lienUssd.addEventListener('click', function() {
-                console.log("[SafeRun Pay] Commande d'intention système envoyée via intent://");
             });
         }
     }
