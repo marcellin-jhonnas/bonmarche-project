@@ -1,6 +1,7 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // Retrait du premier slash '/' pour utiliser un chemin relatif au dépôt
+    navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('SafeRun PWA prête !'))
       .catch(err => console.log('Erreur PWA', err));
   });
