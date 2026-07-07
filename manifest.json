@@ -7,14 +7,14 @@
   "theme_color": "#ffcc00",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192.png?text=SR",
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23ffcc00'/><text x='50%25' y='55%25' font-family='sans-serif' font-weight='bold' font-size='64' fill='black' dominant-baseline='middle' text-anchor='middle'>SR</text></svg>",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml"
     },
     {
-      "src": "https://via.placeholder.com/512x512.png?text=SafeRun",
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23ffcc00'/><text x='50%25' y='55%25' font-family='sans-serif' font-weight='bold' font-size='128' fill='black' dominant-baseline='middle' text-anchor='middle'>SafeRun</text></svg>",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml"
     }
   ]
 }
