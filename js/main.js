@@ -3775,22 +3775,20 @@ function executerActionFinalisation() {
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Point d'entrée principal pour la gestion du bouton de paiement MVola
+ * Gestionnaire intelligent MVola révisé pour contourner les blocages In-App Browser
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
     if (!isMobileDevice) {
-        // --- LOGIQUE ORDINATEUR ---
+        // --- MODE PC (Reste inchangé) ---
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, idCommande);
             
-            // Attente de l'injection du DOM pour intercepter l'événement du bouton d'origine
             setTimeout(function() {
                 const modalPay = document.getElementById('temp-modal-pay');
                 if (modalPay) {
-                    // Cible le bouton vert de validation d'instructions
                     const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
                     if (btnVert) {
-                        btnVert.removeAttribute('onclick'); // Élimine l'ancien écouteur inline instable
+                        btnVert.removeAttribute('onclick');
                         btnVert.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -3798,10 +3796,10 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                         });
                     }
                 }
-            }, 300); // Léger sursis pour garantir que le DOM est prêt
+            }, 300);
         }
     } else {
-        // --- LOGIQUE MOBILE ---
+        // --- MODE MOBILE SÉCURISÉ ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
@@ -3814,26 +3812,37 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             document.body.appendChild(modalPay); 
         } 
         
-        modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
+        modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
 
+        // Remplacement du bouton par un lien 'tel:' natif direct. 
+        // Les navigateurs ne peuvent pas bloquer un clic direct sur un lien hypertexte.
         modalPay.innerHTML = `
-            <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
-                <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;"> 
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button> 
-                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Lancement MVola...</h3> 
+            <div style="background:#fff;padding:0;border-radius:25px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;"> 
+                <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 22px 15px; color: #000;"> 
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;font-size:16px;">&times;</button> 
+                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;font-weight:800;">Paiement par MVola</h3> 
                 </div> 
                 <div style="padding:20px; overflow-y:auto; max-height:75vh;"> 
-                    <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:25px;"> 
-                        <p style="margin:0;font-size:0.85rem;color:#666;">Si l'application ne s'ouvre pas, composez :</p> 
-                        <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:6px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;">${codeBrut}</b> 
+                    
+                    <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:20px;text-align:center;"> 
+                        <p style="margin:0;font-size:0.85rem;color:#555;">Code de transfert généré :</p> 
+                        <b style="font-size:1.15rem;color:#c0392b;background:#ffeaa7;padding:8px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;letter-spacing:0.5px;">${codeBrut}</b> 
                     </div> 
-                    <button id="btn-finaliser-mobile" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3);">
-                        J'AI EFFECTUÉ LE TRANSFERT
+
+                    <!-- ÉTAPE 1 : LIEN NATIF SANS TIMEOUT -->
+                    <a href="tel:${codeEncode}" id="lien-appel-ussd" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;text-decoration:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:12px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-radius;">
+                        📞 ÉTAPE 1 : LANCER L'APPELS
+                    </a>
+
+                    <!-- ÉTAPE 2 : CONFIRMATION ET RECHARGEMENT -->
+                    <button id="btn-finaliser-mobile" style="width:100%;padding:16px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);">
+                        ✅ ÉTAPE 2 : J'AI VALIDÉ LE CODE
                     </button>
                 </div> 
             </div>
         `;
         
+        // Gestion du clic de finalisation (Étape 2)
         const btnMobile = document.getElementById('btn-finaliser-mobile');
         if (btnMobile) {
             btnMobile.addEventListener('click', function(e) {
@@ -3842,22 +3851,13 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                 executerActionFinalisation();
             });
         }
-        
-        setTimeout(function() {
-            window.location.href = "tel:" + codeEncode;
-        }, 500);
+
+        // Optionnel : Si l'utilisateur clique sur l'Étape 1, on peut aussi mémoriser l'action
+        const lienUssd = document.getElementById('lien-appel-ussd');
+        if (lienUssd) {
+            lienUssd.addEventListener('click', function() {
+                console.log("[SafeRun Pay] Lien USSD cliqué manuellement.");
+            });
+        }
     }
 }
-
-/**
- * Écouteur pour la persistance du déclenchement automatique USSD (Mobile)
- */
-window.addEventListener("load", function () {
-    const trigger = sessionStorage.getItem("trigger_ussd");
-    if (trigger === "1" && isMobileDevice) {
-        sessionStorage.removeItem("trigger_ussd");
-        const montant = sessionStorage.getItem("last_montant") || 0;
-        const code = `*111*1*2*0382453610*${Math.floor(montant)}%23`;
-        setTimeout(() => { window.location.href = "tel:" + code; }, 800);
-    }
-});
