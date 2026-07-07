@@ -3751,7 +3751,6 @@ function executerActionFinalisation() {
     }
 
     // 2. NEUTRALISATION RÉSEAU : Redéfinition locale de fetch pour étouffer les requêtes fantômes du chat
-    // Cela empêche le thread asynchrone de la ligne 3236 de lever une exception lors de la déconnexion.
     window.fetch = function() {
         return new Promise(function(resolve) {
             resolve(new Response(JSON.stringify({ status: "aborted_by_safe_run" })));
@@ -3776,7 +3775,7 @@ function executerActionFinalisation() {
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Gestionnaire intelligent MVola révisé pour contourner les blocages In-App Browser
+ * Gestionnaire intelligent MVola révisé - Version INTENT CONTOURNE BLOCAGE MOBILE
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
     if (!isMobileDevice) {
@@ -3800,11 +3799,16 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             }, 300);
         }
    } else {
-        // --- MODE MOBILE SÉCURISÉ (CONTOURNE LE BLOCAGE DE L'IN-APP BROWSER) ---
+        // --- MODE MOBILE SÉCURISÉ (UTILISE LE CONTOURNE INTERNE INTENT://) ---
         const numeroMarcellin = "0382453610";
         const montantPur = Math.floor(montant);
         const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
-        const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
+        
+        // Encodage complet du code USSD pour l'injecter proprement dans la commande système
+        const codeEncode = encodeURIComponent(codeBrut);
+
+        // Architecture du lien d'intention Android (Hack "太空" pour tromper le filtre de Chrome Mobile)
+        const lienIntentAndroid = "intent://太空" + codeEncode + "#Intent;scheme=tel;action=android.intent.action.DIAL;end";
 
         let modalPay = document.getElementById('temp-modal-pay'); 
         if (!modalPay) { 
@@ -3815,7 +3819,7 @@ function gererPaiementMvolaSmart(montant, idCommande) {
         
         modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
 
-        // Injection du HTML avec le lien hypertexte 'tel:' natif direct pour forcer l'ouverture du Dialer Android/iOS
+        // Injection du HTML mis à jour avec le lien d'intention direct
         modalPay.innerHTML = `
             <div style="background:#fff;padding:0;border-radius:25px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;box-sizing:border-box;"> 
                 <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 22px 15px; color: #000;"> 
@@ -3829,7 +3833,7 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                         <b style="font-size:1.15rem;color:#c0392b;background:#ffeaa7;padding:8px 12px;border-radius:8px;display:block;margin-top:8px;word-break:break-all;letter-spacing:0.5px;">${codeBrut}</b> 
                     </div> 
 
-                    <a href="tel:${codeEncode}" id="lien-appel-ussd" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;text-decoration:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:12px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-box;text-align:center;">
+                    <a href="${lienIntentAndroid}" id="lien-appel-ussd" style="display:block;width:100%;padding:16px;background:#ff9900;color:black;text-decoration:none;border-radius:15px;font-weight:bold;font-size:1rem;margin-bottom:12px;box-shadow:0 5px 15px rgba(255,153,0,0.3);box-sizing:border-box;text-align:center;">
                         📞 ÉTAPE 1 : LANCER L'APPEL
                     </a>
 
@@ -3849,17 +3853,16 @@ function gererPaiementMvolaSmart(montant, idCommande) {
                 if (typeof executerActionFinalisation === "function") {
                     executerActionFinalisation();
                 } else {
-                    // Sécurité si la fonction globale n'est pas accessible au même moment
                     location.reload();
                 }
             });
         }
 
-        // Suivi du clic sur l'étape 1
+        // Suivi console du clic
         const lienUssd = document.getElementById('lien-appel-ussd');
         if (lienUssd) {
             lienUssd.addEventListener('click', function() {
-                console.log("[SafeRun Pay] Lien USSD envoyé au Dialer natif.");
+                console.log("[SafeRun Pay] Commande d'intention système envoyée via intent://");
             });
         }
     }
