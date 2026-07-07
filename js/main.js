@@ -1070,11 +1070,17 @@ function afficherChoixPaiementLuxe(id, montant) {
     };
 }
 
-// Fonction pour l'option MVola (On garde ton ancienne logique de facture)
 function afficherInstructionsMvola(montant, idCommande) {
     const quartier = localStorage.getItem('saferun_quartier') || "Non précisé";
-    const infoLivraison = calculerLivraison(); 
+    const infoLivraison = calculerLivraison();
     const numeroMarcellin = "038 24 536 10";
+    
+    // Formatage du numéro et du montant pour le code USSD (sans espaces ni virgules)
+    const numeroPur = "0382453610";
+    const montantPur = Math.floor(montant);
+    
+    // Construction du lien USSD parfait pour Android (avec %23 à la place du #)
+    const lienUssdAndroid = `tel:*111*1*2*${numeroPur}*${montantPur}%23`;
 
     let modalPay = document.getElementById('temp-modal-pay');
     if (!modalPay) {
@@ -1082,25 +1088,25 @@ function afficherInstructionsMvola(montant, idCommande) {
         modalPay.id = 'temp-modal-pay';
         document.body.appendChild(modalPay);
     }
-
+    
     modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);";
     
     modalPay.innerHTML = `
-        <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;animation: slideUp 0.3s ease-out;">
+        <div style="background:#fff;padding:0;border-radius:30px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;animation: slideUp 0.3s ease-out;box-sizing:border-box;">
             
             <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 25px 15px; color: #000;">
                 <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;">&times;</button>
                 <img src="https://www.mvola.mg/wp-content/uploads/2021/03/Logo-MVola.png" style="height:40px;margin-bottom:10px;" alt="MVola">
                 <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;">Instructions de Paiement</h3>
             </div>
-
-            <div style="padding:20px; overflow-y:auto; max-height:75vh;">
+            
+            <div style="padding:20px; overflow-y:auto; max-height:75vh; box-sizing:border-box;">
                 
                 <div style="display:flex;justify-content:space-between;background:#f8f9fa;padding:12px;border-radius:15px;margin-bottom:20px;font-size:0.85rem;border:1px solid #eee;">
                     <span>📍 <b>${quartier}</b></span>
                     <span>📅 <b>${infoLivraison}</b></span>
                 </div>
-
+                
                 <div style="background:#fffdf0;padding:20px;border-radius:20px;border:2px solid #ffcc00;margin-bottom:20px; position:relative;">
                     <p style="margin:0;font-size:0.9rem;color:#666;">Montant exact à envoyer :</p>
                     <h2 style="margin:5px 0;color:#d35400;font-size:1.8rem;">${montant.toLocaleString()} Ar</h2>
@@ -1109,11 +1115,15 @@ function afficherInstructionsMvola(montant, idCommande) {
                         <p style="margin:0 0 5px 0;font-size:0.8rem;color:#7f8c8d;">Numéro MVola (Marcellin) :</p>
                         <b style="font-size:1.3rem;color:#2c3e50;letter-spacing:1px;">${numeroMarcellin}</b>
                     </div>
-
+                    
                     <p style="margin:0;font-size:0.8rem;color:#7f8c8d;">Référence obligatoire :</p>
                     <b style="font-size:1.1rem;color:#c0392b;background:#ffeaa7;padding:4px 12px;border-radius:8px;display:inline-block;margin-top:5px;border:1px solid #fab1a0;">${idCommande}</b>
                 </div>
 
+                <a href="${lienUssdAndroid}" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%);color:black;text-decoration:none;border-radius:15px;font-weight:800;font-size:1rem;margin-bottom:15px;box-shadow:0 8px 20px rgba(255,170,0,0.3);box-sizing:border-box;transition:0.3s;text-transform:uppercase;letter-spacing:0.5px;">
+                    📞 Lancer l'appel MVola automatique
+                </a>
+                
                 <div style="background:#e3f2fd; padding:15px; border-radius:18px; margin-bottom:20px; border-left:5px solid #2196f3; text-align:left;">
                     <div style="display:flex; align-items:center;">
                         <span style="font-size:1.5rem; margin-right:12px;">📸</span>
@@ -1123,7 +1133,7 @@ function afficherInstructionsMvola(montant, idCommande) {
                         </div>
                     </div>
                 </div>
-
+                
                 <div style="text-align:left; padding:0 10px; margin-bottom:25px;">
                     <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
                         <div style="background:#27ae60;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:0.7rem;">✓</div>
@@ -1134,15 +1144,14 @@ function afficherInstructionsMvola(montant, idCommande) {
                         <p style="margin:0;font-size:0.8rem;color:#444;">Suivi en temps réel sur votre <b>Espace Client</b>.</p>
                     </div>
                 </div>
-
-                <button onclick="window.finaliserClientOrdinateur ? window.finaliserClientOrdinateur() : window.location.reload()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;">
-    J'AI EFFECTUÉ LE TRANSFERT
-</button>
+                
+                <button onclick="window.location.reload()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;text-transform:uppercase;">
+                    J'AI EFFECTUÉ LE TRANSFERT
+                </button>
                 
                 <p style="margin-top:15px; font-size:0.75rem; color:#95a5a6;">SafeRun Market - Livraison sécurisée</p>
             </div>
         </div>
-        
         <style>
             @keyframes slideUp {
                 from { transform: translateY(50px); opacity: 0; }
@@ -3730,9 +3739,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
 // =========================================================================
-// SAFERUN MARKET - ARCHITECTURE DE FINALISATION SÉCURISÉE ET NOTIFICATION PWA
+// SAFERUN MARKET - ARCHITECTURE DE FINALISATION SÉCURISÉE ET ROUTAGE MVOLA
 // =========================================================================
 
 const isMobileDevice = /Mobi|Android|iPhone|iPad|IEMobile|BlackBerry/i.test(navigator.userAgent);
@@ -3768,112 +3776,31 @@ function executerActionFinalisation() {
 window.finaliserClientOrdinateur = executerActionFinalisation;
 
 /**
- * Gestionnaire intelligent MVola - Version Notification Push & PWA Mobile
+ * Gestionnaire intelligent MVola - Routeur unique Ordinateur et Mobile
+ * Appelle ta fonction d'affichage principale et branche la finalisation sécurisée.
  */
 function gererPaiementMvolaSmart(montant, idCommande) {
-    if (!isMobileDevice) {
-        // --- MODE PC (Reste inchangé) ---
-        if (typeof afficherInstructionsMvola === "function") {
-            afficherInstructionsMvola(montant, idCommande);
-            
-            setTimeout(function() {
-                const modalPay = document.getElementById('temp-modal-pay');
-                if (modalPay) {
-                    const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
-                    if (btnVert) {
-                        btnVert.removeAttribute('onclick');
-                        btnVert.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            executerActionFinalisation();
-                        });
-                    }
-                }
-            }, 300);
-        }
-   } else {
-        // --- MODE MOBILE PASSERELLE PAR NOTIFICATION SÉCURISÉE ---
-        const numeroMarcellin = "0382453610";
-        const montantPur = Math.floor(montant);
-        const codeBrut = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "#";
-        const codeEncode = "*111*1*2*" + numeroMarcellin + "*" + montantPur + "%23";
-
-        // Demande d'autorisation de notification au téléphone
-        if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-
-        // Déclenchement de la notification locale via le Service Worker réveillé
-        if (typeof Notification !== "undefined" && Notification.permission === "granted" && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(function(registration) {
-                registration.showNotification("SafeRun Market - Paiement Express", {
-                    body: "Touchez ici pour lancer le code de transfert MVola (" + montantPur + " Ar)",
-                    tag: "saferun-payment",
-                    renotify: true,
-                    requireInteraction: true, // Laisse la notification affichée tant qu'on ne clique pas
-                    data: { url: "tel:" + codeEncode }
-                });
-            });
-        }
-
-        let modalPay = document.getElementById('temp-modal-pay'); 
-        if (!modalPay) { 
-            modalPay = document.createElement('div'); 
-            modalPay.id = 'temp-modal-pay'; 
-            document.body.appendChild(modalPay); 
-        } 
-        
-        modalPay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,sans-serif;padding:15px;backdrop-filter:blur(8px);"; 
-
-        modalPay.innerHTML = `
-            <div style="background:#fff;padding:0;border-radius:25px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;box-sizing:border-box;"> 
-                <div style="background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%); padding: 22px 15px; color: #000;"> 
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="position:absolute;top:15px;right:15px;border:none;background:rgba(255,255,255,0.3);width:30px;height:30px;border-radius:50%;cursor:pointer;font-weight:bold;font-size:16px;">&times;</button> 
-                    <h3 style="margin:0;text-transform:uppercase;letter-spacing:1px;font-size:1.1rem;font-weight:800;">Paiement envoyé</h3> 
-                </div> 
-                <div style="padding:20px; overflow-y:auto; max-height:75vh; box-sizing:border-box;"> 
-                    
-                    <div style="background:#fffdf0;padding:15px;border-radius:20px;border:1px solid #ffcc00;margin-bottom:20px;text-align:center;"> 
-                        <p style="margin:0;font-size:0.9rem;color:#2c3e50;font-weight:bold;">🔔 Regardez vos notifications !</p> 
-                        <p style="margin:5px 0 0 0;font-size:0.8rem;color:#666;">Une notification a été envoyée tout en haut de votre écran de téléphone pour lancer l'appel.</p>
-                    </div> 
-
-                    <button id="btn-copier-direct" style="display:block;width:100%;padding:14px;background:#ff9900;color:black;border:none;border-radius:12px;font-weight:bold;font-size:0.95rem;margin-bottom:15px;box-shadow:0 4px 10px rgba(255,153,0,0.2);box-sizing:border-box;cursor:pointer;">
-                        📋 COPIER LE CODE MANUELLEMENT
-                    </button>
-
-                    <button id="btn-finaliser-mobile" style="width:100%;padding:16px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 5px 15px rgba(39,174,96,0.3);box-sizing:border-box;">
-                        ✅ ÉTAPE 2 : J'AI VALIDÉ LE PAIEMENT
-                    </button>
-                </div> 
-            </div>
-        `;
-        
-        // Logique alternative de copie en cas de besoin
-        const btnCopier = document.getElementById('btn-copier-direct');
-        if (btnCopier) {
-            btnCopier.addEventListener('click', function(e) {
-                e.preventDefault();
-                navigator.clipboard.writeText(codeBrut).then(function() {
-                    btnCopier.style.background = "#2c3e50";
-                    btnCopier.style.color = "#ffffff";
-                    btnCopier.innerHTML = "✓ CODE COPIÉ !";
-                });
-            });
-        }
-
-        // Gestion du bouton de finalisation
-        const btnMobile = document.getElementById('btn-finaliser-mobile');
-        if (btnMobile) {
-            btnMobile.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (typeof executerActionFinalisation === "function") {
-                    executerActionFinalisation();
-                } else {
-                    location.reload();
-                }
-            });
-        }
+    // 1. On affiche le grand modal principal (le design attractif avec ou sans bouton d'appel)
+    if (typeof afficherInstructionsMvola === "function") {
+        afficherInstructionsMvola(montant, idCommande);
     }
+
+    // 2. On intercepte le bouton vert final pour appliquer le protocole de finalisation sécurisée SafeRun
+    setTimeout(function() {
+        const modalPay = document.getElementById('temp-modal-pay');
+        if (modalPay) {
+            // On cherche le bouton vert de confirmation (qu'on soit sur PC ou Mobile)
+            const btnVert = modalPay.querySelector('button[style*="background:#27ae60"]') || modalPay.querySelector('button:last-of-type');
+            if (btnVert) {
+                // On retire l'ancien onclick="window.location.reload()" pour mettre notre fermeture sécurisée
+                btnVert.removeAttribute('onclick'); 
+                
+                btnVert.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    executerActionFinalisation(); // Fermeture propre sans NetworkError
+                });
+            }
+        }
+    }, 300); // Petit délai pour laisser le temps au DOM de générer le modal
 }

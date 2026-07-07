@@ -72,21 +72,3 @@ self.addEventListener('fetch', e => {
       })
   );
 });
-
-// =========================================================================
-// 4. GESTIONNAIRE DE NOTIFICATION SYSTÈME (INTERCEPTION DU CLIC)
-// =========================================================================
-self.addEventListener('notificationclick', function(event) {
-    console.log('[SafeRun SW] Clic détecté sur la notification de paiement.');
-    event.notification.close(); // Ferme proprement la notification dans la barre supérieure
-
-    // Récupère l'URL d'appel USSD personnalisée (tel:*111*...) passée par main.js
-    const urlAppelUssd = event.notification.data && event.notification.data.url;
-
-    if (urlAppelUssd) {
-        // Force l'appareil mobile à exécuter l'action d'appel natif du système
-        event.waitUntil(
-            clients.openWindow(urlAppelUssd)
-        );
-    }
-});
