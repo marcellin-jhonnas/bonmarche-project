@@ -2736,14 +2736,14 @@ function ouvrirZoomProduit(nom, prix, image, description) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'modal-zoom-produit';
-        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:15px;";
+        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000000;display:flex;align-items:flex-start;justify-content:center;backdrop-filter:blur(8px);padding:15px;overflow-y:auto;";
         document.body.appendChild(modal);
     }
 
     const nomEchappe = nom.replace(/'/g, "\\'");
     modal.style.display = "flex";
     modal.innerHTML = `
-    <div style="background:white;width:100%;max-width:400px;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);animation: zoomIn 0.3s ease;">
+    <div style="background:white;width:100%;max-width:400px;border-radius:30px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);animation: zoomIn 0.3s ease; margin: auto 0;">
         <button onclick="this.parentElement.parentElement.style.display='none'"
                 style="position:absolute;top:15px;right:15px;border:none;background:rgba(0,0,0,0.5);color:white;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:20px;z-index:10;">&times;</button>
         
