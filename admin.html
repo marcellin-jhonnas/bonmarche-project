@@ -674,9 +674,22 @@
         <div class="card" style="background: #fff7ed; border-left: 5px solid #f97316; padding: 20px; margin-bottom: 20px;">
             <h3 style="margin:0 0 10px 0; color: #c2410c;">1. Analyse du Stock à sortir</h3>
             <p style="font-size: 14px; color: #9a3412;">Cliquez pour calculer le total des produits et le montant grossiste.</p>
-            <button onclick="genererAnalyseStock()" style="background: #f97316; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
-                <i class="fas fa-sync-alt"></i> CALCULER LES TOTAUX
-            </button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+    <!-- Bouton pour charger TOUT le stock du jour -->
+    <button onclick="genererAnalyseStock('AUJOURDHUI', 'TOUS')" style="background: #f97316; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <i class="fas fa-boxes"></i> TOUT LE STOCK DU JOUR
+    </button>
+    
+    <!-- Bouton pour charger uniquement le Matin -->
+    <button onclick="genererAnalyseStock('AUJOURDHUI', 'MATIN')" style="background: #ea580c; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <i class="fas fa-sun"></i> Matin Uniquement
+    </button>
+    
+    <!-- Bouton pour charger uniquement l'Après-midi -->
+    <button onclick="genererAnalyseStock('AUJOURDHUI', 'MIDI')" style="background: #c2410c; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <i class="fas fa-moon"></i> Après-midi Uniquement
+    </button>
+</div>
             <div id="finance-grossiste" style="display:none; background: #f0fdf4; border-left: 5px solid #22c55e; padding: 15px; margin-top: 15px; border-radius: 8px;">
                 <div style="color: #166534; font-size: 12px; font-weight: bold; text-transform: uppercase;">Total à payer au Grossiste</div>
                 <div id="montant-grossiste-total" style="font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 5px;">0 Ar</div>
@@ -2352,13 +2365,19 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
                 return; 
             }
 
-            // Étape B : Vérification de la vague (Matin / Midi)
-            let vagueDetectee = 'MIDI';
-            if (texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
-                vagueDetectee = 'MATIN';
-            } else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-8]:/.test(texteLivraison)) {
-                vagueDetectee = 'MIDI';
-            }
+            // Étape B : Vérification de la vague (Matin / Midi / Tous)
+let vagueDetectee = 'MIDI';
+if (texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)) {
+    vagueDetectee = 'MATIN';
+} else if (texteLivraison.includes("midi") || texteLivraison.includes("après") || texteLivraison.includes("apres") || /à\s*1[2-8]:/.test(texteLivraison)) {
+    vagueDetectee = 'MIDI';
+}
+
+// MODIFICATION : On ignore le filtre si cibleVague est 'TOUS' ou 'TOUTE_JOURNEE'
+if (cibleVague !== 'TOUS' && cibleVague !== 'TOUTE_JOURNEE' && vagueDetectee !== cibleVague) {
+    console.log(`⏳ Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé en [${vagueDetectee}] mais vous avez demandé [${cibleVague}] (Texte: "${c.Livraison}")`);
+    return; 
+}
 
             if (vagueDetectee !== cibleVague) {
                 console.log(`⏳ Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé en [${vagueDetectee}] mais vous avez demandé [${cibleVague}] (Texte: "${c.Livraison}")`);
@@ -2416,7 +2435,7 @@ function genererAnalyseStock(cibleJour = 'AUJOURDHUI', cibleVague = 'MATIN') {
     } else {
         panelResultat.style.display = 'none';
         panelFinance.style.display = 'none';
-        alert("Aucune commande SÉRIEUX ou PLANIFIÉ n'a été trouvée pour aujourd'hui.");
+        alert(`Aucune commande SÉRIEUX ou PLANIFIÉ n'a été trouvée pour ${cibleJour} (${cibleVague}).`);
     }
 }
 
