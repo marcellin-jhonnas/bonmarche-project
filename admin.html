@@ -2538,7 +2538,7 @@ async function genererEtiquettesColis() {
 
     // Récupération sécurisée du choix de l'onglet actif (Aujourd'hui par défaut, Matin par défaut)
     const cibleJour = window.currentCibleJour || 'AUJOURDHUI'; 
-    const cibleVague = window.currentCibleVague || 'MATIN';
+    const cibleVague = window.currentCibleVague || 'TOUS';
 
     console.log(`=== DEBUT DIAGNOSTIC ETIQUETTES [${cibleJour} - ${cibleVague}] ===`);
     console.log(`Recherche numérique Aujourd'hui : "${texteAujourdhui}" | Demain : "${texteDemain}"`);
@@ -2576,10 +2576,10 @@ async function genererEtiquettesColis() {
                 vagueDetectee = 'MIDI';
             }
 
-            if (vagueDetectee !== cibleVague) {
-                console.log(`⏳ Étiquette Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé [${vagueDetectee}] au lieu de [${cibleVague}]`);
-                return false;
-            }
+            if (cibleVague !== 'TOUS' && vagueDetectee !== cibleVague) {
+    console.log(`⏳ Étiquette Ligne #${index + 2} [REJETÉ VAGUE] - Client: ${c.Client || 'Inconnu'} | Classé [${vagueDetectee}] au lieu de [${cibleVague}]`);
+    return false;
+}
 
             // Si validé
             totalLignesFiltrees++;
