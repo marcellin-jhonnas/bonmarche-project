@@ -3828,7 +3828,8 @@ const filigranes = [
     "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000", // Page 2
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000", // Page 3
     "https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=1000", // Page 4
-    "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000"  // Page 5
+    "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000", // Page 5
+    "https://res.cloudinary.com/dweulioyy/image/upload/v1785336722/a62b142f-f178-4570-9c23-7d51d372848b_wqtng6.png"
 ];
 
 function mettreAJourFiligrane(numeroPage) {
