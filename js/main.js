@@ -3831,21 +3831,53 @@ const filigranes = [
     "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000"  // Page 5
 ];
 
-// Fonction sécurisée
 function mettreAJourFiligrane(numeroPage) {
-    const elWatermark = document.getElementById('watermark-bg');
+    console.group(`🔍 [Filigrane] Exécution pour la Page ${numeroPage}`);
     
-    // Si l'élément n'est pas encore prêt, on ne plante pas le script
-    if (!elWatermark) {
-        console.warn("⚠️ Filigrane : #watermark-bg introuvable pour l'instant.");
+    let elWatermark = document.getElementById('watermark-bg');
+    const mainBoutique = document.getElementById('boutique');
+
+    // 1. Diagnostic de l'élément parent
+    if (!mainBoutique) {
+        console.error("❌ ERREUR CRITIQUE : Le conteneur <main id='boutique'> est introuvable dans le DOM !");
+        console.groupEnd();
         return;
     }
 
-    const indexImage = (numeroPage - 1) % filigranes.length;
-    elWatermark.style.backgroundImage = `url('${filigranes[indexImage]}')`;
-}
+    // 2. Si la div filigrane a été effacée par du JS, on la re-crée automatiquement !
+    if (!elWatermark) {
+        console.warn("⚠️ #watermark-bg était absent (probablement effacé par un innerHTML = ''). Création automatique...");
+        
+        elWatermark = document.createElement('div');
+        elWatermark.id = 'watermark-bg';
+        
+        // On l'injecte tout en haut de <main id="boutique">
+        mainBoutique.insertBefore(elWatermark, mainBoutique.firstChild);
+        console.log("✅ Div #watermark-bg injectée avec succès dans <main id='boutique'>");
+    } else {
+        console.log("✅ Div #watermark-bg déjà présente dans le DOM.");
+    }
 
-// Appeler le filigrane uniquement quand le HTML est complètement prêt au démarrage
-document.addEventListener("DOMContentLoaded", () => {
-    mettreAJourFiligrane(1);
-});
+    // 3. Calcul de l'image
+    const indexImage = (numeroPage - 1) % filigranes.length;
+    const urlImage = filigranes[indexImage];
+    console.log(`🖼️ Application de l'image (Index ${indexImage}) :`, urlImage);
+
+    // 4. Application du fond
+    elWatermark.style.backgroundImage = `url('${urlImage}')`;
+
+    // 5. Vérification du style final appliqué
+    const styleApplique = window.getComputedStyle(elWatermark);
+    console.log("📐 Informations de rendu :");
+    console.log("   - Hauteur du parent (#boutique) :", mainBoutique.offsetHeight + "px");
+    console.log("   - Hauteur du filigrane :", elWatermark.offsetHeight + "px");
+    console.log("   - Position :", styleApplique.position);
+    console.log("   - Opacité :", styleApplique.opacity);
+    console.log("   - z-index :", styleApplique.zIndex);
+
+    if (elWatermark.offsetHeight === 0) {
+        console.warn("⚠️ ATTENTION : La hauteur du filigrane est de 0px ! Vérifie que le CSS contient well 'position: absolute' et 'height: 100%' sur #watermark-bg, et 'position: relative' sur #boutique.");
+    }
+
+    console.groupEnd();
+}
