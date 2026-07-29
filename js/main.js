@@ -3831,12 +3831,39 @@ const filigranes = [
     "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000"  // Page 5
 ];
 
-// Fonction pour changer l'arrière-plan
 function mettreAJourFiligrane(numeroPage) {
+    console.group("🔍 Diagnostic Filigrane");
+    
+    // 1. Vérification de l'élément HTML
     const elWatermark = document.getElementById('watermark-bg');
-    if (!elWatermark) return;
+    console.log("1. Elément #watermark-bg trouvé dans le DOM ?", elWatermark);
 
-    // Calcul de l'index pour tourner en boucle si plus de 5 pages
+    if (!elWatermark) {
+        console.error("❌ ÉCHEC : La div #watermark-bg n'existe pas dans la page !");
+        console.groupEnd();
+        return;
+    }
+
+    // 2. Vérification de l'URL calculée
     const indexImage = (numeroPage - 1) % filigranes.length;
-    elWatermark.style.backgroundImage = `url('${filigranes[indexImage]}')`;
+    const urlImage = filigranes[indexImage];
+    console.log(`2. Page ${numeroPage} -> Index ${indexImage} -> URL :`, urlImage);
+
+    // 3. Application du style
+    elWatermark.style.backgroundImage = `url('${urlImage}')`;
+    
+    // 4. Inspecter les propriétés CSS appliquées et réelles
+    const styleCalcule = window.getComputedStyle(elWatermark);
+    console.log("3. Opacité actuelle :", styleCalcule.opacity);
+    console.log("4. z-index actuel :", styleCalcule.zIndex);
+    console.log("5. Dimensions réelles (L x H) :", elWatermark.offsetWidth + "px x " + elWatermark.offsetHeight + "px");
+    console.log("6. Position :", styleCalcule.position);
+
+    // 5. Test visuel forcé temporaire (Rouge semi-transparent)
+    // Desactive le fond image si l'opacité CSS masque tout
+    if (styleCalcule.opacity === "0" || styleCalcule.display === "none") {
+        console.warn("⚠️ ATTENTION : L'élément est masqué par le CSS (opacity: 0 ou display: none) !");
+    }
+
+    console.groupEnd();
 }
