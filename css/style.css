@@ -4025,7 +4025,7 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     height: 100%;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.12; /* Ajuste l'opacité selon la visibilité voulue */
+    opacity: 0.25; /* Ajuste l'opacité selon la visibilité voulue */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
