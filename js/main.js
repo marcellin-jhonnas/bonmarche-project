@@ -168,7 +168,7 @@ function rendreProduits(liste) {
         creerBarrePagination(produitsMarche.length);
     }
     if (typeof mettreAJourFiligrane === "function") {
-        mettreAJourFiligrane(1);
+        mettreAJourFiligrane(pageActuelle);
     }
 }
 
