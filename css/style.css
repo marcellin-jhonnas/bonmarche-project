@@ -4001,3 +4001,34 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     transform: translateY(1px) scale(0.99);
     box-shadow: 0 4px 10px rgba(255,170,0,0.3) !important;
 }
+
+/* ETO NO MIALA RAHA SENDRA MAFY NY ADY EH 2TIMOTY 1:4 */
+/* --- GESTION DU FILIGRANE DYNAMIQUE --- */
+
+#boutique {
+    position: relative; /* Essential pour positionner le filigrane */
+    overflow: hidden;
+    min-height: 400px;
+}
+
+#watermark-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none; /* Ne gêne aucun clic sur les cartes */
+    opacity: 0.08; /* Opacité réglable (0.05 très discret / 0.12 plus marqué) */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease-in-out; /* Effet de transition fluide */
+}
+
+/* On force la grille et la pagination à rester au-dessus du filigrane */
+#grille-produits-reelle, 
+#pagination-container {
+    position: relative;
+    z-index: 1;
+}

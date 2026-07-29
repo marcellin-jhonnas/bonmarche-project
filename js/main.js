@@ -167,6 +167,9 @@ function rendreProduits(liste) {
     if (typeof creerBarrePagination === "function") {
         creerBarrePagination(produitsMarche.length);
     }
+    if (typeof mettreAJourFiligrane === "function") {
+        mettreAJourFiligrane(1);
+    }
 }
 
 // --- INITIALISATION SAFERUN MARKET ---
@@ -499,6 +502,7 @@ function creerBarrePagination(total) {
 function allerPage(num) {
     pageActuelle = num;
     // On rappelle la fonction avec la liste globale (tousLesProduits)
+    mettreAJourFiligrane(num);
     rendreProduits(tousLesProduits); 
     // Remonter en haut de la liste "Tout le Marché" proprement
     document.getElementById('boutique').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3817,4 +3821,22 @@ function gererPaiementMvolaSmart(montant, idCommande) {
             }
         }
     }, 300); // Petit délai pour laisser le temps au DOM de générer le modal
+}
+// Liste des images de filigrane
+const filigranes = [
+    "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1000", // Page 1
+    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000", // Page 2
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000", // Page 3
+    "https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=1000", // Page 4
+    "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000"  // Page 5
+];
+
+// Fonction pour changer l'arrière-plan
+function mettreAJourFiligrane(numeroPage) {
+    const elWatermark = document.getElementById('watermark-bg');
+    if (!elWatermark) return;
+
+    // Calcul de l'index pour tourner en boucle si plus de 5 pages
+    const indexImage = (numeroPage - 1) % filigranes.length;
+    elWatermark.style.backgroundImage = `url('${filigranes[indexImage]}')`;
 }
