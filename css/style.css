@@ -4005,30 +4005,35 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 /* ETO NO MIALA RAHA SENDRA MAFY NY ADY EH 2TIMOTY 1:4 */
 /* --- GESTION DU FILIGRANE DYNAMIQUE --- */
 
+/* 1. Forcer le conteneur à occuper l'espace de ses enfants */
 #boutique {
-    position: relative; /* Essential pour positionner le filigrane */
+    position: relative;
+    display: block; /* S'assure que le bloc englobe la grille */
+    width: 100%;
+    min-height: 500px; /* Sécurité pour que le filigrane ait une hauteur minimale */
     overflow: hidden;
-    min-height: 400px;
 }
 
+/* 2. Filigrane calé sur toute la surface de #boutique */
 #watermark-bg {
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
     z-index: 0;
-    pointer-events: none; /* Ne gêne aucun clic sur les cartes */
-    opacity: 0.08; /* Opacité réglable (0.05 très discret / 0.12 plus marqué) */
+    pointer-events: none;
+    opacity: 0.12; /* Ajuste l'opacité selon la visibilité voulue */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: background-image 0.5s ease-in-out; /* Effet de transition fluide */
+    transition: background-image 0.5s ease-in-out;
 }
 
-/* On force la grille et la pagination à rester au-dessus du filigrane */
-#grille-produits-reelle, 
-#pagination-container {
+/* 3. La grille s'affiche au-dessus */
+#grille-produits-reelle {
     position: relative;
     z-index: 1;
 }
