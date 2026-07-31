@@ -4037,3 +4037,82 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     position: relative;
     z-index: 1;
 }
+
+/* =========================================================
+   1. CONTENEUR PPN : Ultra-fluide avec Scroll Snap & Masque
+   ========================================================= */
+#boutique-ppn.ppn-scroll-container {
+  display: flex !important;
+  gap: 16px !important;
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-behavior: smooth !important;
+  padding: 12px 4px 20px 4px !important;
+  
+  /* Masque en dégradé sur les côtés pour suggérer le défilement */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  
+  /* Cache la barre de défilement tout en gardant la fonction */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+#boutique-ppn.ppn-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* =========================================================
+   2. SKELETON LOADERS : Effet "Shimmer" Lumineux Haut de Gamme
+   ========================================================= */
+.skeleton-horizontal {
+  flex: 0 0 220px !important; /* Largeur d'une carte sur mobile */
+  height: 280px !important;   /* Hauteur ajustée au format carte */
+  border-radius: 16px !important;
+  scroll-snap-align: center !important;
+  
+  /* Arrière-plan animé en dégradé */
+  background: linear-gradient(
+    90deg, 
+    #f0f2f5 0%, 
+    #e6e9ef 20%, 
+    #f8f9fa 40%, 
+    #f0f2f5 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.6s infinite linear !important;
+  
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Animation du balayage de lumière */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* =========================================================
+   3. CARTES PRODUITS REELLES (Une fois le chargement fini)
+   ========================================================= */
+#boutique-ppn .product-card,
+#boutique-ppn .carte-produit {
+  flex: 0 0 220px !important;
+  scroll-snap-align: center !important;
+  border-radius: 16px !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              box-shadow 0.3s ease !important;
+}
+
+/* Effet de survol / d'interaction moderne sur la carte */
+@media (hover: hover) {
+  #boutique-ppn .product-card:hover,
+  #boutique-ppn .carte-produit:hover {
+    transform: translateY(-6px) scale(1.02) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.09) !important;
+  }
+}
