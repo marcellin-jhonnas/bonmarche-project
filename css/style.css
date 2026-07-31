@@ -4116,3 +4116,24 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.09) !important;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  #boutique-ppn .skeleton-horizontal {
+    background: linear-gradient(
+      90deg, 
+      #1e293b 0%, 
+      #334155 20%, 
+      #0f172a 40%, 
+      #1e293b 100%
+    ) !important;
+    background-size: 200% 100% !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #boutique-ppn .skeleton-horizontal {
+    animation: none !important;
+    background: #e2e8f0 !important;
+  }
+}
