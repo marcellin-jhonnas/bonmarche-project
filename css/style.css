@@ -4293,3 +4293,168 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     transform: scale(1.15); /* Niveau de zoom élégant à 115% */
   }
 }
+/* ==========================================================================
+   DESIGN ULTRA-PRO, ATTRAYANT & RESPONSIVE : BOUTIQUE & ANNONCES
+   ========================================================================== */
+
+/* 1. CONTENEUR PRINCIPAL (Version Ordinateur) */
+.shop-layout-container {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 24px !important;
+  padding: 24px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  background-color: #f8fafc !important;
+  border-radius: 24px !important;
+}
+
+.shop-layout-container > div:last-child {
+  flex: 1 !important;
+  min-width: 280px !important;
+  position: sticky !important;
+  top: 20px !important;
+}
+
+/* 2. BANNIÈRE D'ANNONCE (Design Premium avec Effet de Lumière) */
+.annonce-banner {
+  width: 100% !important;
+  height: 170px !important;
+  background: radial-gradient(circle at 80% 20%, rgba(255, 204, 0, 0.15) 0%, transparent 50%),
+              linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%) !important;
+  margin-bottom: 20px !important;
+  border-radius: 20px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease !important;
+}
+
+.annonce-banner:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Slides & Typographie Soignée */
+.slide {
+  position: absolute !important;
+  inset: 0 !important;
+  padding: 20px 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out !important;
+  box-sizing: border-box !important;
+}
+
+.slide.active {
+  opacity: 1 !important;
+  z-index: 2 !important;
+}
+
+/* Titres avec Gradient Text Pro */
+.slide-content h2, 
+.slide-content h3 {
+  margin: 0 0 6px 0 !important;
+  width: 100% !important;
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  background: linear-gradient(90deg, #ffffff 0%, #e2e8f0 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.slide-content p {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.4 !important;
+  width: 100% !important;
+  color: #94a3b8 !important;
+}
+
+.slide-content img:not(.promo-slide img) {
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 110px !important;
+  max-height: 75px !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+  display: block !important;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35)) !important;
+}
+
+/* 3. ADAPTATION RESPONSIVE MOBILE (< 768px) */
+@media (max-width: 768px) {
+  .shop-layout-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    gap: 16px !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .shop-layout-container > div:first-child,
+  .shop-layout-container > div[style*="flex: 3"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .shop-layout-container > div:last-child {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    position: static !important;
+    margin-top: 10px !important;
+  }
+
+  .annonce-banner {
+    height: 150px !important;
+    border-radius: 16px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .slide {
+    padding: 14px 16px !important;
+  }
+
+  .slide-content h2, 
+  .slide-content h3 {
+    font-size: 0.95rem !important;
+  }
+
+  .slide-content p {
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .slide-content img:not(.promo-slide img) {
+    max-width: 75px !important;
+    max-height: 55px !important;
+  }
+
+  /* Zoom Fluide Progressif Mobile */
+  .slide.active img {
+    animation: srMobileZoom 6s ease-in-out infinite alternate !important;
+    transform-origin: center center !important;
+  }
+}
+
+/* Keyframes Zoom */
+@keyframes srMobileZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
