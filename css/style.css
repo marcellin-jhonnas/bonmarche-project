@@ -4137,3 +4137,138 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     background: #e2e8f0 !important;
   }
 }
+
+/* ==========================================================================
+   OPTIMISATION VISUELLE & RESPONSIVE (AJOUT EN BAS DE FICHIER)
+   ========================================================================== */
+
+/* 1. CONTENEUR PRINCIPAL (Version Ordinateur - Modernisé) */
+.shop-layout-container {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 24px !important;
+  padding: 24px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  background-color: #f8fafc !important;
+  border-radius: 24px !important;
+}
+
+/* Positionnement sticky de la colonne de droite sur PC */
+.shop-layout-container > div:last-child {
+  flex: 1 !important;
+  min-width: 280px !important;
+  position: sticky !important;
+  top: 20px !important;
+}
+
+/* 2. STYLE AMÉLIORÉ DE LA BANNIÈRE D'ANNONCE */
+.annonce-banner {
+  width: 100% !important;
+  height: 160px !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  margin-bottom: 20px !important;
+  border-radius: 20px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease !important;
+}
+
+.annonce-banner:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Ajustement des Titres avec correction du linter (background-clip) */
+.slide-content h2, 
+.slide-content h3 {
+  margin: 0 0 6px 0 !important;
+  width: 100% !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  background: linear-gradient(90deg, #ffffff, #cbd5e1) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.slide-content p {
+  margin: 0 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+  width: 100% !important;
+  color: #94a3b8 !important;
+}
+
+.slide-content img:not(.promo-slide img) {
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 110px !important;
+  max-height: 70px !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+  display: block !important;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)) !important;
+}
+
+/* 3. ADAPTATION RESPONSIVE MOBILE (< 768px) */
+@media (max-width: 768px) {
+  .shop-layout-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    gap: 16px !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .shop-layout-container > div:first-child,
+  .shop-layout-container > div[style*="flex: 3"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .shop-layout-container > div:last-child {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    position: static !important;
+    margin-top: 10px !important;
+  }
+
+  .annonce-banner {
+    height: 150px !important;
+    border-radius: 16px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .slide {
+    padding: 14px 16px !important;
+  }
+
+  .slide-content h2, 
+  .slide-content h3 {
+    font-size: 0.95rem !important;
+  }
+
+  .slide-content p {
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .slide-content img:not(.promo-slide img) {
+    max-width: 75px !important;
+    max-height: 50px !important;
+  }
+}
