@@ -4272,3 +4272,24 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     max-height: 50px !important;
   }
 }
+/* ==========================================================================
+   ANIMATION ZOOM FLUIDE SUR L'IMAGE ANNONCE (MOBILE UNIQUEMENT)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Animation progressive sur les images de chaque slide active */
+  .slide.active img {
+    animation: srMobileZoom 6s ease-in-out infinite alternate !important;
+    transform-origin: center center !important;
+  }
+}
+
+/* Keyframes du zoom fluide */
+@keyframes srMobileZoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.15); /* Niveau de zoom élégant à 115% */
+  }
+}
