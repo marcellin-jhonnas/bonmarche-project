@@ -976,7 +976,8 @@ function afficherChoixPaiementLuxe(id, montant) {
         backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
         font-family:'Poppins', sans-serif;
     `;
-    
+    // Condition pour le montant inférieur à 30 000 Ar
+    const estEligiblePayLivraison = Number(montant) < 30000;    
     overlay.innerHTML = `
         <div class="glass-card" style="background:rgba(255,255,255,0.98); padding:45px 35px; border-radius:40px; width:92%; max-width:420px; text-align:center; box-shadow:0 40px 100px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.5); position:relative; overflow:hidden;">
             
@@ -1000,6 +1001,12 @@ function afficherChoixPaiementLuxe(id, montant) {
                 <button id="go-mvola" class="btn-luxe btn-yellow">
                     <span class="icon">📱</span> PAYER PAR MVOLA
                 </button>
+
+                <!-- NOUVEAU BOUTON : PAIEMENT À LA LIVRAISON -->
+                <button id="go-livraison" class="btn-luxe ${estEligiblePayLivraison ? 'btn-green' : 'btn-disabled'}" ${!estEligiblePayLivraison ? 'disabled' : ''}>
+                <span class="icon"> 🚚 </span> PAIEMENT À LA LIVRAISON
+                ${!estEligiblePayLivraison ? '<span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.8;">(Disponible uniquement si < 30 000 Ar)</span>' : ''}
+                </button>
             </div>
 
             <p id="btn-retour-panier-fix" style="margin-top:30px; color:#94a3b8; font-size:0.85rem; cursor:pointer; text-decoration:none; font-weight:600; transition:0.3s;" 
@@ -1016,6 +1023,8 @@ function afficherChoixPaiementLuxe(id, montant) {
             .btn-luxe { position: relative; overflow: hidden; width: 100%; padding: 22px; border: none; border-radius: 22px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .btn-dark { background: #1e293b; color: white; box-shadow: 0 10px 25px rgba(30,41,59,0.2); }
             .btn-yellow { background: #ffcc00; color: #1a1a1a; box-shadow: 0 10px 25px rgba(255,204,0,0.2); }
+            .btn-green { background: #10b981; color: white; box-shadow: 0 10px 25px rgba(16,185,129,0.25); }
+            .btn-disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
             .btn-luxe:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
             .icon { margin-right: 12px; font-size: 1.3rem; }
             .shimmer { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); animation: shimmer 3s infinite; }
@@ -1072,6 +1081,20 @@ function afficherChoixPaiementLuxe(id, montant) {
             afficherInstructionsMvola(montant, id);
         }
     };
+
+    // Action du bouton Paiement à la livraison
+if (estEligiblePayLivraison) {
+    document.getElementById('go-livraison').onclick = async function() {
+        this.innerHTML = " ⌛ Validation...";
+        this.disabled = true;
+
+        // Envoie "Payer a la livraison" dans la colonne L
+        await envoyerActionSheet("Payer a la livraison");
+        overlay.remove();
+
+        alert(`✅ Commande #${id} enregistrée !\n\nPour valider votre commande, veuillez payer uniquement les frais de livraison par MVola.`);
+    };
+}
 }
 
 function afficherInstructionsMvola(montant, idCommande) {
