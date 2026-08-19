@@ -920,7 +920,8 @@ async function envoyerDonneesAuSheet() {
         produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE",
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
         quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
-        statut: "NOUVEAU"
+        statut: "NOUVEAU",
+        note: "Payer à la livraison"
     };
 
     console.log("Payload envoyé au Sheet :", payload);
