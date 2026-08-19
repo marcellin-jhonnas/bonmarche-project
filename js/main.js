@@ -1090,7 +1090,7 @@ if (estEligiblePayLivraison) {
         this.disabled = true;
 
         // Envoie "Payer a la livraison" dans la colonne L
-        await envoyerActionSheet("Payer a la livraison");
+        await envoyerActionSheet("NOUVEAU");
         overlay.remove();
 
         alert(`✅ Commande #${id} enregistrée !\n\nPour valider votre commande, veuillez payer uniquement les frais de livraison par MVola.`);
