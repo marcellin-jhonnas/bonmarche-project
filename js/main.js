@@ -921,7 +921,7 @@ async function envoyerDonneesAuSheet() {
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
         quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
         statut: "NOUVEAU",
-        note: "Payer à la livraison"
+        note: ""
     };
 
     console.log("Payload envoyé au Sheet :", payload);
@@ -1061,6 +1061,7 @@ function afficherChoixPaiementLuxe(id, montant) {
                     telClient: localStorage.getItem('saferun_tel') || "N/A",
                     montant: montant,
                     statut: statut,
+                    note: note,
                     produits: detailProduits,
                     quartier: localStorage.getItem('saferun_quartier') || "Tana"
                 })
@@ -1090,7 +1091,7 @@ if (estEligiblePayLivraison) {
         this.disabled = true;
 
         // Envoie "Payer a la livraison" dans la colonne L
-        await envoyerActionSheet("NOUVEAU");
+        await envoyerActionSheet("NOUVEAU", "Payer à la livraison");
         overlay.remove();
 
         alert(`✅ Commande #${id} enregistrée !\n\nPour valider votre commande, veuillez payer uniquement les frais de livraison par MVola.`);
