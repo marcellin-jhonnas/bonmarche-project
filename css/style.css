@@ -4461,24 +4461,53 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 /* ETO INDRAY ILAY MODIFICATION SPECIALE SUR MOBLIE ILAY BANIER EN TETE */
 @media (max-width: 768px) {
+
     .hero-giz {
-        height: 340px !important;
+        position: relative;
+        height: 360px !important;
         margin: 10px !important;
         justify-content: center;
-        border-radius: 20px;
+        border-radius: 24px;
         overflow: hidden;
+        background-size: 112% auto !important;
+        animation: heroSlowDrift 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroSlowDrift {
+        0%   { background-position: 50% 40%; }
+        100% { background-position: 50% 55%; }
     }
 
     .hero-overlay {
         background: linear-gradient(
             180deg,
-            rgba(255,255,255,0.55) 0%,
-            rgba(255,255,255,0.92) 60%,
+            rgba(255,255,255,0.5) 0%,
+            rgba(255,255,255,0.9) 58%,
             rgba(255,255,255,0.97) 100%
         ) !important;
     }
 
+    .hero-giz::before {
+        content: "";
+        position: absolute;
+        top: -30%;
+        right: -20%;
+        width: 60%;
+        height: 60%;
+        background: radial-gradient(circle, rgba(255,204,0,0.35) 0%, rgba(255,204,0,0) 70%);
+        z-index: 1;
+        pointer-events: none;
+        animation: haloGlow 6s ease-in-out infinite;
+    }
+
+    @keyframes haloGlow {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50%      { opacity: 1; transform: scale(1.15); }
+    }
+
     .hero-content {
+        position: relative;
+        z-index: 3;
         padding-left: 22px;
         padding-right: 22px;
         text-align: center;
@@ -4486,47 +4515,89 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     }
 
     .hero-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         font-size: 0.7rem;
-        padding: 5px 14px;
+        padding: 6px 14px;
         margin-bottom: 12px;
-        background: rgba(30, 58, 138, 0.1);
-        border: 1px solid rgba(30, 58, 138, 0.2);
+        background: rgba(255,255,255,0.55);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(30, 58, 138, 0.18);
         border-radius: 30px;
         color: #1e3a8a;
         font-weight: 700;
+        box-shadow: 0 4px 14px rgba(30, 58, 138, 0.1);
+        animation: badgePulse 2.6s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+        0%, 100% { box-shadow: 0 4px 14px rgba(30, 58, 138, 0.1); }
+        50%      { box-shadow: 0 4px 20px rgba(255, 204, 0, 0.35); }
     }
 
     .hero-content h1 {
-        font-size: 1.5rem !important;
+        font-size: 1.55rem !important;
         line-height: 1.2;
         margin-bottom: 10px;
     }
 
     .hero-content p {
         font-size: 0.9rem;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
         max-width: 34ch;
         margin-left: auto;
         margin-right: auto;
     }
 
     .btn-commander {
+        position: relative;
+        overflow: hidden;
         width: 100%;
         justify-content: center;
-        padding: 15px 20px !important;
-        font-size: 0.88rem;
+        padding: 16px 20px !important;
+        font-size: 0.9rem;
+        box-shadow: 0 8px 22px rgba(255, 204, 0, 0.4);
+        animation: btnBreathe 3s ease-in-out infinite;
+    }
+
+    .btn-commander::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -60%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.65), transparent);
+        transform: skewX(-20deg);
+        animation: btnShimmer 3.2s ease-in-out infinite;
+    }
+
+    @keyframes btnShimmer {
+        0%   { left: -60%; }
+        45%  { left: 130%; }
+        100% { left: 130%; }
+    }
+
+    @keyframes btnBreathe {
+        0%, 100% { box-shadow: 0 8px 22px rgba(255, 204, 0, 0.4); }
+        50%      { box-shadow: 0 10px 28px rgba(255, 204, 0, 0.55); }
     }
 
     .btn-commander:active {
-        transform: scale(0.97);
-        box-shadow: 0 4px 10px rgba(255, 204, 0, 0.35);
+        transform: scale(0.96);
     }
 }
 
-/* Très petits écrans */
 @media (max-width: 380px) {
-    .hero-giz { height: 300px !important; }
-    .hero-content h1 { font-size: 1.3rem !important; }
+    .hero-giz { height: 320px !important; }
+    .hero-content h1 { font-size: 1.35rem !important; }
     .hero-content p { font-size: 0.82rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-giz, .hero-giz::before, .hero-badge, .btn-commander, .btn-commander::after {
+        animation: none !important;
+    }
 }
