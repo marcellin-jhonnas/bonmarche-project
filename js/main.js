@@ -1045,7 +1045,7 @@ function afficherChoixPaiementLuxe(id, montant) {
     };
 
     // --- LOGIQUE D'ENVOI SHEET (Améliorée) ---
-    const envoyerActionSheet = (statut) => {
+    const envoyerActionSheet = (statut, note = "") => {
         if (typeof API_URL !== 'undefined') {
             // Tentative de récupération des produits depuis le panier avant qu'il soit vidé
             const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
