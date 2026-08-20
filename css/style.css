@@ -4461,122 +4461,72 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 
 /* ETO INDRAY ILAY MODIFICATION SPECIALE SUR MOBLIE ILAY BANIER EN TETE */
 @media (max-width: 768px) {
+    .hero-giz {
+        height: 340px !important;
+        margin: 10px !important;
+        justify-content: center;
+        border-radius: 20px;
+        overflow: hidden;
+    }
 
-  /* 1. On neutralise le système de variables CSS non utilisé par le JS actuel,
-        pour éviter tout effet fantôme si une variable est un jour settée ailleurs */
-  #hero-title, #hero-desc, #hero-badge {
-    --hero-opacity: 1;
-    --hero-translate: 0px;
-  }
+    .hero-overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(255,255,255,0.55) 0%,
+            rgba(255,255,255,0.92) 60%,
+            rgba(255,255,255,0.97) 100%
+        ) !important;
+    }
 
-  /* 2. Conteneur principal du hero */
-  #hero-slider {
-    position: relative;
-    overflow: hidden;
-    min-height: 400px;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    align-items: flex-end;
-    isolation: isolate; /* garantit que l'overlay ne fuit pas visuellement */
-  }
+    .hero-content {
+        padding-left: 22px;
+        padding-right: 22px;
+        text-align: center;
+        max-width: 100%;
+    }
 
-  /* 3. Désactivation propre des effets desktop (zoom au survol, curseur trompeur) */
-  #hero-slider:hover {
-    background-size: cover;
-    cursor: default;
-  }
-  #hero-slider:hover #hero-title {
-    text-shadow: 0 2px 10px rgba(0,0,0,0.65);
-    transform: none; /* on bloque le scale desktop pour éviter le conflit avec l'animation JS */
-  }
+    .hero-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 5px 14px;
+        margin-bottom: 12px;
+        background: rgba(30, 58, 138, 0.1);
+        border: 1px solid rgba(30, 58, 138, 0.2);
+        border-radius: 30px;
+        color: #1e3a8a;
+        font-weight: 700;
+    }
 
-  /* 4. Overlay renforcé : un seul voile, dégradé doux du bas vers le haut */
-  .hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(0,0,0,0.75) 0%,
-      rgba(0,0,0,0.35) 45%,
-      rgba(0,0,0,0.05) 80%
-    );
-    z-index: 1;
-  }
+    .hero-content h1 {
+        font-size: 1.5rem !important;
+        line-height: 1.2;
+        margin-bottom: 10px;
+    }
 
-  /* 5. Contenu texte, toujours au-dessus de l'overlay */
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 24px 20px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .hero-content p {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        max-width: 34ch;
+        margin-left: auto;
+        margin-right: auto;
+    }
 
-  .hero-badge {
-    font-size: 0.7rem;
-    letter-spacing: 0.3px;
-    padding: 5px 12px;
-    margin-bottom: 12px;
-    background: rgba(255,255,255,0.18);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 30px;
-    color: #fff;
-    font-weight: 600;
-  }
+    .btn-commander {
+        width: 100%;
+        justify-content: center;
+        padding: 15px 20px !important;
+        font-size: 0.88rem;
+    }
 
-  #hero-title {
-    font-size: 1.5rem;
-    line-height: 1.22;
-    font-weight: 900;
-    letter-spacing: -0.3px;
-    color: #fff;
-    text-shadow: 0 3px 12px rgba(0,0,0,0.55);
-    margin: 0 0 10px 0;
-    /* On fige le transform : évite tout conflit avec l'animation JS en cours */
-    transform: none !important;
-  }
-
-  #hero-desc {
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: rgba(255,255,255,0.94);
-    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    margin: 0 0 20px 0;
-    max-width: 32ch; /* évite les lignes trop longues, plus lisible */
-  }
-
-  .btn-promo {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 15px;
-    font-size: 0.92rem;
-    font-weight: 800;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #ffcc00, #ff9900);
-    color: #1a1a1a;
-    box-shadow: 0 10px 24px rgba(255, 153, 0, 0.35);
-    border: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .btn-promo:active {
-    transform: scale(0.97);
-    box-shadow: 0 6px 14px rgba(255, 153, 0, 0.3);
-  }
+    .btn-commander:active {
+        transform: scale(0.97);
+        box-shadow: 0 4px 10px rgba(255, 204, 0, 0.35);
+    }
 }
 
-/* Très petits écrans (ex: anciens smartphones, <380px) */
+/* Très petits écrans */
 @media (max-width: 380px) {
-  #hero-slider { min-height: 340px; }
-  #hero-title { font-size: 1.3rem; }
-  #hero-desc { font-size: 0.82rem; }
+    .hero-giz { height: 300px !important; }
+    .hero-content h1 { font-size: 1.3rem !important; }
+    .hero-content p { font-size: 0.82rem; }
 }
