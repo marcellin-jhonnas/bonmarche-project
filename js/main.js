@@ -678,6 +678,7 @@ let totalFinal = sousTotal + fraisLivraison;
     
     // On garde en mémoire pour MVola
     window.dernierTotalCalcule = totalFinal;
+    window.dernierFraisLivraison = fraisLivraison;
 }
 // FONCTION DE SUPPRESSION
 function supprimerProduitDirectement(index) {
@@ -1090,11 +1091,11 @@ if (estEligiblePayLivraison) {
         this.innerHTML = " ⌛ Validation...";
         this.disabled = true;
 
-        // Envoie "Payer a la livraison" dans la colonne L
         await envoyerActionSheet("NOUVEAU", "Payer à la livraison");
         overlay.remove();
 
-        alert(`✅ Commande #${id} enregistrée !\n\nPour valider votre commande, veuillez payer uniquement les frais de livraison par MVola.`);
+        const frais = window.dernierFraisLivraison || 0;
+        afficherConfirmationLivraisonPro(id, frais);
     };
 }
 }
@@ -1352,6 +1353,79 @@ async function lancerPayUnit(id, montant) {
     }, 500);
 }
 
+function afficherConfirmationLivraisonPro(idCommande, montantFrais) {
+  const numeroMarcellin = "038 24 536 10";
+  const numeroPur = "0382453610";
+  const montantPur = Math.floor(montantFrais);
+  const lienUssdAndroid = `tel:*111*1*2*${numeroPur}*${montantPur}%23`;
+
+  let modal = document.getElementById('modal-confirmation-livraison');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-confirmation-livraison';
+    document.body.appendChild(modal);
+  }
+
+  modal.style.cssText = `
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.85);
+    z-index:1000000; display:flex; align-items:center; justify-content:center;
+    backdrop-filter: blur(10px); padding:15px;
+    font-family:'Poppins', sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="background:#fff; width:100%; max-width:420px; border-radius:28px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.5); animation: slideUpConfirm 0.35s ease-out;">
+
+      <div style="background:linear-gradient(135deg, #10b981, #059669); padding:30px 20px; text-align:center; color:#fff;">
+        <i class="fas fa-check-circle" style="font-size:2.8rem; margin-bottom:10px;"></i>
+        <h2 style="margin:0; font-size:1.3rem; font-weight:800;">Commande enregistrée</h2>
+        <p style="margin:5px 0 0; font-size:0.85rem; opacity:0.9;">Référence #${idCommande}</p>
+      </div>
+
+      <div style="padding:25px;">
+        <p style="font-size:0.9rem; color:#334155; line-height:1.5; text-align:center; margin-bottom:20px;">
+          Votre commande sera <b>payée à la livraison</b>. Pour la confirmer, merci d'envoyer
+          uniquement les <b>frais de livraison</b> par MVola.
+        </p>
+
+        <div style="background:#fffdf0; border:2px solid #ffcc00; border-radius:18px; padding:18px; text-align:center; margin-bottom:20px;">
+          <p style="margin:0; font-size:0.8rem; color:#666;">Montant à envoyer</p>
+          <h2 style="margin:5px 0; color:#d35400; font-size:1.7rem;">${montantPur.toLocaleString()} Ar</h2>
+          <div style="margin-top:10px; padding:10px; background:#fff; border-radius:10px; border:1px solid #ffeaa7;">
+            <p style="margin:0 0 3px 0; font-size:0.75rem; color:#7f8c8d;">Numéro MVola</p>
+            <b style="font-size:1.2rem; color:#2c3e50; letter-spacing:1px;">${numeroMarcellin}</b>
+          </div>
+          <p style="margin:10px 0 0; font-size:0.75rem; color:#7f8c8d;">Référence obligatoire</p>
+          <b style="font-size:1rem; color:#c0392b; background:#ffeaa7; padding:3px 10px; border-radius:8px; display:inline-block; margin-top:4px;">${idCommande}</b>
+        </div>
+
+        ${isMobileDevice ? `
+        <a href="${lienUssdAndroid}" style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:16px; background:linear-gradient(135deg, #ffcc00, #ffaa00); color:#1a1a1a; text-decoration:none; border-radius:14px; font-weight:800; font-size:0.95rem; margin-bottom:12px; box-shadow:0 8px 20px rgba(255,170,0,0.35);">
+          <i class="fas fa-phone-alt"></i> Envoyer via MVola maintenant
+        </a>
+        ` : `
+        <div style="background:#e0f2fe; padding:12px; border-radius:12px; margin-bottom:12px; font-size:0.8rem; color:#0369a1; text-align:center;">
+          <i class="fas fa-info-circle"></i> Depuis votre mobile, un lien direct MVola sera proposé automatiquement.
+        </div>
+        `}
+
+        <button id="btn-ok-confirmation-livraison" style="width:100%; padding:16px; border:none; border-radius:14px; background:#0f172a; color:#fff; font-weight:700; font-size:0.9rem; cursor:pointer;">
+          J'AI COMPRIS
+        </button>
+      </div>
+    </div>
+    <style>
+      @keyframes slideUpConfirm { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+  `;
+
+  modal.style.display = "flex";
+
+  document.getElementById('btn-ok-confirmation-livraison').onclick = function() {
+    location.reload();
+  };
+}
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
