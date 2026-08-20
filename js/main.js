@@ -1006,7 +1006,7 @@ function afficherChoixPaiementLuxe(id, montant) {
                 <!-- NOUVEAU BOUTON : PAIEMENT À LA LIVRAISON -->
                 <button id="go-livraison" class="btn-luxe ${estEligiblePayLivraison ? 'btn-green' : 'btn-disabled'}" ${!estEligiblePayLivraison ? 'disabled' : ''}>
                 <span class="icon"> 🚚 </span> PAIEMENT À LA LIVRAISON
-                ${!estEligiblePayLivraison ? '<span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.8;">(Disponible uniquement si < 30 000 Ar)</span>' : ''}
+                ${!estEligiblePayLivraison ? '<span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.8;">Disponible après plusieurs commandes</span>' : ''}
                 </button>
             </div>
 
