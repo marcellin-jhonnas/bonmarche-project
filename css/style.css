@@ -4470,8 +4470,21 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         border-radius: 24px;
         overflow: hidden;
         background-size: 112% auto !important;
-        animation: heroSlowDrift 14s ease-in-out infinite alternate;
+        animation: heroSlowDrift 14s ease-in-out infinite alternate,
+           borderBreathe 4s ease-in-out infinite;
+        border: 1px solid rgba(30, 58, 138, 0.15);
     }
+
+@keyframes borderBreathe {
+    0%, 100% {
+        border-color: rgba(30, 58, 138, 0.15);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    50% {
+        border-color: rgba(255, 204, 0, 0.45);
+        box-shadow: 0 4px 20px rgba(255, 204, 0, 0.15);
+    }
+}
 
     @keyframes heroSlowDrift {
         0%   { background-position: 50% 40%; }
@@ -4541,7 +4554,27 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         font-size: 1.55rem !important;
         line-height: 1.2;
         margin-bottom: 10px;
+        position: relative;
+        padding-bottom: 14px;
     }
+    
+    .hero-content h1::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, transparent, #ffcc00, transparent);
+    border-radius: 3px;
+    animation: signatureLine 1.2s ease-out 0.6s forwards;
+}
+
+@keyframes signatureLine {
+    from { width: 0%; }
+    to   { width: 60%; }
+}
 
     .hero-content p {
         font-size: 0.9rem;
