@@ -1747,43 +1747,24 @@ body.sidebar-open .sidebar-overlay {
 }
 
 /* ==========================================================
-   SECTION ARGUMENTS DE CONFIANCE (nouvelle section)
+   SECTION ARGUMENTS DE CONFIANCE — VERSION COMPACTE
    ========================================================== */
 
 .arguments-container {
-    padding: 30px 16px 40px;
+    padding: 16px;
     max-width: 900px;
     margin: 0 auto;
 }
 
-.arg-header {
-    text-align: center;
-    margin-bottom: 22px;
-}
-
-.arg-header h2 {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #1e3a8a;
-    margin: 0 0 10px;
-}
-
-.arg-underline {
-    width: 60px;
-    height: 4px;
-    background: linear-gradient(90deg, #ffcc00, #ff9900);
-    border-radius: 4px;
-    margin: 0 auto;
-}
-
+/* Bannière compacte tout-en-un */
 .arg-banner-blue {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, #1e3a8a 0%, #274690 60%, #1e3a8a 100%);
-    border-radius: 24px;
-    padding: 26px 22px;
-    box-shadow: 0 14px 34px rgba(30, 58, 138, 0.28);
-    margin-bottom: 22px;
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 10px 24px rgba(30, 58, 138, 0.25);
+    margin-bottom: 12px;
 }
 
 .arg-light-effect {
@@ -1808,40 +1789,31 @@ body.sidebar-open .sidebar-overlay {
     position: relative;
     z-index: 2;
     display: flex;
-    flex-direction: column;
-    gap: 18px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
+/* On masque la grande description, remplacée par une ligne courte */
 .arg-text p {
-    color: rgba(255,255,255,0.85);
-    font-size: 0.85rem;
-    margin: 10px 0 0;
-    text-align: center;
+    display: none;
 }
 
 .payment-card-mini {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 16px;
-    padding: 14px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    flex: 1;
 }
 
 .payment-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
 }
 
 .mini-illustration {
-    width: 46px;
-    height: 46px;
-    object-fit: contain;
-    border-radius: 10px;
-    background: #fff;
-    padding: 4px;
-    flex-shrink: 0;
+    display: none; /* supprimée pour gagner de la place, le texte + logos suffisent */
 }
 
 .payment-content {
@@ -1849,25 +1821,25 @@ body.sidebar-open .sidebar-overlay {
 }
 
 .mini-header {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    color: rgba(255,255,255,0.75);
-    margin: 0 0 8px;
+    letter-spacing: 0.4px;
+    color: rgba(255,255,255,0.7);
+    margin: 0 0 4px;
 }
 
 .mini-logos {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
 .mini-logo {
-    height: 24px;
-    border-radius: 5px;
+    height: 18px;
+    border-radius: 4px;
     object-fit: contain;
     background: #fff;
-    padding: 2px 6px;
+    padding: 2px 4px;
 }
 
 .mvola-anim { animation: logoBounce 2.4s ease-in-out infinite; }
@@ -1875,104 +1847,66 @@ body.sidebar-open .sidebar-overlay {
 
 @keyframes logoBounce {
     0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-3px); }
+    50%      { transform: translateY(-2px); }
 }
 
 .arg-action {
-    display: flex;
-    justify-content: center;
+    flex-shrink: 0;
 }
 
 .btn-avis-top {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     background: #ffcc00;
     color: #1a1a1a;
     border: none;
-    padding: 13px 24px;
-    border-radius: 40px;
+    padding: 9px 14px;
+    border-radius: 30px;
     font-weight: 800;
-    font-size: 0.82rem;
+    font-size: 0.66rem;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(255, 204, 0, 0.35);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.35);
     transition: transform 0.2s ease;
 }
 
 .btn-avis-top:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
 }
 
+/* Badges compacts en une seule ligne fine */
 .arg-badges-row {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 6px;
 }
 
 .badge-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
     background: #ffffff;
-    border: 1px solid rgba(30, 58, 138, 0.12);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 0.75rem;
+    border: 1px solid rgba(30, 58, 138, 0.1);
+    padding: 6px 8px;
+    border-radius: 12px;
+    font-size: 0.62rem;
     font-weight: 700;
     color: #1e3a8a;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    white-space: nowrap;
 }
 
 .badge-item i {
     color: #ffcc00;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
 }
 
-/* --- Petit renfort pour ton guide en 3 étapes (écrans intermédiaires 480-768px) --- */
-@media (max-width: 768px) and (min-width: 481px) {
-    .guide-steps-wrapper { gap: 6px; }
-    .guide-step-card p { font-size: 0.6rem; }
-}
-
-/* --- Adaptation mobile de la nouvelle section arguments --- */
-@media (max-width: 768px) {
-    .arg-banner-blue {
-        padding: 20px 16px;
-        border-radius: 20px;
-    }
-
-    .arg-header h2 {
-        font-size: 1.1rem;
-    }
-
-    .payment-row {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .mini-header {
-        text-align: center;
-    }
-
-    .mini-logos {
-        justify-content: center;
-    }
-
-    .btn-avis-top {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .badge-item {
-        font-size: 0.7rem;
-        padding: 7px 12px;
-    }
-}
-
-/* --- Confort d'accessibilité --- */
+/* Confort d'accessibilité */
 @media (prefers-reduced-motion: reduce) {
     .arg-light-effect, .mvola-anim, .visa-anim {
         animation: none !important;
