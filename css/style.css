@@ -2016,6 +2016,81 @@ body.sidebar-open .sidebar-overlay {
     }
 }
 
+/* ==========================================================
+   AMÉLIORATIONS ADDITIVES DU GUIDE 3 ÉTAPES
+   ========================================================== */
+
+/* Badge numéroté en overlay sur l'icône, façon timeline premium */
+.guide-step-card {
+    position: relative;
+}
+
+.step-icon-bg {
+    position: relative;
+}
+
+.step-icon-bg::after {
+    content: attr(data-step);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: #1e3a8a;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Fonds dégradés au lieu de couleurs plates, plus de profondeur */
+.step-icon-bg.yellow {
+    background: linear-gradient(135deg, #fff9e6, #ffe9a8);
+    box-shadow: 0 8px 18px rgba(255, 204, 0, 0.18);
+}
+.step-icon-bg.blue {
+    background: linear-gradient(135deg, #e3f2fd, #bcdffb);
+    box-shadow: 0 8px 18px rgba(33, 150, 243, 0.18);
+}
+.step-icon-bg.green {
+    background: linear-gradient(135deg, #e8f5e9, #bfe8c2);
+    box-shadow: 0 8px 18px rgba(39, 174, 96, 0.18);
+}
+
+/* Retour tactile au clic sur mobile */
+.guide-step-card {
+    transition: transform 0.15s ease;
+}
+.guide-step-card:active {
+    transform: scale(0.95);
+}
+
+/* Ligne de connexion en pointillé, plus stylée que la flèche seule */
+.step-separator {
+    position: relative;
+}
+
+.step-separator::before {
+    content: "";
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    min-width: 24px;
+    height: 2px;
+    background: repeating-linear-gradient(
+        90deg,
+        #ffcc00 0, #ffcc00 4px,
+        transparent 4px, transparent 8px
+    );
+}
+
 /* --- STYLE DE LA PAGINATION SAFERUN --- */
 
 .pagination-flex {
