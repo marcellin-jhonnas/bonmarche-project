@@ -1745,6 +1745,240 @@ body.sidebar-open .sidebar-overlay {
     .sr-premium-guide { padding: 15px 10px; margin: 20px 5px; }
     .payment-icons-mini { margin-top: 5px; font-size: 1rem; gap: 5px;}
 }
+
+/* ==========================================================
+   SECTION ARGUMENTS DE CONFIANCE (nouvelle section)
+   ========================================================== */
+
+.arguments-container {
+    padding: 30px 16px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.arg-header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.arg-header h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1e3a8a;
+    margin: 0 0 10px;
+}
+
+.arg-underline {
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #ffcc00, #ff9900);
+    border-radius: 4px;
+    margin: 0 auto;
+}
+
+.arg-banner-blue {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1e3a8a 0%, #274690 60%, #1e3a8a 100%);
+    border-radius: 24px;
+    padding: 26px 22px;
+    box-shadow: 0 14px 34px rgba(30, 58, 138, 0.28);
+    margin-bottom: 22px;
+}
+
+.arg-light-effect {
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.16), transparent);
+    transform: skewX(-20deg);
+    animation: argSweep 4.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes argSweep {
+    0%   { left: -60%; }
+    50%  { left: 130%; }
+    100% { left: 130%; }
+}
+
+.arg-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.arg-text p {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.85rem;
+    margin: 10px 0 0;
+    text-align: center;
+}
+
+.payment-card-mini {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.payment-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mini-illustration {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.payment-content {
+    flex: 1;
+}
+
+.mini-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.75);
+    margin: 0 0 8px;
+}
+
+.mini-logos {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mini-logo {
+    height: 24px;
+    border-radius: 5px;
+    object-fit: contain;
+    background: #fff;
+    padding: 2px 6px;
+}
+
+.mvola-anim { animation: logoBounce 2.4s ease-in-out infinite; }
+.visa-anim  { animation: logoBounce 2.4s ease-in-out infinite 0.3s; }
+
+@keyframes logoBounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+.arg-action {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-avis-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffcc00;
+    color: #1a1a1a;
+    border: none;
+    padding: 13px 24px;
+    border-radius: 40px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 204, 0, 0.35);
+    transition: transform 0.2s ease;
+}
+
+.btn-avis-top:active {
+    transform: scale(0.96);
+}
+
+.arg-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid rgba(30, 58, 138, 0.12);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.badge-item i {
+    color: #ffcc00;
+    font-size: 0.85rem;
+}
+
+/* --- Petit renfort pour ton guide en 3 étapes (écrans intermédiaires 480-768px) --- */
+@media (max-width: 768px) and (min-width: 481px) {
+    .guide-steps-wrapper { gap: 6px; }
+    .guide-step-card p { font-size: 0.6rem; }
+}
+
+/* --- Adaptation mobile de la nouvelle section arguments --- */
+@media (max-width: 768px) {
+    .arg-banner-blue {
+        padding: 20px 16px;
+        border-radius: 20px;
+    }
+
+    .arg-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .payment-row {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .mini-header {
+        text-align: center;
+    }
+
+    .mini-logos {
+        justify-content: center;
+    }
+
+    .btn-avis-top {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .badge-item {
+        font-size: 0.7rem;
+        padding: 7px 12px;
+    }
+}
+
+/* --- Confort d'accessibilité --- */
+@media (prefers-reduced-motion: reduce) {
+    .arg-light-effect, .mvola-anim, .visa-anim {
+        animation: none !important;
+    }
+}
+
 /* --- STYLE DE LA PAGINATION SAFERUN --- */
 
 .pagination-flex {
