@@ -3017,10 +3017,15 @@ section.saferun-pro-chat .btn-boutique-secondary {
     border-radius: 16px !important;
     object-fit: cover;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    border: 2px solid #fff;
+    border: 3px solid #fff;
     flex-shrink: 0;
 }
-
+.sr-img-wrapper {
+    position: relative;
+    padding: 3px;
+    border-radius: 18px;
+    background: conic-gradient(from 0deg, #1e3a8a, #ffcc00, #1e3a8a);
+}
 .sr-text-group { 
     display: flex; 
     flex-direction: column; 
@@ -3029,6 +3034,7 @@ section.saferun-pro-chat .btn-boutique-secondary {
 
 /* Badge Pro */
 .sr-tag {
+    position: relative;
     font-size: 0.65rem !important;
     font-weight: 800;
     background: #007bff;
@@ -3040,7 +3046,43 @@ section.saferun-pro-chat .btn-boutique-secondary {
     letter-spacing: 0.8px;
     text-transform: uppercase;
 }
+.sr-slide-item.active .sr-tag::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: currentColor;
+    opacity: 0.5;
+    animation: srTagLine 1.2s ease-out 0.3s forwards;
+}
 
+@keyframes srTagLine {
+    from { width: 0%; }
+    to   { width: 70%; }
+}
+
+.sr-slide-item.active .sr-text-group {
+    position: relative;
+    overflow: hidden;
+}
+
+.sr-slide-item.active .sr-text-group::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
+    animation: srTextShimmer 1s ease-out 0.2s;
+    pointer-events: none;
+}
+
+@keyframes srTextShimmer {
+    to { left: 130%; }
+}
 .sr-main-mg {
     font-size: 1.2rem !important;
     font-weight: 800 !important;
@@ -3062,6 +3104,8 @@ section.saferun-pro-chat .btn-boutique-secondary {
     .sr-img-wrapper img { width: 55px !important; height: 55px !important; }
     .sr-main-mg { font-size: 0.9rem !important; }
     .sr-sub-fr { font-size: 0.7rem !important; }
+    .sr-dots-container { bottom: 4px; }   /* ← ajouté */
+    .sr-dot { width: 5px; height: 5px; } .sr-dot.active { width: 14px; }   /* ← ajouté */
 }
 /* --- Styles de signalisation sécurisés --- */
 .sr-text-ferme {
@@ -5351,4 +5395,39 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     border: 1px solid rgba(16, 185, 129, 0.4);
     padding: 3px 8px;
     border-radius: 10px;
+}
+.sr-dots-container {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+}
+
+.sr-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.sr-dot.active {
+    background: #1e3a8a;
+    width: 18px;
+    border-radius: 3px;
+}
+.sr-tag {
+    background: linear-gradient(135deg, #1e3a8a, #3b5bdb) !important;
+}
+
+.sr-tag[style*="28a745"] {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.sr-tag[style*="ff9800"] {
+    background: linear-gradient(135deg, #ffcc00, #ff9900) !important;
+    color: #1a1a1a !important;
 }

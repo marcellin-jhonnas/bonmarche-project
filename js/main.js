@@ -2120,10 +2120,18 @@ if (categorySlider) {
         getSafeRunDelivery();
         const slides = document.querySelectorAll('.sr-slide-item');
         const banner = document.getElementById('srBanner');
+        const dotsContainer = document.getElementById('srDotsContainer');
         let current = 0;
 
         if(!slides.length || !banner) return;
+        function renderDots() {
+    if (!dotsContainer) return;
+    dotsContainer.innerHTML = Array.from(slides).map((_, i) =>
+        `<span class="sr-dot ${i === current ? 'active' : ''}"></span>`
+    ).join('');
+}
 
+renderDots();
         setInterval(() => {
             slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
@@ -2131,6 +2139,7 @@ if (categorySlider) {
             // Transition de fond douce
             banner.style.background = slides[current].getAttribute('data-bg');
             slides[current].classList.add('active');
+            renderDots();
         }, 5000);
     });
 })();
