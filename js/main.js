@@ -3994,6 +3994,11 @@ const promoDeepSlides = [
         ],
         secureTag: 'Paiement chiffré'
     },
+        {
+        type: 'image',
+        layout: 'fill',
+        img: 'Images/hero/nickel.png'
+    },
     {
         type: 'text',
         layout: 'center',
@@ -4004,16 +4009,16 @@ const promoDeepSlides = [
     {
         type: 'image',
         layout: 'fill',
-        img: 'Images/hero/huile.png'
+        img: 'Images/hero/codal.png'
     },
     {
         type: 'image',
         layout: 'fill',
-        img: 'Images/hero/gasy.png'
+        img: 'Images/hero/menaka.png'
     },
     {
         type: 'image-text',
-        layout: 'left',
+        layout: 'center',
         icon: '⚡',
         img: 'Images/hero/PPN.png',
         title: 'Livraison en moins de 2h',
@@ -4022,8 +4027,19 @@ const promoDeepSlides = [
     {
         type: 'image',
         layout: 'fill',
-        img: 'Images/hero/PPN2.png'
+        img: 'Images/hero/molfix.png'
+    },
+        {
+        type: 'image',
+        layout: 'fill',
+        img: 'Images/hero/ppigenique.png'
+    },
+      {
+        type: 'image',
+        layout: 'fill',
+        img: 'Images/hero/rejoigner.png'
     }
+
 ];
 
 let promoDeepIndex = 0;
