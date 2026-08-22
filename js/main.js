@@ -3982,34 +3982,38 @@ function mettreAJourFiligrane(numeroPage) {
     console.groupEnd();
 }
 
-// ==========================================================
-// CARROUSEL ROTATIF — BANNIÈRE PROMO DYNAMIQUE
-// ==========================================================
-
 const promoDeepSlides = [
     {
-        type: 'image-text',
-        icon: '💳',
-        img: 'Images/hero/malagasy.png',
-        title: 'Payez facilement et en toute sécurité',
-        sub: 'Par carte VISA ou MVola, en toute confiance'
+        type: 'payment',
+        layout: 'center',
+        img: 'https://i.imgur.com/htCiGn6.png',
+        title: 'Payez comme vous voulez, en toute confiance',
+        logos: [
+            { src: 'https://i.imgur.com/gjiT1sh.jpeg', alt: 'MVola' },
+            { src: 'https://i.imgur.com/HDdg2qH.jpeg', alt: 'VISA' }
+        ],
+        secureTag: 'Paiement chiffré'
     },
     {
         type: 'text',
+        layout: 'center',
         icon: '🚚',
         title: 'Paiement à la livraison disponible',
         sub: 'Pour les petites commandes, payez cash à la réception'
     },
     {
         type: 'image',
+        layout: 'fill',
         img: 'Images/hero/huile.png'
     },
     {
         type: 'image',
+        layout: 'fill',
         img: 'Images/hero/gasy.png'
     },
     {
         type: 'image-text',
+        layout: 'left',
         icon: '⚡',
         img: 'Images/hero/PPN.png',
         title: 'Livraison en moins de 2h',
@@ -4017,13 +4021,14 @@ const promoDeepSlides = [
     },
     {
         type: 'image',
+        layout: 'fill',
         img: 'Images/hero/PPN2.png'
     }
 ];
 
 let promoDeepIndex = 0;
 let promoDeepIntervalId = null;
-const PROMO_DEEP_DELAY = 4000; // 4 secondes par slide
+const PROMO_DEEP_DELAY = 4000;
 
 function renderPromoDeepSlide() {
     const content = document.getElementById('promoDeepContent');
@@ -4036,7 +4041,26 @@ function renderPromoDeepSlide() {
         const slide = promoDeepSlides[promoDeepIndex];
         let html = '';
 
-        if (slide.type === 'image') {
+        // Réinitialise les classes de layout
+        content.className = 'promo-deep-content';
+
+        if (slide.type === 'payment') {
+            content.classList.add('center-layout');
+            const logosHtml = slide.logos.map(l =>
+                `<img src="${l.src}" alt="${l.alt}" class="promo-deep-mini-logo">`
+            ).join('');
+            html = `
+                <img src="${slide.img}" class="promo-deep-img" alt="SafeRun">
+                <div class="promo-deep-text">
+                    <h3 class="promo-deep-title">${slide.title}</h3>
+                    <div class="promo-deep-mini-logos">
+                        ${logosHtml}
+                        <span class="promo-deep-secure-tag"><i class="fas fa-lock"></i> ${slide.secureTag}</span>
+                    </div>
+                </div>
+            `;
+        } else if (slide.type === 'image') {
+            content.classList.add('image-fill');
             html = `<img src="${slide.img}" class="promo-deep-img" alt="Promo SafeRun">`;
         } else if (slide.type === 'image-text') {
             html = `
@@ -4047,6 +4071,7 @@ function renderPromoDeepSlide() {
                 </div>
             `;
         } else if (slide.type === 'text') {
+            content.classList.add('center-layout');
             html = `
                 <span class="promo-deep-icon">${slide.icon}</span>
                 <div class="promo-deep-text">
@@ -4059,10 +4084,9 @@ function renderPromoDeepSlide() {
         content.innerHTML = html;
         content.classList.remove('fade-out');
 
-        // Relance la barre de progression à chaque nouveau slide
         if (progressBar) {
             progressBar.classList.remove('animate');
-            void progressBar.offsetWidth; // force le navigateur à "reset" l'animation
+            void progressBar.offsetWidth;
             progressBar.classList.add('animate');
         }
     }, 450);
@@ -4070,9 +4094,7 @@ function renderPromoDeepSlide() {
 
 function startPromoDeepCycle() {
     renderPromoDeepSlide();
-
     if (promoDeepIntervalId) clearInterval(promoDeepIntervalId);
-
     promoDeepIntervalId = setInterval(() => {
         promoDeepIndex = (promoDeepIndex + 1) % promoDeepSlides.length;
         renderPromoDeepSlide();

@@ -5295,3 +5295,60 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         animation: none !important;
     }
 }
+/* --- Centrage automatique pour les slides texte/paiement --- */
+.promo-deep-content.center-layout {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.promo-deep-content.center-layout .promo-deep-text {
+    align-items: center;
+}
+
+/* --- Slide "image seule" : remplit tout l'espace disponible --- */
+.promo-deep-content.image-fill {
+    height: 100%;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.promo-deep-content.image-fill .promo-deep-img {
+    max-height: none;
+    max-width: 100%;
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+/* --- Logos + tag sécurité à l'intérieur du carrousel --- */
+.promo-deep-mini-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.promo-deep-mini-logo {
+    height: 20px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #fff;
+    padding: 2px 5px;
+}
+
+.promo-deep-secure-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #d1fae5;
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    padding: 3px 8px;
+    border-radius: 10px;
+}
