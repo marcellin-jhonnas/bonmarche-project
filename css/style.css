@@ -634,6 +634,7 @@ body {
 
 .user-profile { text-align: center; padding: 30px 0; border-bottom: 1px solid #333; margin-bottom: 20px; }
 .user-avatar {
+    position: relative;
     width: 64px;
     height: 64px;
     border-radius: 50%;
@@ -659,11 +660,58 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
-    transition: 0.3s;
+     transition: 0.3s, transform 0.15s ease;
+}
+
+.nav-item:active {
+    transform: scale(0.97);
+}
+.sidebar-nav a[onclick*="contacterAssistance"] {
+    margin-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding-top: 18px;
+}
+
+.nav-item i.fa-whatsapp {
+    color: #25D366 !important;
+}
+
+.nav-item:hover i.fa-whatsapp {
+    color: #1a1a1a !important;
+}
+
+.user-avatar::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background: #22c55e;
+    border: 2px solid #1a1a2e;
+    border-radius: 50%;
+}
+
+body.sidebar-open .nav-item {
+    animation: navItemSlideIn 0.4s ease backwards;
+}
+
+.nav-item:nth-child(1) { animation-delay: 0.05s; }
+.nav-item:nth-child(2) { animation-delay: 0.1s; }
+.nav-item:nth-child(3) { animation-delay: 0.15s; }
+.nav-item:nth-child(4) { animation-delay: 0.2s; }
+.nav-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes navItemSlideIn {
+    from { opacity: 0; transform: translateX(-15px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
 .nav-item i { width: 20px; text-align: center; color: #ffcc00; }
 .nav-item:hover, .nav-item.active { background: #ffcc00; color: #1a1a1a; font-weight: bold; }
+.nav-item.active {
+    box-shadow: 0 4px 14px rgba(255, 204, 0, 0.35);
+}
 .nav-item:hover i { color: #1a1a1a; }
 .nav-item small { display: block; font-size: 0.7rem; opacity: 0.7; font-weight: normal; }
 
@@ -5031,5 +5079,13 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
 @media (prefers-reduced-motion: reduce) {
     .hero-giz, .hero-giz::after, .hero-badge, .btn-commander, .btn-commander::after {
         animation: none !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .user-avatar::after,
+    .nav-item,
+    body.sidebar-open .nav-item {
+        animation: none !important;
+        transition: none !important;
     }
 }
