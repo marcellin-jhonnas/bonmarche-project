@@ -5089,3 +5089,209 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         transition: none !important;
     }
 }
+/* ==========================================================
+   CARROUSEL ROTATIF — BANNIÈRE PROFONDE (cercles concentriques)
+   ========================================================== */
+
+.promo-deep-banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0d1b6b 0%, #1220a3 60%, #0d1b6b 100%);
+    border-radius: 22px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    padding: 22px 24px 28px;
+    margin: 16px 0;
+    box-shadow: 0 14px 32px rgba(13, 27, 107, 0.35);
+}
+
+/* Cercles concentriques en fond, tournant lentement */
+.promo-deep-rings {
+    position: absolute;
+    top: 50%;
+    right: -35%;
+    width: 320px;
+    height: 320px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: repeating-radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.09) 0px,
+        rgba(255,255,255,0.09) 2px,
+        transparent 2px,
+        transparent 28px
+    );
+    pointer-events: none;
+    animation: ringsRotate 40s linear infinite;
+}
+
+@keyframes ringsRotate {
+    from { transform: translateY(-50%) rotate(0deg); }
+    to   { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Pastille "EN DIRECT" clignotante */
+.promo-deep-live {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    z-index: 3;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #ff6b6b;
+    background: rgba(255,255,255,0.1);
+    padding: 3px 9px;
+    border-radius: 20px;
+    animation: liveBlink 1.8s ease-in-out infinite;
+}
+
+@keyframes liveBlink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+/* Zone de contenu qui change (texte/image) */
+.promo-deep-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.promo-deep-content.fade-out {
+    opacity: 0;
+    transform: translateX(-16px);
+}
+
+.promo-deep-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.promo-deep-img {
+    max-height: 76px;
+    max-width: 90px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.promo-deep-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.promo-deep-title {
+    color: #fff;
+    font-size: 1.02rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 4px;
+}
+
+.promo-deep-sub {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.76rem;
+    margin: 0;
+}
+
+/* Barre de progression façon "story" */
+.promo-deep-progress {
+    position: absolute;
+    bottom: 10px;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.promo-deep-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffcc00, #ff9900);
+    border-radius: 3px;
+}
+
+.promo-deep-progress-bar.animate {
+    animation: progressFill 4s linear forwards;
+}
+
+@keyframes progressFill {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+
+/* ==========================================================
+   BADGES — toujours alignés sur une seule ligne
+   ========================================================== */
+
+.arg-badges-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: clamp(4px, 2vw, 10px);
+    flex-wrap: nowrap; /* empêche tout passage à la ligne */
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0; /* autorise le rétrécissement même avec du texte */
+    background: #ffffff;
+    border: 1px solid rgba(30, 58, 138, 0.1);
+    padding: clamp(6px, 2vw, 10px) clamp(4px, 1.5vw, 8px);
+    border-radius: 14px;
+    font-size: clamp(0.55rem, 2.2vw, 0.68rem);
+    font-weight: 700;
+    color: #1e3a8a;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.badge-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge-item i {
+    color: #ffcc00;
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+    flex-shrink: 0;
+}
+
+/* Sur très petit écran : on masque le texte, garde juste l'icône ronde */
+@media (max-width: 360px) {
+    .badge-item span {
+        display: none;
+    }
+
+    .badge-item {
+        border-radius: 50%;
+        aspect-ratio: 1 / 1;
+        padding: 10px;
+    }
+
+    .badge-item i {
+        font-size: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .promo-deep-rings,
+    .promo-deep-live,
+    .promo-deep-progress-bar {
+        animation: none !important;
+    }
+}

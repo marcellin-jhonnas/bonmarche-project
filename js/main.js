@@ -3981,3 +3981,102 @@ function mettreAJourFiligrane(numeroPage) {
 
     console.groupEnd();
 }
+
+// ==========================================================
+// CARROUSEL ROTATIF — BANNIÈRE PROMO DYNAMIQUE
+// ==========================================================
+
+const promoDeepSlides = [
+    {
+        type: 'image-text',
+        icon: '💳',
+        img: 'Images/hero/malagasy.png',
+        title: 'Payez facilement et en toute sécurité',
+        sub: 'Par carte VISA ou MVola, en toute confiance'
+    },
+    {
+        type: 'text',
+        icon: '🚚',
+        title: 'Paiement à la livraison disponible',
+        sub: 'Pour les petites commandes, payez cash à la réception'
+    },
+    {
+        type: 'image',
+        img: 'Images/hero/huile.png'
+    },
+    {
+        type: 'image',
+        img: 'Images/hero/gasy.png'
+    },
+    {
+        type: 'image-text',
+        icon: '⚡',
+        img: 'Images/hero/PPN.png',
+        title: 'Livraison en moins de 2h',
+        sub: 'Vos courses arrivent avant que vous n\'ayez le temps de souffler'
+    },
+    {
+        type: 'image',
+        img: 'Images/hero/PPN2.png'
+    }
+];
+
+let promoDeepIndex = 0;
+let promoDeepIntervalId = null;
+const PROMO_DEEP_DELAY = 4000; // 4 secondes par slide
+
+function renderPromoDeepSlide() {
+    const content = document.getElementById('promoDeepContent');
+    const progressBar = document.getElementById('promoDeepProgressBar');
+    if (!content) return;
+
+    content.classList.add('fade-out');
+
+    setTimeout(() => {
+        const slide = promoDeepSlides[promoDeepIndex];
+        let html = '';
+
+        if (slide.type === 'image') {
+            html = `<img src="${slide.img}" class="promo-deep-img" alt="Promo SafeRun">`;
+        } else if (slide.type === 'image-text') {
+            html = `
+                <img src="${slide.img}" class="promo-deep-img" alt="Promo SafeRun">
+                <div class="promo-deep-text">
+                    <h3 class="promo-deep-title">${slide.title}</h3>
+                    <p class="promo-deep-sub">${slide.sub}</p>
+                </div>
+            `;
+        } else if (slide.type === 'text') {
+            html = `
+                <span class="promo-deep-icon">${slide.icon}</span>
+                <div class="promo-deep-text">
+                    <h3 class="promo-deep-title">${slide.title}</h3>
+                    <p class="promo-deep-sub">${slide.sub}</p>
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+        content.classList.remove('fade-out');
+
+        // Relance la barre de progression à chaque nouveau slide
+        if (progressBar) {
+            progressBar.classList.remove('animate');
+            void progressBar.offsetWidth; // force le navigateur à "reset" l'animation
+            progressBar.classList.add('animate');
+        }
+    }, 450);
+}
+
+function startPromoDeepCycle() {
+    renderPromoDeepSlide();
+
+    if (promoDeepIntervalId) clearInterval(promoDeepIntervalId);
+
+    promoDeepIntervalId = setInterval(() => {
+        promoDeepIndex = (promoDeepIndex + 1) % promoDeepSlides.length;
+        renderPromoDeepSlide();
+    }, PROMO_DEEP_DELAY);
+}
+
+document.addEventListener('DOMContentLoaded', startPromoDeepCycle);
