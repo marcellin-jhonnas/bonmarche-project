@@ -272,6 +272,8 @@ function validerQuartierFinal(donnees, isManual = false) {
     localStorage.setItem('saferun_tarif_minimal', tarif);
     localStorage.setItem('saferun_seuil_gratuite', seuil);
     localStorage.setItem('saferun_secteur_valide', 'true');
+    localStorage.setItem('saferun_zone_nom', isManual ? donnees.toUpperCase() : donnees.nomOfficiel);
+    localStorage.setItem('saferun_zone_code', cp);
 
     // Actualise l'affichage pour montrer les prix immédiatement
   // --- APRÈS LE REMPLISSAGE ET LA SAUVEGARDE ---
@@ -1615,6 +1617,7 @@ function annulerPlanif() {
 
 // 7. INIT
 document.addEventListener('DOMContentLoaded', () => {
+    resynchroniserTarifLivraison();   // ← ajouté en premier
     chargerBoutique();
     rafraichirSidebar();
     mettreAJourBadgeLivraison();
@@ -4127,3 +4130,56 @@ function startPromoDeepCycle() {
 }
 
 document.addEventListener('DOMContentLoaded', startPromoDeepCycle);
+
+async function resynchroniserTarifLivraison() {
+    const dejaValide = localStorage.getItem('saferun_secteur_valide');
+    const zoneNom = localStorage.getItem('saferun_zone_nom');
+    const zoneCode = localStorage.getItem('saferun_zone_code');
+
+    if (dejaValide !== 'true' || !zoneNom) return;
+
+    // --- Limitation : une seule resynchronisation toutes les 6 heures ---
+    const DELAI_MIN_SYNC = 6 * 60 * 60 * 1000; // 6 heures en millisecondes
+    const derniereSyncStr = localStorage.getItem('saferun_last_sync');
+    const maintenant = Date.now();
+
+    if (derniereSyncStr) {
+        const derniereSync = parseInt(derniereSyncStr, 10);
+        if (!isNaN(derniereSync) && (maintenant - derniereSync) < DELAI_MIN_SYNC) {
+            console.log("SafeRun : resynchronisation ignorée, déjà faite récemment.");
+            return; // trop tôt, on ne refait pas l'appel
+        }
+    }
+
+    try {
+        const url = `${MON_URL_GAS}?postalCode=${encodeURIComponent(zoneCode || '')}&query=${encodeURIComponent(zoneNom)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const match = data.find(item => item.nomOfficiel === zoneNom);
+
+            if (match) {
+                const tarifPropre = parseInt(match.tarif.toString().replace(/[^0-9]/g, ''), 10);
+                const seuilPropre = parseInt(match.seuil.toString().replace(/[^0-9]/g, ''), 10);
+
+                localStorage.setItem('saferun_tarif_minimal', tarifPropre);
+                localStorage.setItem('saferun_seuil_gratuite', seuilPropre);
+
+                console.log("SafeRun : tarifs de livraison resynchronisés avec le serveur.");
+            } else {
+                console.warn("SafeRun : zone non retrouvée côté serveur, anciennes valeurs conservées.");
+            }
+        }
+
+        // On enregistre l'heure de cette tentative, réussie ou non,
+        // pour éviter de réessayer en boucle en cas de zone introuvable
+        localStorage.setItem('saferun_last_sync', maintenant.toString());
+
+    } catch (e) {
+        console.warn("SafeRun : échec de la resynchronisation des tarifs, anciennes valeurs conservées.", e);
+        // On enregistre quand même l'heure pour éviter de spammer les tentatives
+        // en cas de connexion instable
+        localStorage.setItem('saferun_last_sync', maintenant.toString());
+    }
+}
