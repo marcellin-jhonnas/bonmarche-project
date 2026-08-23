@@ -608,20 +608,26 @@ function afficherPanier() {
     let resume = "";
 
     if (panier.length === 0) {
-        resume = "<p style='text-align:center; padding:20px;'>Votre panier est vide.</p>";
+        resume = `
+            <div class="panier-vide-anime">
+                <div class="panier-vide-icon">🛒</div>
+                <p>Votre panier est vide</p>
+                <span>Ajoutez des produits pour commencer vos achats</span>
+            </div>`;
     } else {
         panier.forEach((item, index) => {
             const st = item.prix * item.quantite;
-            sousTotal += st; // On calcule le prix des articles
+            sousTotal += st;
             resume += `
-                <div class="item-panier-ligne" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 0.9rem;">${item.nom}</div>
-                        <div style="font-size: 0.8rem; color: #666;">${item.quantite} x ${item.prix.toLocaleString()} Ar</div>
+                <div class="item-panier-ligne" style="animation-delay: ${index * 0.06}s;">
+                    <div class="item-panier-icon"><i class="fas fa-shopping-basket"></i></div>
+                    <div class="item-panier-info">
+                        <div class="item-panier-nom">${item.nom}</div>
+                        <div class="item-panier-qte">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-weight: bold; font-size: 0.85rem;">${st.toLocaleString()} Ar</span>
-                        <button onclick="supprimerProduitDirectement(${index})" style="background: #fff5f5; border: none; color: #ff4757; width: 30px; height: 30px; border-radius: 8px; cursor: pointer;">
+                    <div class="item-panier-actions">
+                        <span class="item-panier-prix">${st.toLocaleString()} Ar</span>
+                        <button onclick="supprimerProduitDirectement(${index})" class="btn-suppr-item">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -629,67 +635,79 @@ function afficherPanier() {
         });
     }
 
-    // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET ---
-let fraisLivraison = 0;
+    // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET (inchangée) ---
+    let fraisLivraison = 0;
+    const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
+    const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
+    const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
+    const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
 
-// --- BLOC DE SÉCURITÉ ET DE NETTOYAGE DES TARIFS ---
-const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
-const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
-
-// Nettoyage extrême : supprime "Ar" et les espaces pour obtenir de vrais nombres purs
-const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
-const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
-// ---------------------------------------------------
-
-if (sousTotal > 0) {
-    // 1. Calcul de la règle des 15% (Protection sur le poids/volume)
-    let calcul15 = sousTotal * 0.15;
-
-    // 2. Comparaison avec le tarif minimal extrait du GAS (via tarif)
-    // On applique le plus élevé des deux
-    fraisLivraison = Math.max(calcul15, tarifMin);
-
-    // 3. Vérification du seuil de gratuité (via seuil)
-    if (sousTotal >= seuilGratuit) {
-        fraisLivraison = 0;
+    if (sousTotal > 0) {
+        let calcul15 = sousTotal * 0.15;
+        fraisLivraison = Math.max(calcul15, tarifMin);
+        if (sousTotal >= seuilGratuit) {
+            fraisLivraison = 0;
+        }
+        fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
     }
 
-    // 4. Arrondi à la dizaine pour un total propre
-    fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
-}
+    let totalFinal = sousTotal + fraisLivraison;
 
-let totalFinal = sousTotal + fraisLivraison;
-
-    // --- MISE À JOUR DE L'AFFICHAGE ---
+    // --- NOUVELLE STRUCTURE D'AFFICHAGE ---
     detail.innerHTML = `
-        <strong>Récapitulatif</strong><hr>
-        ${resume}
+        <div class="panier-header-sticky">
+            <strong>Récapitulatif</strong>
+            <span class="panier-count-badge">${panier.length} article${panier.length > 1 ? 's' : ''}</span>
+        </div>
+        <div class="panier-liste-scroll">
+            ${resume}
+        </div>
         ${sousTotal > 0 ? `
-        <div style="margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px; border:1px solid #eee;">
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#666;">
+        <div class="panier-total-sticky" id="panierTotalSticky">
+            <div class="panier-total-row">
                 <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
             </div>
-            <div style="display:flex; justify-content:space-between; color:#d35400; font-weight:bold; margin-top:5px;">
-    <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
-</div>
+            <div class="panier-total-row panier-livraison-row">
+                <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
+            </div>
         </div>` : ''}
     `;
 
-    // Utilisation de totalFinal ici au lieu de total
+    // Animation de pulsation sur le total à chaque mise à jour
+    const totalBloc = document.getElementById('panierTotalSticky');
+    if (totalBloc) {
+        totalBloc.classList.add('updating');
+        setTimeout(() => totalBloc.classList.remove('updating'), 400);
+    }
+
     totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
-    
-    // On garde en mémoire pour MVola
     window.dernierTotalCalcule = totalFinal;
     window.dernierFraisLivraison = fraisLivraison;
-}
-// FONCTION DE SUPPRESSION
+}// FONCTION DE SUPPRESSION
 function supprimerProduitDirectement(index) {
-    panier.splice(index, 1);
-    localStorage.setItem('saferun_panier', JSON.stringify(panier));
-    mettreAJourBadge();
-    const totalArticles = panier.reduce((acc, item) => acc + item.quantite, 0);
-    synchroniserBadges(totalArticles);
-    afficherPanier(); // Rafraîchit la liste
+    const lignes = document.querySelectorAll('.item-panier-ligne');
+    const ligneAAnimer = lignes[index];
+
+    if (ligneAAnimer) {
+        ligneAAnimer.style.transition = 'all 0.3s ease';
+        ligneAAnimer.style.transform = 'translateX(100%)';
+        ligneAAnimer.style.opacity = '0';
+
+        setTimeout(() => {
+            panier.splice(index, 1);
+            localStorage.setItem('saferun_panier', JSON.stringify(panier));
+            mettreAJourBadge();
+            const totalArticles = panier.reduce((acc, item) => acc + item.quantite, 0);
+            synchroniserBadges(totalArticles);
+            afficherPanier();
+        }, 280);
+    } else {
+        // Sécurité : si l'élément visuel n'est pas trouvé, on supprime quand même
+        panier.splice(index, 1);
+        localStorage.setItem('saferun_panier', JSON.stringify(panier));
+        mettreAJourBadge();
+        afficherPanier();
+    }
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
