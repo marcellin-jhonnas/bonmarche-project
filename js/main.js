@@ -1486,6 +1486,13 @@ function rafraichirSidebar() {
     if (elQuartier) {
         elQuartier.innerHTML = quartier ? `<i class="fas fa-map-marker-alt"></i> ${quartier}` : `<i class="fas fa-map-marker-alt"></i> Quartier non renseigné`;
     }
+
+     // --- Affiche le bouton "Restaurer" uniquement si le profil est vide ---
+    const btnRestauration = document.getElementById('btn-restaurer-compte');
+    if (btnRestauration) {
+        btnRestauration.style.display = nom ? 'none' : 'inline-block';
+    }
+
     genererQRCodeClient();
 }
 
@@ -4200,4 +4207,58 @@ async function resynchroniserTarifLivraison() {
         // en cas de connexion instable
         localStorage.setItem('saferun_last_sync', maintenant.toString());
     }
+const URL_SCRIPT_PRINCIPAL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // celui avec getClientParTel}
+function ouvrirRestaurationCompte() {
+    const nomExistant = localStorage.getItem('saferun_nom');
+    if (nomExistant) {
+        alert("Vous avez déjà un profil actif. Utilisez 'Modifier mon profil' si vous souhaitez changer vos informations.");
+        return;
+    }
+
+    const tel = prompt("Entrez votre numéro de téléphone pour restaurer votre compte :");
+    if (!tel || tel.trim() === "") return;
+
+    const telNettoye = tel.trim();
+
+    // Petit indicateur visuel pendant la recherche
+    const ancienTitre = document.title;
+    document.title = "Recherche en cours...";
+
+    fetch(`${URL_SCRIPT_PRINCIPAL}?action=getClientParTel&tel=${encodeURIComponent(telNettoye)}`)
+        .then(response => response.json())
+        .then(data => {
+            document.title = ancienTitre;
+
+            if (data.found) {
+                // 1. Restauration du profil
+                localStorage.setItem('saferun_nom', data.client.nom);
+                localStorage.setItem('saferun_tel', data.client.telephone);
+                localStorage.setItem('saferun_quartier', data.client.quartier);
+
+                // 2. Restauration des tarifs de livraison (si trouvés)
+                if (data.tarifMin) {
+                    const tarifPropre = parseInt(data.tarifMin.toString().replace(/[^0-9]/g, ''), 10);
+                    localStorage.setItem('saferun_tarif_minimal', tarifPropre);
+                }
+                if (data.seuilGratuit) {
+                    const seuilPropre = parseInt(data.seuilGratuit.toString().replace(/[^0-9]/g, ''), 10);
+                    localStorage.setItem('saferun_seuil_gratuite', seuilPropre);
+                }
+
+                // 3. On marque le secteur comme validé pour débloquer l'affichage des prix
+                localStorage.setItem('saferun_secteur_valide', 'true');
+                localStorage.setItem('saferun_zone_nom', data.client.quartier);
+
+                alert(`Bienvenue à nouveau, ${data.client.nom} ! Votre compte a été restauré.`);
+                location.reload();
+            } else {
+                alert("Aucun compte trouvé avec ce numéro. Vérifiez le numéro saisi, ou créez un nouveau profil.");
+            }
+        })
+        .catch(err => {
+            document.title = ancienTitre;
+            console.error("Erreur restauration compte:", err);
+            alert("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
+        });
+}
 }
