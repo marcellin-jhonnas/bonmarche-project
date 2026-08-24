@@ -711,9 +711,18 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
+    // Si une commande est déjà enregistrée et attend un paiement,
+    // on reprend directement le paiement au lieu de recalculer un panier maintenant vide
+    const idPendant = localStorage.getItem('saferun_commande_pendante_id');
+    const montantPendant = localStorage.getItem('saferun_commande_pendante_montant');
+
+    if (idPendant && montantPendant) {
+        afficherChoixPaiementLuxe(idPendant, Number(montantPendant));
+        return;
+    }
+
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
     const estInscrit = localStorage.getItem('saferun_nom');
-
     if (!estInscrit) {
         alert("Pour commander, merci de compléter votre profil !");
         ouvrirInscription(); 
@@ -972,9 +981,13 @@ async function envoyerDonneesAuSheet() {
     localStorage.setItem('saferun_commandes', JSON.stringify(historique));
     localStorage.setItem('livraison_vue', 'false'); // Badge rouge
 
-    // 3. MISES À JOUR VISUELLES
+        // 3. MISES À JOUR VISUELLES
     if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
     
+    // Mémorise la commande en attente de paiement, indépendamment du panier
+    localStorage.setItem('saferun_commande_pendante_id', idCommande);
+    localStorage.setItem('saferun_commande_pendante_montant', montantTotal);
+
     // Nettoyage panier
     panier = []; 
     localStorage.removeItem('saferun_panier');
@@ -1097,9 +1110,11 @@ function afficherChoixPaiementLuxe(id, montant) {
         if (typeof lancerPayUnit === "function") lancerPayUnit(id, montant); 
     };
 
-    document.getElementById('go-mvola').onclick = function() {
+        document.getElementById('go-mvola').onclick = function() {
         envoyerActionSheet("NOUVEAU");
         overlay.remove();
+        localStorage.removeItem('saferun_commande_pendante_id');
+        localStorage.removeItem('saferun_commande_pendante_montant');
         if (typeof afficherInstructionsMvola === "function") {
             afficherInstructionsMvola(montant, id);
         }
@@ -1113,6 +1128,8 @@ if (estEligiblePayLivraison) {
 
         await envoyerActionSheet("NOUVEAU", "Payer à la livraison");
         overlay.remove();
+        localStorage.removeItem('saferun_commande_pendante_id');
+        localStorage.removeItem('saferun_commande_pendante_montant');
 
         const frais = window.dernierFraisLivraison || 0;
         afficherConfirmationLivraisonPro(id, frais);
@@ -1344,8 +1361,8 @@ async function lancerPayUnit(id, montant) {
                 purchase_units: [{ reference_id: id, amount: { currency_code: 'USD', value: montantFinalUSD } }]
             }),
             onApprove: async (data, actions) => {
-                return actions.order.capture().then(async (details) => {
-                    document.getElementById('paypal-modal').innerHTML = `
+            return actions.order.capture().then(async (details) => {
+            document.getElementById('paypal-modal').innerHTML = `
                         <div style="padding: 60px 20px; text-align: center; animation: modalPop 0.4s ease;">
                             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
                             <h2 style="font-weight: 800; color: #1a1a1a;">Paiement Réussi !</h2>
