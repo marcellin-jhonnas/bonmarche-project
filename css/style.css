@@ -5655,3 +5655,42 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         animation: none !important;
     }
 }
+.trust-badges {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.trust-badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid rgba(30, 58, 138, 0.1);
+    padding: 14px 8px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.trust-badge-item i {
+    font-size: 1.3rem;
+    color: #ffcc00;
+}
+
+.trust-badge-item span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .trust-badge-item i { font-size: 1.1rem; }
+    .trust-badge-item span { font-size: 0.62rem; }
+}
