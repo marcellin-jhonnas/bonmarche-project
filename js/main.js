@@ -1000,8 +1000,8 @@ async function envoyerDonneesAuSheet() {
     // Nettoyage panier
     panier = []; 
     localStorage.removeItem('saferun_panier');
-    if (typeof mettreAJourAffichagePanier === "function") mettreAJourAffichagePanier();
-    
+    if (typeof mettreAJourBadge === "function") mettreAJourBadge();
+    if (typeof synchroniserBadges === "function") synchroniserBadges(0);
     // Affichage de la modale de paiement Marcellin
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
