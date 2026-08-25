@@ -814,17 +814,10 @@ function ouvrirTicketAutomatique() {
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if (oldAnnuler) oldAnnuler.remove();
 
-        btnEnvoi.onclick = function() {
+                btnEnvoi.onclick = function() {
 
-            let montantSecurise = 0;
-            const elTotal = document.getElementById('total-panier') 
-                || document.querySelector('.total-amount');
-
-            if (typeof montantTotalGlobal !== 'undefined' && montantTotalGlobal > 0) {
-                montantSecurise = montantTotalGlobal;
-            } else if (elTotal) {
-                montantSecurise = parseInt(elTotal.innerText.replace(/\D/g, ''));
-            }
+            // On utilise directement la valeur fiable déjà calculée par afficherPanier()
+            let montantSecurise = window.dernierTotalCalcule || 0;
 
             localStorage.setItem('safe_last_amount', montantSecurise);
 
