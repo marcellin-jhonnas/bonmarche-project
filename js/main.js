@@ -604,6 +604,15 @@ function afficherPanier() {
     const totalLabel = document.getElementById('total-modal');
     if(!detail || !totalLabel) return;
 
+    // Si le panier réel est vide mais qu'une commande vient d'être transmise, on l'affiche à la place
+    if (panier.length === 0) {
+        const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+        if (snapshot && snapshot.produits && snapshot.produits.length > 0) {
+            afficherRecapCommandeEnvoyee(snapshot);
+            return;
+        }
+    }
+
     let sousTotal = 0; 
     let resume = "";
 
@@ -987,7 +996,7 @@ async function envoyerDonneesAuSheet() {
     // Mémorise la commande en attente de paiement, indépendamment du panier
     localStorage.setItem('saferun_commande_pendante_id', idCommande);
     localStorage.setItem('saferun_commande_pendante_montant', montantTotal);
-
+    localStorage.setItem('saferun_snapshot_commande', JSON.stringify({ id: idCommande, produits: JSON.parse(JSON.stringify(panier)), montant: montantTotal }));
     // Nettoyage panier
     panier = []; 
     localStorage.removeItem('saferun_panier');
@@ -1463,6 +1472,92 @@ function afficherConfirmationLivraisonPro(idCommande, montantFrais) {
   document.getElementById('btn-ok-confirmation-livraison').onclick = function() {
     location.reload();
   };
+}
+function afficherRecapCommandeEnvoyee(snapshot) {
+    const detail = document.getElementById('detail-panier');
+    const totalLabel = document.getElementById('total-modal');
+    if (!detail || !totalLabel) return;
+
+    let sousTotal = 0;
+    let resume = snapshot.produits.map((item, index) => {
+        const st = item.prix * item.quantite;
+        sousTotal += st;
+        return `
+            <div class="item-panier-ligne">
+                <div class="item-panier-icon"><i class="fas fa-shopping-basket"></i></div>
+                <div class="item-panier-info">
+                    <div class="item-panier-nom">${item.nom}</div>
+                    <div class="item-panier-qte">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
+                </div>
+                <div class="item-panier-actions">
+                    <span class="item-panier-prix">${st.toLocaleString()} Ar</span>
+                    <button onclick="supprimerProduitSnapshot(${index})" class="btn-suppr-item">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>`;
+    }).join('');
+
+    detail.innerHTML = `
+        <div class="panier-header-sticky">
+            <strong>Commande transmise</strong>
+            <span class="panier-count-badge">Réf ${snapshot.id}</span>
+        </div>
+        <div class="panier-liste-scroll">
+            ${resume}
+        </div>
+        <div class="panier-total-sticky">
+            <div class="panier-total-row">
+                <span>Total commande :</span> <span>${sousTotal.toLocaleString()} Ar</span>
+            </div>
+        </div>
+        <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:10px;">
+            Cette commande a déjà été transmise. Vous pouvez encore retirer un produit si besoin.
+        </p>
+    `;
+
+    totalLabel.innerText = sousTotal.toLocaleString() + " Ar";
+    window.dernierTotalCalcule = sousTotal;
+}
+
+function supprimerProduitSnapshot(index) {
+    let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+    if (!snapshot) return;
+
+    snapshot.produits.splice(index, 1);
+
+    if (snapshot.produits.length === 0) {
+        // Plus aucun produit : on annule la commande côté serveur
+        if (typeof API_URL !== 'undefined') {
+            fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({ action: "modifierStatut", id: snapshot.id, statut: "ANNULÉ" })
+            });
+        }
+        localStorage.removeItem('saferun_snapshot_commande');
+        afficherPanier();
+        return;
+    }
+
+    const nouveauMontant = snapshot.produits.reduce((acc, item) => acc + (item.prix * item.quantite), 0);
+    snapshot.montant = nouveauMontant;
+    localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+
+    if (typeof API_URL !== 'undefined') {
+        fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "modifierProduitsCommande",
+                id: snapshot.id,
+                produits: snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", "),
+                montant: nouveauMontant
+            })
+        });
+    }
+
+    afficherRecapCommandeEnvoyee(snapshot);
 }
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
