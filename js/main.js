@@ -1361,33 +1361,34 @@ async function lancerPayUnit(id, montant) {
                 purchase_units: [{ reference_id: id, amount: { currency_code: 'USD', value: montantFinalUSD } }]
             }),
             onApprove: async (data, actions) => {
-            return actions.order.capture().then(async (details) => {
-            document.getElementById('paypal-modal').innerHTML = `
-                        <div style="padding: 60px 20px; text-align: center; animation: modalPop 0.4s ease;">
-                            <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-                            <h2 style="font-weight: 800; color: #1a1a1a;">Paiement Réussi !</h2>
-                            <p style="color: #64748b;">Merci ${details.payer.name.given_name}, votre commande est enregistrée.</p>
-                        </div>
-                    `;
-
-                    try {
-                        await fetch(SCRIPT_URL, {
-                            method: "POST",
-                            mode: "no-cors",
-                            body: JSON.stringify({
-                                action: "nouvelleCommande",
-                                id: id, nom: nomClient, tel: telClient, quartier: quartierClient,
-                                montant: montant, produits: produitsCommande,
-                                transactionId: details.id, statut: "PAYÉ"
-                            })
-                        });
-                        if (typeof viderPanier === 'function') viderPanier();
-                        setTimeout(() => location.reload(), 3000);
-                    } catch (e) { console.error(e); }
-                });
-            }
-        }).render('#paypal-button-container');
-    }, 500);
+    return actions.order.capture().then(async (details) => {
+        document.getElementById('paypal-modal').innerHTML = `
+            <div style="padding: 60px 20px; text-align: center; animation: modalPop 0.4s ease;">
+                <div style="font-size: 60px; margin-bottom: 20px;"> ✅ </div>
+                <h2 style="font-weight: 800; color: #1a1a1a;">Paiement Réussi !</h2>
+                <p style="color: #64748b;">Merci ${details.payer.name.given_name}, votre commande est enregistrée.</p>
+            </div>
+        `;
+        try {
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "nouvelleCommande",
+                    id: id, nom: nomClient, tel: telClient, quartier: quartierClient,
+                    montant: montant, produits: produitsCommande,
+                    transactionId: details.id, statut: "PAYÉ"
+                })
+            });
+            if (typeof viderPanier === 'function') viderPanier();
+            localStorage.removeItem('saferun_commande_pendante_id');
+            localStorage.removeItem('saferun_commande_pendante_montant');
+            setTimeout(() => location.reload(), 3000);
+        } catch (e) { console.error(e); }
+    });
+}
+}).render('#paypal-button-container');
+}, 500);
 }
 
 function afficherConfirmationLivraisonPro(idCommande, montantFrais) {
