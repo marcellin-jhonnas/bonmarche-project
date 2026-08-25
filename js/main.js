@@ -1536,11 +1536,15 @@ function supprimerProduitSnapshot(index) {
             });
         }
 
-        // On retire aussi cette commande de l'historique local
+                // On retire aussi cette commande de l'historique local
         let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
         historique = historique.filter(cmd => cmd.id !== snapshot.id);
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
         if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
+
+        // Rafraîchit aussi le badge du panier, au cas où il affichait encore l'ancien nombre
+        if (typeof mettreAJourBadge === "function") mettreAJourBadge();
+        if (typeof synchroniserBadges === "function") synchroniserBadges(0);
 
         localStorage.removeItem('saferun_snapshot_commande');
         afficherPanier();
