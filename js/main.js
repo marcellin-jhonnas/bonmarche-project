@@ -1535,6 +1535,13 @@ function supprimerProduitSnapshot(index) {
                 body: JSON.stringify({ action: "modifierStatut", id: snapshot.id, statut: "ANNULÉ" })
             });
         }
+
+        // On retire aussi cette commande de l'historique local
+        let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+        historique = historique.filter(cmd => cmd.id !== snapshot.id);
+        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+        if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
+
         localStorage.removeItem('saferun_snapshot_commande');
         afficherPanier();
         return;
@@ -1544,6 +1551,8 @@ function supprimerProduitSnapshot(index) {
     snapshot.montant = nouveauMontant;
     localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
 
+    const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+
     if (typeof API_URL !== 'undefined') {
         fetch(API_URL, {
             method: "POST",
@@ -1551,10 +1560,19 @@ function supprimerProduitSnapshot(index) {
             body: JSON.stringify({
                 action: "modifierProduitsCommande",
                 id: snapshot.id,
-                produits: snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", "),
+                produits: produitsTexte,
                 montant: nouveauMontant
             })
         });
+    }
+
+    // On met aussi à jour la même commande dans l'historique local
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+    const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
+    if (indexHistorique !== -1) {
+        historique[indexHistorique].produits = produitsTexte;
+        historique[indexHistorique].total = nouveauMontant;
+        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
     }
 
     afficherRecapCommandeEnvoyee(snapshot);
