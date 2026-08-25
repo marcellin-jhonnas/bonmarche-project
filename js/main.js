@@ -711,14 +711,21 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
-    // Si une commande est déjà enregistrée et attend un paiement,
-    // on reprend directement le paiement au lieu de recalculer un panier maintenant vide
     const idPendant = localStorage.getItem('saferun_commande_pendante_id');
     const montantPendant = localStorage.getItem('saferun_commande_pendante_montant');
 
-    if (idPendant && montantPendant) {
+    // On ne réutilise la commande en attente QUE si le panier est réellement vide
+    // (rien n'a changé depuis le dernier envoi). S'il contient des articles,
+    // c'est que le client l'a modifié : on ignore l'ancienne valeur figée.
+    if (idPendant && montantPendant && panier.length === 0) {
         afficherChoixPaiementLuxe(idPendant, Number(montantPendant));
         return;
+    }
+
+    // Le panier a été modifié : on efface toute trace de l'ancienne commande en attente
+    if (panier.length > 0) {
+        localStorage.removeItem('saferun_commande_pendante_id');
+        localStorage.removeItem('saferun_commande_pendante_montant');
     }
 
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
