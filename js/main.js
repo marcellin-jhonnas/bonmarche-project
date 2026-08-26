@@ -604,13 +604,17 @@ function afficherPanier() {
     const totalLabel = document.getElementById('total-modal');
     if(!detail || !totalLabel) return;
 
-    // Si le panier réel est vide mais qu'une commande vient d'être transmise, on l'affiche à la place
-    if (panier.length === 0) {
-        const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-        if (snapshot && snapshot.produits && snapshot.produits.length > 0) {
-            afficherRecapCommandeEnvoyee(snapshot);
-            return;
-        }
+        const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+    const snapshotActif = snapshotExistant && snapshotExistant.produits && snapshotExistant.produits.length > 0;
+
+    if (panier.length === 0 && snapshotActif) {
+        afficherRecapCommandeEnvoyee(snapshotExistant);
+        return;
+    }
+
+    if (panier.length > 0 && snapshotActif) {
+        fusionnerNouveauxProduitsDansSnapshot(snapshotExistant);
+        return;
     }
 
     let sousTotal = 0; 
@@ -720,31 +724,89 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
-    const idPendant = localStorage.getItem('saferun_commande_pendante_id');
-    const montantPendant = localStorage.getItem('saferun_commande_pendante_montant');
+    if (panier.length > 0) {
+        // Le client a des articles à commander : on ignore toute ancienne référence
+        localStorage.removeItem('saferun_commande_pendante_id');
+        localStorage.removeItem('saferun_commande_pendante_montant');
 
-    // On ne réutilise la commande en attente QUE si le panier est réellement vide
-    // (rien n'a changé depuis le dernier envoi). S'il contient des articles,
-    // c'est que le client l'a modifié : on ignore l'ancienne valeur figée.
-    if (idPendant && montantPendant && panier.length === 0) {
-        afficherChoixPaiementLuxe(idPendant, Number(montantPendant));
+        const estInscrit = localStorage.getItem('saferun_nom');
+        if (!estInscrit) {
+            alert("Pour commander, merci de compléter votre profil !");
+            ouvrirInscription();
+        } else {
+            ouvrirTicketAutomatique();
+        }
         return;
     }
 
-    // Le panier a été modifié : on efface toute trace de l'ancienne commande en attente
-    if (panier.length > 0) {
-        localStorage.removeItem('saferun_commande_pendante_id');
-        localStorage.removeItem('saferun_commande_pendante_montant');
+    // Panier vide : on regarde s'il existe une commande déjà transmise et toujours active
+    const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+    if (snapshot && snapshot.produits && snapshot.produits.length > 0) {
+        afficherChoixPaiementLuxe(snapshot.id, snapshot.montant);
+        return;
     }
 
-    if (panier.length === 0) { alert("Votre panier est vide !"); return; }
-    const estInscrit = localStorage.getItem('saferun_nom');
-    if (!estInscrit) {
-        alert("Pour commander, merci de compléter votre profil !");
-        ouvrirInscription(); 
-    } else {
-        ouvrirTicketAutomatique();
+    alert("Votre panier est vide !");
+}
+function calculerTotauxAvecLivraison(listeProduits) {
+    let sousTotal = listeProduits.reduce((acc, item) => acc + (item.prix * item.quantite), 0);
+
+    const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
+    const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
+    const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
+    const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
+
+    let fraisLivraison = 0;
+    if (sousTotal > 0) {
+        let calcul15 = sousTotal * 0.15;
+        fraisLivraison = Math.max(calcul15, tarifMin);
+        if (sousTotal >= seuilGratuit) fraisLivraison = 0;
+        fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
     }
+
+    return { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison };
+}
+function fusionnerNouveauxProduitsDansSnapshot(snapshot) {
+    panier.forEach(nouvelItem => {
+        const existant = snapshot.produits.find(p => p.nom === nouvelItem.nom);
+        if (existant) {
+            existant.quantite += nouvelItem.quantite;
+        } else {
+            snapshot.produits.push(nouvelItem);
+        }
+    });
+
+    panier = [];
+    localStorage.removeItem('saferun_panier');
+    if (typeof mettreAJourBadge === "function") mettreAJourBadge();
+
+    const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+    const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+    snapshot.montant = totalFinal;
+    localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+
+    if (typeof API_URL !== 'undefined') {
+        fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "modifierProduitsCommande",
+                id: snapshot.id,
+                produits: produitsTexte,
+                montant: totalFinal
+            })
+        });
+    }
+
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+    const idx = historique.findIndex(cmd => cmd.id === snapshot.id);
+    if (idx !== -1) {
+        historique[idx].produits = produitsTexte;
+        historique[idx].total = totalFinal;
+        localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    }
+
+    afficherRecapCommandeEnvoyee(snapshot);
 }
 
 function ouvrirTicketAutomatique() {
@@ -1235,7 +1297,7 @@ function afficherInstructionsMvola(montant, idCommande) {
                     </div>
                 </div>
                 
-                <button onclick="window.location.reload()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;text-transform:uppercase;">
+                <button onclick="confirmerTransfertMvolaEffectue()" style="width:100%;padding:18px;background:#27ae60;color:white;border:none;border-radius:15px;font-weight:bold;font-size:1rem;cursor:pointer;box-shadow:0 10px 20px rgba(39,174,96,0.3); transition:0.3s;text-transform:uppercase;">
                     J'AI EFFECTUÉ LE TRANSFERT
                 </button>
                 
@@ -1249,6 +1311,15 @@ function afficherInstructionsMvola(montant, idCommande) {
             }
         </style>
     `;
+}
+function confirmerTransfertMvolaEffectue() {
+    panier = [];
+    localStorage.removeItem('saferun_panier');
+    localStorage.removeItem('saferun_commande_pendante_id');
+    localStorage.removeItem('saferun_commande_pendante_montant');
+    localStorage.removeItem('saferun_snapshot_commande');
+
+    window.location.reload();
 }
 async function lancerPayUnit(id, montant) {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAy80IbBLBeL3M4sNIzuoE1XzuoO5XdrPYe3Grf9J1irb0ApX7pzCDftzJKqFEB3YV/exec";
@@ -1470,18 +1541,19 @@ function afficherConfirmationLivraisonPro(idCommande, montantFrais) {
   modal.style.display = "flex";
 
   document.getElementById('btn-ok-confirmation-livraison').onclick = function() {
+    localStorage.removeItem('saferun_snapshot_commande');
     location.reload();
-  };
+};
 }
 function afficherRecapCommandeEnvoyee(snapshot) {
     const detail = document.getElementById('detail-panier');
     const totalLabel = document.getElementById('total-modal');
     if (!detail || !totalLabel) return;
 
-    let sousTotal = 0;
+    const { sousTotal, fraisLivraison, totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+
     let resume = snapshot.produits.map((item, index) => {
         const st = item.prix * item.quantite;
-        sousTotal += st;
         return `
             <div class="item-panier-ligne">
                 <div class="item-panier-icon"><i class="fas fa-shopping-basket"></i></div>
@@ -1508,16 +1580,20 @@ function afficherRecapCommandeEnvoyee(snapshot) {
         </div>
         <div class="panier-total-sticky">
             <div class="panier-total-row">
-                <span>Total commande :</span> <span>${sousTotal.toLocaleString()} Ar</span>
+                <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
+            </div>
+            <div class="panier-total-row panier-livraison-row">
+                <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
             </div>
         </div>
         <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:10px;">
-            Cette commande a déjà été transmise. Vous pouvez encore retirer un produit si besoin.
+            Cette commande a déjà été transmise. Ajoutez ou retirez un produit si besoin.
         </p>
     `;
 
-    totalLabel.innerText = sousTotal.toLocaleString() + " Ar";
-    window.dernierTotalCalcule = sousTotal;
+    totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+    window.dernierTotalCalcule = totalFinal;
+    window.dernierFraisLivraison = fraisLivraison;
 }
 
 function supprimerProduitSnapshot(index) {
@@ -1527,7 +1603,6 @@ function supprimerProduitSnapshot(index) {
     snapshot.produits.splice(index, 1);
 
     if (snapshot.produits.length === 0) {
-        // Plus aucun produit : on annule la commande côté serveur
         if (typeof API_URL !== 'undefined') {
             fetch(API_URL, {
                 method: "POST",
@@ -1536,23 +1611,22 @@ function supprimerProduitSnapshot(index) {
             });
         }
 
-                // On retire aussi cette commande de l'historique local
         let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
         historique = historique.filter(cmd => cmd.id !== snapshot.id);
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
         if (typeof mettreAJourBadgeLivraison === "function") mettreAJourBadgeLivraison();
-
-        // Rafraîchit aussi le badge du panier, au cas où il affichait encore l'ancien nombre
         if (typeof mettreAJourBadge === "function") mettreAJourBadge();
         if (typeof synchroniserBadges === "function") synchroniserBadges(0);
 
         localStorage.removeItem('saferun_snapshot_commande');
+        localStorage.removeItem('saferun_commande_pendante_id');
+        localStorage.removeItem('saferun_commande_pendante_montant');
         afficherPanier();
         return;
     }
 
-    const nouveauMontant = snapshot.produits.reduce((acc, item) => acc + (item.prix * item.quantite), 0);
-    snapshot.montant = nouveauMontant;
+    const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+    snapshot.montant = totalFinal;
     localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
 
     const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
@@ -1565,17 +1639,16 @@ function supprimerProduitSnapshot(index) {
                 action: "modifierProduitsCommande",
                 id: snapshot.id,
                 produits: produitsTexte,
-                montant: nouveauMontant
+                montant: totalFinal
             })
         });
     }
 
-    // On met aussi à jour la même commande dans l'historique local
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
     const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
     if (indexHistorique !== -1) {
         historique[indexHistorique].produits = produitsTexte;
-        historique[indexHistorique].total = nouveauMontant;
+        historique[indexHistorique].total = totalFinal;
         localStorage.setItem('saferun_commandes', JSON.stringify(historique));
     }
 
