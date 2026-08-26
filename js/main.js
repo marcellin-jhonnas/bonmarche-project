@@ -922,13 +922,13 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.style.background = "#0f172a";
                 btnEnvoi.style.opacity = "1";
 
-                btnEnvoi.onclick = function() {
+                    btnEnvoi.onclick = function() {
                     modal.style.display = "none";
 
-                    const montantRecupere = localStorage.getItem('safe_last_amount') || 0;
-
-                    if (typeof afficherChoixPaiementLuxe === "function") {
-                        afficherChoixPaiementLuxe(idRecent, Number(montantRecupere));
+                    // On réutilise la logique centralisée : elle fusionne les nouveaux
+                    // ajouts, relit le snapshot le plus à jour, et affiche le bon montant.
+                    if (typeof envoyerCommande === "function") {
+                        envoyerCommande();
                     }
                 };
 
