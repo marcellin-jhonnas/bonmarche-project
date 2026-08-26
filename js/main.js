@@ -724,21 +724,22 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
-    const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+    let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
     const snapshotActif = snapshot && snapshot.produits && snapshot.produits.length > 0;
 
-    // Une commande est déjà en cours : on fusionne tout nouvel ajout dedans,
-    // et on ne crée JAMAIS une nouvelle ligne / un nouvel ID.
     if (snapshotActif) {
         if (panier.length > 0) {
             fusionnerNouveauxProduitsDansSnapshot(snapshot);
         }
-        const snapshotAJour = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-        afficherChoixPaiementLuxe(snapshotAJour.id, snapshotAJour.montant);
+
+        // On relit systématiquement la version la plus fraîche, jamais une variable en mémoire
+        const snapshotFinal = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+        if (!snapshotFinal) { alert("Votre panier est vide !"); return; }
+
+        afficherChoixPaiementLuxe(snapshotFinal.id, snapshotFinal.montant);
         return;
     }
 
-    // Aucune commande en cours : flux normal pour une toute première commande
     if (panier.length === 0) { alert("Votre panier est vide !"); return; }
     const estInscrit = localStorage.getItem('saferun_nom');
     if (!estInscrit) {
@@ -1577,6 +1578,9 @@ function afficherRecapCommandeEnvoyee(snapshot) {
         </div>
         <div class="panier-liste-scroll">
             ${resume}
+            <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:12px; padding-bottom:4px;">
+                Cette commande a déjà été transmise. Ajoutez ou retirez un produit si besoin.
+            </p>
         </div>
         <div class="panier-total-sticky">
             <div class="panier-total-row">
@@ -1586,9 +1590,6 @@ function afficherRecapCommandeEnvoyee(snapshot) {
                 <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
             </div>
         </div>
-        <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:10px;">
-            Cette commande a déjà été transmise. Ajoutez ou retirez un produit si besoin.
-        </p>
     `;
 
     totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
