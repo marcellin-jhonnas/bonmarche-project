@@ -557,10 +557,10 @@ function ajouterAuPanier(nom, prix) {
     localStorage.setItem('saferun_panier', JSON.stringify(panier));
 
     // MISE À JOUR DES COMPTEURS (On envoie le total réel, pas la longueur)
-    const totalArticles = panier.reduce((acc, item) => acc + item.quantite, 0);
+    const totalArticles = calculerQuantiteTotaleGlobale();
     
     mettreAJourBadge(); 
-    synchroniserBadges(totalArticles); // Utilise le total calculé ici !
+    synchroniserBadges(totalArticles);// Utilise le total calculé ici !
 
     // Petit point rouge et vibration
     const dot = document.getElementById('cart-dot');
@@ -576,7 +576,7 @@ function ajouterAuPanier(nom, prix) {
 function mettreAJourBadge() {
     const badge = document.getElementById('cart-count');
     if(badge) {
-        const totalArticles = panier.reduce((sum, item) => sum + item.quantite, 0);
+        const totalArticles = calculerQuantiteTotaleGlobale();
         badge.innerText = totalArticles;
         badge.style.display = totalArticles > 0 ? "block" : "none";
     }
@@ -724,29 +724,29 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
-    if (panier.length > 0) {
-        // Le client a des articles à commander : on ignore toute ancienne référence
-        localStorage.removeItem('saferun_commande_pendante_id');
-        localStorage.removeItem('saferun_commande_pendante_montant');
-
-        const estInscrit = localStorage.getItem('saferun_nom');
-        if (!estInscrit) {
-            alert("Pour commander, merci de compléter votre profil !");
-            ouvrirInscription();
-        } else {
-            ouvrirTicketAutomatique();
-        }
-        return;
-    }
-
-    // Panier vide : on regarde s'il existe une commande déjà transmise et toujours active
     const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-    if (snapshot && snapshot.produits && snapshot.produits.length > 0) {
-        afficherChoixPaiementLuxe(snapshot.id, snapshot.montant);
+    const snapshotActif = snapshot && snapshot.produits && snapshot.produits.length > 0;
+
+    // Une commande est déjà en cours : on fusionne tout nouvel ajout dedans,
+    // et on ne crée JAMAIS une nouvelle ligne / un nouvel ID.
+    if (snapshotActif) {
+        if (panier.length > 0) {
+            fusionnerNouveauxProduitsDansSnapshot(snapshot);
+        }
+        const snapshotAJour = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+        afficherChoixPaiementLuxe(snapshotAJour.id, snapshotAJour.montant);
         return;
     }
 
-    alert("Votre panier est vide !");
+    // Aucune commande en cours : flux normal pour une toute première commande
+    if (panier.length === 0) { alert("Votre panier est vide !"); return; }
+    const estInscrit = localStorage.getItem('saferun_nom');
+    if (!estInscrit) {
+        alert("Pour commander, merci de compléter votre profil !");
+        ouvrirInscription(); 
+    } else {
+        ouvrirTicketAutomatique();
+    }
 }
 function calculerTotauxAvecLivraison(listeProduits) {
     let sousTotal = listeProduits.reduce((acc, item) => acc + (item.prix * item.quantite), 0);
@@ -1654,6 +1654,16 @@ function supprimerProduitSnapshot(index) {
 
     afficherRecapCommandeEnvoyee(snapshot);
 }
+
+function calculerQuantiteTotaleGlobale() {
+    const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+    const quantiteSnapshot = (snapshot && snapshot.produits)
+        ? snapshot.produits.reduce((sum, item) => sum + item.quantite, 0)
+        : 0;
+    const quantitePanier = panier.reduce((sum, item) => sum + item.quantite, 0);
+    return quantiteSnapshot + quantitePanier;
+}
+
 // 5. SIDEBAR ET POPUP
 function toggleSidebar() {
     // 1. On cible le corps de la page et l'icône du bouton
