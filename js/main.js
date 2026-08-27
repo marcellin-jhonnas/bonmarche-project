@@ -1865,6 +1865,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chargerBoutique();
     rafraichirSidebar();
     mettreAJourBadgeLivraison();
+     setTimeout(initPaginationVisibility, 1200); // ← ajouté
     // --- À INSERER VERS LA LIGNE 251 ---
     const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
     if (historique.length > 0) {
@@ -4480,4 +4481,26 @@ function ouvrirRestaurationCompte() {
             alert("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
         });
 }
+}
+function initPaginationVisibility() {
+    const boutique = document.getElementById('boutique');
+    if (!boutique) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const paginationEl = document.getElementById('pagination-container');
+            if (!paginationEl) return;
+
+            if (entry.isIntersecting) {
+                paginationEl.classList.add('visible');
+            } else {
+                paginationEl.classList.remove('visible');
+            }
+        });
+    }, {
+        threshold: 0.15, // se déclenche dès que 15% de la grille est visible
+        rootMargin: "0px 0px -10% 0px" // légère marge pour un déclenchement naturel
+    });
+
+    observer.observe(boutique);
 }

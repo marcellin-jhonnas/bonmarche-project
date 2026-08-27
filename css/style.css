@@ -5873,3 +5873,15 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     .trust-ribbon-container::after { width: 40px; }
     .trust-ribbon-item::after { width: 18px; height: 18px; font-size: 0.7rem; }
 }
+.pagination-flex {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.pagination-flex.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
