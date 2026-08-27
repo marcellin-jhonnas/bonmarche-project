@@ -2041,10 +2041,10 @@ function initRibbon() {
     const fullList = [...ribbonImages, ...ribbonImages, ...ribbonImages, ...ribbonImages];
     
     track.innerHTML = fullList.map(src => `
-        <div class="ribbon-item">
-            <img src="${src}" alt="Vokatra Malagasy" onerror="this.style.display='none'">
-        </div>
-    `).join('');
+    <div class="trust-ribbon-item">
+        <img src="${src}" alt="Vokatra Malagasy" onerror="this.style.display='none'">
+    </div>
+`).join('');
 }
 
 initRibbon();

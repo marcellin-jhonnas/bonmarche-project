@@ -3603,9 +3603,10 @@ text-align:center;
 
 .trust-ribbon-track {
     display: inline-flex;
+    align-items: center;
     gap: 50px; 
-    /* Augmenter à 45s ou 60s pour ralentir encore plus */
-    animation: scrollRibbon 45s linear infinite; 
+    animation: scrollRibbon 45s linear infinite;
+    will-change: transform;
 }
 
 /* On garde la pause au survol pour une lecture parfaite */
@@ -3614,26 +3615,45 @@ text-align:center;
 }
 
 .trust-ribbon-item img {
-    height: 120px; /* Image bien grande */
+    height: 120px;
     width: auto;
-    border-radius: 12px;
+    border-radius: 14px;
+    display: block;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 }
+.trust-ribbon-container::before,
+.trust-ribbon-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
 
-/* Pause au survol pour lire les détails */
-.trust-ribbon-container:hover .trust-ribbon-track {
-    animation-play-state: paused;
+.trust-ribbon-container::before {
+    left: 0;
+    background: linear-gradient(90deg, #ffffff 0%, transparent 100%);
+}
+
+.trust-ribbon-container::after {
+    right: 0;
+    background: linear-gradient(270deg, #ffffff 0%, transparent 100%);
 }
 
 .trust-ribbon-item img:hover {
-    transform: scale(1.2) rotate(2deg); /* Effet dynamique au survol */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transform: scale(1.12) translateY(-6px);
+    box-shadow: 0 16px 32px rgba(0, 69, 255, 0.18);
+    border-color: rgba(0, 69, 255, 0.15);
 }
 
 @keyframes scrollRibbon {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(-25%); }
 }
 @media (max-width: 500px) {
     .container {
@@ -5817,4 +5837,39 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     font-size: 0.9rem;
     box-shadow: 0 6px 14px rgba(0, 69, 255, 0.35);
     border: 3px solid #fff;
+}
+.trust-ribbon-item {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.trust-ribbon-item::after {
+    content: "🇲🇬";
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.3s ease;
+}
+
+.trust-ribbon-item:hover::after {
+    opacity: 1;
+    transform: scale(1);
+}
+@media (max-width: 600px) {
+    .trust-ribbon-container { height: 110px; }
+    .trust-ribbon-item img { height: 80px; border-radius: 10px; }
+    .trust-ribbon-container::before,
+    .trust-ribbon-container::after { width: 40px; }
+    .trust-ribbon-item::after { width: 18px; height: 18px; font-size: 0.7rem; }
 }
