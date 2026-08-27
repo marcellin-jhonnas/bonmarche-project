@@ -1579,7 +1579,7 @@ function afficherRecapCommandeEnvoyee(snapshot) {
         <div class="panier-liste-scroll">
             ${resume}
             <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:12px; padding-bottom:4px;">
-                Cette commande a déjà été transmise. Ajoutez ou retirez un produit si besoin.
+                👉 Vérifiez votre panier, effectuez vos modifications si nécessaire, puis validez votre commande.
             </p>
         </div>
         <div class="panier-total-sticky">
