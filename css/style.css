@@ -5877,11 +5877,18 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, margin 0.4s ease;
 }
 
 .pagination-flex.visible {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+    max-height: 80px;
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
 }
