@@ -2030,7 +2030,13 @@ const ribbonImages = [
     'Images/hero/malagasy.png',
     'Images/hero/huile.png',
     'Images/hero/gasy.png',
+    'Images/hero/molfix.png',
     'Images/hero/eauvive.png',
+    'Images/hero/codal.png',
+    'Images/hero/rejoigner.png',
+    'Images/hero/nickel.png',
+    'Images/hero/menaka.png',
+    'Images/hero/ppigenique.png',
     'Images/hero/PPN.png',
     'Images/hero/PPN2.png' // Ajout de la 6ème image
 ];
