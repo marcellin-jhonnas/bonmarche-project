@@ -4427,6 +4427,7 @@ async function resynchroniserTarifLivraison() {
         // en cas de connexion instable
         localStorage.setItem('saferun_last_sync', maintenant.toString());
     }
+}
 const URL_SCRIPT_PRINCIPAL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // celui avec getClientParTel}
 function ouvrirRestaurationCompte() {
     const nomExistant = localStorage.getItem('saferun_nom');
@@ -4480,7 +4481,6 @@ function ouvrirRestaurationCompte() {
             console.error("Erreur restauration compte:", err);
             alert("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
         });
-}
 }
 function initPaginationVisibility() {
     const boutique = document.getElementById('boutique');
