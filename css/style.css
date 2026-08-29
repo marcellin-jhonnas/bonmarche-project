@@ -5892,3 +5892,16 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     margin-top: 20px !important;
     margin-bottom: 10px !important;
 }
+
+#chat-promo-text::after {
+    content: "|";
+    display: inline-block;
+    margin-left: 2px;
+    animation: cursorBlink 0.9s step-end infinite;
+    color: inherit;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0; }
+}

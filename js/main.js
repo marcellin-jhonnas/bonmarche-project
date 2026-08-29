@@ -3017,7 +3017,8 @@ function toggleChat() {
         // On cache la promo pour ne pas encombrer l'écran ouvert
         if (promo) promo.style.display = "none";
         
-        document.getElementById('chat-notif').style.display = "none";
+        const notif = document.getElementById('chat-notif');
+        if (notif) notif.style.display = "none";
         
         const msgContainer = document.getElementById('chat-messages');
         if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
@@ -3067,19 +3068,27 @@ function obtenirMessagesSelonHeure() {
 let isTyping = false;
 
 function taperMessage(element, texte, callback) {
-if (!element || isTyping) return; // <-- SÉCURITÉ : Si une écriture tourne déjà, on sort !
-let i = 0;
-element.innerHTML = "";
-isTyping = true;
-    
+    if (!element || isTyping) return;
+
+    const caracteres = Array.from(texte); // Gère correctement les emojis
+    let i = 0;
+    element.innerHTML = "";
+    isTyping = true;
+
     function type() {
-        if (i < texte.length) {
-            element.innerHTML += texte.charAt(i);
+        if (!document.body.contains(element)) {
+            isTyping = false;
+            return;
+        }
+
+        if (i < caracteres.length) {
+            element.textContent = caracteres.slice(0, i + 1).join('');
             i++;
-            setTimeout(type, 60); // Vitesse légèrement plus rapide pour le confort (35ms)
+            const delai = 40 + Math.random() * 20; // Reste dans la plage 30-65ms surveillée
+            setTimeout(type, delai);
         } else {
             isTyping = false;
-            if (callback) setTimeout(callback, 2500); // Pause avant le prochain message
+            if (callback) setTimeout(callback, 2500);
         }
     }
     type();
