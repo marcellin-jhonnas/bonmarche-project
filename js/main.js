@@ -4436,7 +4436,7 @@ async function resynchroniserTarifLivraison() {
 }
 const SITE_KEY_RECAPTCHA = "6Le_sp4tAAAAANYKex_BBhz7KP8TFc5f_g9H_1Nn";
 const LIMITE_RESTAURATION_JOUR = 5;
-
+const URL_SCRIPT_PRINCIPAL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 function verifierLimiteRestauration() {
     const aujourdHui = new Date().toDateString();
     const derniereDate = localStorage.getItem('saferun_restauration_date');
