@@ -4434,7 +4434,29 @@ async function resynchroniserTarifLivraison() {
         localStorage.setItem('saferun_last_sync', maintenant.toString());
     }
 }
-const URL_SCRIPT_PRINCIPAL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; // celui avec getClientParTel}
+const SITE_KEY_RECAPTCHA = "6Le_sp4tAAAAANYKex_BBhz7KP8TFc5f_g9H_1Nn";
+const LIMITE_RESTAURATION_JOUR = 5;
+
+function verifierLimiteRestauration() {
+    const aujourdHui = new Date().toDateString();
+    const derniereDate = localStorage.getItem('saferun_restauration_date');
+    let compteur = parseInt(localStorage.getItem('saferun_restauration_count') || '0', 10);
+
+    if (derniereDate !== aujourdHui) {
+        // Nouveau jour : on réinitialise le compteur
+        localStorage.setItem('saferun_restauration_date', aujourdHui);
+        localStorage.setItem('saferun_restauration_count', '0');
+        compteur = 0;
+    }
+
+    return compteur < LIMITE_RESTAURATION_JOUR;
+}
+
+function incrementerCompteurRestauration() {
+    let compteur = parseInt(localStorage.getItem('saferun_restauration_count') || '0', 10);
+    localStorage.setItem('saferun_restauration_count', (compteur + 1).toString());
+}
+
 function ouvrirRestaurationCompte() {
     const nomExistant = localStorage.getItem('saferun_nom');
     if (nomExistant) {
@@ -4442,52 +4464,66 @@ function ouvrirRestaurationCompte() {
         return;
     }
 
+    if (!verifierLimiteRestauration()) {
+        alert("Vous avez atteint la limite de tentatives pour aujourd'hui. Réessayez demain, ou contactez notre assistance WhatsApp.");
+        return;
+    }
+
     const tel = prompt("Entrez votre numéro de téléphone pour restaurer votre compte :");
     if (!tel || tel.trim() === "") return;
 
     const telNettoye = tel.trim();
-
-    // Petit indicateur visuel pendant la recherche
     const ancienTitre = document.title;
-    document.title = "Recherche en cours...";
+    document.title = "Vérification en cours...";
 
-    fetch(`${URL_SCRIPT_PRINCIPAL}?action=getClientParTel&tel=${encodeURIComponent(telNettoye)}`)
-        .then(response => response.json())
-        .then(data => {
-            document.title = ancienTitre;
+    // Génère un token reCAPTCHA invisible avant d'envoyer la requête
+    grecaptcha.ready(function() {
+        grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'restaurer_compte' }).then(function(token) {
 
-            if (data.found) {
-                // 1. Restauration du profil
-                localStorage.setItem('saferun_nom', data.client.nom);
-                localStorage.setItem('saferun_tel', data.client.telephone);
-                localStorage.setItem('saferun_quartier', data.client.quartier);
+            incrementerCompteurRestauration();
 
-                // 2. Restauration des tarifs de livraison (si trouvés)
-                if (data.tarifMin) {
-                    const tarifPropre = parseInt(data.tarifMin.toString().replace(/[^0-9]/g, ''), 10);
-                    localStorage.setItem('saferun_tarif_minimal', tarifPropre);
-                }
-                if (data.seuilGratuit) {
-                    const seuilPropre = parseInt(data.seuilGratuit.toString().replace(/[^0-9]/g, ''), 10);
-                    localStorage.setItem('saferun_seuil_gratuite', seuilPropre);
-                }
+            fetch(`${URL_SCRIPT_PRINCIPAL}?action=getClientParTel&tel=${encodeURIComponent(telNettoye)}&recaptchaToken=${encodeURIComponent(token)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.title = ancienTitre;
 
-                // 3. On marque le secteur comme validé pour débloquer l'affichage des prix
-                localStorage.setItem('saferun_secteur_valide', 'true');
-                localStorage.setItem('saferun_zone_nom', data.client.quartier);
+                    if (data.status === "recaptcha_echec") {
+                        alert("Vérification de sécurité échouée. Merci de réessayer dans quelques instants.");
+                        return;
+                    }
 
-                alert(`Bienvenue à nouveau, ${data.client.nom} ! Votre compte a été restauré.`);
-                location.reload();
-            } else {
-                alert("Aucun compte trouvé avec ce numéro. Vérifiez le numéro saisi, ou créez un nouveau profil.");
-            }
-        })
-        .catch(err => {
-            document.title = ancienTitre;
-            console.error("Erreur restauration compte:", err);
-            alert("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
+                    if (data.found) {
+                        localStorage.setItem('saferun_nom', data.client.nom);
+                        localStorage.setItem('saferun_tel', data.client.telephone);
+                        localStorage.setItem('saferun_quartier', data.client.quartier);
+
+                        if (data.tarifMin) {
+                            const tarifPropre = parseInt(data.tarifMin.toString().replace(/[^0-9]/g, ''), 10);
+                            localStorage.setItem('saferun_tarif_minimal', tarifPropre);
+                        }
+                        if (data.seuilGratuit) {
+                            const seuilPropre = parseInt(data.seuilGratuit.toString().replace(/[^0-9]/g, ''), 10);
+                            localStorage.setItem('saferun_seuil_gratuite', seuilPropre);
+                        }
+
+                        localStorage.setItem('saferun_secteur_valide', 'true');
+                        localStorage.setItem('saferun_zone_nom', data.client.quartier);
+
+                        alert(`Bienvenue à nouveau, ${data.client.nom} ! Votre compte a été restauré.`);
+                        location.reload();
+                    } else {
+                        alert("Aucun compte trouvé avec ce numéro. Vérifiez le numéro saisi, ou créez un nouveau profil.");
+                    }
+                })
+                .catch(err => {
+                    document.title = ancienTitre;
+                    console.error("Erreur restauration compte:", err);
+                    alert("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
+                });
         });
+    });
 }
+
 function initPaginationVisibility() {
     const boutique = document.getElementById('boutique');
     if (!boutique) return;
