@@ -1011,7 +1011,11 @@ async function envoyerDonneesAuSheet() {
 
     const idCommande = "SR-" + Date.now().toString().slice(-6);
     const infoLivraison = calculerLivraison(); 
-    
+    const tokenRecaptcha = await new Promise((resolve) => {
+        grecaptcha.ready(function() {
+            grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'nouvelle_commande' }).then(resolve);
+        });
+    });
     const payload = {
         action: "nouvelleCommande",
         nom: nom || "NOM_MANQUANT",
@@ -1023,7 +1027,8 @@ async function envoyerDonneesAuSheet() {
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
         quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
         statut: "NOUVEAU",
-        note: ""
+        note: "",
+         recaptchaToken: tokenRecaptcha
     };
 
     console.log("Payload envoyé au Sheet :", payload);
@@ -1151,11 +1156,16 @@ function afficherChoixPaiementLuxe(id, montant) {
     };
 
     // --- LOGIQUE D'ENVOI SHEET (Améliorée) ---
-    const envoyerActionSheet = (statut, note = "") => {
+        const envoyerActionSheet = async (statut, note = "") => {
         if (typeof API_URL !== 'undefined') {
-            // Tentative de récupération des produits depuis le panier avant qu'il soit vidé
             const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
             const detailProduits = historique.length > 0 ? historique[0].produits : "Commande SafeRun";
+
+            const tokenRecaptcha = await new Promise((resolve) => {
+                grecaptcha.ready(function() {
+                    grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'nouvelle_commande' }).then(resolve);
+                });
+            });
 
             fetch(API_URL, {
                 method: "POST",
@@ -1169,7 +1179,8 @@ function afficherChoixPaiementLuxe(id, montant) {
                     statut: statut,
                     note: note,
                     produits: detailProduits,
-                    quartier: localStorage.getItem('saferun_quartier') || "Tana"
+                    quartier: localStorage.getItem('saferun_quartier') || "Tana",
+                    recaptchaToken: tokenRecaptcha
                 })
             });
         }
