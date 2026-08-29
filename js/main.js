@@ -3349,22 +3349,23 @@ async function publierAvis() {
     const photoInput = document.getElementById('photo-client');
     const photo = photoInput.files[0];
     
-    // Utilisation de ta clé de stockage exacte
     const nom = localStorage.getItem('saferun_nom') || "Client SafeRun";
     const btn = document.getElementById('btn-publier');
-
-    // Vérification de sécurité
     if (!texte || !photo) {
         alert("Marcellin dit : N'oubliez pas le commentaire et la photo !");
         return;
     }
-
-    // Blocage du bouton pour éviter les doubles clics
     btn.disabled = true;
-    btn.innerText = "⏳ Publication...";
+    btn.innerText = " Publication...";
+
+    const tokenRecaptcha = await new Promise((resolve) => {
+        grecaptcha.ready(function() {
+            grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'publier_avis' }).then(resolve);
+        });
+    });
 
     try {
-        // --- ÉTAPE A : Envoi de la photo vers ImgBB ---
+                // --- ÉTAPE A : Envoi de la photo vers ImgBB ---
         const formData = new FormData();
         formData.append("image", photo);
         
@@ -3383,9 +3384,9 @@ async function publierAvis() {
             action: "publierAvis",
             nom: nom,
             message: texte,
-            photo: finalPhotoUrl
+            photo: finalPhotoUrl,
+            recaptchaToken: tokenRecaptcha
         };
-
         // Utilisation de ton API_URL déclarée en entête
         const responseSheet = await fetch(API_URL, {
             method: "POST",
