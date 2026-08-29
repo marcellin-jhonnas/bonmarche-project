@@ -3465,29 +3465,29 @@ async function envoyerMessageChat() {
     const input = document.getElementById('chat-input');
     const message = input.value.trim();
     
-    // On récupère l'ID (GUEST ou TEL)
     const idClient = obtenirIdentiteChat(); 
     
-    // CONDITION : On récupère le nom s'il existe, sinon on utilise l'ID
     const nomClient = localStorage.getItem('saferun_nom');
     const expediteurFinal = (nomClient && nomClient !== "Anonyme") ? nomClient : idClient;
-
     if (!message) return;
 
-    // 1. AFFICHAGE IMMÉDIAT (UI Optimiste)
     const container = document.getElementById('chat-messages');
     container.innerHTML += `
         <div class="message client" style="background: #dcf8c6; align-self: flex-end; padding: 8px 12px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; font-size: 0.9rem; margin-bottom:5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-            ${formaterMessage(message)}
+        ${formaterMessage(message)}
         </div>
     `;
     input.value = "";
     container.scrollTop = container.scrollHeight;
-
-    // 2. MISE À JOUR DU COMPTEUR
-    dernierNombreMessages++; 
+    dernierNombreMessages++;
 
     try {
+        const tokenRecaptcha = await new Promise((resolve) => {
+            grecaptcha.ready(function() {
+                grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'envoyer_message' }).then(resolve);
+            });
+        });
+
         await fetch(scriptURL, {
             method: "POST",
             mode: "no-cors",
@@ -3495,7 +3495,8 @@ async function envoyerMessageChat() {
                 action: "sendChatMessage", 
                 idClient: idClient, 
                 expediteur: expediteurFinal, 
-                message: message 
+                message: message,
+                recaptchaToken: tokenRecaptcha
             })
         });
     } catch (e) { 
@@ -3524,19 +3525,25 @@ async function envoyerPhotoChat() {
         const base64Data = reader.result.split(',')[1]; // On récupère uniquement les données
 
         try {
-            await fetch(scriptURL, {
-                method: "POST",
-                // Attention : on garde no-cors si ton GAS actuel utilise cette méthode
-                mode: "no-cors", 
-                body: JSON.stringify({ 
-                    action: "sendChatMessage", 
-                    idClient: idClient, 
-                    expediteur: expediteurFinal, 
-                    message: "IMAGE_SENT", // Mot-clé pour le GAS
-                    image: base64Data, 
-                    nomFichier: "Capture_" + idClient + "_" + Date.now() + ".jpg"
-                })
-            });
+                            const tokenRecaptchaPhoto = await new Promise((resolve) => {
+                    grecaptcha.ready(function() {
+                        grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'envoyer_photo' }).then(resolve);
+                    });
+                });
+
+                await fetch(scriptURL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    body: JSON.stringify({ 
+                        action: "sendChatMessage", 
+                        idClient: idClient, 
+                        expediteur: expediteurFinal, 
+                        message: "IMAGE_SENT",
+                        image: base64Data, 
+                        nomFichier: "Capture_" + idClient + "_" + Date.now() + ".jpg",
+                        recaptchaToken: tokenRecaptchaPhoto
+                    })
+                });
             fileInput.value = ""; // On vide l'input
         } catch (e) { 
             console.error("Erreur d'envoi de la photo", e);
