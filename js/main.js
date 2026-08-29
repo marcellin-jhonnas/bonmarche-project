@@ -3088,7 +3088,11 @@ function taperMessage(element, texte, callback) {
             setTimeout(type, delai);
         } else {
             isTyping = false;
-            if (callback) setTimeout(callback, 2500);
+            element.classList.add('fini');
+            if (callback) setTimeout(() => {
+                element.classList.remove('fini');
+                callback();
+            }, 2500);
         }
     }
     type();

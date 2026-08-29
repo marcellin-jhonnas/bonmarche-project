@@ -5897,11 +5897,25 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     content: "|";
     display: inline-block;
     margin-left: 2px;
+    font-weight: bold;
+    color: #25D366;
     animation: cursorBlink 0.9s step-end infinite;
-    color: inherit;
 }
 
 @keyframes cursorBlink {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0; }
+}
+#chat-promo-text::after {
+    content: "|";
+    display: inline-block;
+    margin-left: 2px;
+    font-weight: bold;
+    color: #25D366;
+    animation: cursorBlink 0.9s step-end infinite;
+    opacity: 1;
+}
+
+#chat-promo-text.fini::after {
+    opacity: 0;
 }
