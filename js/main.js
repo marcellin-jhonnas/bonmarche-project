@@ -1042,14 +1042,12 @@ async function envoyerDonneesAuSheet() {
          recaptchaToken: tokenRecaptcha
     };
 
-    console.log("Payload envoyé au Sheet :", payload);
+        console.log("Payload envoyé au Sheet :", payload);
+    const resultatEnvoi = await envoyerAvecFileAttente(API_URL, payload);
 
-    // 1. Envoi au Google Sheet
-    fetch(API_URL, { 
-        method: "POST", 
-        mode: "no-cors", 
-        body: JSON.stringify(payload) 
-    });
+    if (resultatEnvoi.queued) {
+        alert("⚠️ Connexion instable : votre commande a été enregistrée sur votre appareil et sera transmise automatiquement dès le retour du réseau.");
+    }
 
     let historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
 
@@ -3524,16 +3522,12 @@ async function envoyerMessageChat() {
             });
         });
 
-        await fetch(scriptURL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ 
-                action: "sendChatMessage", 
-                idClient: idClient, 
-                expediteur: expediteurFinal, 
-                message: message,
-                recaptchaToken: tokenRecaptcha
-            })
+        await envoyerAvecFileAttente(scriptURL, {
+            action: "sendChatMessage", 
+            idClient: idClient, 
+            expediteur: expediteurFinal, 
+            message: message,
+            recaptchaToken: tokenRecaptcha
         });
     } catch (e) { 
         console.error("Erreur d'envoi", e);
@@ -4654,4 +4648,91 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!navigator.onLine) {
         afficherBandeauHorsLigne();
     }
+});
+// ==========================================================
+// SYSTÈME DE FILE D'ATTENTE POUR REQUÊTES HORS LIGNE
+// ==========================================================
+
+function ajouterALaFileAttente(url, payload) {
+    const file = JSON.parse(localStorage.getItem('saferun_file_attente') || '[]');
+    file.push({
+        id: 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        url: url,
+        payload: payload,
+        dateAjout: new Date().toISOString()
+    });
+    localStorage.setItem('saferun_file_attente', JSON.stringify(file));
+    mettreAJourBadgeFileAttente();
+}
+
+function retirerDeLaFileAttente(id) {
+    let file = JSON.parse(localStorage.getItem('saferun_file_attente') || '[]');
+    file = file.filter(item => item.id !== id);
+    localStorage.setItem('saferun_file_attente', JSON.stringify(file));
+    mettreAJourBadgeFileAttente();
+}
+
+async function envoyerAvecFileAttente(url, payload) {
+    if (!navigator.onLine) {
+        ajouterALaFileAttente(url, payload);
+        return { queued: true };
+    }
+
+    try {
+        await fetch(url, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify(payload)
+        });
+        return { queued: false, success: true };
+    } catch (e) {
+        // Le fetch a échoué malgré une connexion apparente : on met quand même en file
+        console.warn("Échec réseau, mise en file d'attente :", e);
+        ajouterALaFileAttente(url, payload);
+        return { queued: true };
+    }
+}
+
+async function traiterFileAttente() {
+    if (!navigator.onLine) return;
+
+    let file = JSON.parse(localStorage.getItem('saferun_file_attente') || '[]');
+    if (file.length === 0) return;
+
+    console.log(`[SafeRun] Renvoi de ${file.length} requête(s) en attente...`);
+
+    for (const item of file) {
+        try {
+            await fetch(item.url, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify(item.payload)
+            });
+            retirerDeLaFileAttente(item.id);
+        } catch (e) {
+            console.warn("Échec du renvoi, on réessaiera plus tard :", e);
+            // On arrête la boucle ici : si une requête échoue encore,
+            // inutile de tenter les suivantes tout de suite
+            break;
+        }
+    }
+}
+
+function mettreAJourBadgeFileAttente() {
+    const file = JSON.parse(localStorage.getItem('saferun_file_attente') || '[]');
+    const badge = document.getElementById('badge-file-attente');
+    if (badge) {
+        badge.innerText = file.length;
+        badge.style.display = file.length > 0 ? 'flex' : 'none';
+    }
+}
+
+// Dès que la connexion revient, on tente de vider la file automatiquement
+window.addEventListener('online', () => {
+    setTimeout(traiterFileAttente, 1000); // petit délai pour laisser la connexion se stabiliser
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    mettreAJourBadgeFileAttente();
+    if (navigator.onLine) traiterFileAttente();
 });
