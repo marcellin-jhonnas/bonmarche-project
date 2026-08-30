@@ -728,6 +728,13 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
+    const tarifsOk = await assurerTarifsLivraisonValides();
+    if (!tarifsOk) {
+        alert("Merci de resélectionner votre quartier pour continuer votre commande en toute sécurité.");
+        location.reload();
+        return;
+    }
+
     let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
     const snapshotActif = snapshot && snapshot.produits && snapshot.produits.length > 0;
 
@@ -4594,4 +4601,37 @@ function obtenirIconeCategorie(categorie) {
         "HUILES": "fa-oil-can"
     };
     return mapping[cat] || "fa-star";
+}
+async function assurerTarifsLivraisonValides() {
+    const secteurValide = localStorage.getItem('saferun_secteur_valide');
+    const tarifMin = localStorage.getItem('saferun_tarif_minimal');
+    const seuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
+    const zoneNom = localStorage.getItem('saferun_zone_nom');
+
+    // Cas suspect : le client a validé une zone, mais les tarifs ont disparu
+    if (secteurValide === 'true' && zoneNom && (!tarifMin || !seuilGratuit)) {
+        try {
+            const zoneCode = localStorage.getItem('saferun_zone_code') || '';
+            const url = `${MON_URL_GAS}?postalCode=${encodeURIComponent(zoneCode)}&query=${encodeURIComponent(zoneNom)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            const match = data.find(item => item.nomOfficiel === zoneNom);
+
+            if (match) {
+                const tarifPropre = parseInt(match.tarif.toString().replace(/[^0-9]/g, ''), 10);
+                const seuilPropre = parseInt(match.seuil.toString().replace(/[^0-9]/g, ''), 10);
+                localStorage.setItem('saferun_tarif_minimal', tarifPropre);
+                localStorage.setItem('saferun_seuil_gratuite', seuilPropre);
+                return true;
+            } else {
+                // Zone introuvable : on invalide proprement, plutôt que d'utiliser un défaut arbitraire
+                localStorage.removeItem('saferun_secteur_valide');
+                return false;
+            }
+        } catch (e) {
+            console.warn("Impossible de revérifier les tarifs de livraison.", e);
+            return false;
+        }
+    }
+    return true;
 }
