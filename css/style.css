@@ -5955,3 +5955,50 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         font-size: 0.62rem;
     }
 }
+.cat-badge-overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e3a8a;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    animation: catBadgeFloat 3s ease-in-out infinite;
+}
+
+@keyframes catBadgeFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+.cat-badge-overlay i {
+    font-size: 0.7rem;
+    color: #ffcc00;
+}
+
+@media (max-width: 480px) {
+    .cat-badge-overlay {
+        font-size: 0.55rem;
+        padding: 4px 8px;
+        top: 10px;
+        left: 10px;
+    }
+    .cat-badge-overlay i {
+        font-size: 0.62rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cat-badge-overlay {
+        animation: none !important;
+    }
+}
