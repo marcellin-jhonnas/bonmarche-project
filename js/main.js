@@ -381,7 +381,11 @@ const actionClicPanier = quartierValide
          onmouseover="this.style.transform='scale(1.1)';"
          onmouseout="this.style.transform='scale(1)';"
     >
-    
+     <!-- BADGE CATÉGORIE -->
+    <div class="cat-badge-overlay">
+        <i class="fas ${obtenirIconeCategorie(p.Categorie)}"></i>
+        <span>${p.Categorie || 'Essentiel'}</span>
+    </div>
     <!-- BOUTON OEIL (APERÇU) -->
     <div onclick="event.stopPropagation(); ${quartierValide ? `ouvrirZoomProduit('${nomPropre}', ${p.Prix}, '${p.Image_URL}', '${descEchappee}')` : 'focusSearch()'}" 
          title="Aperçu rapide"
@@ -4577,4 +4581,17 @@ function initPaginationVisibility() {
     });
 
     observer.observe(boutique);
+}
+
+function obtenirIconeCategorie(categorie) {
+    const cat = (categorie || "").toString().toUpperCase().trim();
+    const mapping = {
+        "PPN": "fa-basket-shopping",
+        "BOISSONS": "fa-bottle-water",
+        "EPICERIE": "fa-store",
+        "ÉPICERIE": "fa-store",
+        "PRODUITS LAITIERS": "fa-cheese",
+        "HUILES": "fa-oil-can"
+    };
+    return mapping[cat] || "fa-star";
 }
