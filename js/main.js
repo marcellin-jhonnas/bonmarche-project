@@ -4635,3 +4635,23 @@ async function assurerTarifsLivraisonValides() {
     }
     return true;
 }
+
+function afficherBandeauHorsLigne() {
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = 'block';
+}
+
+function masquerBandeauHorsLigne() {
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+window.addEventListener('offline', afficherBandeauHorsLigne);
+window.addEventListener('online', masquerBandeauHorsLigne);
+
+// Vérification immédiate au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    if (!navigator.onLine) {
+        afficherBandeauHorsLigne();
+    }
+});

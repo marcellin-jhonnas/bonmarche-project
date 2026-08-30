@@ -6002,3 +6002,11 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
         animation: none !important;
     }
 }
+#offline-banner {
+    animation: slideDownBanner 0.3s ease-out;
+}
+
+@keyframes slideDownBanner {
+    from { transform: translateY(-100%); }
+    to   { transform: translateY(0); }
+}
