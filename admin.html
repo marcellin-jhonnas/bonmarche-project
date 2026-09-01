@@ -1783,6 +1783,10 @@ function genererFactureLivreur(commande) {
     // Et on garde "Téléphone" pour le numéro
     const adressePhysique = commande["Lieu Exact"] || "Non précisé";
     const telephone = commande.Téléphone || "---";
+        const noteBrute = (commande.Note || "").toString().toLowerCase();
+    const estCOD = noteBrute.includes("livraison");
+    const fraisConfirmes = parseFloat(commande.FraisLivraison) || 0;
+    const montantACollecter = Math.max((parseFloat(commande.Montant) || 0) - fraisConfirmes, 0);
     const noteBrute = (commande.Note || "").toString().toLowerCase();
     const estCOD = noteBrute.includes("payer à la livraison") || noteBrute.includes("payer a la livraison");
     
@@ -1827,7 +1831,10 @@ function genererFactureLivreur(commande) {
                 
           ${estCOD ? `
           <div style="background:#fef3c7; border:2px solid #f59e0b; padding:10px; margin:10px 0; text-align:center; font-weight:900; font-size:1.05em;">
-             ⚠️ ENCAISSER ${commande.Montant || 0} Ar EN ESPÈCES/MOBILE
+             ${fraisConfirmes > 0 
+                ? `⚠️ ENCAISSER ${montantACollecter.toLocaleString()} Ar<br><span style="font-size:0.65em; font-weight:600;">(Frais de livraison ${fraisConfirmes.toLocaleString()} Ar déjà réglés)</span>`
+                : `⚠️ FRAIS DE LIVRAISON NON CONFIRMÉS — VÉRIFIER AVANT DÉPART`
+             }
           </div>
           <div class="checklist">
             [ ] Colis complet & vérifié<br>
@@ -1844,7 +1851,7 @@ function genererFactureLivreur(commande) {
           </div>
           `}
 
-          <div class="total">TOTAL: ${commande.Montant || 0} Ar</div>
+          <div class="total">TOTAL COMMANDE: ${commande.Montant || 0} Ar</div>
                 
                 <div class="qr-section">
                     <img src="${qrCodeUrl}" alt="QR Code">
@@ -4078,16 +4085,17 @@ function copierCodeSecurite() {
 }
 function obtenirBadgePaiement(commande) {
     const note = (commande.Note || "").toString().toLowerCase();
-    const estCOD = note.includes("payer à la livraison") || note.includes("payer a la livraison");
+    const estCOD = note.includes("livraison");
 
     if (estCOD) {
-        return `<span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px; white-space:nowrap;">
-                    💵 CASH À COLLECTER
-                </span>`;
+        const frais = parseFloat(commande.FraisLivraison) || 0;
+        if (frais === 0) {
+            return `<span style="background:#fee2e2; color:#991b1b; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px;">⏳ Frais non confirmés</span>`;
+        }
+        const cash = Math.max((parseFloat(commande.Montant) || 0) - frais, 0);
+        return `<span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px;">💵 Collecter ${cash.toLocaleString()} Ar</span>`;
     }
-    return `<span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px; white-space:nowrap;">
-                ✅ DÉJÀ PAYÉ
-            </span>`;
+    return `<span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px;">✅ DÉJÀ PAYÉ</span>`;
 }
 </script>
 <style>
