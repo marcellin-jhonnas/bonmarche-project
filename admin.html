@@ -1679,6 +1679,16 @@ function genererTableauLogistique(serieuses) {
     if(document.getElementById('count-serieux')) document.getElementById('count-serieux').innerText = nbSerieux;
     if(document.getElementById('count-planifie')) document.getElementById('count-planifie').innerText = nbPlanifie;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = serieuses.length;
+       const totalCashACollecter = serieuses
+       .filter(c => {
+           const note = (c.Note || "").toString().toLowerCase();
+           return note.includes("payer à la livraison") || note.includes("payer a la livraison");
+       })
+       .reduce((sum, c) => sum + (parseFloat(c.Montant) || 0), 0);
+
+   if(document.getElementById('count-cash-total')) {
+       document.getElementById('count-cash-total').innerText = totalCashACollecter.toLocaleString() + " Ar";
+   } 
 
     // --- 2. PRÉPARATION DU TABLEAU ---
     window.currentSerieuses = serieuses;
@@ -1708,8 +1718,9 @@ function genererTableauLogistique(serieuses) {
             <tr style="border-bottom:1px solid #e2e8f0;">
                 <td style="padding:12px;">
                     <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
-                        <strong style="color:#1e293b;">${c.Client || 'Inconnu'}</strong>
-                        ${obtenirBadgeUrgence(c)}
+                <strong style="color:#1e293b;">${c.Client || 'Inconnu'}</strong>
+                ${obtenirBadgeUrgence(c)}
+                ${obtenirBadgePaiement(c)}
                     </div>
                     <small style="color:#94a3b8; font-size:11px;">Réf: ${c.ID || '---'}</small>
                 </td>
@@ -1771,7 +1782,9 @@ function genererFactureLivreur(commande) {
     // RECTIFICATION : On pointe sur la colonne "Lieu Exact" pour l'adresse
     // Et on garde "Téléphone" pour le numéro
     const adressePhysique = commande["Lieu Exact"] || "Non précisé";
-    const telephone = commande.Téléphone || "---"; 
+    const telephone = commande.Téléphone || "---";
+    const noteBrute = (commande.Note || "").toString().toLowerCase();
+    const estCOD = noteBrute.includes("payer à la livraison") || noteBrute.includes("payer a la livraison");
     
     // 2. Préparation du QR Code avec l'adresse exacte
     const lienMaps = "http://maps.google.com/?q=" + encodeURIComponent(adressePhysique);
@@ -1812,12 +1825,26 @@ function genererFactureLivreur(commande) {
                 <hr>
                 <p><strong>PRODUITS:</strong><br>${(commande.Produits || "Commande standard").replace(/\n/g, "<br>")}</p>
                 
-                <div class="checklist">
-                    [ ] Colis complet & vérifié<br>
-                    [ ] Paiement reçu (Especes/Mobile)
-                </div>
+          ${estCOD ? `
+          <div style="background:#fef3c7; border:2px solid #f59e0b; padding:10px; margin:10px 0; text-align:center; font-weight:900; font-size:1.05em;">
+             ⚠️ ENCAISSER ${commande.Montant || 0} Ar EN ESPÈCES/MOBILE
+          </div>
+          <div class="checklist">
+            [ ] Colis complet & vérifié<br>
+            [ ] Montant encaissé et vérifié<br>
+            [ ] Reçu remis au client
+          </div>
+          ` : `
+          <div style="background:#dcfce7; border:2px solid #16a34a; padding:10px; margin:10px 0; text-align:center; font-weight:900; font-size:1.05em;">
+             ✅ COMMANDE DÉJÀ PAYÉE — NE RIEN ENCAISSER
+          </div>
+          <div class="checklist">
+            [ ] Colis complet & vérifié<br>
+            [ ] Identité du client confirmée
+          </div>
+          `}
 
-                <div class="total">TOTAL: ${commande.Montant || 0} Ar</div>
+          <div class="total">TOTAL: ${commande.Montant || 0} Ar</div>
                 
                 <div class="qr-section">
                     <img src="${qrCodeUrl}" alt="QR Code">
@@ -4048,6 +4075,19 @@ function copierCodeSecurite() {
             btn.style.color = "#f59e0b";
         }, 2000);
     });
+}
+function obtenirBadgePaiement(commande) {
+    const note = (commande.Note || "").toString().toLowerCase();
+    const estCOD = note.includes("payer à la livraison") || note.includes("payer a la livraison");
+
+    if (estCOD) {
+        return `<span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px; white-space:nowrap;">
+                    💵 CASH À COLLECTER
+                </span>`;
+    }
+    return `<span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-left:6px; white-space:nowrap;">
+                ✅ DÉJÀ PAYÉ
+            </span>`;
 }
 </script>
 <style>
