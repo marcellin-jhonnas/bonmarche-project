@@ -1147,7 +1147,7 @@ function fermerNotif() { document.getElementById('notif-popup').style.display = 
 async function marquerLu(id) { 
     // On utilise l'URL avec l'action markAsRead que nous avons ajoutée au doGet
     try {
-        await fetch(CONFIG.API + "?action=markAsRead&idClient=" + id);
+        await fetch(CONFIG.API + "?action=markAsRead&idClient=" + id + "&adminKey=" + CONFIG.ADMIN_KEY);
         console.log("Statut mis à jour sur le Sheet pour : " + id);
     } catch (e) {
         console.error("Erreur marquerLu:", e);
@@ -1217,7 +1217,8 @@ afficherLivreurs();
     const CONFIG = {
         API: "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec",
         USER: "Admin",
-        PASS: "SafeRun2026"
+        PASS: "SafeRun2026",
+        ADMIN_KEY: "SafeRun2026-Xk9mPz-Admin-7Qw2"
     };
 
  function login() {
@@ -1419,7 +1420,7 @@ if (id === 'tab-users') {
     if(isLocked) return;
     isLocked = true;
     try {
-        const res = await fetch(CONFIG.API + "?action=readAllChat");
+        const res = await fetch(CONFIG.API + "?action=readAllChat&adminKey=" + CONFIG.ADMIN_KEY);
         const allMsgs = await res.json();
         surveillerNouveauxMessages(allMsgs); // Active la surveillance des notifications
 
@@ -3203,12 +3204,13 @@ async function ouvrirModalPaiement() {
     try {
         const response = await fetch(CONFIG.API, {
             method: "POST",
-            body: JSON.stringify({
-                action: "ajouterPaiementRapide",
-                tel: tel,
-                ref: ref,
-                montant: montant // On ajoute le montant ici pour le GAS
-            })
+body: JSON.stringify({
+   action: "ajouterPaiementRapide",
+   tel: tel,
+   ref: ref,
+   montant: montant,
+   adminKey: CONFIG.ADMIN_KEY
+})
         });
         
         const res = await response.json();
@@ -3263,13 +3265,14 @@ async function enregistrerCalendrier(typeCible) {
     try {
         const response = await fetch(CONFIG.API, {
             method: "POST",
-            body: JSON.stringify({
-                action: "gestionCalendrier",
-                type: typeCible,
-                titre: titre,
-                description: desc,
-                date: date
-            })
+body: JSON.stringify({
+   action: "gestionCalendrier",
+   type: typeCible,
+   titre: titre,
+   description: desc,
+   date: date,
+   adminKey: CONFIG.ADMIN_KEY
+})
         });
         const res = await response.json();
         if (res.status === "success") {
@@ -3286,7 +3289,7 @@ async function viderFeuille(typeCible) {
     try {
         const response = await fetch(CONFIG.API, {
             method: "POST",
-            body: JSON.stringify({ action: "nettoyerFeuilles", cible: typeCible })
+            body: JSON.stringify({ action: "nettoyerFeuilles", cible: typeCible, adminKey: CONFIG.ADMIN_KEY })
         });
         const res = await response.json();
         alert("✅ " + res.message);
