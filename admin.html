@@ -1783,12 +1783,10 @@ function genererFactureLivreur(commande) {
     // Et on garde "Téléphone" pour le numéro
     const adressePhysique = commande["Lieu Exact"] || "Non précisé";
     const telephone = commande.Téléphone || "---";
-        const noteBrute = (commande.Note || "").toString().toLowerCase();
+    const noteBrute = (commande.Note || "").toString().toLowerCase();
     const estCOD = noteBrute.includes("livraison");
     const fraisConfirmes = parseFloat(commande.FraisLivraison) || 0;
     const montantACollecter = Math.max((parseFloat(commande.Montant) || 0) - fraisConfirmes, 0);
-    const noteBrute = (commande.Note || "").toString().toLowerCase();
-    const estCOD = noteBrute.includes("payer à la livraison") || noteBrute.includes("payer a la livraison");
     
     // 2. Préparation du QR Code avec l'adresse exacte
     const lienMaps = "http://maps.google.com/?q=" + encodeURIComponent(adressePhysique);
