@@ -1153,7 +1153,7 @@ async function marquerLu(id) {
         console.error("Erreur marquerLu:", e);
     }
 }
-async function supprimerDuSheet(id) { fetch(CONFIG.API + "?action=deleteClientMessages&idClient=" + id); }
+async function supprimerDuSheet(id) { fetch(CONFIG.API + "?action=deleteClientMessages&idClient=" + id + "&adminKey=" + CONFIG.ADMIN_KEY); }
 async function envoyerReponseRapide(id, msg) {
     // On crée l'objet JSON propre
     const payload = {
