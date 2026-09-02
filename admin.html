@@ -1179,40 +1179,94 @@ async function envoyerReponseRapide(id, msg) {
     let unreadByClient = {}; 
     // ----------------------------------
     let allData = []; 
-    let listeLivreurs = JSON.parse(localStorage.getItem('safeRunLivreurs')) || [];
+    let listeLivreurs = [];
+
+async function chargerLivreursDepuisSheet() {
+    try {
+        const res = await fetch(CONFIG.API + "?action=getLivreursActifs");
+        const noms = await res.json();
+        listeLivreurs = noms;
+        afficherLivreurs();
+    } catch (e) {
+        console.error("Impossible de charger les livreurs depuis le Sheet.", e);
+    }
+}
     let annuaire = JSON.parse(localStorage.getItem('annuaire_livreurs')) || {};
-function ajouterLivreur() {
+async function ajouterLivreur() {
     const nom = document.getElementById('input-nom-livreur').value.trim();
     if(!nom) return;
-    
-    listeLivreurs.push(nom);
-    localStorage.setItem('safeRunLivreurs', JSON.stringify(listeLivreurs)); // Sauvegarde
-    document.getElementById('input-nom-livreur').value = ""; // Vide l'input
-    afficherLivreurs();
+
+    const pin = prompt(`Code PIN à 4 chiffres pour ${nom} :`);
+    if (!pin || pin.trim().length !== 4) {
+        alert("Code PIN invalide (4 chiffres requis).");
+        return;
+    }
+
+    try {
+        const res = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "gestionLivreurs",
+                operation: "ajouter",
+                nom: nom,
+                pin: pin.trim(),
+                adminKey: CONFIG.ADMIN_KEY
+            })
+        });
+        const data = await res.json();
+        alert(data.message);
+
+        document.getElementById('input-nom-livreur').value = "";
+        await chargerLivreursDepuisSheet();
+    } catch (e) {
+        alert("Erreur lors de l'ajout du livreur.");
+        console.error(e);
+    }
 }
 
 function afficherLivreurs() {
     let html = "<h3>Mes Livreurs :</h3>";
     let options = '<option value="TOUS">-- TOUS LES LIVREURS --</option>';
 
-    listeLivreurs.forEach((l, index) => {
+    listeLivreurs.forEach((l) => {
         html += `<div style="padding:10px; background:white; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between;">
-            ${l} <button onclick="listeLivreurs.splice(${index},1); localStorage.setItem('safeRunLivreurs', JSON.stringify(listeLivreurs)); afficherLivreurs();" style="color:red; border:none; background:none; cursor:pointer;">Supprimer</button>
+            ${l} <button onclick="supprimerLivreur('${l}')" style="color:red; border:none; background:none; cursor:pointer;">Désactiver</button>
         </div>`;
         
-        // On ajoute le livreur dans les options du filtre de l'onglet logistique
         options += `<option value="${l.toUpperCase()}">${l}</option>`;
     });
 
     document.getElementById('liste-livreurs-affichage').innerHTML = html;
     
-    // Mise à jour du menu déroulant dans l'onglet logistique
     const selectFiltre = document.getElementById('filtre-livreur-logistique');
     if(selectFiltre) selectFiltre.innerHTML = options;
 }
 
+async function supprimerLivreur(nom) {
+    if (!confirm(`Désactiver ${nom} ? Il ne pourra plus se connecter.`)) return;
+
+    try {
+        const res = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "gestionLivreurs",
+                operation: "desactiver",
+                nom: nom,
+                adminKey: CONFIG.ADMIN_KEY
+            })
+        });
+        const data = await res.json();
+        alert(data.message);
+        await chargerLivreursDepuisSheet();
+    } catch (e) {
+        alert("Erreur lors de la désactivation.");
+        console.error(e);
+    }
+}
+
 // Lancer l'affichage au démarrage
-afficherLivreurs();
+// Lancer le chargement depuis le Sheet au démarrage
+chargerLivreursDepuisSheet();
 
     const CONFIG = {
         API: "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec",
