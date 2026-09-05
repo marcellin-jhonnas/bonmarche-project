@@ -112,6 +112,19 @@
         padding: 40px 20px;
         color: #94a3b8;
     }
+    .btn-maps { background: #e0f2fe; color: #0369a1; }
+    .btn-probleme {
+    width: 100%;
+    background: #fee2e2;
+    color: #991b1b;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 8px;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -136,6 +149,17 @@
         <button onclick="deconnecterLivreur()" style="background:rgba(255,255,255,0.15); border:none; color:white; padding:8px 12px; border-radius:8px; cursor:pointer;">
             <i class="fas fa-sign-out-alt"></i>
         </button>
+    </div>
+
+    <div id="resume-journee" style="display:flex; gap:10px; margin-bottom:15px;">
+        <div style="flex:1; background:white; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.05);">
+            <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">Restant</div>
+            <div id="compteur-restant" style="font-size:1.4rem; font-weight:900; color:#1e3a8a;">0</div>
+        </div>
+        <div style="flex:1; background:white; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.05);">
+            <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">Cash à ramener</div>
+            <div id="compteur-cash" style="font-size:1.4rem; font-weight:900; color:#f59e0b;">0 Ar</div>
+        </div>
     </div>
 
     <div id="liste-commandes-livreur"></div>
@@ -213,7 +237,8 @@ async function chargerCommandesLivreur(nom) {
 
     try {
         const res = await fetch(API_URL_LIVREUR + "?action=getCommandesLivreur&nom=" + encodeURIComponent(nom));
-        const commandes = await res.json();
+        let commandes = await res.json();
+        commandes = trierParHoraire(commandes);
 
         if (commandes.length === 0) {
             container.innerHTML = `<div id="message-vide"><i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i><p style="margin-top:10px;">Aucune livraison en attente. Bravo !</p></div>`;
@@ -226,23 +251,43 @@ async function chargerCommandesLivreur(nom) {
             const frais = parseFloat(c.FraisLivraison) || 0;
             const montantACollecter = Math.max((parseFloat(c.Montant) || 0) - frais, 0);
             const telProp = (c.Téléphone || "").toString().replace(/\D/g, '');
+            const adresse = c["Lieu Exact"] || 'Non précisé';
+            const lienMaps = "https://maps.google.com/?q=" + encodeURIComponent(adresse);
 
             return `
                 <div class="carte-commande ${estCOD ? '' : 'payee'}">
                     <h3>${c.Client || 'Client'}</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> ${c["Lieu Exact"] || 'Non précisé'}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> ${adresse}</p>
                     <p><i class="fas fa-box"></i> ${c.Produits || ''}</p>
                     ${estCOD
                         ? `<span class="badge-paiement badge-cod">💵 Collecter ${montantACollecter.toLocaleString()} Ar</span>`
                         : `<span class="badge-paiement badge-paye">✅ Déjà payé</span>`
                     }
                     <div class="actions-commande">
-                        <a href="tel:${telProp}" class="btn-action btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
-                        <button class="btn-action btn-livre" onclick="marquerCommeLivree('${c.ID}', '${nom}')"><i class="fas fa-check"></i> Livré</button>
-                    </div>
+    <a href="${lienMaps}" target="_blank" class="btn-action btn-maps"><i class="fas fa-map-marked-alt"></i> Itinéraire</a>
+    <a href="tel:${telProp}" class="btn-action btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
+    <button class="btn-action btn-livre" onclick="marquerCommeLivree('${c.ID}', '${nom}')"><i class="fas fa-check"></i> Livré</button>
+</div>
+<button class="btn-probleme" onclick="signalerProbleme('${c.Client}', '${c.ID}', '${adresse}')">
+    <i class="fas fa-exclamation-triangle"></i> Signaler un problème
+</button>
                 </div>
             `;
         }).join('');
+
+        container.innerHTML = commandes.map(c => { /* ... contenu inchangé ... */ }).join('');
+
+        // Mise à jour du résumé de la journée
+        let totalCash = 0;
+        commandes.forEach(c => {
+            const note = (c.Note || "").toString().toLowerCase();
+            if (note.includes("livraison")) {
+                const frais = parseFloat(c.FraisLivraison) || 0;
+                totalCash += Math.max((parseFloat(c.Montant) || 0) - frais, 0);
+            }
+        });
+        document.getElementById('compteur-restant').innerText = commandes.length;
+        document.getElementById('compteur-cash').innerText = totalCash.toLocaleString() + " Ar";
 
     } catch (e) {
         container.innerHTML = "<p style='text-align:center; color:red;'>Erreur de chargement.</p>";
@@ -261,6 +306,20 @@ async function marquerCommeLivree(id, nom) {
     } catch (e) {
         alert("Erreur lors de la mise à jour.");
     }
+}
+function trierParHoraire(commandes) {
+    function extraireOrdre(livraisonTexte) {
+        const texte = (livraisonTexte || "").toLowerCase();
+        if (texte.includes("matin")) return 1;
+        if (texte.includes("après-midi") || texte.includes("apres-midi")) return 2;
+        return 3; // pas d'horaire précisé, en dernier
+    }
+    return commandes.sort((a, b) => extraireOrdre(a.Livraison) - extraireOrdre(b.Livraison));
+}
+function signalerProbleme(client, id, adresse) {
+    const numeroSupport = "261382453610"; // ton numéro WhatsApp existant
+    const message = `⚠️ PROBLÈME LIVRAISON\nCommande: ${id}\nClient: ${client}\nAdresse: ${adresse}\n\nDécrivez le problème svp.`;
+    window.open(`https://wa.me/${numeroSupport}?text=${encodeURIComponent(message)}`, '_blank');
 }
 </script>
 </body>
