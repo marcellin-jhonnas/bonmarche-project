@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeRun - Espace Livreur</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f8fafc; }
+
+    #ecran-connexion {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1e3a8a, #274690);
+        padding: 20px;
+    }
+
+    .box-connexion {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        width: 100%;
+        max-width: 360px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+
+    .box-connexion h2 { margin-bottom: 20px; color: #1e3a8a; }
+
+    .box-connexion select, .box-connexion input {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 1rem;
+    }
+
+    .box-connexion button {
+        width: 100%;
+        padding: 14px;
+        background: #ffcc00;
+        border: none;
+        border-radius: 10px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    #ecran-livreur { display: none; padding: 15px; }
+
+    .header-livreur {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1e3a8a;
+        color: white;
+        padding: 16px;
+        border-radius: 14px;
+        margin-bottom: 15px;
+    }
+
+    .carte-commande {
+        background: white;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        border-left: 5px solid #f59e0b;
+    }
+
+    .carte-commande.payee { border-left-color: #22c55e; }
+
+    .carte-commande h3 { font-size: 1.05rem; margin-bottom: 6px; }
+    .carte-commande p { font-size: 0.85rem; color: #555; margin: 3px 0; }
+
+    .badge-paiement {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-top: 8px;
+    }
+    .badge-cod { background: #fef3c7; color: #92400e; }
+    .badge-paye { background: #dcfce7; color: #15803d; }
+
+    .actions-commande {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .btn-appeler { background: #dbeafe; color: #1e3a8a; }
+    .btn-livre { background: #22c55e; color: white; }
+
+    #message-vide {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+    }
+</style>
+</head>
+<body>
+
+<div id="ecran-connexion">
+    <div class="box-connexion">
+        <h2><i class="fas fa-motorcycle"></i> Espace Livreur</h2>
+        <select id="select-nom-livreur">
+            <option value="">Chargement des livreurs...</option>
+        </select>
+        <input type="password" id="input-pin" placeholder="Code PIN" maxlength="4" inputmode="numeric">
+        <button onclick="connecterLivreur()">Se connecter</button>
+    </div>
+</div>
+
+<div id="ecran-livreur">
+    <div class="header-livreur">
+        <div>
+            <div style="font-size:0.75rem; opacity:0.8;">Bonjour</div>
+            <div id="nom-livreur-affiche" style="font-weight:800; font-size:1.1rem;"></div>
+        </div>
+        <button onclick="deconnecterLivreur()" style="background:rgba(255,255,255,0.15); border:none; color:white; padding:8px 12px; border-radius:8px; cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </div>
+
+    <div id="liste-commandes-livreur"></div>
+</div>
+
+<script>
+const API_URL_LIVREUR = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+
+document.addEventListener('DOMContentLoaded', () => {
+    const nomSauve = localStorage.getItem('saferun_livreur_nom');
+    if (nomSauve) {
+        afficherEspaceLivreur(nomSauve);
+    } else {
+        chargerListeLivreurs();
+    }
+});
+
+async function chargerListeLivreurs() {
+    try {
+        const res = await fetch(API_URL_LIVREUR + "?action=getLivreursActifs");
+        const noms = await res.json();
+        const select = document.getElementById('select-nom-livreur');
+        select.innerHTML = noms.length > 0
+            ? noms.map(n => `<option value="${n}">${n}</option>`).join('')
+            : '<option value="">Aucun livreur actif</option>';
+    } catch (e) {
+        console.error("Erreur chargement livreurs", e);
+    }
+}
+
+async function connecterLivreur() {
+    const nom = document.getElementById('select-nom-livreur').value;
+    const pin = document.getElementById('input-pin').value.trim();
+
+    if (!nom || pin.length !== 4) {
+        alert("Sélectionnez votre nom et entrez votre code PIN.");
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL_LIVREUR, {
+            method: "POST",
+            body: JSON.stringify({ action: "connexionLivreur", nom: nom, pin: pin })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            localStorage.setItem('saferun_livreur_nom', data.nom);
+            afficherEspaceLivreur(data.nom);
+        } else {
+            alert("Code PIN incorrect.");
+        }
+    } catch (e) {
+        alert("Erreur de connexion. Vérifiez votre réseau.");
+    }
+}
+
+function deconnecterLivreur() {
+    localStorage.removeItem('saferun_livreur_nom');
+    document.getElementById('ecran-livreur').style.display = 'none';
+    document.getElementById('ecran-connexion').style.display = 'flex';
+    chargerListeLivreurs();
+}
+
+async function afficherEspaceLivreur(nom) {
+    document.getElementById('ecran-connexion').style.display = 'none';
+    document.getElementById('ecran-livreur').style.display = 'block';
+    document.getElementById('nom-livreur-affiche').innerText = nom;
+    await chargerCommandesLivreur(nom);
+}
+
+async function chargerCommandesLivreur(nom) {
+    const container = document.getElementById('liste-commandes-livreur');
+    container.innerHTML = "<p style='text-align:center; padding:30px;'>Chargement...</p>";
+
+    try {
+        const res = await fetch(API_URL_LIVREUR + "?action=getCommandesLivreur&nom=" + encodeURIComponent(nom));
+        const commandes = await res.json();
+
+        if (commandes.length === 0) {
+            container.innerHTML = `<div id="message-vide"><i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i><p style="margin-top:10px;">Aucune livraison en attente. Bravo !</p></div>`;
+            return;
+        }
+
+        container.innerHTML = commandes.map(c => {
+            const note = (c.Note || "").toString().toLowerCase();
+            const estCOD = note.includes("livraison");
+            const frais = parseFloat(c.FraisLivraison) || 0;
+            const montantACollecter = Math.max((parseFloat(c.Montant) || 0) - frais, 0);
+            const telProp = (c.Téléphone || "").toString().replace(/\D/g, '');
+
+            return `
+                <div class="carte-commande ${estCOD ? '' : 'payee'}">
+                    <h3>${c.Client || 'Client'}</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> ${c["Lieu Exact"] || 'Non précisé'}</p>
+                    <p><i class="fas fa-box"></i> ${c.Produits || ''}</p>
+                    ${estCOD
+                        ? `<span class="badge-paiement badge-cod">💵 Collecter ${montantACollecter.toLocaleString()} Ar</span>`
+                        : `<span class="badge-paiement badge-paye">✅ Déjà payé</span>`
+                    }
+                    <div class="actions-commande">
+                        <a href="tel:${telProp}" class="btn-action btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
+                        <button class="btn-action btn-livre" onclick="marquerCommeLivree('${c.ID}', '${nom}')"><i class="fas fa-check"></i> Livré</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        container.innerHTML = "<p style='text-align:center; color:red;'>Erreur de chargement.</p>";
+    }
+}
+
+async function marquerCommeLivree(id, nom) {
+    if (!confirm("Confirmer la livraison de cette commande ?")) return;
+
+    try {
+        await fetch(API_URL_LIVREUR, {
+            method: "POST",
+            body: JSON.stringify({ action: "marquerLivree", id: id, nom: nom })
+        });
+        await chargerCommandesLivreur(nom);
+    } catch (e) {
+        alert("Erreur lors de la mise à jour.");
+    }
+}
+</script>
+</body>
+</html>
