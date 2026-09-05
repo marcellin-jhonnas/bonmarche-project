@@ -209,6 +209,8 @@ async function connecterLivreur() {
         if (data.success) {
             localStorage.setItem('saferun_livreur_nom', data.nom);
             afficherEspaceLivreur(data.nom);
+        } else if (data.bloque) {
+            alert(data.message);
         } else {
             alert("Code PIN incorrect.");
         }
@@ -255,7 +257,7 @@ async function chargerCommandesLivreur(nom) {
             const lienMaps = "https://maps.google.com/?q=" + encodeURIComponent(adresse);
 
             return `
-                <div class="carte-commande ${estCOD ? '' : 'payee'}">
+                <div class="carte-commande ${estCOD ? '' : 'payee'}" data-id="${c.ID}">
                     <h3>${c.Client || 'Client'}</h3>
                     <p><i class="fas fa-map-marker-alt"></i> ${adresse}</p>
                     <p><i class="fas fa-box"></i> ${c.Produits || ''}</p>
@@ -297,16 +299,75 @@ async function chargerCommandesLivreur(nom) {
 async function marquerCommeLivree(id, nom) {
     if (!confirm("Confirmer la livraison de cette commande ?")) return;
 
+    const payload = { action: "marquerLivree", id: id, nom: nom };
+
+    if (!navigator.onLine) {
+        ajouterALaFileAttenteLivreur(payload);
+        alert("📴 Pas de connexion : cette livraison sera confirmée automatiquement dès le retour du réseau.");
+        // On retire quand même la carte visuellement pour ne pas la re-livrer par erreur
+        marquerCarteCommeEnAttente(id);
+        return;
+    }
+
     try {
         await fetch(API_URL_LIVREUR, {
             method: "POST",
-            body: JSON.stringify({ action: "marquerLivree", id: id, nom: nom })
+            body: JSON.stringify(payload)
         });
         await chargerCommandesLivreur(nom);
     } catch (e) {
-        alert("Erreur lors de la mise à jour.");
+        ajouterALaFileAttenteLivreur(payload);
+        alert("📴 Connexion instable : cette livraison sera confirmée automatiquement dès le retour du réseau.");
+        marquerCarteCommeEnAttente(id);
     }
 }
+
+function ajouterALaFileAttenteLivreur(payload) {
+    const file = JSON.parse(localStorage.getItem('saferun_livreur_file_attente') || '[]');
+    file.push(payload);
+    localStorage.setItem('saferun_livreur_file_attente', JSON.stringify(file));
+}
+
+function marquerCarteCommeEnAttente(id) {
+    const cartes = document.querySelectorAll('.carte-commande');
+    cartes.forEach(carte => {
+        if (carte.dataset.id === id) {
+            carte.style.opacity = "0.4";
+            carte.style.pointerEvents = "none";
+        }
+    });
+}
+
+async function traiterFileAttenteLivreur() {
+    if (!navigator.onLine) return;
+
+    let file = JSON.parse(localStorage.getItem('saferun_livreur_file_attente') || '[]');
+    if (file.length === 0) return;
+
+    for (const payload of file) {
+        try {
+            await fetch(API_URL_LIVREUR, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            console.warn("Échec du renvoi, on réessaiera plus tard.");
+            return; // on arrête, on retentera au prochain événement 'online'
+        }
+    }
+
+    localStorage.removeItem('saferun_livreur_file_attente');
+    const nom = localStorage.getItem('saferun_livreur_nom');
+    if (nom) chargerCommandesLivreur(nom);
+}
+
+window.addEventListener('online', () => {
+    setTimeout(traiterFileAttenteLivreur, 1000);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (navigator.onLine) traiterFileAttenteLivreur();
+});
 function trierParHoraire(commandes) {
     function extraireOrdre(livraisonTexte) {
         const texte = (livraisonTexte || "").toLowerCase();
