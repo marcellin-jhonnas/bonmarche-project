@@ -865,7 +865,7 @@
     </div>
 
     <div class="card">
-        <h3>Comptes enregistrés sur ce navigateur</h3>
+        <h3>Comptes enregistrés (accessibles depuis tous les appareils)</h3>
         <div id="liste-comptes-actifs" style="margin-top: 15px;">
             </div>
     </div>
@@ -1275,36 +1275,39 @@ chargerLivreursDepuisSheet();
         ADMIN_KEY: "SafeRun2026-Xk9mPz-Admin-7Qw2"
     };
 
- function login() {
-    const u = document.getElementById('admin-user').value.trim();
-    const p = document.getElementById('admin-pass').value.trim();
-    const err = document.getElementById('auth-err');
+async function login() {
+  const u = document.getElementById('admin-user').value.trim();
+  const p = document.getElementById('admin-pass').value.trim();
+  const err = document.getElementById('auth-err');
 
-    // Sécurité supplémentaire : On vérifie si la sécurité initiale a bien été validée
     if (sessionStorage.getItem('saferun_2fa_valide') !== 'OUI') {
-        window.location.reload();
-        return;
+       window.location.reload();
+       return;
     }
 
-    // A. Vérification de l'accès Maître (CONFIG) d'origine -> Maintenant parfaitement fonctionnel !
     if (u === CONFIG.USER && p === CONFIG.PASS) {
-        sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
-        entrerDansApplication("ADMIN");
-        return;
+       sessionStorage.setItem('role_connecte_temporaire', 'ADMIN');
+       entrerDansApplication("ADMIN");
+       return;
     }
 
-    // B. Vérification des comptes créés (LocalStorage d'origine pour l'équipe)
-    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-    const compteTrouve = comptes.find(c => c.user === u && c.pass === p);
+    try {
+        const res = await fetch(CONFIG.API, {
+            method: "POST",
+            body: JSON.stringify({ action: "connexionCompte", user: u, pass: p })
+        });
+        const data = await res.json();
 
-    if (compteTrouve) {
-        sessionStorage.setItem('role_connecte_temporaire', compteTrouve.role);
-        entrerDansApplication(compteTrouve.role);
-    } else {
-        if(err) {
-            err.style.display = 'block';
-            err.innerText = "Identifiants invalides.";
+        if (data.success) {
+            sessionStorage.setItem('role_connecte_temporaire', data.role);
+            entrerDansApplication(data.role);
+        } else if (data.bloque) {
+            if(err) { err.style.display = 'block'; err.innerText = data.message; }
+        } else {
+            if(err) { err.style.display = 'block'; err.innerText = "Identifiants invalides."; }
         }
+    } catch (e) {
+        if(err) { err.style.display = 'block'; err.innerText = "Erreur de connexion au serveur."; }
     }
 }
 
@@ -3181,52 +3184,77 @@ function viderToutLeStorage() {
     }
 }
 // 1. AFFICHER LES COMPTES
-function afficherComptes() {
-    const conteneur = document.getElementById('liste-comptes-actifs');
-    const comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-    conteneur.innerHTML = "";
+async function afficherComptes() {
+   const conteneur = document.getElementById('liste-comptes-actifs');
+   const res = await fetch(CONFIG.API, {
+       method: "POST",
+       body: JSON.stringify({ action: "gestionComptes", operation: "lister", adminKey: CONFIG.ADMIN_KEY })
+   });
+   const data = await res.json();
+   const comptes = data.comptes || [];
 
-    comptes.forEach((c, index) => {
-        const div = document.createElement('div');
-        div.style = "display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;";
-        div.innerHTML = `
-            <div>
-                <strong>${c.user}</strong> <span class="badge" style="background:#e2e8f0; padding:3px 8px; border-radius:12px; font-size:10px; margin-left:10px;">${c.role}</span>
-            </div>
-            <button onclick="supprimerCompte(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        conteneur.appendChild(div);
-    });
+   conteneur.innerHTML = "";
+
+  comptes.forEach((c, index) => {
+     const div = document.createElement('div');
+     div.style = "display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;";
+     div.innerHTML = `
+        <div>
+           <strong>${c.user}</strong> <span class="badge" style="background:#e2e8f0; padding:3px 8px; border-radius:12px; font-size:10px; margin-left:10px;">${c.role}</span>
+        </div>
+        <button onclick="supprimerCompte(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;">
+           <i class="fas fa-trash"></i>
+        </button>
+     `;
+     conteneur.appendChild(div);
+  });
 }
 
 // 2. CRÉER UN COMPTE
-function creerCompte() {
-    const user = document.getElementById('new-user-name').value.trim();
-    const pass = document.getElementById('new-user-pass').value.trim();
-    const role = document.getElementById('new-user-role').value;
+async function creerCompte() {
+   const user = document.getElementById('new-user-name').value.trim();
+   const pass = document.getElementById('new-user-pass').value.trim();
+   const role = document.getElementById('new-user-role').value;
 
     if(!user || !pass) return alert("Veuillez remplir tous les champs !");
 
-    let comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-    comptes.push({ user, pass, role });
-    localStorage.setItem('comptes_plateforme', JSON.stringify(comptes));
-    
+    await fetch(CONFIG.API, {
+        method: "POST",
+        body: JSON.stringify({
+            action: "gestionComptes",
+            operation: "ajouter",
+            user: user,
+            pass: pass,
+            role: role,
+            adminKey: CONFIG.ADMIN_KEY
+        })
+    });
+
     document.getElementById('new-user-name').value = "";
     document.getElementById('new-user-pass').value = "";
-    afficherComptes();
+    await afficherComptes();
     alert("Accès créé avec succès !");
 }
 
 // 3. SUPPRIMER UN COMPTE
-function supprimerCompte(index) {
-    if(confirm("Supprimer cet accès ?")) {
-        let comptes = JSON.parse(localStorage.getItem('comptes_plateforme') || "[]");
-        comptes.splice(index, 1);
-        localStorage.setItem('comptes_plateforme', JSON.stringify(comptes));
-        afficherComptes();
-    }
+async function supprimerCompte(index) {
+   if(!confirm("Supprimer cet accès ?")) return;
+
+   // On récupère la liste actuelle pour retrouver le bon utilisateur à cet index
+   const res = await fetch(CONFIG.API, {
+       method: "POST",
+       body: JSON.stringify({ action: "gestionComptes", operation: "lister", adminKey: CONFIG.ADMIN_KEY })
+   });
+   const data = await res.json();
+   const comptes = data.comptes || [];
+   const compteACible = comptes[index];
+   if (!compteACible) return;
+
+   await fetch(CONFIG.API, {
+       method: "POST",
+       body: JSON.stringify({ action: "gestionComptes", operation: "supprimer", user: compteACible.user, adminKey: CONFIG.ADMIN_KEY })
+   });
+   await afficherComptes();
 }
 
 // 4. LA SÉCURITÉ : CACHER LES ONGLETS SELON LE RÔLE
