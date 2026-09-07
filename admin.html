@@ -1368,10 +1368,15 @@ async function login() {
 
     // --- 4. LANCEMENT DES CHARGEMENTS SPÉCIFIQUES ---
     
-    if (id === 'tab-logistique') {
-        console.log("LOG : Lancement du chargement Logistique...");
-        loadLogistique(); 
-    }
+     if (id === 'tab-logistique') {
+ console.log("LOG : Lancement du chargement Logistique avec les livreurs...");
+ // On force d'abord la récupération des livreurs depuis Google Sheets
+ chargerLivreursDepuisSheet().then(() => {
+ // Une fois les livreurs chargés à 100%, on affiche le tableau logistique
+ loadLogistique(); 
+ });
+ }
+
 
     if (id === 'tab-caisse') {
         console.log("LOG : Calcul des recettes en cours...");
