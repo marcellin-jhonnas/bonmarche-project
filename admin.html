@@ -1266,7 +1266,11 @@ async function supprimerLivreur(nom) {
 
 // Lancer l'affichage au démarrage
 // Lancer le chargement depuis le Sheet au démarrage
-chargerLivreursDepuisSheet();
+chargerLivreursDepuisSheet().then(() => {
+    if (typeof loadLogistique === 'function') {
+        loadLogistique();
+    }
+});
 
     const CONFIG = {
         API: "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec",
@@ -1947,24 +1951,7 @@ function obtenirBadgeUrgence(commande) {
         return `<span style="${styleBase} background:#f1f5f9; color:#64748b; border:1px solid #64748b;">PLANIFIÉ</span>`;
     }
 }
-async function assignerLivreur(idCommande, nomLivreur) {
-    if(!nomLivreur) return;
-    console.log("LOG : Assignation livreur " + nomLivreur + " à " + idCommande);
 
-    try {
-        await fetch(CONFIG.API, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                action: "updateStatut", // On utilise la même action mais on peut adapter ton GAS
-                idCommande: idCommande,
-                livreur: nomLivreur // Assure-toi que ton script Google gère cette colonne
-            })
-        });
-    } catch(e) {
-        console.error("Erreur assignation :", e);
-    }
-}
 function filtrerLogistique() {
     const input = document.getElementById("search-logistique");
     const filter = input.value.toUpperCase();
@@ -2094,24 +2081,22 @@ function filtrerParLivreur() {
     console.log(`Filtrage terminé : ${visibleCount} commandes affichées pour ${livreurSelectionne}`);
 }
 function assignerLivreur(idCommande, nomLivreur) {
-    console.log(`LOG : Assignation de ${nomLivreur} à la commande ${idCommande}`);
+   console.log(`LOG : Assignation de ${nomLivreur} à la commande ${idCommande}`);
 
-    // 1. On met à jour la mémoire locale (On utilise Livraison car c'est le nom de ta colonne H)
-    const cmd = allData.find(c => c.ID.toString() === idCommande.toString());
-    if (cmd) {
-        cmd.Livraison = nomLivreur; // <-- On change "Livreur" en "Livraison"
-    }
+  const cmd = allData.find(c => c.ID.toString() === idCommande.toString());
+  if (cmd) {
+     cmd.Livreur = nomLivreur;
+  }
 
-    // 2. On informe le serveur
-    fetch(CONFIG.API, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-            action: "updateLivreur",
-            idCommande: idCommande,
-            livreur: nomLivreur
-        })
-    });
+  fetch(CONFIG.API, {
+     method: "POST",
+     mode: "no-cors",
+     body: JSON.stringify({
+        action: "updateLivreur",
+        idCommande: idCommande,
+        livreur: nomLivreur
+     })
+  });
 }
 function genererStatsPerformance() {
     // 1. Filtrer uniquement les commandes livrées
