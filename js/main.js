@@ -542,7 +542,39 @@ function actionCommentaire(nom) {
 }
 // 2. PANIER
 function ajouterAuPanier(nom, prix) {
-    const produitExistant = panier.find(item => item.nom === nom);
+ // --- INJECTION GRAPHIQUE ISOLÉE : ANIMATION FLY-TO-CART ---
+ try {
+   const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === nom || p.Nom.replace(/'/g, "\\'") === nom) : null;
+   if (prodDonnees && prodDonnees.Image_URL) {
+     let panierCible = document.querySelector('.floating-cart') || document.querySelector('.fa-shopping-cart') || document.getElementById('cart-count');
+     if (panierCible) {
+       const flyer = document.createElement('img');
+       flyer.src = prodDonnees.Image_URL;
+       flyer.style.cssText = "position:fixed; z-index:999999; width:65px; height:65px; object-fit:contain; border-radius:50%; background:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.15); border:2px solid #ffcc00; pointer-events:none; ease-in-out; transition: all 0.75s cubic-bezier(0.25, 1, 0.5, 1);";
+       
+       let btnDeclench = window.event ? window.event.target : null;
+       let topStart = window.innerHeight / 2, leftStart = window.innerWidth / 2;
+       if (btnDeclench && typeof btnDeclench.getBoundingClientRect === 'function') {
+         let rectB = btnDeclench.getBoundingClientRect();
+         topStart = rectB.top; leftStart = rectB.left;
+       }
+       flyer.style.top = topStart + "px"; flyer.style.left = leftStart + "px";
+       document.body.appendChild(flyer);
+       
+       let rectCible = panierCible.getBoundingClientRect();
+       requestAnimationFrame(() => {
+         flyer.style.top = (rectCible.top + 10) + "px";
+         flyer.style.left = (rectCible.left + 10) + "px";
+         flyer.style.width = "15px"; flyer.style.height = "15px";
+         flyer.style.opacity = "0.2"; flyer.style.transform = "rotate(360deg)";
+       });
+       setTimeout(() => { flyer.remove(); }, 750);
+     }
+   }
+ } catch(animationError) { console.warn("Animation non bloquante", animationError); }
+ // --- FIN DE L'INJECTION (LE RESTE DE VOTRE LOGIQUE RESTE INTACT) ---
+
+ const produitExistant = panier.find(item => item.nom === nom);
     
     if (produitExistant) {
         produitExistant.quantite += 1;
@@ -604,103 +636,110 @@ function filtrerParCategorie(categorieCible) {
 }
 
 function afficherPanier() {
-    const detail = document.getElementById('detail-panier');
-    const totalLabel = document.getElementById('total-modal');
-    if(!detail || !totalLabel) return;
+ const detail = document.getElementById('detail-panier');
+ const totalLabel = document.getElementById('total-modal');
+ if(!detail || !totalLabel) return;
+ const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+ const snapshotActif = snapshotExistant && snapshotExistant.produits && snapshotExistant.produits.length > 0;
+ if (panier.length === 0 && snapshotActif) {
+ afficherRecapCommandeEnvoyee(snapshotExistant);
+ return;
+ }
+ if (panier.length > 0 && snapshotActif) {
+ fusionnerNouveauxProduitsDansSnapshot(snapshotExistant);
+ return;
+ }
+ let sousTotal = 0; 
+ let resume = "";
+ if (panier.length === 0) {
+ resume = `
+ <div class="panier-vide-anime" style="text-align:center; padding:40px 20px;">
+ <div class="panier-vide-icon" style="font-size:3.5rem; margin-bottom:12px;">🛒</div>
+ <p style="font-weight:700; margin:0; color:#1e293b; font-size:1rem;">Votre panier est vide</p>
+ <span style="font-size:0.8rem; color:#64748b; display:block; margin-top:4px;">Ajoutez des produits pour commencer vos achats</span>
+ </div>`;
+ } else {
+ panier.forEach((item, index) => {
+ const st = item.prix * item.quantite;
+ sousTotal += st;
+ 
+ // Récupération sécurisée de l'image correspondante dans votre liste existante
+ const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom) : null;
+ const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
 
-        const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-    const snapshotActif = snapshotExistant && snapshotExistant.produits && snapshotExistant.produits.length > 0;
-
-    if (panier.length === 0 && snapshotActif) {
-        afficherRecapCommandeEnvoyee(snapshotExistant);
-        return;
-    }
-
-    if (panier.length > 0 && snapshotActif) {
-        fusionnerNouveauxProduitsDansSnapshot(snapshotExistant);
-        return;
-    }
-
-    let sousTotal = 0; 
-    let resume = "";
-
-    if (panier.length === 0) {
-        resume = `
-            <div class="panier-vide-anime">
-                <div class="panier-vide-icon">🛒</div>
-                <p>Votre panier est vide</p>
-                <span>Ajoutez des produits pour commencer vos achats</span>
-            </div>`;
-    } else {
-        panier.forEach((item, index) => {
-            const st = item.prix * item.quantite;
-            sousTotal += st;
-            resume += `
-                <div class="item-panier-ligne" style="animation-delay: ${index * 0.06}s;">
-                    <div class="item-panier-icon"><i class="fas fa-shopping-basket"></i></div>
-                    <div class="item-panier-info">
-                        <div class="item-panier-nom">${item.nom}</div>
-                        <div class="item-panier-qte">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
-                    </div>
-                    <div class="item-panier-actions">
-                        <span class="item-panier-prix">${st.toLocaleString()} Ar</span>
-                        <button onclick="supprimerProduitDirectement(${index})" class="btn-suppr-item">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>`;
-        });
-    }
-
-    // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET (inchangée) ---
-    let fraisLivraison = 0;
-    const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
-    const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
-    const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
-    const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
-
-    if (sousTotal > 0) {
-        let calcul15 = sousTotal * 0.15;
-        fraisLivraison = Math.max(calcul15, tarifMin);
-        if (sousTotal >= seuilGratuit) {
-            fraisLivraison = 0;
-        }
-        fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
-    }
-
-    let totalFinal = sousTotal + fraisLivraison;
-
-    // --- NOUVELLE STRUCTURE D'AFFICHAGE ---
-    detail.innerHTML = `
-        <div class="panier-header-sticky">
-            <strong>Récapitulatif</strong>
-            <span class="panier-count-badge">${panier.length} article${panier.length > 1 ? 's' : ''}</span>
-        </div>
-        <div class="panier-liste-scroll">
-            ${resume}
-        </div>
-        ${sousTotal > 0 ? `
-        <div class="panier-total-sticky" id="panierTotalSticky">
-            <div class="panier-total-row">
-                <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
-            </div>
-            <div class="panier-total-row panier-livraison-row">
-                <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
-            </div>
-        </div>` : ''}
-    `;
-
-    // Animation de pulsation sur le total à chaque mise à jour
-    const totalBloc = document.getElementById('panierTotalSticky');
-    if (totalBloc) {
-        totalBloc.classList.add('updating');
-        setTimeout(() => totalBloc.classList.remove('updating'), 400);
-    }
-
-    totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
-    window.dernierTotalCalcule = totalFinal;
-    window.dernierFraisLivraison = fraisLivraison;
-}// FONCTION DE SUPPRESSION
+ resume += `
+ <div class="item-panier-ligne" style="animation-delay: ${index * 0.06}s; display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #f1f5f9;">
+   <!-- MINIATURE GRAPHIQUE DU PRODUIT -->
+   <div style="width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; border: 1px solid #e2e8f0;">
+     <img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain; background:transparent;">
+   </div>
+   
+   <!-- INFOS PRODUIT -->
+   <div style="flex: 1; min-width: 0; text-align: left;">
+     <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${item.nom}</div>
+     <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.prix.toLocaleString()} Ar</div>
+     <div style="font-weight: 800; font-size: 0.85rem; color: #059669; margin-top:2px;">${st.toLocaleString()} Ar</div>
+   </div>
+   
+   <!-- SELECTEUR DE QUANTITE INTERACTIF -->
+   <div style="display: flex; align-items: center; background: #f1f5f9; border-radius: 50px; padding: 3px; gap: 6px; flex-shrink:0;">
+     ${item.quantite === 1 ? `
+     <button onclick="supprimerProduitDirectement(${index})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition:0.2s;">
+       <i class="fas fa-trash-alt"></i>
+     </button>
+     ` : `
+     <button onclick="modifierQuantiteDepuisPanier(${index}, -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
+     `}
+     <span style="font-weight: 800; font-size: 0.85rem; color: #1e293b; min-width: 18px; text-align: center;">${item.quantite}</span>
+     <button onclick="modifierQuantiteDepuisPanier(${index}, 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
+   </div>
+ </div>`;
+ });
+ }
+ // --- LOGIQUE DE CALCUL DYNAMIQUE SAFERUN MARKET (STRICTEMENT D'ORIGINE) ---
+ let fraisLivraison = 0;
+ const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
+ const rawSeuilGratuit = localStorage.getItem('saferun_seuil_gratuite');
+ const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
+ const seuilGratuit = rawSeuilGratuit ? parseInt(rawSeuilGratuit.toString().replace(/[^0-9]/g, ''), 10) : 120000;
+ if (sousTotal > 0) {
+ let calcul15 = sousTotal * 0.15;
+ fraisLivraison = Math.max(calcul15, tarifMin);
+ if (sousTotal >= seuilGratuit) {
+ fraisLivraison = 0;
+ }
+ fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
+ }
+ let totalFinal = sousTotal + fraisLivraison;
+ // --- RENDER FINAL ---
+ detail.innerHTML = `
+ <div class="panier-header-sticky" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+   <strong style="color:#1e293b; font-size:0.95rem;">Récapitulatif</strong>
+   <span class="panier-count-badge" style="background:linear-gradient(135deg, #ffcc00, #ff9900); color:#1a1a1a; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:800;">${panier.length} article${panier.length > 1 ? 's' : ''}</span>
+ </div>
+ <div class="panier-liste-scroll" style="max-height: 42vh; overflow-y: auto; padding-right:2px;">
+ ${resume}
+ </div>
+ ${sousTotal > 0 ? `
+ <div class="panier-total-sticky" id="panierTotalSticky" style="background:#f8fafc; border-radius:16px; padding:12px; margin-top:12px; border:1px solid #e2e8f0;">
+   <div class="panier-total-row" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px; color:#64748b;">
+     <span>Articles :</span> <span style="font-weight:700; color:#1e293b;">${sousTotal.toLocaleString()} Ar</span>
+   </div>
+   <div class="panier-total-row panier-livraison-row" style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
+     <span>Frais de Livraison :</span> <span style="font-weight:700; color:${fraisLivraison === 0 ? '#059669' : '#1e293b'}">${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
+   </div>
+ </div>` : ''}
+ `;
+ const totalBloc = document.getElementById('panierTotalSticky');
+ if (totalBloc) {
+ totalBloc.classList.add('updating');
+ setTimeout(() => totalBloc.classList.remove('updating'), 400);
+ }
+ totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+ window.dernierTotalCalcule = totalFinal;
+ window.dernierFraisLivraison = fraisLivraison;
+}
+// FONCTION DE SUPPRESSION
 function supprimerProduitDirectement(index) {
     const lignes = document.querySelectorAll('.item-panier-ligne');
     const ligneAAnimer = lignes[index];
@@ -4736,3 +4775,28 @@ document.addEventListener('DOMContentLoaded', () => {
     mettreAJourBadgeFileAttente();
     if (navigator.onLine) traiterFileAttente();
 });
+
+// --- FONCTION COMPAGNONNE POUR MISE A JOUR DES QUANTITES DANS LE PANIER ---
+function modifierQuantiteDepuisPanier(index, changement) {
+ if (panier[index]) {
+   panier[index].quantite += changement;
+   
+   // Sécurité au cas où la quantité descend à 0
+   if (panier[index].quantite <= 0) {
+     panier.splice(index, 1);
+   }
+   
+   // Sauvegarde immédiate locale
+   localStorage.setItem('saferun_panier', JSON.stringify(panier));
+   
+   // Recalcul et rafraîchissement des compteurs natifs de l'application
+   const totalArticles = calculerQuantiteTotaleGlobale();
+   mettreAJourBadge(); 
+   if (typeof synchroniserBadges === "function") {
+     synchroniserBadges(totalArticles);
+   }
+   
+   // Relance le rendu graphique du panier avec les nouvelles valeurs
+   afficherPanier();
+ }
+}
