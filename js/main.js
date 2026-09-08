@@ -1615,29 +1615,35 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  let resume = snapshot.produits.map((item, index) => {
  const st = item.prix * item.quantite;
  
- // Récupération sécurisée et non bloquante de la photo du produit
+ // Récupération de la photo du produit depuis votre liste locale globale
  const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom) : null;
  const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
 
  return `
  <div class="item-panier-ligne" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #f1f5f9;">
- <!-- NOUVEAU : MINIATURE VISUELLE DU PRODUIT -->
+ <!-- MINIATURE VISUELLE DU PRODUIT -->
  <div style="width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; border: 1px solid #e2e8f0;">
  <img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain; background:transparent;">
  </div>
  
- <!-- DETAILS ET QUANTITE -->
+ <!-- DETAILS DU PRODUIT ET PRIX DYNAMIQUE -->
  <div style="flex: 1; min-width: 0; text-align: left;">
  <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${item.nom}</div>
- <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
- <div style="font-weight: 800; font-size: 0.85rem; color: #059669; margin-top:2px;">${st.toLocaleString()} Ar</div>
+ <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.prix.toLocaleString()} Ar</div>
+ <div style="font-weight: 800; font-size: 0.85rem; color: #0d47a1; margin-top:2px;">${st.toLocaleString()} Ar</div>
  </div>
  
- <!-- BOUTON DE SUPPRESSION GRAPHIQUE -->
- <div style="flex-shrink: 0;">
- <button onclick="supprimerProduitSnapshot(${index})" class="btn-suppr-item" style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: 0.2s;">
+ <!-- NOUVEAU : SÉLECTEUR DE QUANTITÉ IDENTIQUE SUR LA COMMANDE TRANSMISE -->
+ <div style="display: flex; align-items: center; background: #f1f5f9; border-radius: 50px; padding: 3px; gap: 6px; flex-shrink:0;">
+ ${item.quantite === 1 ? `
+ <button onclick="supprimerProduitSnapshot(${index})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition:0.2s;">
  <i class="fas fa-trash-alt"></i>
  </button>
+ ` : `
+ <button onclick="modifierQuantiteSnapshotGraphique(${index}, -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
+ `}
+ <span style="font-weight: 800; font-size: 0.85rem; color: #1e293b; min-width: 18px; text-align: center;">${item.quantite}</span>
+ <button onclick="modifierQuantiteSnapshotGraphique(${index}, 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
  </div>
  </div>`;
  }).join('');
@@ -1651,7 +1657,7 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  <div class="panier-liste-scroll" style="max-height: 38vh; overflow-y: auto; padding-right:2px;">
  ${resume}
  <p style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:14px; padding: 0 10px 4px 10px; line-height:1.4;">
- <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vérifiez votre commande. Effectuez vos modifications ou suppressions si nécessaire avant le paiement final.
+ <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vous pouvez ajuster les quantités ou supprimer un article avant de passer au paiement final.
  </p>
  </div>
  
@@ -4814,4 +4820,62 @@ function modifierQuantiteDepuisPanier(index, changement) {
    // Relance le rendu graphique du panier avec les nouvelles valeurs
    afficherPanier();
  }
+}
+
+// --- FONCTION COMPAGNONNE POUR MODIFIER LES QUANTITES DE LA COMMANDE ENVOYÉE ---
+function modifierQuantiteSnapshotGraphique(index, changement) {
+ let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+ if (!snapshot || !snapshot.produits || !snapshot.produits[index]) return;
+ 
+ // Appliquer la modification de quantité
+ snapshot.produits[index].quantite += changement;
+ 
+ // Sécurité si la quantité descend à 0 : on bascule sur votre fonction de suppression existante
+ if (snapshot.produits[index].quantite <= 0) {
+ supprimerProduitSnapshot(index);
+ return;
+ }
+ 
+ // Calculer les nouveaux totaux d'après vos règles de livraison officielles
+ const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+ snapshot.montant = totalFinal;
+ 
+ // Sauvegarder la nouvelle version de la commande en attente
+ localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+ 
+ // Formater la liste des produits pour l'envoi Google Sheet (ex: "Produit A (x2), Produit B (x1)")
+ const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+ 
+ // Synchronisation en arrière-plan avec votre serveur Google Sheets
+ if (typeof API_URL !== 'undefined') {
+ fetch(API_URL, {
+ method: "POST",
+ mode: "no-cors",
+ body: JSON.stringify({
+ action: "modifierProduitsCommande",
+ id: snapshot.id,
+ produits: produitsTexte,
+ montant: totalFinal
+ })
+ });
+ }
+ 
+ // Synchronisation immédiate dans l'historique local de l'espace client
+ let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+ const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
+ if (indexHistorique !== -1) {
+ historique[indexHistorique].produits = produitsTexte;
+ historique[indexHistorique].total = totalFinal;
+ localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+ }
+ 
+ // Mettre à jour l'ensemble des compteurs et badges visuels du site
+ const totalArticles = calculerQuantiteTotaleGlobale();
+ mettreAJourBadge();
+ if (typeof synchroniserBadges === "function") {
+ synchroniserBadges(totalArticles);
+ }
+ 
+ // Recharger l'interface graphique mise à jour à l'écran
+ afficherRecapCommandeEnvoyee(snapshot);
 }
