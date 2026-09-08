@@ -1606,55 +1606,70 @@ function afficherConfirmationLivraisonPro(idCommande, montantFrais) {
 };
 }
 function afficherRecapCommandeEnvoyee(snapshot) {
-    const detail = document.getElementById('detail-panier');
-    const totalLabel = document.getElementById('total-modal');
-    if (!detail || !totalLabel) return;
+ const detail = document.getElementById('detail-panier');
+ const totalLabel = document.getElementById('total-modal');
+ if (!detail || !totalLabel) return;
+ 
+ const { sousTotal, fraisLivraison, totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+ 
+ let resume = snapshot.produits.map((item, index) => {
+ const st = item.prix * item.quantite;
+ 
+ // Récupération sécurisée et non bloquante de la photo du produit
+ const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom) : null;
+ const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
 
-    const { sousTotal, fraisLivraison, totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
-
-    let resume = snapshot.produits.map((item, index) => {
-        const st = item.prix * item.quantite;
-        return `
-            <div class="item-panier-ligne">
-                <div class="item-panier-icon"><i class="fas fa-shopping-basket"></i></div>
-                <div class="item-panier-info">
-                    <div class="item-panier-nom">${item.nom}</div>
-                    <div class="item-panier-qte">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
-                </div>
-                <div class="item-panier-actions">
-                    <span class="item-panier-prix">${st.toLocaleString()} Ar</span>
-                    <button onclick="supprimerProduitSnapshot(${index})" class="btn-suppr-item">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>`;
-    }).join('');
-
-    detail.innerHTML = `
-        <div class="panier-header-sticky">
-            <strong>Commande transmise</strong>
-            <span class="panier-count-badge">Réf ${snapshot.id}</span>
-        </div>
-        <div class="panier-liste-scroll">
-            ${resume}
-            <p style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:12px; padding-bottom:4px;">
-                👉 Vérifiez votre panier, effectuez vos modifications si nécessaire, puis validez votre commande.
-            </p>
-        </div>
-        <div class="panier-total-sticky">
-            <div class="panier-total-row">
-                <span>Articles :</span> <span>${sousTotal.toLocaleString()} Ar</span>
-            </div>
-            <div class="panier-total-row panier-livraison-row">
-                <span>Frais de Livraison :</span> <span>${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
-            </div>
-        </div>
-    `;
-
-    totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
-    window.dernierTotalCalcule = totalFinal;
-    window.dernierFraisLivraison = fraisLivraison;
+ return `
+ <div class="item-panier-ligne" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #f1f5f9;">
+ <!-- NOUVEAU : MINIATURE VISUELLE DU PRODUIT -->
+ <div style="width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; border: 1px solid #e2e8f0;">
+ <img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain; background:transparent;">
+ </div>
+ 
+ <!-- DETAILS ET QUANTITE -->
+ <div style="flex: 1; min-width: 0; text-align: left;">
+ <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${item.nom}</div>
+ <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.quantite} × ${item.prix.toLocaleString()} Ar</div>
+ <div style="font-weight: 800; font-size: 0.85rem; color: #059669; margin-top:2px;">${st.toLocaleString()} Ar</div>
+ </div>
+ 
+ <!-- BOUTON DE SUPPRESSION GRAPHIQUE -->
+ <div style="flex-shrink: 0;">
+ <button onclick="supprimerProduitSnapshot(${index})" class="btn-suppr-item" style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: 0.2s;">
+ <i class="fas fa-trash-alt"></i>
+ </button>
+ </div>
+ </div>`;
+ }).join('');
+ 
+ detail.innerHTML = `
+ <div class="panier-header-sticky" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+ <strong style="color:#0d47a1; font-size:0.95rem;"><i class="fas fa-paper-plane"></i> Commande transmise</strong>
+ <span class="panier-count-badge" style="background:#0f172a; color:#fff; padding:3px 10px; border-radius:20px; font-size:0.7rem; font-weight:700;">Réf ${snapshot.id}</span>
+ </div>
+ 
+ <div class="panier-liste-scroll" style="max-height: 38vh; overflow-y: auto; padding-right:2px;">
+ ${resume}
+ <p style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:14px; padding: 0 10px 4px 10px; line-height:1.4;">
+ <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vérifiez votre commande. Effectuez vos modifications ou suppressions si nécessaire avant le paiement final.
+ </p>
+ </div>
+ 
+ <div class="panier-total-sticky" style="background:#f8fafc; border-radius:16px; padding:12px; margin-top:12px; border:1px solid #e2e8f0;">
+ <div class="panier-total-row" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px; color:#64748b;">
+ <span>Articles :</span> <span style="font-weight:700; color:#1e293b;">${sousTotal.toLocaleString()} Ar</span>
+ </div>
+ <div class="panier-total-row panier-livraison-row" style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
+ <span>Frais de Livraison :</span> <span style="font-weight:700; color:${fraisLivraison === 0 ? '#059669' : '#1e293b'}">${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
+ </div>
+ </div>
+ `;
+ 
+ totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+ window.dernierTotalCalcule = totalFinal;
+ window.dernierFraisLivraison = fraisLivraison;
 }
+
 
 function supprimerProduitSnapshot(index) {
     let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
