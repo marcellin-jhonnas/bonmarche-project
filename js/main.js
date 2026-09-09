@@ -1194,14 +1194,21 @@ function afficherChoixPaiementLuxe(id, montant) {
     document.body.appendChild(overlay);
 
     // --- LOGIQUE DE RETOUR MODIFIÉE ---
-    document.getElementById('btn-retour-panier-fix').onclick = function() {
-        overlay.remove();
-        const modalPanier = document.getElementById('modal-panier');
-        if(modalPanier) {
-            modalPanier.style.display = "flex";
-            modalPanier.classList.add('show');
-        }
-    };
+     // --- LOGIQUE DE RETOUR MODIFIÉE ET SÉCURISÉE ---
+ document.getElementById('btn-retour-panier-fix').onclick = function() {
+ overlay.remove();
+ const modalPanier = document.getElementById('modal-panier');
+ if(modalPanier) {
+ modalPanier.style.display = "flex";
+ modalPanier.classList.add('show');
+ 
+ // RÉVEIL DU PANIER : On force l'application à relancer le rendu graphique propre
+ if (typeof afficherPanier === "function") {
+ afficherPanier();
+ }
+ }
+ };
+
 
     // --- LOGIQUE D'ENVOI SHEET (Améliorée) ---
         const envoyerActionSheet = async (statut, note = "") => {
