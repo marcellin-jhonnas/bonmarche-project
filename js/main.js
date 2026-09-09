@@ -1675,6 +1675,53 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  window.dernierFraisLivraison = fraisLivraison;
 }
 
+// --- INJECTION GLOBALE SÉCURISÉE : FORCE LE RÉVEIL DES BOUTONS DU RECAP ---
+window.gererQuantiteSnapshotNative = function(index, changement) {
+ let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+ if (!snapshot || !snapshot.produits || !snapshot.produits[index]) return;
+ 
+ snapshot.produits[index].quantite += changement;
+ 
+ if (snapshot.produits[index].quantite <= 0) {
+   supprimerProduitSnapshot(index);
+   return;
+ }
+ 
+ const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+ snapshot.montant = totalFinal;
+ localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+ 
+ const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+ 
+ if (typeof API_URL !== 'undefined') {
+   fetch(API_URL, {
+     method: "POST",
+     mode: "no-cors",
+     body: JSON.stringify({
+       action: "modifierProduitsCommande",
+       id: snapshot.id,
+       produits: produitsTexte,
+       montant: totalFinal
+     })
+   });
+ }
+ 
+ let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+ const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
+ if (indexHistorique !== -1) {
+   historique[indexHistorique].produits = produitsTexte;
+   historique[indexHistorique].total = totalFinal;
+   localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+ }
+ 
+ const totalArticles = calculerQuantiteTotaleGlobale();
+ mettreAJourBadge();
+ if (typeof synchroniserBadges === "function") {
+   synchroniserBadges(totalArticles);
+ }
+ 
+ afficherRecapCommandeEnvoyee(snapshot);
+};
 
 
 function supprimerProduitSnapshot(index) {
@@ -4880,50 +4927,3 @@ function modifierQuantiteSnapshotGraphique(index, changement) {
  afficherRecapCommandeEnvoyee(snapshot);
 }
 
-// --- INJECTION GLOBALE SÉCURISÉE : FORCE LE RÉVEIL DES BOUTONS DU RECAP ---
-window.gererQuantiteSnapshotNative = function(index, changement) {
- let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
- if (!snapshot || !snapshot.produits || !snapshot.produits[index]) return;
- 
- snapshot.produits[index].quantite += changement;
- 
- if (snapshot.produits[index].quantite <= 0) {
-   supprimerProduitSnapshot(index);
-   return;
- }
- 
- const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
- snapshot.montant = totalFinal;
- localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
- 
- const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
- 
- if (typeof API_URL !== 'undefined') {
-   fetch(API_URL, {
-     method: "POST",
-     mode: "no-cors",
-     body: JSON.stringify({
-       action: "modifierProduitsCommande",
-       id: snapshot.id,
-       produits: produitsTexte,
-       montant: totalFinal
-     })
-   });
- }
- 
- let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
- const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
- if (indexHistorique !== -1) {
-   historique[indexHistorique].produits = produitsTexte;
-   historique[indexHistorique].total = totalFinal;
-   localStorage.setItem('saferun_commandes', JSON.stringify(historique));
- }
- 
- const totalArticles = calculerQuantiteTotaleGlobale();
- mettreAJourBadge();
- if (typeof synchroniserBadges === "function") {
-   synchroniserBadges(totalArticles);
- }
- 
- afficherRecapCommandeEnvoyee(snapshot);
-};
