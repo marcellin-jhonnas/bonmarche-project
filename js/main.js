@@ -1615,7 +1615,6 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  let resume = snapshot.produits.map((item, index) => {
  const st = item.prix * item.quantite;
  
- // Récupération de la photo du produit depuis votre liste locale globale
  const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom) : null;
  const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
 
@@ -1626,24 +1625,24 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  <img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain; background:transparent;">
  </div>
  
- <!-- DETAILS DU PRODUIT ET PRIX DYNAMIQUE -->
+ <!-- DETAILS PRODUIT -->
  <div style="flex: 1; min-width: 0; text-align: left;">
  <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${item.nom}</div>
  <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.prix.toLocaleString()} Ar</div>
  <div style="font-weight: 800; font-size: 0.85rem; color: #0d47a1; margin-top:2px;">${st.toLocaleString()} Ar</div>
  </div>
  
- <!-- NOUVEAU : SÉLECTEUR DE QUANTITÉ IDENTIQUE SUR LA COMMANDE TRANSMISE -->
+ <!-- ACTION PLUS / MOINS AVEC WINDOW ACTION SÉCURISÉE -->
  <div style="display: flex; align-items: center; background: #f1f5f9; border-radius: 50px; padding: 3px; gap: 6px; flex-shrink:0;">
  ${item.quantite === 1 ? `
  <button onclick="supprimerProduitSnapshot(${index})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition:0.2s;">
  <i class="fas fa-trash-alt"></i>
  </button>
  ` : `
- <button onclick="modifierQuantiteSnapshotGraphique(${index}, -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
+ <button onclick="window.gererQuantiteSnapshotNative(${index}, -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
  `}
  <span style="font-weight: 800; font-size: 0.85rem; color: #1e293b; min-width: 18px; text-align: center;">${item.quantite}</span>
- <button onclick="modifierQuantiteSnapshotGraphique(${index}, 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
+ <button onclick="window.gererQuantiteSnapshotNative(${index}, 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
  </div>
  </div>`;
  }).join('');
@@ -1657,7 +1656,7 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  <div class="panier-liste-scroll" style="max-height: 38vh; overflow-y: auto; padding-right:2px;">
  ${resume}
  <p style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:14px; padding: 0 10px 4px 10px; line-height:1.4;">
- <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vous pouvez ajuster les quantités ou supprimer un article avant de passer au paiement final.
+ <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vous pouvez modifier les quantités librement et recalculer votre commande instantanément.
  </p>
  </div>
  
@@ -1675,6 +1674,7 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
 }
+
 
 
 function supprimerProduitSnapshot(index) {
@@ -4879,3 +4879,51 @@ function modifierQuantiteSnapshotGraphique(index, changement) {
  // Recharger l'interface graphique mise à jour à l'écran
  afficherRecapCommandeEnvoyee(snapshot);
 }
+
+// --- INJECTION GLOBALE SÉCURISÉE : FORCE LE RÉVEIL DES BOUTONS DU RECAP ---
+window.gererQuantiteSnapshotNative = function(index, changement) {
+ let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+ if (!snapshot || !snapshot.produits || !snapshot.produits[index]) return;
+ 
+ snapshot.produits[index].quantite += changement;
+ 
+ if (snapshot.produits[index].quantite <= 0) {
+   supprimerProduitSnapshot(index);
+   return;
+ }
+ 
+ const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+ snapshot.montant = totalFinal;
+ localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+ 
+ const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+ 
+ if (typeof API_URL !== 'undefined') {
+   fetch(API_URL, {
+     method: "POST",
+     mode: "no-cors",
+     body: JSON.stringify({
+       action: "modifierProduitsCommande",
+       id: snapshot.id,
+       produits: produitsTexte,
+       montant: totalFinal
+     })
+   });
+ }
+ 
+ let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+ const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
+ if (indexHistorique !== -1) {
+   historique[indexHistorique].produits = produitsTexte;
+   historique[indexHistorique].total = totalFinal;
+   localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+ }
+ 
+ const totalArticles = calculerQuantiteTotaleGlobale();
+ mettreAJourBadge();
+ if (typeof synchroniserBadges === "function") {
+   synchroniserBadges(totalArticles);
+ }
+ 
+ afficherRecapCommandeEnvoyee(snapshot);
+};
