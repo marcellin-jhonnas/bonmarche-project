@@ -1682,50 +1682,53 @@ window.gererQuantiteSnapshotNative = function(nomProduit, changement) {
  let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
  if (!snapshot || !snapshot.produits) return;
  
- // Trouver le produit dans le snapshot par son nom de manière ultra-sécurisée
  const indexProduit = snapshot.produits.findIndex(p => p.nom === nomProduit || p.nom.replace(/'/g, "\\'") === nomProduit);
  if (indexProduit === -1) return;
  
- // Appliquer le changement
  snapshot.produits[indexProduit].quantite += changement;
  
- // Si la quantité tombe à 0, on bascule sur la suppression d'origine
  if (snapshot.produits[indexProduit].quantite <= 0) {
- supprimerProduitSnapshot(indexProduit);
- return;
+   supprimerProduitSnapshot(indexProduit);
+   return;
  }
  
  const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
  snapshot.montant = totalFinal;
  localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
+ 
+ // CORRECTION ICI : On génère le texte à partir du SNAPSHOT mis à jour, jamais du panier vide !
  const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
  
  if (typeof API_URL !== 'undefined') {
- fetch(API_URL, {
- method: "POST",
- mode: "no-cors",
- body: JSON.stringify({
- action: "modifierProduitsCommande",
- id: snapshot.id,
- produits: produitsTexte,
- montant: totalFinal
- })
- });
+   fetch(API_URL, {
+     method: "POST",
+     mode: "no-cors",
+     body: JSON.stringify({
+       action: "modifierProduitsCommande",
+       id: snapshot.id,
+       produits: produitsTexte, // Envoie la vraie liste mise à jour
+       montant: totalFinal
+     })
+   });
  }
+ 
  let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
  const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
  if (indexHistorique !== -1) {
- historique[indexHistorique].produits = produitsTexte;
- historique[indexHistorique].total = totalFinal;
- localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+   historique[indexHistorique].produits = produitsTexte;
+   historique[indexHistorique].total = totalFinal;
+   localStorage.setItem('saferun_commandes', JSON.stringify(historique));
  }
+ 
  const totalArticles = calculerQuantiteTotaleGlobale();
  mettreAJourBadge();
  if (typeof synchroniserBadges === "function") {
- synchroniserBadges(totalArticles);
+   synchroniserBadges(totalArticles);
  }
+ 
  afficherRecapCommandeEnvoyee(snapshot);
 };
+
 
 
 
