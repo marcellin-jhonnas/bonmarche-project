@@ -1073,7 +1073,7 @@ async function envoyerDonneesAuSheet() {
         id: idCommande,
         correlationId: idCommande,
         montant: montantTotal,
-        produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE",
+        produits: panier.length > 0 ? panier.map(p => `${p.nom} (x${p.quantite})`).join(", ") : (JSON.parse(localStorage.getItem('saferun_snapshot_commande')) ? JSON.parse(localStorage.getItem('saferun_snapshot_commande')).produits.map(p => `${p.nom} (x${p.quantite})`).join(", ") : "PANIER_VIDE"),
         livraison: infoLivraison || "ERREUR_FONCTION_LIVRAISON",
         quartier: quartier || "QUARTIER_VIDE_LOCALSTORAGE",
         statut: "NOUVEAU",
