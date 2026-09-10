@@ -1616,14 +1616,14 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  const detail = document.getElementById('detail-panier');
  const totalLabel = document.getElementById('total-modal');
  if (!detail || !totalLabel) return;
- 
  const { sousTotal, fraisLivraison, totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
- 
  let resume = snapshot.produits.map((item, index) => {
  const st = item.prix * item.quantite;
- 
  const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom) : null;
  const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
+ 
+ // Échapper les apostrophes du nom pour éviter tout bug HTML
+ const nomEchappe = item.nom.replace(/'/g, "\\'");
 
  return `
  <div class="item-panier-ligne" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #f1f5f9;">
@@ -1631,42 +1631,37 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  <div style="width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; border: 1px solid #e2e8f0;">
  <img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain; background:transparent;">
  </div>
- 
  <!-- DETAILS PRODUIT -->
  <div style="flex: 1; min-width: 0; text-align: left;">
  <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${item.nom}</div>
  <div style="font-size: 0.75rem; color: #64748b; font-weight:500;">${item.prix.toLocaleString()} Ar</div>
  <div style="font-weight: 800; font-size: 0.85rem; color: #0d47a1; margin-top:2px;">${st.toLocaleString()} Ar</div>
  </div>
- 
- <!-- ACTION PLUS / MOINS AVEC WINDOW ACTION SÉCURISÉE -->
+ <!-- ACTION PLUS / MOINS PAR NOM DE PRODUIT -->
  <div style="display: flex; align-items: center; background: #f1f5f9; border-radius: 50px; padding: 3px; gap: 6px; flex-shrink:0;">
  ${item.quantite === 1 ? `
  <button onclick="supprimerProduitSnapshot(${index})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition:0.2s;">
  <i class="fas fa-trash-alt"></i>
  </button>
  ` : `
- <button onclick="window.gererQuantiteSnapshotNative(${index}, -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
+ <button onclick="window.gererQuantiteSnapshotNative('${nomEchappe}', -1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">-</button>
  `}
  <span style="font-weight: 800; font-size: 0.85rem; color: #1e293b; min-width: 18px; text-align: center;">${item.quantite}</span>
- <button onclick="window.gererQuantiteSnapshotNative(${index}, 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
+ <button onclick="window.gererQuantiteSnapshotNative('${nomEchappe}', 1)" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem;">+</button>
  </div>
  </div>`;
  }).join('');
- 
  detail.innerHTML = `
  <div class="panier-header-sticky" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
  <strong style="color:#0d47a1; font-size:0.95rem;"><i class="fas fa-paper-plane"></i> Commande transmise</strong>
  <span class="panier-count-badge" style="background:#0f172a; color:#fff; padding:3px 10px; border-radius:20px; font-size:0.7rem; font-weight:700;">Réf ${snapshot.id}</span>
  </div>
- 
  <div class="panier-liste-scroll" style="max-height: 38vh; overflow-y: auto; padding-right:2px;">
  ${resume}
  <p style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:14px; padding: 0 10px 4px 10px; line-height:1.4;">
  <i class="fas fa-info-circle" style="color:#ff9900;"></i> Vous pouvez modifier les quantités librement et recalculer votre commande instantanément.
  </p>
  </div>
- 
  <div class="panier-total-sticky" style="background:#f8fafc; border-radius:16px; padding:12px; margin-top:12px; border:1px solid #e2e8f0;">
  <div class="panier-total-row" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px; color:#64748b;">
  <span>Articles :</span> <span style="font-weight:700; color:#1e293b;">${sousTotal.toLocaleString()} Ar</span>
@@ -1676,59 +1671,62 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  </div>
  </div>
  `;
- 
  totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
 }
 
+
 // --- INJECTION GLOBALE SÉCURISÉE : FORCE LE RÉVEIL DES BOUTONS DU RECAP ---
-window.gererQuantiteSnapshotNative = function(index, changement) {
+window.gererQuantiteSnapshotNative = function(nomProduit, changement) {
  let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
- if (!snapshot || !snapshot.produits || !snapshot.produits[index]) return;
+ if (!snapshot || !snapshot.produits) return;
  
- snapshot.produits[index].quantite += changement;
+ // Trouver le produit dans le snapshot par son nom de manière ultra-sécurisée
+ const indexProduit = snapshot.produits.findIndex(p => p.nom === nomProduit || p.nom.replace(/'/g, "\\'") === nomProduit);
+ if (indexProduit === -1) return;
  
- if (snapshot.produits[index].quantite <= 0) {
-   supprimerProduitSnapshot(index);
-   return;
+ // Appliquer le changement
+ snapshot.produits[indexProduit].quantite += changement;
+ 
+ // Si la quantité tombe à 0, on bascule sur la suppression d'origine
+ if (snapshot.produits[indexProduit].quantite <= 0) {
+ supprimerProduitSnapshot(indexProduit);
+ return;
  }
  
  const { totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
  snapshot.montant = totalFinal;
  localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshot));
- 
  const produitsTexte = snapshot.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
  
  if (typeof API_URL !== 'undefined') {
-   fetch(API_URL, {
-     method: "POST",
-     mode: "no-cors",
-     body: JSON.stringify({
-       action: "modifierProduitsCommande",
-       id: snapshot.id,
-       produits: produitsTexte,
-       montant: totalFinal
-     })
-   });
+ fetch(API_URL, {
+ method: "POST",
+ mode: "no-cors",
+ body: JSON.stringify({
+ action: "modifierProduitsCommande",
+ id: snapshot.id,
+ produits: produitsTexte,
+ montant: totalFinal
+ })
+ });
  }
- 
  let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
  const indexHistorique = historique.findIndex(cmd => cmd.id === snapshot.id);
  if (indexHistorique !== -1) {
-   historique[indexHistorique].produits = produitsTexte;
-   historique[indexHistorique].total = totalFinal;
-   localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+ historique[indexHistorique].produits = produitsTexte;
+ historique[indexHistorique].total = totalFinal;
+ localStorage.setItem('saferun_commandes', JSON.stringify(historique));
  }
- 
  const totalArticles = calculerQuantiteTotaleGlobale();
  mettreAJourBadge();
  if (typeof synchroniserBadges === "function") {
-   synchroniserBadges(totalArticles);
+ synchroniserBadges(totalArticles);
  }
- 
  afficherRecapCommandeEnvoyee(snapshot);
 };
+
 
 
 function supprimerProduitSnapshot(index) {
