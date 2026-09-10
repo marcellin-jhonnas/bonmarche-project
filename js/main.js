@@ -1193,21 +1193,31 @@ function afficherChoixPaiementLuxe(id, montant) {
     `;
     document.body.appendChild(overlay);
 
-    // --- LOGIQUE DE RETOUR MODIFIÉE ---
-     // --- LOGIQUE DE RETOUR MODIFIÉE ET SÉCURISÉE ---
+ // --- LOGIQUE DE RETOUR MODIFIÉE ET ULTRA-SÉCURISÉE (ANTI-BLOCAGE) ---
  document.getElementById('btn-retour-panier-fix').onclick = function() {
- overlay.remove();
- const modalPanier = document.getElementById('modal-panier');
- if(modalPanier) {
- modalPanier.style.display = "flex";
- modalPanier.classList.add('show');
- 
- // RÉVEIL DU PANIER : On force l'application à relancer le rendu graphique propre
- if (typeof afficherPanier === "function") {
- afficherPanier();
- }
- }
+   // 1. Supprimer proprement l'overlay de paiement
+   if (overlay) overlay.remove();
+   
+   // 2. Supprimer tout autre overlay ou reste de chargement en arrière-plan par sécurité
+   const oldOverlay = document.getElementById('modale-saferun-pay');
+   if (oldOverlay) oldOverlay.remove();
+   
+   // 3. Récupérer et réactiver la modale de récapitulatif du panier
+   const modalPanier = document.getElementById('modal-panier');
+   if(modalPanier) {
+     modalPanier.style.cssText += " display:flex !important; opacity:1 !important; pointer-events:auto !important;";
+     modalPanier.classList.add('show');
+     
+     // 4. RÉVEIL INSTANTANÉ DE L'INTERFACE : On force le rechargement du HTML propre
+     const snapshotActuel = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+     if (snapshotActuel && typeof afficherRecapCommandeEnvoyee === "function") {
+       afficherRecapCommandeEnvoyee(snapshotActuel);
+     } else if (typeof afficherPanier === "function") {
+       afficherPanier();
+     }
+   }
  };
+
 
 
     // --- LOGIQUE D'ENVOI SHEET (Améliorée) ---
@@ -1670,9 +1680,16 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  </div>
  `;
  totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+  // ... Lignes précédentes de la fin de votre fonction afficherRecapCommandeEnvoyee ...
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
+
+ // INJECTION DE SÉCURITÉ ANTI-FREEZE : Force le conteneur à écouter les clics immédiatement
+ if (detail) {
+   detail.style.cssText += " pointer-events: auto !important; opacity: 1 !important;";
+ }
 }
+
 
 
 
