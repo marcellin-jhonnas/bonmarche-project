@@ -965,7 +965,7 @@ function ouvrirTicketAutomatique() {
             setTimeout(() => {
 
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                let idRecent = (historique.length > 0) ? historique[0].id : "SR" + Date.now();
+                let idRecent = window.dernierIdCommandeEnvoyee || ((historique.length > 0) ? historique[0].id : "SR" + Date.now());
 
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "💳 PASSER AU PAIEMENT";
@@ -1007,29 +1007,33 @@ function ouvrirTicketAutomatique() {
                     btnAnnuler.onmouseleave = () => btnAnnuler.style.opacity = "1";
 
                     btnAnnuler.onclick = function() {
-                        if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+  if (confirm("Confirmer l'annulation de la commande " + idRecent + " ?")) {
+    if (typeof API_URL !== 'undefined') {
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "modifierStatut",
+          id: idRecent,
+          statut: "ANNULÉ"
+        })
+      });
+    }
+    let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
+    let nouvelH = h.filter(item => item.id !== idRecent);
+    localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
 
-                            if (typeof API_URL !== 'undefined') {
-                                fetch(API_URL, {
-                                    method: "POST",
-                                    mode: "no-cors",
-                                    body: JSON.stringify({
-                                        action: "modifierStatut",
-                                        id: idRecent,
-                                        statut: "ANNULÉ"
-                                    })
-                                });
-                            }
+    // --- AJOUT INDISPENSABLE : on efface toute trace de la commande en cours ---
+    localStorage.removeItem('safe_last_amount');
+    localStorage.removeItem('saferun_snapshot_commande');
+    localStorage.removeItem('saferun_commande_pendante_id');
+    localStorage.removeItem('saferun_commande_pendante_montant');
+    panier = [];
+    localStorage.removeItem('saferun_panier');
 
-                            let h = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
-                            let nouvelH = h.filter(item => item.id !== idRecent);
-
-                            localStorage.setItem('saferun_commandes', JSON.stringify(nouvelH));
-                            localStorage.removeItem('safe_last_amount');
-
-                            location.reload();
-                        }
-                    };
+    location.reload();
+  }
+};
 
                     containerBoutons.appendChild(btnAnnuler);
                 }
@@ -1060,6 +1064,7 @@ async function envoyerDonneesAuSheet() {
     }
 
     const idCommande = "SR-" + Date.now().toString().slice(-6);
+    window.dernierIdCommandeEnvoyee = idCommande;
     const infoLivraison = calculerLivraison(); 
     const tokenRecaptcha = await new Promise((resolve) => {
         grecaptcha.ready(function() {
