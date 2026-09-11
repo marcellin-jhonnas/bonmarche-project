@@ -4865,8 +4865,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- FONCTION COMPAGNONNE POUR MISE A JOUR DES QUANTITES DANS LE PANIER ---
 function modifierQuantiteDepuisPanier(index, changement) {
- if (panier[index]) {
-   panier[index].quantite += changement;
+  const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+  if (panier.length === 0 && snapshot && snapshot.produits && snapshot.produits.length > 0) {
+    // Le vrai contenu à modifier est dans le snapshot, pas dans "panier"
+    window.gererQuantiteSnapshotNative(index, changement);
+    return;
+  }
+  if (panier[index]) {
+    panier[index].quantite += changement;
    
    // Sécurité au cas où la quantité descend à 0
    if (panier[index].quantite <= 0) {
