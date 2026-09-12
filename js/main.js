@@ -5044,3 +5044,22 @@ function ouvrirAchatsValides() {
    }).join('');
  }
 }
+
+// --- INJECTION INDÉPENDANTE : FERMETURE SIDEBAR SI CLIC EXTÉRIEUR ---
+document.addEventListener('click', function(event) {
+    const body = document.body;
+    
+    // Si la sidebar est actuellement ouverte
+    if (body.classList.contains('sidebar-open')) {
+        const sidebar = document.getElementById('user-sidebar');
+        const menuBtn = document.querySelector('.menu-toggle-btn');
+        
+        // Si le clic n'a pas eu lieu dans la sidebar ni sur le bouton du menu lui-même
+        if (sidebar && !sidebar.contains(event.target) && menuBtn && !menuBtn.contains(event.target)) {
+            // Relance votre fonction native pour fermer le menu proprement et remettre les 3 barres
+            if (typeof toggleSidebar === 'function') {
+                toggleSidebar();
+            }
+        }
+    }
+});
