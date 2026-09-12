@@ -6211,3 +6211,41 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
   animation: saferun-spin 0.8s linear infinite;
 }
 @keyframes saferun-spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================
+   📱 CORRECTIF DE SÉCURITÉ MOBILE : ANTI-DÉBORDEMENT SIDEBAR
+   ========================================================== */
+
+/* Force la sidebar à rester totalement masquée hors de l'écran au chargement */
+.sidebar {
+    left: -320px !important; /* Pousse la barre encore plus loin à gauche par sécurité */
+    visibility: hidden; /* Rend la barre invisible pour que le téléphone ne la calcule pas */
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s !important;
+}
+
+/* Réactive instantanément la visibilité et glisse le menu SEULEMENT quand il est ouvert */
+body.sidebar-open .sidebar {
+    left: 0 !important;
+    visibility: visible !important;
+}
+
+/* Sécurité absolue pour empêcher le catalogue d'être poussé ou coupé à droite */
+html, body {
+    width: 100vw !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important; /* Coupe strict tout débordement horizontal */
+    position: relative;
+}
+
+/* Empêche le conteneur principal de bugger sur les petits écrans tactiles */
+#main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: translateX(0) !important; /* Supprime le décalage par défaut */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Applique le décalage propre de 280px uniquement quand le menu est ouvert */
+body.sidebar-open #main-content {
+    transform: translateX(280px) !important;
+}
