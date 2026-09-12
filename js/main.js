@@ -771,6 +771,7 @@ async function envoyerCommande() {
     afficherChargementGlobal(); // <-- AJOUT
     const tarifsOk = await assurerTarifsLivraisonValides();
     if (!tarifsOk) {
+        masquerChargementGlobal(); // <-- AJOUT 1
         alert("Merci de resélectionner votre quartier pour continuer votre commande en toute sécurité.");
         location.reload();
         return;
@@ -778,7 +779,7 @@ async function envoyerCommande() {
 
     let snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
     const snapshotActif = snapshot && snapshot.produits && snapshot.produits.length > 0;
-
+    
     if (snapshotActif) {
         if (panier.length > 0) {
             fusionnerNouveauxProduitsDansSnapshot(snapshot);
@@ -786,18 +787,24 @@ async function envoyerCommande() {
 
         // On relit systématiquement la version la plus fraîche, jamais une variable en mémoire
         const snapshotFinal = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-        if (!snapshotFinal) { alert("Votre panier est vide !"); return; }
-
+        if (!snapshotFinal) { 
+            masquerChargementGlobal(); // <-- AJOUT 2
+            alert("Votre panier est vide !"); return; }
+         masquerChargementGlobal(); // <-- AJOUT 3
         afficherChoixPaiementLuxe(snapshotFinal.id, snapshotFinal.montant);
         return;
     }
 
-    if (panier.length === 0) { alert("Votre panier est vide !"); return; }
+    if (panier.length === 0) { 
+        masquerChargementGlobal(); // <-- AJOUT 4
+        alert("Votre panier est vide !"); return; }
     const estInscrit = localStorage.getItem('saferun_nom');
     if (!estInscrit) {
+        masquerChargementGlobal(); // <-- AJOUT 5
         alert("Pour commander, merci de compléter votre profil !");
         ouvrirInscription(); 
     } else {
+        masquerChargementGlobal(); // <-- AJOUT 6
         ouvrirTicketAutomatique();
     }
 }
