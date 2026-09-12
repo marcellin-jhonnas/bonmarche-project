@@ -767,6 +767,7 @@ function supprimerProduitDirectement(index) {
 }
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
+    afficherChargementGlobal(); // <-- AJOUT
     const tarifsOk = await assurerTarifsLivraisonValides();
     if (!tarifsOk) {
         alert("Merci de resélectionner votre quartier pour continuer votre commande en toute sécurité.");
@@ -944,7 +945,7 @@ function ouvrirTicketAutomatique() {
         if (oldAnnuler) oldAnnuler.remove();
 
                 btnEnvoi.onclick = function() {
-
+            if (document.getElementById('saferun-loading-overlay').classList.contains('show')) return; // <-- AJOUT anti double-clic
             // On utilise directement la valeur fiable déjà calculée par afficherPanier()
             let montantSecurise = window.dernierTotalCalcule || 0;
 
@@ -952,6 +953,7 @@ function ouvrirTicketAutomatique() {
 
             // ⏳ LOADING UX
             btnEnvoi.disabled = true;
+            afficherChargementGlobal(); // <-- AJOUT
             btnEnvoi.innerHTML = "⌛ Traitement en cours...";
             btnEnvoi.style.opacity = "0.7";
 
@@ -966,7 +968,7 @@ function ouvrirTicketAutomatique() {
 
                 const historique = JSON.parse(localStorage.getItem('saferun_commandes')) || [];
                 let idRecent = window.dernierIdCommandeEnvoyee || ((historique.length > 0) ? historique[0].id : "SR" + Date.now());
-
+                masquerChargementGlobal(); // <-- AJOUT
                 btnEnvoi.disabled = false;
                 btnEnvoi.innerHTML = "💳 PASSER AU PAIEMENT";
                 btnEnvoi.style.background = "#0f172a";
@@ -1124,6 +1126,7 @@ async function envoyerDonneesAuSheet() {
     if (typeof mettreAJourBadge === "function") mettreAJourBadge();
     if (typeof synchroniserBadges === "function") synchroniserBadges(0);
     // Affichage de la modale de paiement Marcellin
+    masquerChargementGlobal(); // <-- AJOUT
     afficherChoixPaiementLuxe(idCommande, montantTotal);
 }
 
@@ -4765,7 +4768,14 @@ function afficherBandeauHorsLigne() {
     const banner = document.getElementById('offline-banner');
     if (banner) banner.style.display = 'block';
 }
-
+function afficherChargementGlobal() {
+  const overlay = document.getElementById('saferun-loading-overlay');
+  if (overlay) overlay.classList.add('show');
+}
+function masquerChargementGlobal() {
+  const overlay = document.getElementById('saferun-loading-overlay');
+  if (overlay) overlay.classList.remove('show');
+}
 function masquerBandeauHorsLigne() {
     const banner = document.getElementById('offline-banner');
     if (banner) banner.style.display = 'none';

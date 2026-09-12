@@ -6192,3 +6192,22 @@ select#sr-zone-picker:hover, #sr-quartier-input:focus {
     50% { transform: scale(1.06); box-shadow: 0 16px 30px rgba(255, 153, 0, 0.5); }
     100% { transform: scale(1); box-shadow: 0 12px 24px rgba(255, 153, 0, 0.3); }
 }
+#saferun-loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 999999;
+  align-items: center;
+  justify-content: center;
+}
+#saferun-loading-overlay.show { display: flex; }
+.saferun-spinner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 5px solid rgba(255,255,255,0.35);
+  border-top-color: #ffffff;
+  animation: saferun-spin 0.8s linear infinite;
+}
+@keyframes saferun-spin { to { transform: rotate(360deg); } }
