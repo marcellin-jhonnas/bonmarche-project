@@ -2073,6 +2073,31 @@ function ouvrirLivraisons() {
     if (historique.length === 0) {
         container.innerHTML = "<p style='color: #666;'>Aucune commande en cours.</p>";
     } else {
+            // --- DEBUT INJECTION GRAPHIQUE LIVRAISON ---
+    try {
+      let nouvelHistHTML = "";
+      [...historique].reverse().forEach(cmd => {
+        let listeProduitsHTML = "";
+        if (cmd.produits && cmd.produits !== "PANIER_VIDE") {
+          cmd.produits.split(",").forEach(frag => {
+            if (!frag.trim()) return;
+            let nomItem = frag.trim(); let qteItem = "1";
+            const matchQte = frag.match(/\(x(\d+)\)/);
+            if (matchQte) { qteItem = matchQte[1]; nomItem = frag.replace(matchQte[0], "").trim(); }
+            const prodDonnees = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === nomItem || p.Nom.replace(/'/g, "\\'") === nomItem) : null;
+            const imgUrl = prodDonnees ? prodDonnees.Image_URL : 'https://placeholder.com';
+            listeProduitsHTML += `<div style="display:flex; align-items:center; gap:10px; margin-top:8px; background:#fff; padding:6px 10px; border-radius:12px; border:1px solid #f1f5f9;"><div style="width:38px; height:38px; border-radius:8px; overflow:hidden; background:#f8fafc; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0; flex-shrink:0;"><img src="${imgUrl}" style="max-width:90%; max-height:90%; object-fit:contain;"></div><div style="flex:1; min-width:0; text-align:left;"><div style="font-weight:700; font-size:0.8rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nomItem}</div><div style="font-size:0.75rem; color:#64748b; font-weight:600;">Quantité : ${qteItem}</div></div></div>`;
+          });
+        }
+        let statusColor = cmd.statut === "PAYÉ" || cmd.statut === "LIVRÉ" ? "#059669" : (cmd.statut === "ANNULÉ" ? "#ef4444" : "#f36f21");
+        nouvelHistHTML += `<div style="background:#f8fafc; border-left:5px solid ${statusColor}; padding:14px; margin-bottom:12px; border-radius:16px; box-shadow:0 4px 10px rgba(0,0,0,0.01); border:1px solid #edf2f7;"><div style="display:flex; justify-content:space-between; align-items:center; font-family:'Poppins',sans-serif;"><span style="font-weight:800; font-size:0.85rem; color:#1e293b;">Commande #${cmd.id.toString().slice(-4)}</span><span style="color:white; background:${statusColor}; padding:3px 10px; border-radius:20px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.3px;">${cmd.statut}</span></div><div style="margin:8px 0 10px 0;">${listeProduitsHTML}</div><div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid #edf2f7; font-size:0.8rem;"><span style="color:#64748b; font-size:0.7rem;"><i class="far fa-calendar-alt"></i> ${cmd.date}</span><div style="font-weight:800; color:#1e293b;">Total: <span style="color:#0d47a1;">${cmd.total.toLocaleString()} Ar</span></div></div></div>`;
+      });
+      container.innerHTML = nouvelHistHTML;
+      if (typeof toggleSidebar === 'function') { const sidebar = document.getElementById('user-sidebar'); if(sidebar && sidebar.classList.contains('open')) toggleSidebar(); }
+      return;
+    } catch(errHist) { console.warn("Rendu historique standard alternatif"); }
+    // --- FIN INJECTION GRAPHIQUE LIVRAISON ---
+
         container.innerHTML = historique.reverse().map(cmd => `
             <div style="background: #f9f9f9; border-left: 4px solid var(--orange); padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.85rem;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold;">
@@ -2096,7 +2121,11 @@ function fermerLivraisons() {
     const modal = document.getElementById('modal-livraisons');
     if (modal) {
         modal.classList.remove('show');
-        setTimeout(() => modal.style.display = "none", 300);
+        setTimeout(() => {
+   modal.style.display = "none";
+   const titreModale = modal.querySelector('h3');
+   if (titreModale) titreModale.innerHTML = "Mes Livraisons";
+ }, 300);
     }
 }
 
@@ -4967,3 +4996,34 @@ function modifierQuantiteSnapshotGraphique(index, changement) {
  afficherRecapCommandeEnvoyee(snapshot);
 }
 
+// --- COMPLEMENT GRAPHIQUE ISOLE POUR LES REÇUS DE PAIEMENTS VALIDÉS ---
+function ouvrirAchatsValides() {
+ if (document.body.classList.contains('sidebar-open')) { toggleSidebar(); }
+ const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+ const commandesValides = historique.filter(cmd => cmd.statut === "PAYÉ" || cmd.statut === "LIVRÉ" || cmd.statut === "TERMINE");
+ const modal = document.getElementById('modal-livraisons');
+ const container = document.getElementById('liste-livraisons');
+ if (!modal || !container) return;
+ modal.style.display = "flex"; setTimeout(() => modal.classList.add('show'), 10);
+ const titreModale = modal.querySelector('h3');
+ if (titreModale) titreModale.innerHTML = "<i class='fas fa-receipt' style='color:#059669;'></i> Mes Reçus Validés";
+ if (commandesValides.length === 0) {
+   container.innerHTML = "<p style='color:#64748b; text-align:center; padding:30px 10px; font-size:0.85rem;'>Aucun reçu de paiement disponible pour le moment.</p>";
+ } else {
+   container.innerHTML = commandesValides.map(cmd => {
+     let produitsHTML = "";
+     if (cmd.produits && cmd.produits !== "PANIER_VIDE") {
+       cmd.produits.split(",").forEach(frag => {
+         if (!frag.trim()) return;
+         let nomP = frag.trim(); let qteP = "1";
+         const match = frag.match(/\(x(\d+)\)/);
+         if (match) { qteP = match[1]; nomP = frag.replace(match[0], "").trim(); }
+         const cachedProd = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === nomP || p.Nom.replace(/'/g, "\\'") === nomP) : null;
+         const urlPhoto = cachedProd ? cachedProd.Image_URL : 'https://placeholder.com';
+         produitsHTML += `<div style="display:flex; align-items:center; gap:10px; margin-top:6px; background:#fff; padding:6px 10px; border-radius:12px; border:1px solid #e2e8f0;"><div style="width:36px; height:36px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><img src="${urlPhoto}" style="max-width:90%; max-height:90%; object-fit:contain;"></div><div style="flex:1; min-width:0; text-align:left;"><div style="font-weight:700; font-size:0.8rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nomP}</div><div style="font-size:0.75rem; color:#059669; font-weight:700;">Validé × ${qteP}</div></div></div>`;
+       });
+     }
+     return `<div class="recu-card" style="background:#ffffff; border:1px solid #e2e8f0; padding:14px; border-radius:18px; margin-bottom:12px; text-align:left; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-left:6px solid #059669;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-family:'Poppins',sans-serif;"><span style="font-weight:800; font-size:0.85rem; color:#1e293b;">Reçu #${cmd.id.toString().slice(-4)}</span><span style="background:#e6f4ea; color:#059669; font-size:0.65rem; padding:3px 10px; border-radius:20px; font-weight:800; text-transform:uppercase;">Reçu Sécurisé</span></div><div style="margin:6px 0;">${produitsHTML}</div><div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid #f1f5f9; font-size:0.75rem; color:#64748b;"><span>Passée le : ${cmd.date}</span><span style="font-weight:800; font-size:0.85rem; color:#1e293b;">Total : <span style="color:#059669;">${cmd.total.toLocaleString()} Ar</span></span></div></div>`;
+   }).join('');
+ }
+}
