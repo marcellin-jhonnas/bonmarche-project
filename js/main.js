@@ -636,6 +636,7 @@ function filtrerParCategorie(categorieCible) {
 }
 
 function afficherPanier() {
+ masquerChargementGlobal(); // <-- AJOUT : le panier doit toujours être cliquable
  const detail = document.getElementById('detail-panier');
  const totalLabel = document.getElementById('total-modal');
  if(!detail || !totalLabel) return;
@@ -4800,8 +4801,17 @@ function afficherBandeauHorsLigne() {
 function afficherChargementGlobal() {
   const overlay = document.getElementById('saferun-loading-overlay');
   if (overlay) overlay.classList.add('show');
+
+  // FILET DE SÉCURITÉ : si personne n'appelle masquerChargementGlobal()
+  // dans les 8 secondes, on force la fermeture pour ne jamais bloquer le client
+  clearTimeout(window._saferunLoadingTimeout);
+  window._saferunLoadingTimeout = setTimeout(() => {
+    masquerChargementGlobal();
+  }, 8000);
 }
+
 function masquerChargementGlobal() {
+  clearTimeout(window._saferunLoadingTimeout);
   const overlay = document.getElementById('saferun-loading-overlay');
   if (overlay) overlay.classList.remove('show');
 }
