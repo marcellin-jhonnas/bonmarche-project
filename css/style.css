@@ -6253,3 +6253,165 @@ body.sidebar-open #main-content {
 .menu-toggle-btn i {
     transition: transform 0.3s ease, cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
+
+/* ============================================
+   STYLE PREMIUM POUR LES REÇUS DE PAIEMENT
+   ============================================ */
+
+.recu-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.03);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border-left: 5px solid #059669;
+}
+
+.recu-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), 0 12px 32px rgba(5, 150, 105, 0.1);
+}
+
+/* Petit ruban décoratif en fond (effet "sécurisé") */
+.recu-card::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 90px;
+    height: 90px;
+    background: radial-gradient(circle, rgba(5, 150, 105, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+/* --- En-tête du reçu --- */
+.recu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eef2f6;
+}
+
+.recu-header b {
+    font-size: 0.95rem;
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.recu-header small {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+/* --- Badge de statut --- */
+.recu-status {
+    font-size: 0.65rem !important;
+    padding: 5px 12px !important;
+    border-radius: 30px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* --- Liste des produits avec photo --- */
+.recu-card .produit-ligne {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 14px;
+    border: 1px solid #eef2f6;
+    transition: background 0.2s ease;
+}
+
+.recu-card .produit-ligne:hover {
+    background: #f1f5f9;
+}
+
+.recu-card .produit-ligne img {
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* --- Pied du reçu (total + bouton détails) --- */
+.recu-card .recu-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.recu-card .recu-footer b {
+    color: #059669;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+/* --- Bouton "Détails" premium --- */
+.recu-details-btn {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 30px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
+    transition: all 0.25s ease;
+}
+
+.recu-details-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+}
+
+.recu-details-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* --- Petit tag "Reçu Sécurisé" façon badge premium --- */
+.recu-tag-securise {
+    background: linear-gradient(135deg, #e6f4ea 0%, #d1fae5 100%);
+    color: #059669;
+    font-size: 0.6rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.15);
+}
+
+/* --- Responsive mobile --- */
+@media (max-width: 480px) {
+    .recu-card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+    .recu-header b {
+        font-size: 0.85rem;
+    }
+    .recu-details-btn {
+        padding: 7px 14px;
+        font-size: 0.68rem;
+    }
+}

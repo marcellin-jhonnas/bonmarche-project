@@ -3038,7 +3038,7 @@ async function ouvrirAchatsValides() {
                   ? window.listeLocaleSafeRun.find(p => p.Nom === nomP || p.Nom.replace(/'/g, "\\'") === nomP)
                   : null;
                const urlPhoto = cachedProd ? cachedProd.Image_URL : 'https://placeholder.com';
-               produitsHTML += `<div style="display:flex; align-items:center; gap:10px; margin-top:6px; background:#fff; padding:6px 10px; border-radius:12px; border:1px solid #e2e8f0;">
+               produitsHTML += `<div class="produit-ligne">
                   <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                      <img src="${urlPhoto}" style="max-width:90%; max-height:90%; object-fit:contain;">
                   </div>
@@ -3063,10 +3063,10 @@ async function ouvrirAchatsValides() {
                  <div class="recu-status" style="${badgeStyle} font-size:11px; padding:3px 8px; border-radius:20px; font-weight:bold;">${badgeTexte}</div>
               </div>
               <div style="margin:10px 0;">${produitsHTML}</div>
-              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f9f9f9; padding-top:10px;">
-                 <b style="color:#27ae60;">${Number(montant).toLocaleString()} Ar</b>
-                 <button class="recu-details-btn" onclick="afficherRecuDetaille('${cmd.id}')">DÉTAILS</button>
-              </div>
+              <div class="recu-footer">
+   <b>${Number(montant).toLocaleString()} Ar</b>
+   <button class="recu-details-btn" onclick="afficherRecuDetaille('${cmd.id}')">DÉTAILS</button>
+</div>
             </div>`;
       });
    }
