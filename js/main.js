@@ -2990,65 +2990,90 @@ async function synchroniserAchats() {
     }
 }
 
-
 async function ouvrirAchatsValides() {
-    document.body.classList.remove('sidebar-open');
-    await synchroniserAchats();
+  document.body.classList.remove('sidebar-open');
+  await synchroniserAchats();
 
-    const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
-    const valides = historique.filter(cmd => {
-  // On harmonise le texte du statut
-  const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
-  // On affiche le reçu si c'est l'un de ces 3 mots
-  return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ"|| s === "LIVRÉ";
-});
+   const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
+   const valides = historique.filter(cmd => {
+     const s = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+     return s === "VALIDÉ" || s === "SÉRIEUX" || s === "PAYÉ" || s === "LIVRÉ";
+   });
 
     let html = `
-        <div style="padding:15px; text-align:center;">
-            <h3 style="margin-bottom:20px;"><i class="fas fa-receipt"></i> Mes Reçus</h3>
-            <div style="max-height:400px; overflow-y:auto;">`;
+       <div style="padding:15px; text-align:center;">
+        <h3 style="margin-bottom:20px;"><i class="fas fa-receipt"></i> Mes Reçus</h3>
+        <div style="max-height:400px; overflow-y:auto;">`;
 
-    if (valides.length === 0) {
-        html += `
-            <div style="padding:30px; border:2px dashed #eee; border-radius:20px; color:#888;">
-                <p>Aucune commande validée pour le moment.</p>
+   if (valides.length === 0) {
+      html += `
+         <div style="padding:30px; border:2px dashed #eee; border-radius:20px; color:#888;">
+            <p>Aucune commande validée pour le moment.</p>
+         </div>`;
+   } else {
+      valides.forEach(cmd => {
+         const montant = cmd.Montant || cmd.montant || cmd.total || 0;
+         const statutBrut = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
+         let badgeTexte = "CONFIRMÉ";
+         let badgeStyle = "background:#dcfce7; color:#15803d;";
+
+         if (statutBrut === "LIVRÉ") {
+            badgeTexte = "CLÔTURÉ";
+            badgeStyle = "background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;";
+         } else if (statutBrut === "EXPIRÉ") {
+            badgeTexte = "COMMANDE EXPIRÉE";
+            badgeStyle = "background:#fee2e2; color:#ef4444; border:1px solid #fca5a5;";
+         }
+
+         // --- INSERTION CHIRURGICALE : affichage visuel des produits avec photo ---
+         let produitsHTML = "";
+         if (cmd.produits && cmd.produits !== "PANIER_VIDE") {
+            cmd.produits.split(",").forEach(frag => {
+               if (!frag.trim()) return;
+               let nomP = frag.trim();
+               let qteP = "1";
+               const match = frag.match(/\(x(\d+)\)/);
+               if (match) { qteP = match[1]; nomP = frag.replace(match[0], "").trim(); }
+               const cachedProd = window.listeLocaleSafeRun
+                  ? window.listeLocaleSafeRun.find(p => p.Nom === nomP || p.Nom.replace(/'/g, "\\'") === nomP)
+                  : null;
+               const urlPhoto = cachedProd ? cachedProd.Image_URL : 'https://placeholder.com';
+               produitsHTML += `<div style="display:flex; align-items:center; gap:10px; margin-top:6px; background:#fff; padding:6px 10px; border-radius:12px; border:1px solid #e2e8f0;">
+                  <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                     <img src="${urlPhoto}" style="max-width:90%; max-height:90%; object-fit:contain;">
+                  </div>
+                  <div style="flex:1; min-width:0; text-align:left;">
+                     <div style="font-weight:700; font-size:0.8rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nomP}</div>
+                     <div style="font-size:0.75rem; color:#059669; font-weight:700;">Validé × ${qteP}</div>
+                  </div>
+               </div>`;
+            });
+         } else {
+            produitsHTML = `<p style="font-size:0.85rem; color:#666; margin:10px 0;">${cmd.produits || ''}</p>`;
+         }
+         // --- FIN INSERTION ---
+
+         html += `
+            <div class="recu-card">
+              <div class="recu-header">
+                 <div>
+                   <small style="color:#aaa; display:block;">REF</small>
+                   <b>#${cmd.id}</b>
+                 </div>
+                 <div class="recu-status" style="${badgeStyle} font-size:11px; padding:3px 8px; border-radius:20px; font-weight:bold;">${badgeTexte}</div>
+              </div>
+              <div style="margin:10px 0;">${produitsHTML}</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f9f9f9; padding-top:10px;">
+                 <b style="color:#27ae60;">${Number(montant).toLocaleString()} Ar</b>
+                 <button class="recu-details-btn" onclick="afficherRecuDetaille('${cmd.id}')">DÉTAILS</button>
+              </div>
             </div>`;
-    } else {
-        valides.forEach(cmd => {
-            const montant = cmd.Montant || cmd.montant || cmd.total || 0;
-const statutBrut = String(cmd.statut || cmd.Statut || "").toUpperCase().trim();
-let badgeTexte = "CONFIRMÉ";
-let badgeStyle = "background:#dcfce7; color:#15803d;"; // Vert par défaut
+      });
+   }
 
-if (statutBrut === "LIVRÉ") {
-    badgeTexte = "CLÔTURÉ"; // Devient TERMINÉ (ou CLÔTURÉ)
-    badgeStyle = "background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"; // Devient gris
-}
-else if (statutBrut === "EXPIRÉ") {
-    badgeTexte = "COMMANDE EXPIRÉE";
-    badgeStyle = "background:#fee2e2; color:#ef4444; border:1px solid #fca5a5;"; // Badge Rouge Rouge
-}
-            html += `
-                <div class="recu-card">
-                    <div class="recu-header">
-                        <div>
-                            <small style="color:#aaa; display:block;">REF</small>
-                            <b>#${cmd.id}</b>
-                        </div>
-                        <div class="recu-status" style="${badgeStyle} font-size:11px; padding:3px 8px; border-radius:20px; font-weight:bold;">${badgeTexte}</div>
-                    </div>
-                    <p style="font-size:0.85rem; color:#666; margin:10px 0;">${cmd.produits}</p>
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f9f9f9; pt:10px; padding-top:10px;">
-                        <b style="color:#27ae60;">${Number(montant).toLocaleString()} Ar</b>
-                        <button class="recu-details-btn" onclick="afficherRecuDetaille('${cmd.id}')">DÉTAILS</button>
-                    </div>
-                </div>`;
-        });
-    }
-
-    html += `</div>
-        <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border:none; background:#eee; border-radius:12px; cursor:pointer;">Fermer</button>
-    </div>`;
+  html += `</div>
+    <button onclick="fermerModal()" style="width:100%; padding:12px; margin-top:15px; border:none; background:#eee; border-radius:12px; cursor:pointer;">Fermer</button>
+  </div>`;
 
     afficherModalGenerique(html);
 }
@@ -5013,37 +5038,6 @@ function modifierQuantiteSnapshotGraphique(index, changement) {
  afficherRecapCommandeEnvoyee(snapshot);
 }
 
-// --- COMPLEMENT GRAPHIQUE ISOLE POUR LES REÇUS DE PAIEMENTS VALIDÉS ---
-function ouvrirAchatsValides() {
- if (document.body.classList.contains('sidebar-open')) { toggleSidebar(); }
- const historique = JSON.parse(localStorage.getItem('saferun_commandes') || "[]");
- const commandesValides = historique.filter(cmd => cmd.statut === "PAYÉ" || cmd.statut === "LIVRÉ" || cmd.statut === "TERMINE");
- const modal = document.getElementById('modal-livraisons');
- const container = document.getElementById('liste-livraisons');
- if (!modal || !container) return;
- modal.style.display = "flex"; setTimeout(() => modal.classList.add('show'), 10);
- const titreModale = modal.querySelector('h3');
- if (titreModale) titreModale.innerHTML = "<i class='fas fa-receipt' style='color:#059669;'></i> Mes Reçus Validés";
- if (commandesValides.length === 0) {
-   container.innerHTML = "<p style='color:#64748b; text-align:center; padding:30px 10px; font-size:0.85rem;'>Aucun reçu de paiement disponible pour le moment.</p>";
- } else {
-   container.innerHTML = commandesValides.map(cmd => {
-     let produitsHTML = "";
-     if (cmd.produits && cmd.produits !== "PANIER_VIDE") {
-       cmd.produits.split(",").forEach(frag => {
-         if (!frag.trim()) return;
-         let nomP = frag.trim(); let qteP = "1";
-         const match = frag.match(/\(x(\d+)\)/);
-         if (match) { qteP = match[1]; nomP = frag.replace(match[0], "").trim(); }
-         const cachedProd = window.listeLocaleSafeRun ? window.listeLocaleSafeRun.find(p => p.Nom === nomP || p.Nom.replace(/'/g, "\\'") === nomP) : null;
-         const urlPhoto = cachedProd ? cachedProd.Image_URL : 'https://placeholder.com';
-         produitsHTML += `<div style="display:flex; align-items:center; gap:10px; margin-top:6px; background:#fff; padding:6px 10px; border-radius:12px; border:1px solid #e2e8f0;"><div style="width:36px; height:36px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><img src="${urlPhoto}" style="max-width:90%; max-height:90%; object-fit:contain;"></div><div style="flex:1; min-width:0; text-align:left;"><div style="font-weight:700; font-size:0.8rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nomP}</div><div style="font-size:0.75rem; color:#059669; font-weight:700;">Validé × ${qteP}</div></div></div>`;
-       });
-     }
-     return `<div class="recu-card" style="background:#ffffff; border:1px solid #e2e8f0; padding:14px; border-radius:18px; margin-bottom:12px; text-align:left; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-left:6px solid #059669;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-family:'Poppins',sans-serif;"><span style="font-weight:800; font-size:0.85rem; color:#1e293b;">Reçu #${cmd.id.toString().slice(-4)}</span><span style="background:#e6f4ea; color:#059669; font-size:0.65rem; padding:3px 10px; border-radius:20px; font-weight:800; text-transform:uppercase;">Reçu Sécurisé</span></div><div style="margin:6px 0;">${produitsHTML}</div><div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid #f1f5f9; font-size:0.75rem; color:#64748b;"><span>Passée le : ${cmd.date}</span><span style="font-weight:800; font-size:0.85rem; color:#1e293b;">Total : <span style="color:#059669;">${cmd.total.toLocaleString()} Ar</span></span></div></div>`;
-   }).join('');
- }
-}
 
 // --- INJECTION INDÉPENDANTE : FERMETURE SIDEBAR SI CLIC EXTÉRIEUR ---
 document.addEventListener('click', function(event) {
