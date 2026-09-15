@@ -6415,3 +6415,61 @@ body.sidebar-open #main-content {
         font-size: 0.68rem;
     }
 }
+/* --- CORRECTIF FLUIDE POUR PETITS ÉCRANS ANDROID --- */
+@media (max-width: 420px) {
+  /* 1. On donne un peu plus d'espace aux colonnes pour respirer */
+  #grille-produits-reelle, .container, #boutique {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 6px !important;
+  }
+
+  /* 2. Restructuration de la carte produit pour réduire sa hauteur */
+  .carte-produit, .product-card {
+    padding: 8px !important;
+    height: auto !important; /* Laisse la carte s'adapter dynamiquement */
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 3. Réduction drastique de la hauteur de l'image */
+  .carte-produit img, .product-card img, .img-container {
+    height: 90px !important; /* Limite la hauteur de l'image sur petit mobile */
+    object-fit: contain !important;
+  }
+
+  /* 4. Rendre les textes et badges minuscules et compacts */
+  .carte-produit h3, .product-card h3 {
+    font-size: 0.72rem !important;
+    line-height: 1.1 !important;
+    height: 2.2em !important; /* Réduit l'espace réservé au titre */
+    margin: 4px 0 !important;
+  }
+
+  .cat-tag, .cat-badge-overlay {
+    font-size: 0.55rem !important;
+    padding: 2px 6px !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* 5. Compactage de la zone prix et bouton */
+  .prix-badge, .prix-container span {
+    font-size: 0.75rem !important;
+  }
+  
+  .prix-container small {
+    font-size: 0.55rem !important;
+  }
+
+  .btn-commander {
+    font-size: 0.7rem !important;
+    padding: 6px 4px !important; /* Bouton beaucoup moins haut et plus discret */
+    margin-top: 6px !important;
+    border-radius: 8px !important;
+  }
+  
+  /* Masque les étoiles sur très petit écran pour économiser de la hauteur */
+  .carte-produit .fa-star, .product-card .fa-star, .rating-stars {
+    display: none !important;
+  }
+}
