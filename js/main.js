@@ -752,8 +752,13 @@ function afficherPanier() {
  fraisLivraison = 0;
  }
  fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
- }
- let totalFinal = sousTotal + fraisLivraison;
+}
+// --- AJOUT : contrainte de poids ---
+const contraintePoids = evaluerContraintePoids(panier);
+if (sousTotal > 0 && !contraintePoids.bloque) {
+    fraisLivraison += contraintePoids.suppPoids;
+}
+let totalFinal = sousTotal + fraisLivraison;
  // --- RENDER FINAL ---
  detail.innerHTML = `
  <div class="panier-header-sticky" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
