@@ -875,14 +875,15 @@ function calculerTotauxAvecLivraison(listeProduits) {
         fraisLivraison = Math.max(calcul15, tarifMin);
         if (sousTotal >= seuilGratuit) fraisLivraison = 0;
         fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
-        }
+    }
+
     // --- AJOUT : contrainte de poids ---
-    const contraintePoids = evaluerContraintePoids(panier);
+    const contraintePoids = evaluerContraintePoids(listeProduits);   // ✅ listeProduits, pas panier
     if (sousTotal > 0 && !contraintePoids.bloque) {
         fraisLivraison += contraintePoids.suppPoids;
     }
 
-    return { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison };
+    return { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison, contraintePoids };
 }
 function fusionnerNouveauxProduitsDansSnapshot(snapshot) {
     panier.forEach(nouvelItem => {
