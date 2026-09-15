@@ -634,7 +634,49 @@ function filtrerParCategorie(categorieCible) {
         rendreProduits(filtrés);
     }
 }
+// ============================================
+// GESTION DU POIDS ET DU VÉHICULE DE LIVRAISON
+// ============================================
+const SEUIL_VEHICULE_AR = 8000;
+const SEUILS_POIDS = {
+    velo: { leger: 8, plafond: 15 },
+    moto: { leger: 15, plafond: 25 }
+};
+const TARIF_SUPPLEMENT_KG = 500;
 
+function determinerVehiculeLivraison() {
+    const rawTarifMin = localStorage.getItem('saferun_tarif_minimal');
+    const tarifMin = rawTarifMin ? parseInt(rawTarifMin.toString().replace(/[^0-9]/g, ''), 10) : 6000;
+    return tarifMin <= SEUIL_VEHICULE_AR ? 'velo' : 'moto';
+}
+
+function calculerPoidsTotalPanier(listeProduits) {
+    let poidsTotal = 0;
+    listeProduits.forEach(item => {
+        const prodDonnees = window.listeLocaleSafeRun
+            ? window.listeLocaleSafeRun.find(p => p.Nom === item.nom || p.Nom.replace(/'/g, "\\'") === item.nom)
+            : null;
+        const poidsUnitaire = prodDonnees && prodDonnees.Poids ? parseFloat(prodDonnees.Poids) : 0;
+        poidsTotal += poidsUnitaire * item.quantite;
+    });
+    return poidsTotal;
+}
+
+function evaluerContraintePoids(listeProduits) {
+    const vehicule = determinerVehiculeLivraison();
+    const seuils = SEUILS_POIDS[vehicule];
+    const poidsTotal = calculerPoidsTotalPanier(listeProduits);
+    let suppPoids = 0, bloque = false, message = "";
+
+    if (poidsTotal >= seuils.plafond) {
+        bloque = true;
+        message = `Votre commande pèse environ ${poidsTotal.toFixed(1)} kg, ce qui dépasse la capacité de notre livreur (${vehicule === 'velo' ? 'vélo' : 'moto'}) pour votre zone. Merci de réduire vos quantités.`;
+    } else if (poidsTotal >= seuils.leger) {
+        suppPoids = Math.ceil((poidsTotal - seuils.leger) * TARIF_SUPPLEMENT_KG);
+        message = `Colis un peu lourd (${poidsTotal.toFixed(1)} kg) — supplément de manutention inclus.`;
+    }
+    return { vehicule, poidsTotal, suppPoids, bloque, message };
+}
 function afficherPanier() {
  masquerChargementGlobal(); // <-- AJOUT : le panier doit toujours être cliquable
  const detail = document.getElementById('detail-panier');
@@ -729,6 +771,10 @@ function afficherPanier() {
    <div class="panier-total-row panier-livraison-row" style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
      <span>Frais de Livraison :</span> <span style="font-weight:700; color:${fraisLivraison === 0 ? '#059669' : '#1e293b'}">${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
    </div>
+   ${contraintePoids.message ? `
+   <div style="margin-top:8px; padding:8px 10px; background:${contraintePoids.bloque ? '#fee2e2' : '#fff7ed'}; color:${contraintePoids.bloque ? '#dc2626' : '#c2410c'}; border-radius:10px; font-size:0.75rem; font-weight:600;">
+       <i class="fas ${contraintePoids.bloque ? 'fa-exclamation-triangle' : 'fa-weight-hanging'}"></i> ${contraintePoids.message}
+   </div>` : ''}
  </div>` : ''}
  `;
  const totalBloc = document.getElementById('panierTotalSticky');
@@ -737,6 +783,13 @@ function afficherPanier() {
  setTimeout(() => totalBloc.classList.remove('updating'), 400);
  }
  totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
+     const btnValider = document.getElementById('btn-valider-commande');
+    if (btnValider) {
+        btnValider.disabled = contraintePoids.bloque;
+        btnValider.style.opacity = contraintePoids.bloque ? "0.5" : "1";
+        btnValider.style.cursor = contraintePoids.bloque ? "not-allowed" : "pointer";
+        btnValider.innerText = contraintePoids.bloque ? "Réduisez vos quantités pour continuer" : "VALIDER MA COMMANDE";
+    }
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
 }
@@ -822,6 +875,11 @@ function calculerTotauxAvecLivraison(listeProduits) {
         fraisLivraison = Math.max(calcul15, tarifMin);
         if (sousTotal >= seuilGratuit) fraisLivraison = 0;
         fraisLivraison = Math.ceil(fraisLivraison / 10) * 10;
+        }
+    // --- AJOUT : contrainte de poids ---
+    const contraintePoids = evaluerContraintePoids(panier);
+    if (sousTotal > 0 && !contraintePoids.bloque) {
+        fraisLivraison += contraintePoids.suppPoids;
     }
 
     return { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison };
