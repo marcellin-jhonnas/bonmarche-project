@@ -846,13 +846,34 @@ async function envoyerCommande() {
 
         // On relit systématiquement la version la plus fraîche, jamais une variable en mémoire
         const snapshotFinal = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
-        if (!snapshotFinal) { 
-            masquerChargementGlobal(); // <-- AJOUT 2
-            alert("Votre panier est vide !"); return; }
-         masquerChargementGlobal(); // <-- AJOUT 3
-        afficherChoixPaiementLuxe(snapshotFinal.id, snapshotFinal.montant);
-        return;
-    }
+        if (!snapshotFinal) {
+         masquerChargementGlobal(); // <-- AJOUT 2
+         alert("Votre panier est vide !"); return; }
+       masquerChargementGlobal(); // <-- AJOUT 3
+
+      // --- AJOUT : vérification du poids avant paiement (corrige le contournement snapshot) ---
+      const contraintePoidsSnapshot = evaluerContraintePoids(snapshotFinal.produits);
+      if (contraintePoidsSnapshot.bloque) {
+          afficherModalGenerique(`
+              <div style="padding:20px; text-align:center;">
+                  <div style="font-size:40px; color:#dc2626; margin-bottom:10px;">
+                      <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <h3 style="margin-bottom:10px;">Commande trop lourde</h3>
+                  <p style="color:#666; font-size:0.9rem; line-height:1.5;">
+                      ${contraintePoidsSnapshot.message}
+                  </p>
+                  <button onclick="fermerModalGenerique()" style="width:100%; padding:12px; margin-top:15px; border:none; background:#eee; border-radius:12px; cursor:pointer;">
+                      J'ai compris
+                  </button>
+              </div>
+          `);
+          return;
+      }
+
+      afficherChoixPaiementLuxe(snapshotFinal.id, snapshotFinal.montant);
+      return;
+  }
 
     if (panier.length === 0) { 
         masquerChargementGlobal(); // <-- AJOUT 4
@@ -2855,14 +2876,19 @@ setInterval(updateHeroAnimate, 5000);
 
 // RÉPARATION FINALE DU BOUTON X
 function fermerModal() {
-    const ids = ['modal-panier', 'modal-rdv', 'modal-planification', 'modal-livraisons', 'welcome-popup'];
-    ids.forEach(id => {
-        const m = document.getElementById(id);
-        if(m) {
-            m.classList.remove('show');
-            setTimeout(() => { m.style.display = "none"; }, 300);
-        }
-    });
+   const ids = ['modal-panier', 'modal-rdv', 'modal-planification', 'modal-livraisons', 'welcome-popup'];
+   ids.forEach(id => {
+      const m = document.getElementById(id);
+      if(m) {
+         m.classList.remove('show');
+         setTimeout(() => { m.style.display = "none"; }, 300);
+      }
+      // --- AJOUT : sécurité, on réaffiche toujours le footer du panier ---
+      if (id === 'modal-panier' && m) {
+         const footer = m.querySelector('.modal-footer');
+         if (footer) footer.style.display = "flex";
+      }
+   });
 }
 /* --- TA FONCTION MISE À JOUR (Garde le même nom pour la facture) --- */
 
