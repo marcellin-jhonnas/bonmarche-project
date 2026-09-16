@@ -6473,3 +6473,24 @@ body.sidebar-open #main-content {
     display: none !important;
   }
 }
+/* ============================================
+   PANIER : bouton toujours visible, liste scrollable
+   ============================================ */
+#modal-panier .modal-box {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    overflow: hidden;
+}
+
+#modal-panier #detail-panier {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+#modal-panier .modal-footer {
+    flex-shrink: 0;
+    background: #fff;
+    padding-top: 5px;
+}

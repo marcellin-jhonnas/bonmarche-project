@@ -902,12 +902,14 @@ setInterval(nextSlide, 5000);
     <div class="modal-box">
         <button class="close-popup" onclick="fermerModal()">×</button>
         <div id="detail-panier" style="text-align: left; margin-top: 20px;"></div>
-        <hr>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin: 15px 0;">
-            <span>TOTAL :</span>
-            <span id="total-modal">0 Ar</span>
-        </div>
-        <button class="btn-inscription" id="btn-valider-commande" onclick="envoyerDonneesAuSheet()">🚀  VALIDER MA COMMANDE</button>
+<div class="modal-footer">
+<hr style="margin:10px 0;">
+<div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin: 10px 0;">
+<span>TOTAL :</span>
+<span id="total-modal">0 Ar</span>
+</div>
+<button class="btn-inscription" id="btn-valider-commande" onclick="envoyerDonneesAuSheet()"> VALIDER MA COMMANDE</button>
+</div>
     </div>
 </div>
 
