@@ -797,6 +797,7 @@ let totalFinal = sousTotal + fraisLivraison;
     }
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
+ window.dernierContraintePoids = contraintePoids;
 }
 // FONCTION DE SUPPRESSION
 function supprimerProduitDirectement(index) {
@@ -1009,15 +1010,26 @@ function ouvrirTicketAutomatique() {
         btnEnvoi.onmouseover = () => btnEnvoi.style.transform = "scale(1.03)";
         btnEnvoi.onmouseleave = () => btnEnvoi.style.transform = "scale(1)";
 
-        // RESET
+    // RESET (sécurisé : on respecte le blocage poids calculé par afficherPanier())
+    const contraintePoidsActuelle = window.dernierContraintePoids || { bloque: false };
+    if (contraintePoidsActuelle.bloque) {
+        btnEnvoi.innerHTML = "Réduisez vos quantités pour continuer";
+        btnEnvoi.disabled = true;
+        btnEnvoi.style.opacity = "0.5";
+        btnEnvoi.style.cursor = "not-allowed";
+    } else {
         btnEnvoi.innerHTML = "🚀 CONFIRMER LA COMMANDE";
         btnEnvoi.disabled = false;
+        btnEnvoi.style.opacity = "1";
+        btnEnvoi.style.cursor = "pointer";
+    }
 
         const oldAnnuler = document.getElementById('btn-annuler-commande');
         if (oldAnnuler) oldAnnuler.remove();
 
                 btnEnvoi.onclick = function() {
             if (document.getElementById('saferun-loading-overlay').classList.contains('show')) return; // <-- AJOUT anti double-clic
+            if (window.dernierContraintePoids && window.dernierContraintePoids.bloque) return; // <-- AJOUT sécurité poids
             // On utilise directement la valeur fiable déjà calculée par afficherPanier()
             let montantSecurise = window.dernierTotalCalcule || 0;
 
