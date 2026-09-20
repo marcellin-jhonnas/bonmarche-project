@@ -1739,7 +1739,7 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  const detail = document.getElementById('detail-panier');
  const totalLabel = document.getElementById('total-modal');
  if (!detail || !totalLabel) return;
- const { sousTotal, fraisLivraison, totalFinal } = calculerTotauxAvecLivraison(snapshot.produits);
+ const { sousTotal, fraisLivraison, totalFinal, contraintePoids } = calculerTotauxAvecLivraison(snapshot.produits);
  
  let resume = snapshot.produits.map((item, index) => {
  const st = item.prix * item.quantite;
@@ -1790,12 +1790,27 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  <div class="panier-total-row panier-livraison-row" style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
  <span>Frais de Livraison :</span> <span style="font-weight:700; color:${fraisLivraison === 0 ? '#059669' : '#1e293b'}">${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
  </div>
+ ${contraintePoids.message ? `
+ <div style="margin-top:8px; padding:8px 10px; background:${contraintePoids.bloque ? '#fee2e2' : '#fff7ed'}; color:${contraintePoids.bloque ? '#dc2626' : '#c2410c'}; border-radius:10px; font-size:0.75rem; font-weight:600;">
+ <i class="fas ${contraintePoids.bloque ? 'fa-exclamation-triangle' : 'fa-weight-hanging'}"></i>
+ ${contraintePoids.message}
+ </div>` : ''}
  </div>
  `;
  totalLabel.innerText = totalFinal.toLocaleString() + " Ar";
   // ... Lignes précédentes de la fin de votre fonction afficherRecapCommandeEnvoyee ...
  window.dernierTotalCalcule = totalFinal;
  window.dernierFraisLivraison = fraisLivraison;
+ window.dernierContraintePoids = contraintePoids;
+
+ // AJOUT : on désactive le bouton de validation si le poids dépasse le plafond
+ const btnValider = document.getElementById('btn-valider-commande');
+ if (btnValider) {
+   btnValider.disabled = contraintePoids.bloque;
+   btnValider.style.opacity = contraintePoids.bloque ? "0.5" : "1";
+   btnValider.style.cursor = contraintePoids.bloque ? "not-allowed" : "pointer";
+   btnValider.innerText = contraintePoids.bloque ? "Réduisez vos quantités pour continuer" : "VALIDER MA COMMANDE";
+ }
 
  // INJECTION DE SÉCURITÉ ANTI-FREEZE : Force le conteneur à écouter les clics immédiatement
  if (detail) {
