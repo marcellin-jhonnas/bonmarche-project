@@ -4951,6 +4951,14 @@ function afficherChargementGlobal() {
   const overlay = document.getElementById('saferun-loading-overlay');
   if (overlay) overlay.classList.add('show');
 
+  // AJOUT : on bloque le bouton de validation pendant le chargement pour éviter le double-clic
+  const btnValider = document.getElementById('btn-valider-commande');
+  if (btnValider) {
+    btnValider.disabled = true;
+    btnValider.style.opacity = "0.5";
+    btnValider.style.cursor = "not-allowed";
+  }
+
   // FILET DE SÉCURITÉ : si personne n'appelle masquerChargementGlobal()
   // dans les 8 secondes, on force la fermeture pour ne jamais bloquer le client
   clearTimeout(window._saferunLoadingTimeout);
@@ -4963,6 +4971,16 @@ function masquerChargementGlobal() {
   clearTimeout(window._saferunLoadingTimeout);
   const overlay = document.getElementById('saferun-loading-overlay');
   if (overlay) overlay.classList.remove('show');
+
+  // AJOUT : on réactive le bouton, sauf si le poids bloque toujours la commande
+  const btnValider = document.getElementById('btn-valider-commande');
+  if (btnValider) {
+    const bloquePoids = window.dernierContraintePoids && window.dernierContraintePoids.bloque;
+    btnValider.disabled = !!bloquePoids;
+    btnValider.style.opacity = bloquePoids ? "0.5" : "1";
+    btnValider.style.cursor = bloquePoids ? "not-allowed" : "pointer";
+    btnValider.innerText = bloquePoids ? "Réduisez vos quantités pour continuer" : "VALIDER MA COMMANDE";
+  }
 }
 function masquerBandeauHorsLigne() {
     const banner = document.getElementById('offline-banner');
