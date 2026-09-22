@@ -575,7 +575,58 @@ function ajouterAuPanier(nom, prix) {
  // --- FIN DE L'INJECTION (LE RESTE DE VOTRE LOGIQUE RESTE INTACT) ---
 
  const produitExistant = panier.find(item => item.nom === nom);
+      // --- INJECTION CORRECTION MARCELLIN : FUSION AUTOMATIQUE DANS LE SNAPSHOT EXISTANT ---
+  const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+  if (snapshotExistant && snapshotExistant.produits) {
+    // On regarde si le produit existe déjà dans l'ancienne commande transmise
+    const produitDansSnapshot = snapshotExistant.produits.find(item => item.nom === nom || item.nom.replace(/'/g, "\\'") === nom);
+    if (produitDansSnapshot) {
+      produitDansSnapshot.quantite += 1;
+    } else {
+      snapshotExistant.produits.push({ nom, prix, quantite: 1 });
+    }
     
+    // On recalcule immédiatement les totaux pour le Sheet et l'affichage local
+    const { totalFinal } = calculerTotauxAvecLivraison(snapshotExistant.produits);
+    snapshotExistant.montant = totalFinal;
+    
+    // Sauvegarde en cache de la ligne mise à jour
+    localStorage.setItem('saferun_snapshot_commande', JSON.stringify(snapshotExistant));
+    
+    // On avertit ton Google Sheet en arrière-plan qu'on a mis à jour CETTE ligne précise (id)
+    const produitsTexte = snapshotExistant.produits.map(p => `${p.nom} (x${p.quantite})`).join(", ");
+    if (typeof API_URL !== 'undefined') {
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "modifierProduitsCommande",
+          id: snapshotExistant.id,
+          produits: produitsTexte,
+          montant: totalFinal
+        })
+      });
+    }
+
+    // Mise à jour de l'historique visuel du client
+    let historique = JSON.parse(localStorage.getItem('saferun_commandes') || '[]');
+    const idx = historique.findIndex(cmd => cmd.id === snapshotExistant.id);
+    if (idx !== -1) {
+      historique[idx].produits = produitsTexte;
+      historique[idx].total = totalFinal;
+      localStorage.setItem('saferun_commandes', JSON.stringify(historique));
+    }
+
+    // Mises à jour des compteurs visuels (les badges sur ton écran)
+    mettreAJourBadge(); 
+    const totalArticles = calculerQuantiteTotaleGlobale();
+    if (typeof synchroniserBadges === "function") synchroniserBadges(totalArticles);
+    
+    // On sort de la fonction pour éviter de dupliquer dans le panier temporaire
+    return;
+  }
+  // --- FIN DE L'INJECTION CORRECTION ---
+
     if (produitExistant) {
         produitExistant.quantite += 1;
     } else {
