@@ -573,9 +573,7 @@ function ajouterAuPanier(nom, prix) {
    }
  } catch(animationError) { console.warn("Animation non bloquante", animationError); }
  // --- FIN DE L'INJECTION (LE RESTE DE VOTRE LOGIQUE RESTE INTACT) ---
-
- const produitExistant = panier.find(item => item.nom === nom);
-      // --- INJECTION CORRECTION MARCELLIN : FUSION AUTOMATIQUE DANS LE SNAPSHOT EXISTANT ---
+  // --- INJECTION CORRECTION MARCELLIN : FUSION AUTOMATIQUE DANS LE SNAPSHOT EXISTANT ---
   const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
   if (snapshotExistant && snapshotExistant.produits) {
     // On regarde si le produit existe déjà dans l'ancienne commande transmise
@@ -627,6 +625,8 @@ function ajouterAuPanier(nom, prix) {
   }
   // --- FIN DE L'INJECTION CORRECTION ---
 
+ const produitExistant = panier.find(item => item.nom === nom);
+    
     if (produitExistant) {
         produitExistant.quantite += 1;
     } else {
