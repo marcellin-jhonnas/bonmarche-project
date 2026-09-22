@@ -1203,29 +1203,27 @@ async function envoyerDonneesAuSheet() {
     modalBox.style.position = "relative";
     modalBox.appendChild(bouclierBloquant);
 
-    // 3. Moteur d'animation du pourcentage calé sur tes 2,5 secondes d'attente Sheet
+        // 3. Moteur à progression synchronisée (Monte à 95% et se bloque en attendant le réseau)
     let progression = 0;
-    const intervalBouclier = setInterval(() => {
-      progression += 4; // Incrémentation fluide
-      if (progression >= 100) {
-        progression = 100;
-        clearInterval(intervalBouclier);
-        const txt = document.getElementById('texte-chargement-live');
-        if (txt) txt.innerHTML = '<i class="fas fa-check-circle"></i> Commande prête !';
-        
-        // Effacement en douceur à 100% juste avant l'apparition de SafeRun Pay
-        setTimeout(() => {
-          bouclierBloquant.style.transition = "opacity 0.3s ease";
-          bouclierBloquant.style.opacity = "0";
-          setTimeout(() => bouclierBloquant.remove(), 300);
-        }, 150);
+    window.intervalBouclierSafeRun = setInterval(() => {
+      if (!window.chargementDonneesSheetPret) {
+        if (progression < 95) progression += 1;
       } else {
-        const txt = document.getElementById('texte-chargement-live');
-        if (txt) txt.innerText = `Préparation : ${progression}%`;
+        progression = 100;
+        clearInterval(window.intervalBouclierSafeRun);
       }
+
+      const txt = document.getElementById('texte-chargement-live');
       const barre = document.getElementById('barre-chargement-live');
       if (barre) barre.style.width = progression + "%";
-    }, 90); // Atteint 100% en 2250ms (parfait pour ton timeout de 2500ms)
+      
+      if (progression < 95) {
+        if (txt) txt.innerText = `Préparation : ${progression}%`;
+      } else if (progression === 95) {
+        if (txt) txt.innerText = "Finalisation logistique... (95%)";
+      }
+    }, 25);
+
   }
   // =========================================================================
 
@@ -1300,10 +1298,31 @@ async function envoyerDonneesAuSheet() {
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourBadge === "function") mettreAJourBadge();
     if (typeof synchroniserBadges === "function") synchroniserBadges(0);
-    // Affichage de la modale de paiement Marcellin
-    masquerChargementGlobal(); // <-- AJOUT
-    afficherChoixPaiementLuxe(idCommande, montantTotal);
+        // Déclenchement du 100% et affichage immédiat de SafeRun Pay sans coupure visuelle
+    window.chargementDonneesSheetPret = true;
+
+    setTimeout(() => {
+      const txt = document.getElementById('texte-chargement-live');
+      const barre = document.getElementById('barre-chargement-live');
+      if (barre) barre.style.width = "100%";
+      if (txt) txt.innerHTML = '<i class="fas fa-check-circle"></i> Commande prête !';
+
+      const bouclier = document.getElementById('saferun-bouclier-attente');
+      setTimeout(() => {
+        if (bouclier) {
+          bouclier.style.transition = "opacity 0.2s ease";
+          bouclier.style.opacity = "0";
+          setTimeout(() => bouclier.remove(), 200);
+        }
+        const modal = document.getElementById('modal-panier');
+        if (modal) modal.style.display = "none";
+        
+        masquerChargementGlobal();
+        afficherChoixPaiementLuxe(idCommande, montantTotal);
+      }, 250);
+    }, 300);
 }
+
 
 function afficherChoixPaiementLuxe(id, montant) {
     // Suppression de l'ancienne modale si elle existe déjà
