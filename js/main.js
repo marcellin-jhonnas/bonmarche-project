@@ -1158,6 +1158,76 @@ async function envoyerDonneesAuSheet() {
     const tel = localStorage.getItem('saferun_tel');
     const nom = localStorage.getItem('saferun_nom');
     const quartier = localStorage.getItem('saferun_quartier'); 
+      // =========================================================================
+  // --- BOUCLIER DE SÉCURITÉ MARCELLIN : ALERTE DE PRÉPARATION 0 A 100% ---
+  // =========================================================================
+  const modalBox = document.querySelector('#modal-panier .modal-box');
+  if (modalBox) {
+    // 1. Création du calque transparent opaque qui floute et bloque TOUS les clics
+    const bouclierBloquant = document.createElement('div');
+    bouclierBloquant.id = "saferun-bouclier-attente";
+    bouclierBloquant.style.cssText = `
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+      border-radius: 20px;
+    `;
+
+    // 2. Structure HTML propre avec ton dégradé bleu premium et la barre dorée
+    bouclierBloquant.innerHTML = `
+      <div style="background: linear-gradient(135deg, #1e3a8a, #0d47a1); color: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(13,71,161,0.3); text-align: center; width: 100%; max-width: 340px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px;">
+          <i class="fas fa-boxes fa-spin" style="color: #ffcc00; font-size: 1.4rem;"></i>
+          <span style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">PRÉPARATION EN COURS</span>
+        </div>
+        <p style="margin: 0 0 15px 0; font-size: 0.8rem; opacity: 0.9; line-height: 1.4;">
+          Sécurisation de vos produits et calcul logistique...
+        </p>
+        <div style="background: rgba(255, 255, 255, 0.2); height: 8px; border-radius: 10px; overflow: hidden; position: relative; margin-bottom: 8px;">
+          <div id="barre-chargement-live" style="background: #ffcc00; width: 0%; height: 100%; transition: width 0.2s linear; border-radius: 10px;"></div>
+        </div>
+        <span id="texte-chargement-live" style="font-size: 0.85rem; font-weight: bold; color: #ffcc00; display: block; font-family: 'Poppins', sans-serif;">Préparation : 0%</span>
+      </div>
+    `;
+
+    // On force la boîte modale à accepter le positionnement absolu pour le recouvrement
+    modalBox.style.position = "relative";
+    modalBox.appendChild(bouclierBloquant);
+
+    // 3. Moteur d'animation du pourcentage calé sur tes 2,5 secondes d'attente Sheet
+    let progression = 0;
+    const intervalBouclier = setInterval(() => {
+      progression += 4; // Incrémentation fluide
+      if (progression >= 100) {
+        progression = 100;
+        clearInterval(intervalBouclier);
+        const txt = document.getElementById('texte-chargement-live');
+        if (txt) txt.innerHTML = '<i class="fas fa-check-circle"></i> Commande prête !';
+        
+        // Effacement en douceur à 100% juste avant l'apparition de SafeRun Pay
+        setTimeout(() => {
+          bouclierBloquant.style.transition = "opacity 0.3s ease";
+          bouclierBloquant.style.opacity = "0";
+          setTimeout(() => bouclierBloquant.remove(), 300);
+        }, 150);
+      } else {
+        const txt = document.getElementById('texte-chargement-live');
+        if (txt) txt.innerText = `Préparation : ${progression}%`;
+      }
+      const barre = document.getElementById('barre-chargement-live');
+      if (barre) barre.style.width = progression + "%";
+    }, 90); // Atteint 100% en 2250ms (parfait pour ton timeout de 2500ms)
+  }
+  // =========================================================================
 
     console.log("--- DIAGNOSTIC ENVOI ---");
     console.log("Nom trouvé :", nom);
