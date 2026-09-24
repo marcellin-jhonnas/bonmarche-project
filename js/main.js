@@ -890,11 +890,20 @@ async function envoyerCommande() {
       modal.style.display = "flex";
       modal.classList.add('show');
     }
-    if (typeof afficherRecapCommandeEnvoyee === "function") {
-      afficherRecapCommandeEnvoyee(snapshotAlerte);
-    }
-    if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
-    return;
+     const contraintePoidsAlerte = evaluerContraintePoids(snapshotAlerte.produits);
+
+     if (contraintePoidsAlerte.bloque) {
+        if (typeof afficherRecapCommandeEnvoyee === "function") {
+           afficherRecapCommandeEnvoyee(snapshotAlerte);
+        }
+        if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+        return;
+     }
+
+     if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+     modal.style.display = "none";
+     afficherChoixPaiementLuxe(snapshotAlerte.id, snapshotAlerte.montant);
+     return;
   }
   
   const modal = document.getElementById('modal-panier');
