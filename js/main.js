@@ -1376,6 +1376,7 @@ async function envoyerDonneesAuSheet() {
     localStorage.setItem('saferun_commande_pendante_montant', montantTotal);
     localStorage.setItem('saferun_snapshot_commande', JSON.stringify({ id: idCommande, produits: JSON.parse(JSON.stringify(panier)), montant: montantTotal }));
     // Nettoyage panier
+    localStorage.setItem('saferun_panier_backup_attente', JSON.stringify(panier));
     panier = []; 
     localStorage.removeItem('saferun_panier');
     if (typeof mettreAJourBadge === "function") mettreAJourBadge();
@@ -1910,7 +1911,23 @@ function afficherRecapCommandeEnvoyee(snapshot) {
  const detail = document.getElementById('detail-panier');
  const totalLabel = document.getElementById('total-modal');
  if (!detail || !totalLabel) return;
- const { sousTotal, fraisLivraison, totalFinal, contraintePoids } = calculerTotauxAvecLivraison(snapshot.produits);
+
+ // --- SÉCURISATION ANTI-0 ARRIARY MARCELLIN ---
+ // Si le tableau de produits est vide à cause du nettoyage, on récupère le montant de secours en cache
+ let montantSecours = parseInt(localStorage.getItem('saferun_commande_pendante_montant'), 10) || snapshot.montant || 0;
+ 
+ // On s'assure d'avoir une liste de produits valide pour générer le visuel du tableau
+ let produitsPourRendu = (snapshot.produits && snapshot.produits.length > 0) 
+    ? snapshot.produits 
+    : (JSON.parse(localStorage.getItem('saferun_panier_backup_attente')) || []);
+
+ const { sousTotal, fraisLivraison, totalFinal, contraintePoids } = 
+    calculerTotauxAvecLivraison(produitsPourRendu);
+    
+ // Correction finale du montant si le recalcul sur liste vide a renvoyé 0
+ let totalAffichage = totalFinal === 0 ? montantSecours : totalFinal;
+ // ----------------============================---
+
  
  let resume = snapshot.produits.map((item, index) => {
  const st = item.prix * item.quantite;
