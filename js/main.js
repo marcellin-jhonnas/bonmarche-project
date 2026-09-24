@@ -879,40 +879,34 @@ function supprimerProduitDirectement(index) {
 // 4. COMMANDE ET ENVOI
 async function envoyerCommande() {
       // =========================================================================
-  // --- SYNCHRONISATION ABSOLUE DU POIDS (BOUTON HAUT ET BOUTON FLOTTANT) ---
+  // --- HARMONISATION ET OUVERTURE DU PANIER (HAUT & FLOTTANT) ---
   // =========================================================================
-  // On regarde ce qu'il y a dans le panier temporaire OU dans le snapshot en cours
-  const verifPanier = panier.length > 0 ? panier : (JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null')?.produits || []);
+  let snapshotAlerte = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+  const snapshotActifAlerte = snapshotAlerte && snapshotAlerte.produits && snapshotAlerte.produits.length > 0;
   
-  if (verifPanier.length > 0) {
-    const contraintePoidsUrgent = evaluerContraintePoids(verifPanier);
-    
-    // Si la commande dépasse le poids autorisé pour le vélo/moto
-    if (contraintePoidsUrgent && contraintePoidsUrgent.bloque) {
-      if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
-      
-      // On affiche IMMÉDIATEMENT la modale d'alerte rouge
-      if (typeof afficherModalGenerique === "function") {
-        afficherModalGenerique(`
-          <div style="padding:20px; text-align:center; font-family:'Poppins', sans-serif;">
-            <div style="font-size:40px; color:#dc2626; margin-bottom:10px;">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3 style="margin-bottom:10px; font-weight:800; color:#1e293b;">Commande trop lourde</h3>
-            <p style="color:#64748b; font-size:0.9rem; line-height:1.5;">
-              ${contraintePoidsUrgent.message}
-            </p>
-            <button onclick="fermerModalGenerique()" style="width:100%; padding:14px; margin-top:15px; border:none; background:#f1f5f9; color:#1e293b; font-weight:700; border-radius:12px; cursor:pointer;">
-              J'ai compris, je vais réduire
-            </button>
-          </div>
-        `);
-      } else {
-        alert(contraintePoidsUrgent.message);
-      }
-      return; // Blocage total : on empêche l'ouverture du panier ou du snapshot
+  if (snapshotActifAlerte) {
+    const modal = document.getElementById('modal-panier');
+    if (modal) {
+      modal.style.display = "flex";
+      modal.classList.add('show');
     }
+    if (typeof afficherRecapCommandeEnvoyee === "function") {
+      afficherRecapCommandeEnvoyee(snapshotAlerte);
+    }
+    if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+    return;
   }
+  
+  const modal = document.getElementById('modal-panier');
+  if (modal) {
+    modal.style.display = "flex";
+    modal.classList.add('show');
+  }
+  if (typeof ouvrirTicketAutomatique === "function") {
+    ouvrirTicketAutomatique();
+  }
+  if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+  return;
   // =========================================================================
 
     afficherChargementGlobal(); // <-- AJOUT
