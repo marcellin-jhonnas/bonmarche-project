@@ -22,6 +22,21 @@ let tousLesProduits = [];
 let panier = JSON.parse(localStorage.getItem('saferun_panier')) || [];
 mettreAJourBadge(); // Pour afficher le nombre dès l'ouverture
 
+// --- SÉCURITÉ : DURÉE DE VIE DU SNAPSHOT DE COMMANDE ---
+const DUREE_VIE_SNAPSHOT_MS = 2 * 60 * 60 * 1000; // 2 heures
+
+function nettoyerSnapshotSiExpire() {
+   const snapshot = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+   if (!snapshot || !snapshot.dateCreation) return; // pas de date = ancien format, on ne touche pas
+
+   const age = Date.now() - snapshot.dateCreation;
+   if (age > DUREE_VIE_SNAPSHOT_MS) {
+      localStorage.removeItem('saferun_snapshot_commande');
+      localStorage.removeItem('saferun_commande_pendante_id');
+      localStorage.removeItem('saferun_commande_pendante_montant');
+   }
+}
+nettoyerSnapshotSiExpire();
 // 1. CHARGEMENT
 async function chargerBoutique() {
     const loader = document.getElementById('loading-placeholder');
@@ -881,6 +896,7 @@ async function envoyerCommande() {
       // =========================================================================
   // --- HARMONISATION ET OUVERTURE DU PANIER (HAUT & FLOTTANT) ---
   // =========================================================================
+    nettoyerSnapshotSiExpire();
   let snapshotAlerte = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
   const snapshotActifAlerte = snapshotAlerte && snapshotAlerte.produits && snapshotAlerte.produits.length > 0;
   
@@ -1383,7 +1399,7 @@ async function envoyerDonneesAuSheet() {
     // Mémorise la commande en attente de paiement, indépendamment du panier
     localStorage.setItem('saferun_commande_pendante_id', idCommande);
     localStorage.setItem('saferun_commande_pendante_montant', montantTotal);
-    localStorage.setItem('saferun_snapshot_commande', JSON.stringify({ id: idCommande, produits: JSON.parse(JSON.stringify(panier)), montant: montantTotal }));
+    localStorage.setItem('saferun_snapshot_commande', JSON.stringify({ id: idCommande, produits: JSON.parse(JSON.stringify(panier)), montant: montantTotal, dateCreation: Date.now() }));
     // Nettoyage panier
     localStorage.setItem('saferun_panier_backup_attente', JSON.stringify(panier));
     panier = []; 
@@ -5241,6 +5257,16 @@ async function traiterFileAttente() {
     if (!navigator.onLine) return;
 
     let file = JSON.parse(localStorage.getItem('saferun_file_attente') || '[]');
+    if (file.length === 0) return;
+
+    const DUREE_VIE_FILE_MS = 20 * 60 * 1000; // 20 minutes
+    const maintenant = Date.now();
+    const fileValide = file.filter(item => (maintenant - new Date(item.dateAjout).getTime()) <= DUREE_VIE_FILE_MS);
+    if (fileValide.length !== file.length) {
+       localStorage.setItem('saferun_file_attente', JSON.stringify(fileValide));
+       mettreAJourBadgeFileAttente();
+    }
+    file = fileValide;
     if (file.length === 0) return;
 
     console.log(`[SafeRun] Renvoi de ${file.length} requête(s) en attente...`);
