@@ -31,6 +31,17 @@ function nettoyerSnapshotSiExpire() {
 
    const age = Date.now() - snapshot.dateCreation;
    if (age > DUREE_VIE_SNAPSHOT_MS) {
+      if (typeof API_URL !== 'undefined') {
+         fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+               action: "modifierStatut",
+               id: snapshot.id,
+               statut: "EXPIRÉ"
+            })
+         });
+      }
       localStorage.removeItem('saferun_snapshot_commande');
       localStorage.removeItem('saferun_commande_pendante_id');
       localStorage.removeItem('saferun_commande_pendante_montant');
