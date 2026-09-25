@@ -748,6 +748,7 @@ function afficherPanier() {
  const detail = document.getElementById('detail-panier');
  const totalLabel = document.getElementById('total-modal');
  if(!detail || !totalLabel) return;
+ nettoyerSnapshotSiExpire();
  const snapshotExistant = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
  const snapshotActif = snapshotExistant && snapshotExistant.produits && snapshotExistant.produits.length > 0;
  if (panier.length === 0 && snapshotActif) {
