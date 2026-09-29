@@ -3150,12 +3150,12 @@ function calculerLivraison() {
     let dateLivraison = new Date();
     let creneau = "";
 
-    if ((jourSemaine === 6 && tempsActuel > 11) || jourSemaine === 0) {
+    if ((jourSemaine === 6 && tempsActuel > 13) || jourSemaine === 0) {
         let joursAAjouter = (jourSemaine === 0) ? 1 : 2;
         dateLivraison.setDate(maintenant.getDate() + joursAAjouter);
         creneau = "Lundi matin (entre 9h et 11h)";
     } else {
-        if (tempsActuel >= 5 && tempsActuel <= 11) {
+        if (tempsActuel >= 5 && tempsActuel <= 13) {
             creneau = "cet après-midi (entre 14h et 17h)";
         } else {
             dateLivraison.setDate(maintenant.getDate() + 1);
