@@ -2353,10 +2353,10 @@ function sauvegarderPlanif() {
      return;
   }
 
-  // --- RÈGLE 5 : DÉLAI MINIMUM DE 3H AVANT LE CRÉNEAU ---
-  const delaiMinimumMs = 3 * 60 * 60 * 1000;
+  // --- RÈGLE 5 : DÉLAI MINIMUM DE 4H AVANT LE CRÉNEAU ---
+  const delaiMinimumMs = 4 * 60 * 60 * 1000;
   if (dateObj.getTime() < (Date.now() + delaiMinimumMs)) {
-     alert("Merci de planifier au moins 3 heures à l'avance.");
+     alert("Merci de planifier au moins 4 heures à l'avance.");
      return;
   }
 
