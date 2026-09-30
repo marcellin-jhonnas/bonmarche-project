@@ -2317,23 +2317,48 @@ function fermerPlanif() {
 }
 
 function sauvegarderPlanif() {
-    const dateInput = document.getElementById('date-planif').value;
-    if(!dateInput) { alert("Veuillez choisir une date et une heure !"); return; }
+  const dateInput = document.getElementById('date-planif').value;
+  if(!dateInput) { alert("Veuillez choisir une date et une heure !"); return; }
 
-    const dateObj = new Date(dateInput);
-    const jour = dateObj.getDay(); 
-    const heure = dateObj.getHours();
+  const dateObj = new Date(dateInput);
+  const jour = dateObj.getDay();
+  const heure = dateObj.getHours();
+  const minutes = dateObj.getMinutes();
 
-    // --- TES RÈGLES DE VALIDATION ---
-    if (jour === 0) {
-        alert("Nous sommes fermés le dimanche. Choisissez un autre jour.");
-        return;
-    }
+  // --- RÈGLE 1 : PAS LE DIMANCHE ---
+  if (jour === 0) {
+      alert("Nous sommes fermés le dimanche. Choisissez un autre jour.");
+      return;
+  }
 
-    if (heure < 8 || heure >= 17) {
-        alert("Veuillez choisir un créneau entre 8h et 17h.");
-        return;
-    }
+  // --- RÈGLE 2 : PAS UN JOUR FERMÉ DÉCLARÉ DANS LE SHEET ---
+  const anneeP = dateObj.getFullYear();
+  const moisP = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const jourP = String(dateObj.getDate()).padStart(2, '0');
+  const dateISOPlanif = `${anneeP}-${moisP}-${jourP}`;
+  if (joursFermesSafeRun.includes(dateISOPlanif)) {
+      alert("Ce jour est indisponible, merci de choisir une autre date.");
+      return;
+  }
+
+  // --- RÈGLE 3 : HEURE PLEINE UNIQUEMENT ---
+  if (minutes !== 0) {
+     alert("Merci de choisir une heure pleine (ex : 14h00).");
+     return;
+  }
+
+  // --- RÈGLE 4 : CRÉNEAU ENTRE 8H ET 16H (dernier créneau réservable) ---
+  if (heure < 8 || heure > 16) {
+     alert("Veuillez choisir un créneau entre 8h et 16h.");
+     return;
+  }
+
+  // --- RÈGLE 5 : DÉLAI MINIMUM DE 3H AVANT LE CRÉNEAU ---
+  const delaiMinimumMs = 3 * 60 * 60 * 1000;
+  if (dateObj.getTime() < (Date.now() + delaiMinimumMs)) {
+     alert("Merci de planifier au moins 3 heures à l'avance.");
+     return;
+  }
 
     // --- STOCKAGE POUR LA FACTURE ---
     datePlanifiee = dateInput; 
@@ -2347,15 +2372,19 @@ function sauvegarderPlanif() {
     document.getElementById('date-affichage').innerText = dateLisible;
     document.getElementById('status-planif').style.display = "block";
     
-    // IMPORTANT : On sauvegarde dans le localStorage pour que la facture le récupère
+    // IMPORTANT : on sauvegarde la date brute en plus du texte lisible,
+    // pour que calculerLivraison() puisse la relire même après un rechargement
     localStorage.setItem('saferun_creneau_final', dateLisible);
-    
+    localStorage.setItem('saferun_creneau_brut', dateInput);
+
     fermerPlanif();
 }
 
 function annulerPlanif() {
-    datePlanifiee = null;
-    document.getElementById('status-planif').style.display = "none";
+  datePlanifiee = null;
+  localStorage.removeItem('saferun_creneau_final');
+  localStorage.removeItem('saferun_creneau_brut');
+  document.getElementById('status-planif').style.display = "none";
 }
 
 // 7. INIT
@@ -3135,8 +3164,10 @@ function fermerModal() {
 function calculerLivraison() {
     // --- PRIORITÉ 1 : SI LE CLIENT A CHOISI UNE DATE MANUELLE ---
     // On vérifie si 'datePlanifiee' existe (choix via ouvrirPlanification)
-    if (datePlanifiee) {
-        const d = new Date(datePlanifiee);
+   const creneauPersiste = localStorage.getItem('saferun_creneau_brut');
+   const dateManuelle = creneauPersiste || datePlanifiee;
+   if (dateManuelle) {
+       const d = new Date(dateManuelle);
         const optionsPlanif = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
         let dateLisible = d.toLocaleString('fr-FR', optionsPlanif);
         return `LIVRAISON : ${dateLisible.charAt(0).toUpperCase() + dateLisible.slice(1)}`;
