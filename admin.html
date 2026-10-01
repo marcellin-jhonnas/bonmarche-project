@@ -4353,5 +4353,791 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
     }
 }
 </script>
+<script>
+/* =====================================================================
+   SafeRun Admin OS — CORRECTIFS FONCTIONNELS (v1)
+   À placer dans un <script> JUSTE AVANT </body>, après tout le reste.
+   Ce fichier redéfinit des fonctions existantes : il ne touche pas
+   au HTML. Voir LISEZ-MOI en bas pour les 4 petites modifications à
+   faire à la main dans le fichier d'origine.
+   ===================================================================== */
+(function () {
+  'use strict';
+  if (window.__srCorrectifs) return;
+  window.__srCorrectifs = true;
+
+  /* ------------------------------------------------------------------
+     0. UTILITAIRES PARTAGÉS (une seule façon de lire dates / montants)
+     ------------------------------------------------------------------ */
+  const MOIS = ['janvier','fevrier','mars','avril','mai','juin','juillet','aout',
+                'septembre','octobre','novembre','decembre'];
+  const JOURS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+  const sansAccent = s => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const norm = s => sansAccent(s).toLowerCase().trim();
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const debutJour = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const memeJour = (a, b) => a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const fmtAr = n => new Intl.NumberFormat('fr-FR').format(Math.round(n || 0)) + ' Ar';
+
+  /** "12 000 Ar" -> 12000 ; 12000.5 -> 12000 ; "1,5" -> 1 ; null -> 0 */
+  function parseMontant(v) {
+    if (typeof v === 'number') return isFinite(v) ? Math.round(v) : 0;
+    let s = String(v == null ? '' : v).trim().replace(/[.,]\d{1,2}\s*(ar)?$/i, '');
+    s = s.replace(/[^\d-]/g, '');
+    const n = parseInt(s, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // "4 juin", "04 juin 2026", "1er juillet", "12 sept" — jamais "4 juin" dans "14 juin"
+  const RE_DATE = new RegExp(
+    '(?:^|\\D)(\\d{1,2})(?:er)?\\s+(janvier|janv|fevrier|fevr|mars|avril|mai|juin|juillet|juil|' +
+    'aout|septembre|sept|octobre|oct|novembre|nov|decembre|dec)(?![a-z])(?:\\s+(\\d{4}))?');
+
+  /** Date (00:00) trouvée dans le texte de livraison, ou null. L'année absente est
+      déduite en prenant la plus proche d'aujourd'hui (règle le cas déc./janv.). */
+  function dateLivraison(texte) {
+    const m = norm(texte).match(RE_DATE);
+    if (!m) return null;
+    const jour = +m[1];
+    const mois = MOIS.findIndex(x => x.startsWith(m[2]));
+    if (mois < 0) return null;
+    if (m[3]) return new Date(+m[3], mois, jour);
+    const auj = debutJour(new Date());
+    let best = null, ecart = Infinity;
+    [auj.getFullYear() - 1, auj.getFullYear(), auj.getFullYear() + 1].forEach(an => {
+      const d = new Date(an, mois, jour);
+      if (d.getMonth() !== mois) return;               // ex. 30 février
+      const e = Math.abs(d - auj);
+      if (e < ecart) { ecart = e; best = d; }
+    });
+    return best;
+  }
+
+  /** Première heure trouvée : "9h", "09:30", "entre 14h et 17h" -> 9 / 9 / 14. Jamais "19h" pour "9h". */
+  function heureLivraison(texte) {
+    const m = norm(texte).match(/(?:^|\D)(\d{1,2})\s*(?:h(?![a-z])|:)\s*(\d{2})?/);
+    if (!m) return null;
+    const h = +m[1];
+    return h >= 0 && h < 24 ? h : null;
+  }
+
+  /** 'MATIN' | 'MIDI' | null (null = non précisé, chaque module choisit son défaut) */
+  function vague(texte) {
+    const t = norm(texte);
+    if (/matin/.test(t)) return 'MATIN';
+    if (/midi|apres|aprem/.test(t)) return 'MIDI';
+    const h = heureLivraison(texte);
+    if (h == null) return null;
+    return h < 12 ? 'MATIN' : 'MIDI';
+  }
+
+  /** offset 0 = aujourd'hui, 1 = demain. La date numérique prime ; à défaut : mots-clés. */
+  function jourMatch(texte, offset) {
+    const cible = debutJour(new Date());
+    cible.setDate(cible.getDate() + offset);
+    const d = dateLivraison(texte);
+    if (d) return memeJour(d, cible);
+    const t = norm(texte);
+    if (offset === 0 && /aujourd'?hui|ce jour/.test(t)) return true;
+    if (offset === 1 && /demain/.test(t)) return true;
+    return new RegExp('(?:^|[^a-z])' + JOURS[cible.getDay()] + '(?![a-z])').test(t) &&
+           !(offset === 0 && /demain/.test(t));
+  }
+
+  function jourCible(texte) {
+    if (jourMatch(texte, 0)) return 'AUJOURDHUI';
+    if (jourMatch(texte, 1)) return 'DEMAIN';
+    return 'AUTRES';
+  }
+
+  /** [{nom, qte}] depuis "2 x Huile, 1 x Riz + Sucre" */
+  function extraireProduits(c) {
+    let p = String(c.Produits || c.Produit || '');
+    if (!p || /livraison/i.test(p)) {
+      const l = String(c.Livraison || '');
+      p = l.includes('-') ? l.substring(l.lastIndexOf('-') + 1).trim() : '';
+    }
+    const out = [];
+    p.split(/[,+]/).forEach(item => {
+      const txt = item.trim();
+      if (!txt) return;
+      const m = txt.match(/^(\d+)\s*[xX]\s*(.+)$/);
+      out.push(m ? { nom: m[2].trim(), qte: parseInt(m[1], 10) } : { nom: txt, qte: 1 });
+    });
+    return out;
+  }
+
+  const cleProduit = nom => norm(nom).replace(/\s+/g, ' ');
+  const estCOD = c => String(c.Note || '').toLowerCase().includes('livraison');
+  const toDate = v => { const d = new Date(v); return isNaN(d) ? null : d; };
+
+  window.SR = { parseMontant, dateLivraison, heureLivraison, vague, jourMatch, jourCible,
+                extraireProduits, esc, norm };
+
+  /* ------------------------------------------------------------------
+     1. DONNÉES NORMALISÉES À LA SOURCE (Montant, Téléphone, Statut)
+        -> règle d'un coup les 3 lectures de Montant, Telephone/Téléphone
+           et les comparaisons de statuts avec/sans accent.
+     ------------------------------------------------------------------ */
+  const STATUTS = { SERIEUX: 'SÉRIEUX', PLANIFIE: 'PLANIFIÉ', LIVRE: 'LIVRÉ', PAYE: 'PAYÉ',
+                    ANNULE: 'ANNULÉ', REPORTE: 'REPORTÉ', VALIDE: 'VALIDÉ' };
+
+  function normaliserCommande(c) {
+    if (!c || typeof c !== 'object') return c;
+    const o = Object.assign({}, c);
+    const st = String(o.Statut != null ? o.Statut : (o.statut != null ? o.statut : '')).trim();
+    o.Statut = STATUTS[sansAccent(st).toUpperCase()] || st;
+    o.Montant = parseMontant(o.Montant != null ? o.Montant : o.montant);
+    if (o.FraisLivraison !== undefined) o.FraisLivraison = parseMontant(o.FraisLivraison);
+    const tel = o['Téléphone'] || o.Telephone || o['téléphone'] || o.telephone || '';
+    o['Téléphone'] = tel; o.Telephone = tel;
+    return o;
+  }
+
+  if (!window.__srFetchPatched) {
+    window.__srFetchPatched = true;
+    const _fetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+      const res = await _fetch(input, init);
+      const url = typeof input === 'string' ? input : ((input && input.url) || '');
+      if (/[?&]action=getCommandes(?:&|$)/.test(url)) {
+        try {
+          const data = await res.clone().json();
+          if (Array.isArray(data)) {
+            return new Response(JSON.stringify(data.map(normaliserCommande)),
+              { status: res.status, headers: { 'Content-Type': 'application/json' } });
+          }
+        } catch (e) { /* on laisse passer la réponse d'origine */ }
+      }
+      return res;
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     2. APPELS SERVEUR : on lit VRAIMENT la réponse (fini les no-cors)
+     ------------------------------------------------------------------ */
+  async function postAPI(payload) {
+    const res = await fetch(CONFIG.API, {
+      method: 'POST',
+      body: JSON.stringify(Object.assign({ adminKey: CONFIG.ADMIN_KEY }, payload))
+    });
+    let data;
+    try { data = await res.json(); } catch (e) { throw new Error('Réponse illisible du serveur'); }
+    if (!(data && (data.status === 'success' || data.success === true))) {
+      throw new Error((data && data.message) || 'Le serveur a refusé l\u2019opération');
+    }
+    return data;
+  }
+  window.SR.postAPI = postAPI;
+
+  // Petit stockage partagé (serveur) avec repli local : annuaire + prix d'achat
+  async function kvLoad(cle, cleLocaleHeritee) {
+    const local = () => {
+      try { return JSON.parse(localStorage.getItem(cleLocaleHeritee || ('sr_cfg_' + cle))) || {}; }
+      catch (e) { return {}; }
+    };
+    try {
+      const d = await postAPI({ action: 'getConfig', cle: cle });
+      if (d && d.valeur && typeof d.valeur === 'object') {
+        try { localStorage.setItem(cleLocaleHeritee || ('sr_cfg_' + cle), JSON.stringify(d.valeur)); } catch (e) {}
+        return Object.assign({}, local(), d.valeur);
+      }
+    } catch (e) { /* serveur sans getConfig : repli local */ }
+    return local();
+  }
+  async function kvSave(cle, valeur, cleLocaleHeritee) {
+    try { localStorage.setItem(cleLocaleHeritee || ('sr_cfg_' + cle), JSON.stringify(valeur)); } catch (e) {}
+    try { await postAPI({ action: 'saveConfig', cle: cle, valeur: valeur }); return true; }
+    catch (e) { console.warn('saveConfig indisponible :', e.message); return false; }
+  }
+
+  /* ------------------------------------------------------------------
+     3. STATUT DES COMMANDES + ASSIGNATION (avec vrai retour d'erreur)
+     ------------------------------------------------------------------ */
+  window.updateStatus = async function (id, nouveauStatut) {
+    if (!nouveauStatut) { alert('Erreur : statut non défini pour la commande #' + id); return; }
+    if (!confirm('Changer le statut de la commande #' + id + ' en ' + nouveauStatut + ' ?')) return;
+    try {
+      await postAPI({ action: 'updateStatut', idCommande: id, nouveauStatut: nouveauStatut });
+      alert('Statut mis à jour !');
+      await window.refreshAll();
+      if (typeof loadLogistique === 'function') await loadLogistique();
+    } catch (e) {
+      console.error(e);
+      alert('❌ Statut NON modifié : ' + e.message);
+    }
+  };
+
+  window.assignerLivreur = async function (idCommande, nomLivreur) {
+    const cmd = allData.find(c => String(c.ID) === String(idCommande));
+    const ancien = cmd ? cmd.Livreur : '';
+    if (cmd) cmd.Livreur = nomLivreur;
+    try {
+      await postAPI({ action: 'updateLivreur', idCommande: idCommande, livreur: nomLivreur });
+    } catch (e) {
+      if (cmd) cmd.Livreur = ancien;
+      alert('❌ Livreur NON enregistré : ' + e.message);
+      if (typeof loadLogistique === 'function') loadLogistique();
+    }
+  };
+
+  // Le <select> « Livreur » ne réaffichait pas le livreur déjà assigné après rechargement
+  if (typeof genererTableauLogistique === 'function') {
+    const _gtl = window.genererTableauLogistique;
+    window.genererTableauLogistique = function (serieuses) {
+      _gtl(serieuses);
+      document.querySelectorAll('#logistique-container tbody tr').forEach((tr, i) => {
+        const sel = tr.querySelector('select');
+        const l = serieuses[i] && serieuses[i].Livreur;
+        if (sel && l) sel.value = l;
+      });
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     4. STOCK : bug « TOUS », dates/heures exactes, coût d'achat réel
+     ------------------------------------------------------------------ */
+  let PRIX_ACHAT = {};            // clé produit normalisée -> prix d'achat unitaire (Ar)
+  let prixCharges = false;
+  let derniereAnalyse = ['AUJOURDHUI', 'MATIN'];
+
+  function commandesStock(cibleJour, cibleVague) {
+    return (allData || []).filter(c => {
+      if (c.Statut !== 'SÉRIEUX' && c.Statut !== 'PLANIFIÉ') return false;
+      const t = c.Livraison || '';
+      const jourOk = (cibleJour === 'AUJOURDHUI' && jourMatch(t, 0)) ||
+                     (cibleJour === 'DEMAIN' && jourMatch(t, 1));
+      if (!jourOk) return false;
+      if (cibleVague === 'TOUS' || cibleVague === 'TOUTE_JOURNEE') return true;   // <- le bug
+      return (vague(t) || 'MIDI') === cibleVague;
+    });
+  }
+
+  window.editerPrixAchat = async function (noms) {
+    for (const nom of noms) {
+      const cle = cleProduit(nom);
+      const saisie = prompt('Prix d\u2019achat unitaire chez le grossiste (Ar) pour « ' + nom + ' » :',
+                            PRIX_ACHAT[cle] != null ? PRIX_ACHAT[cle] : '');
+      if (saisie === null) break;                       // Annuler = on s'arrête
+      if (saisie.trim() === '') continue;
+      const p = parseMontant(saisie);
+      if (p > 0) PRIX_ACHAT[cle] = p;
+    }
+    const partage = await kvSave('prix_achat', PRIX_ACHAT);
+    if (!partage) console.info('Prix enregistrés sur cet appareil uniquement.');
+    window.genererAnalyseStock(derniereAnalyse[0], derniereAnalyse[1]);
+  };
+
+  window.genererAnalyseStock = async function (cibleJour, cibleVague) {
+    cibleJour = cibleJour || 'AUJOURDHUI';
+    cibleVague = cibleVague || 'MATIN';
+    derniereAnalyse = [cibleJour, cibleVague];
+    // les étiquettes lisent ces deux variables : elles doivent suivre le bouton cliqué
+    window.currentCibleJour = cibleJour;
+    window.currentCibleVague = cibleVague;
+
+    const conteneur = document.getElementById('liste-cumul-stock');
+    const panelResultat = document.getElementById('resultat-stock');
+    const panelFinance = document.getElementById('finance-grossiste');
+    const affichagePrix = document.getElementById('montant-grossiste-total');
+    if (!conteneur || !panelResultat || !panelFinance || !affichagePrix) return;
+
+    if (!prixCharges) { PRIX_ACHAT = await kvLoad('prix_achat'); prixCharges = true; }
+
+    const cumul = {};
+    commandesStock(cibleJour, cibleVague).forEach(c => {
+      extraireProduits(c).forEach(({ nom, qte }) => {
+        const k = nom.toUpperCase();
+        cumul[k] = (cumul[k] || 0) + qte;
+      });
+    });
+    const noms = Object.keys(cumul);
+    if (!noms.length) {
+      panelResultat.style.display = 'none';
+      panelFinance.style.display = 'none';
+      alert('Aucune commande SÉRIEUX ou PLANIFIÉ trouvée pour ' + cibleJour + ' (' + cibleVague + ').');
+      return;
+    }
+
+    let total = 0; const manquants = [];
+    noms.forEach(nom => {
+      const p = PRIX_ACHAT[cleProduit(nom)];
+      if (p > 0) total += p * cumul[nom]; else manquants.push(nom);
+    });
+
+    panelResultat.style.display = 'block';
+    panelFinance.style.display = 'block';
+    // markup inchangé : imprimerBonSortie() lit .item-stock-prepare / .nom-produit-pdf / .qte-produit-pdf
+    conteneur.innerHTML = noms.map(nom => `
+      <div class="item-stock-prepare" style="background:white;border:1px solid #e2e8f0;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="nom-produit-pdf" style="font-weight:500;">${esc(nom)}</span>
+        <strong class="qte-produit-pdf" style="color:var(--orange);background:#fff7ed;padding:2px 8px;border-radius:4px;">x${cumul[nom]}</strong>
+      </div>`).join('');
+
+    affichagePrix.innerText = fmtAr(total);              // rien d'autre dans cet élément (lu par le PDF)
+
+    let note = document.getElementById('grossiste-note');
+    if (!note) {
+      note = document.createElement('div');
+      note.id = 'grossiste-note';
+      note.style.cssText = 'margin-top:10px;font-size:12px;';
+      panelFinance.appendChild(note);
+    }
+    note.innerHTML = (manquants.length
+      ? `<div style="color:#b45309;margin-bottom:6px;">⚠️ Total partiel : prix d'achat manquant pour ${manquants.map(esc).join(', ')}.</div>`
+      : '') +
+      `<button type="button" id="btn-prix-achat" style="background:#166534;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Saisir / modifier les prix d'achat</button>`;
+    document.getElementById('btn-prix-achat').onclick = () => window.editerPrixAchat(manquants.length ? manquants : noms);
+  };
+
+  /* ------------------------------------------------------------------
+     5. PILOTE DE DÉSTOCKAGE (allData n'est pas window.allData : c'était
+        la vraie cause du « cliquez d'abord sur Logistique »)
+     ------------------------------------------------------------------ */
+  window.analyserEtDispatcherLivraisons = async function () {
+    if (!allData.length) await window.refreshAll();
+    if (!allData.length) { alert('❌ Aucune commande chargée. Vérifiez la connexion.'); return; }
+
+    const cibleJour = document.getElementById('pilote-filtre-jour').value;
+    const F = { MATIN: { inv: {}, html: '', nb: 0 }, APREM: { inv: {}, html: '', nb: 0 } };
+    const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
+
+    allData.forEach(c => {
+      if (!['SÉRIEUX', 'PLANIFIÉ', 'VALIDÉ'].includes(c.Statut)) return;
+      const t = c.Livraison || '';
+      if (jourCible(t) !== cibleJour) return;
+      const f = F[vague(t) === 'MIDI' ? 'APREM' : 'MATIN'];     // non précisé -> matin (comme avant)
+      const prods = extraireProduits(c);
+      prods.forEach(({ nom, qte }) => { const n = cap(nom); f.inv[n] = (f.inv[n] || 0) + qte; });
+      const libelle = prods.map(p => p.qte + ' x ' + cap(p.nom)).join(', ') || esc(c.Produits || '');
+      f.nb++;
+      f.html += `
+        <tr style="border-bottom:1px solid #e2e8f0;background:white;">
+          <td style="padding:10px;"><strong>${esc(c.Client || 'Client')}</strong><br><small style="color:#64748b;">Ref: #${esc(c.ID || '---')}</small></td>
+          <td style="padding:10px;"><span style="color:#ff6600;font-weight:600;">📦 ${esc(libelle)}</span><br>
+            <small style="color:#1e293b;">📍 <strong>Lieu :</strong> ${esc(c['Lieu Exact'] || 'À préciser')}</small><br>
+            <small style="color:#64748b;">📞 Tél : ${esc(c['Téléphone'] || '---')}</small></td>
+          <td style="padding:10px;font-weight:bold;color:#0f172a;">💼 ${esc(c.Livreur || 'En attente')}</td>
+          <td style="padding:10px;font-weight:bold;color:#16a34a;">${fmtAr(c.Montant)}</td>
+        </tr>`;
+    });
+
+    const section = f => `
+      <div style="background:#fff7ed;border:1px solid #ffedd5;border-radius:8px;padding:15px;margin-bottom:20px;">
+        <h4 style="margin:0 0 10px 0;color:#c2410c;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;"><i class="fas fa-shopping-basket"></i> À RETIRER CHEZ LE GROSSISTE (TOTAL COMPTABILISÉ)</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;background:white;">
+          <thead><tr style="background:#ea580c;color:white;">
+            <th style="padding:10px;width:70%;">Désignation Produit</th>
+            <th style="padding:10px;width:30%;text-align:center;">Quantité Totale à Prendre</th></tr></thead>
+          <tbody>${Object.keys(f.inv).length ? Object.keys(f.inv).map(a => `
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px;font-weight:bold;color:#1e293b;">📌 ${esc(a)}</td>
+              <td style="padding:10px;font-weight:bold;color:#ea580c;text-align:center;font-size:15px;background:#fff7ed;">x${f.inv[a]}</td></tr>`).join('')
+            : '<tr><td colspan="2" style="padding:10px;text-align:center;color:#94a3b8;">Aucun produit trouvé pour ce créneau.</td></tr>'}
+          </tbody></table></div>
+      <h4 style="margin:15px 0 10px 0;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-truck-ramp-box"></i> TOURNÉE DE LIVRAISON INDIVIDUELLE</h4>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">
+        <thead><tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;color:#475569;">
+          <th style="padding:10px;width:25%;">Client / ID</th>
+          <th style="padding:10px;width:40%;">Spécification Livraison & Adresse</th>
+          <th style="padding:10px;width:20%;">Livreur Assigné</th>
+          <th style="padding:10px;width:15%;">Montant</th></tr></thead>
+        <tbody>${f.html}</tbody></table>`;
+
+    const zm = document.getElementById('zone-matin'), za = document.getElementById('zone-aprem');
+    if (zm) zm.innerHTML = F.MATIN.nb
+      ? `<p style="margin:0 0 10px 0;font-weight:bold;color:#0284c7;"><i class="fas fa-clock"></i> VAGUE DU MATIN : ${F.MATIN.nb} livraisons.</p>` + section(F.MATIN)
+      : '<p style="color:#94a3b8;text-align:center;padding:20px;border:1px dashed #cbd5e1;border-radius:8px;font-style:italic;">Aucune livraison ce matin.</p>';
+    if (za) za.innerHTML = F.APREM.nb
+      ? `<p style="margin:0 0 10px 0;font-weight:bold;color:#b45309;"><i class="fas fa-clock"></i> VAGUE DE L'APRÈS-MIDI : ${F.APREM.nb} livraisons.</p>` + section(F.APREM)
+      : '<p style="color:#94a3b8;text-align:center;padding:20px;border:1px dashed #cbd5e1;border-radius:8px;font-style:italic;">Aucune livraison cet après-midi.</p>';
+  };
+
+  /* ------------------------------------------------------------------
+     6. CAISSE : encaissement réel (COD − frais), filtre par jour,
+        clôture limitée à ce qui est affiché
+     ------------------------------------------------------------------ */
+  const COLONNES_DATE_LIVRAISON = ['DateLivraison', 'Date Livraison', 'DateLivré', 'Date Livré'];
+  function dateEncaissement(c) {
+    for (const k of COLONNES_DATE_LIVRAISON) { const d = c[k] && toDate(c[k]); if (d) return d; }
+    return dateLivraison(c.Livraison) || toDate(c.Date) || new Date();
+  }
+  function calculerCaisse(jour) {
+    const livrees = (allData || []).filter(c => c.Statut === 'LIVRÉ' && memeJour(dateEncaissement(c), jour));
+    let aEncaisser = 0, dejaPaye = 0;
+    const parLivreur = {};
+    const lignes = livrees.map(c => {
+      const cod = estCOD(c);
+      const cash = cod ? Math.max(c.Montant - (parseFloat(c.FraisLivraison) || 0), 0) : 0;
+      if (cod) aEncaisser += cash; else dejaPaye += c.Montant;
+      const nom = c.Livreur || 'Non assigné';
+      parLivreur[nom] = (parLivreur[nom] || 0) + cash;
+      return { c: c, cod: cod, cash: cash, fraisOk: !cod || (parseFloat(c.FraisLivraison) || 0) > 0 };
+    });
+    return { livrees: livrees, lignes: lignes, aEncaisser: aEncaisser, dejaPaye: dejaPaye, parLivreur: parLivreur };
+  }
+  function jourCaisseChoisi() {
+    const el = document.getElementById('caisse-date');
+    if (el && el.value) { const [a, m, j] = el.value.split('-').map(Number); return new Date(a, m - 1, j); }
+    return debutJour(new Date());
+  }
+  window.genererJournalCaisse = function () {
+    const tab = document.getElementById('tab-caisse');
+    if (tab && !document.getElementById('caisse-date')) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin:10px 0 15px;';
+      const t = new Date();
+      const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+      wrap.innerHTML = `<label style="font-size:12px;font-weight:bold;color:#64748b;">Journée : </label>
+        <input type="date" id="caisse-date" value="${iso}" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">`;
+      const h2 = tab.querySelector('h2');
+      if (h2) h2.insertAdjacentElement('afterend', wrap); else tab.prepend(wrap);
+      wrap.querySelector('input').onchange = window.genererJournalCaisse;
+    }
+    const k = calculerCaisse(jourCaisseChoisi());
+    document.getElementById('caisse-total').innerText = fmtAr(k.aEncaisser);
+    document.getElementById('caisse-count').innerText = k.livrees.length;
+    const petit = document.getElementById('caisse-total').parentElement.querySelector('small');
+    if (petit) petit.textContent = 'Espèces à récupérer (paiement à la livraison, hors frais)' +
+      (k.dejaPaye ? ' — déjà payé en ligne : ' + fmtAr(k.dejaPaye) : '');
+
+    const box = document.getElementById('caisse-details-container');
+    if (!k.livrees.length) { box.innerHTML = "<p style='padding:20px;color:gray;'>Aucun encaissement pour cette journée.</p>"; return; }
+    const resume = Object.keys(k.parLivreur).sort().map(n =>
+      `<span style="display:inline-block;background:#f1f5f9;border-radius:12px;padding:4px 10px;margin:0 6px 6px 0;font-size:12px;"><strong>${esc(n)}</strong> : ${fmtAr(k.parLivreur[n])}</span>`).join('');
+    box.innerHTML = `<div style="margin-bottom:10px;">${resume}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="border-bottom:2px solid #f1f5f9;text-align:left;color:#64748b;">
+          <th style="padding:10px;">Client</th><th style="padding:10px;">Livreur</th>
+          <th style="padding:10px;">Paiement</th><th style="padding:10px;text-align:right;">À encaisser</th></tr></thead>
+        <tbody>${k.lignes.map(l => `<tr style="border-bottom:1px solid #f8fafc;">
+          <td style="padding:10px;">${esc(l.c.Client)}</td><td style="padding:10px;">${esc(l.c.Livreur || '---')}</td>
+          <td style="padding:10px;">${l.cod ? (l.fraisOk ? '💵 À la livraison' : '⚠️ Frais non confirmés') : '✅ Déjà payé'}</td>
+          <td style="padding:10px;text-align:right;font-weight:bold;">${fmtAr(l.cash)}</td></tr>`).join('')}</tbody></table>`;
+  };
+
+  window.cloturerJournee = async function () {
+    const jour = jourCaisseChoisi();
+    const k = calculerCaisse(jour);
+    if (!k.livrees.length) { alert("Rien à clôturer pour le " + jour.toLocaleDateString('fr-FR') + " : aucune commande « LIVRÉ »."); return; }
+    if (!confirm('Clôturer la journée du ' + jour.toLocaleDateString('fr-FR') + ' ?\n\nEspèces à encaisser : ' +
+        fmtAr(k.aEncaisser) + '\nColis remis : ' + k.livrees.length + '\n\nCes commandes seront archivées.')) return;
+    try {
+      await postAPI({ action: 'archiverCommandes', ids: k.livrees.map(c => c.ID) });
+      alert('✅ Journée clôturée : ' + k.livrees.length + ' commande(s) archivée(s).');
+      await window.refreshAll();
+      window.genererJournalCaisse();
+    } catch (e) {
+      console.error(e);
+      alert('❌ Clôture NON effectuée : ' + e.message);
+    }
+  };
+
+  /* ------------------------------------------------------------------
+     7. CHAT : polling unique après connexion + pastille fiable
+     ------------------------------------------------------------------ */
+  const lusLocalement = new Set();
+  let nonLusPrecedent = null;
+  const idDe = m => String(m.idClient != null ? m.idClient : (m.ID_Client != null ? m.ID_Client : ''));
+  const expDe = m => String(m.expediteur != null ? m.expediteur : (m.Expediteur || ''));
+  const estNonLu = m => expDe(m) !== 'Admin' && norm(m.Statut != null ? m.Statut : m.statut) === 'non lu';
+
+  function majPastille() {
+    const total = Object.values(unreadByClient).reduce((a, b) => a + b, 0);
+    const n = document.getElementById('chat-notif');
+    if (!n) return;
+    n.style.cssText = total > 0
+      ? 'display:inline-block;height:auto;width:auto;min-width:16px;padding:1px 5px;border-radius:10px;font-size:10px;font-weight:bold;color:white;text-align:center;margin-left:auto;'
+      : 'display:none;';
+    n.textContent = total > 0 ? String(total) : '';
+  }
+
+  window.syncChat = async function () {
+    if (!window.__srConnecte || document.hidden || isLocked) return;   // rien avant le login, rien onglet caché
+    isLocked = true;
+    try {
+      const res = await fetch(CONFIG.API + '?action=readAllChat&adminKey=' + encodeURIComponent(CONFIG.ADMIN_KEY));
+      const allMsgs = await res.json();
+      if (!Array.isArray(allMsgs)) return;
+      surveillerNouveauxMessages(allMsgs);
+
+      // non-lus = statut « Non lu » côté serveur, moins ce qu'on vient d'ouvrir localement
+      const serveur = {};
+      allMsgs.forEach(m => { if (estNonLu(m)) serveur[idDe(m)] = (serveur[idDe(m)] || 0) + 1; });
+      lusLocalement.forEach(id => { if (!serveur[id]) lusLocalement.delete(id); });
+      unreadByClient = {};
+      Object.keys(serveur).forEach(id => { if (!lusLocalement.has(id)) unreadByClient[id] = serveur[id]; });
+      const total = Object.values(unreadByClient).reduce((a, b) => a + b, 0);
+      if (nonLusPrecedent !== null && total > nonLusPrecedent) {
+        const son = document.getElementById('alert-sound');
+        if (son) { const p = son.play(); if (p && p.catch) p.catch(() => {}); }
+      }
+      nonLusPrecedent = total;
+      lastMessageCount = totalMessages = allMsgs.length;
+      majPastille();
+
+      const clients = [...new Set(allMsgs.map(idDe))].filter(Boolean);
+      const liste = document.getElementById('client-list');
+      liste.innerHTML = clients.map(c => {
+        const sel = activeClient != null && String(activeClient) === c;
+        const nb = unreadByClient[c] || 0;
+        return `<div data-id="${esc(c)}" style="padding:15px;border-bottom:1px solid #e2e8f0;cursor:pointer;display:flex;justify-content:space-between;background:${sel ? '#fff7ed' : 'white'}">
+          <span><strong>${esc(c)}</strong></span>${nb ? `<span style="background:red;color:white;border-radius:12px;padding:2px 8px;font-size:12px">${nb}</span>` : ''}</div>`;
+      }).join('');
+
+      if (activeClient != null) {
+        const RE_IMG = /^https?:\/\/[^\s"'<>]+\.(?:png|jpe?g|gif|webp)(?:\?[^\s"'<>]*)?$/i;
+        const html = allMsgs.filter(m => idDe(m) === String(activeClient)).map(m => {
+          const texte = String(m.message || m.Message || m.texte || '');
+          if (!texte) return '';
+          const side = expDe(m) === 'Admin' ? 'sent' : 'received';
+          const corps = RE_IMG.test(texte.trim())
+            ? `<div style="width:100%;max-width:100%;overflow-x:auto;padding:4px 0;"><a href="${esc(texte.trim())}" target="_blank" rel="noopener noreferrer"><img src="${esc(texte.trim())}" alt="Capture SafeRun" style="max-height:220px;max-width:100%;border-radius:6px;display:block;object-fit:contain;box-shadow:0 1px 3px rgba(0,0,0,0.15);"></a><small style="display:block;font-size:9px;opacity:0.7;margin-top:4px;font-style:italic;">📱 Cliquer pour agrandir</small></div>`
+            : esc(texte).replace(/\n/g, '<br>');
+          return `<div class="msg ${side}" style="max-width:85%;word-wrap:break-word;">${corps}</div>`;
+        }).join('');
+        const box = document.getElementById('msg-container');
+        const enBas = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+        box.innerHTML = html;
+        if (enBas || window.__srForcerScroll) { box.scrollTop = box.scrollHeight; window.__srForcerScroll = false; }
+      }
+    } catch (e) {
+      console.error('syncChat :', e);
+    } finally {
+      isLocked = false;
+    }
+  };
+
+  const listeClients = document.getElementById('client-list');
+  if (listeClients) listeClients.onclick = e => {
+    const d = e.target.closest('[data-id]');
+    if (d) window.loadDiscussion(d.dataset.id);
+  };
+
+  window.loadDiscussion = function (id) {
+    activeClient = id;
+    lusLocalement.add(String(id));
+    unreadByClient[id] = 0;
+    majPastille();
+    document.getElementById('chat-header').innerText = 'Client: ' + id;
+    document.getElementById('input-zone').style.display = 'flex';
+    window.__srForcerScroll = true;
+    marquerLu(id);                                   // le serveur passe les messages à « Lu »
+    (function relancer(essais) {
+      if (isLocked && essais < 8) return setTimeout(() => relancer(essais + 1), 500);
+      window.syncChat();
+    })(0);
+  };
+
+  // un seul minuteur, 5 s, et jamais avant la connexion
+  window.startSync = function () {
+    if (window.__srTimerChat) return;
+    window.__srTimerChat = setInterval(() => window.syncChat(), 5000);
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) window.syncChat(); });
+
+  const _entrer = window.entrerDansApplication;
+  window.entrerDansApplication = function (role) {
+    window.__srConnecte = true;
+    _entrer.apply(this, arguments);
+    chargerAnnuaire();
+  };
+
+  /* ------------------------------------------------------------------
+     8. TABLEAU DE BORD : vraies données
+     ------------------------------------------------------------------ */
+  const VALIDES = ['SÉRIEUX', 'PLANIFIÉ', 'PAYÉ', 'LIVRÉ'];
+  const _refreshAll = window.refreshAll;
+  window.refreshAll = async function () {
+    await _refreshAll.apply(this, arguments);
+    try { majDashboardReel(); } catch (e) { console.error('Dashboard :', e); }
+  };
+
+  function majDashboardReel() {
+    const valides = (allData || []).filter(c => VALIDES.includes(c.Statut));
+    const ca = valides.reduce((s, c) => s + c.Montant, 0);
+    const elCA = document.getElementById('dash-ca');
+    if (elCA) elCA.innerText = fmtAr(ca);
+
+    if (typeof salesChart !== 'undefined' && salesChart && salesChart.data) {
+      const auj = debutJour(new Date());
+      const labels = [], valeurs = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(auj); d.setDate(d.getDate() - i);
+        labels.push(JOURS[d.getDay()].slice(0, 3) + ' ' + d.getDate());
+        valeurs.push(valides.filter(c => { const dc = toDate(c.Date); return dc && memeJour(dc, d); })
+                            .reduce((s, c) => s + c.Montant, 0));
+      }
+      salesChart.data.labels = labels;
+      salesChart.data.datasets[0].data = valeurs;
+      salesChart.update();
+    }
+
+    // « Nouveaux clients » (12 en dur) -> clients ayant commandé ces 7 derniers jours
+    const carte = document.querySelector('#tab-dash .grid .card:nth-child(3)');
+    if (carte) {
+      const limite = debutJour(new Date()); limite.setDate(limite.getDate() - 6);
+      const actifs = new Set();
+      (allData || []).forEach(c => {
+        const d = toDate(c.Date);
+        if (d && d >= limite) actifs.add(String(c['Téléphone'] || c.Client || '').replace(/\s/g, ''));
+      });
+      actifs.delete('');
+      const h3 = carte.querySelector('h3'), h2 = carte.querySelector('h2');
+      if (h3) h3.textContent = 'Clients actifs (7 jours)';
+      if (h2) h2.textContent = actifs.size;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     9. SCANNER D'EXPIRATION : dates exactes, admin seulement, relecture
+        fraîche avant d'écrire (voir aussi le déclencheur serveur en bas)
+     ------------------------------------------------------------------ */
+  window.extraireDateDepuisTexte = function (texte) {
+    const d = dateLivraison(texte);
+    if (!d) return null;
+    if (d < debutJour(new Date())) return d;              // date passée : expirée
+    const h = heureLivraison(texte);
+    if (h != null) d.setHours(h, 0, 0, 0);
+    else { const v = vague(texte); d.setHours(v === 'MATIN' ? 9 : (v === 'MIDI' ? 14 : 0), 0, 0, 0); }
+    return d;
+  };
+
+  window.SR_SCAN_EXPIRATION_CLIENT = true;   // mettre false une fois le déclencheur serveur installé
+  window.scruterEtMettreAJourCommandesDirectes = async function (tableau) {
+    if (!window.SR_SCAN_EXPIRATION_CLIENT || window.__srScanEnCours) return;
+    if (sessionStorage.getItem('role_connecte_temporaire') !== 'ADMIN') return;
+    if (!Array.isArray(tableau) || !tableau.length) return;
+    const maintenant = new Date();
+    const candidats = tableau.filter(c => {
+      if (norm(c.Statut) !== 'nouveau') return false;
+      const lim = window.extraireDateDepuisTexte(c.Livraison || c.livraison || '');
+      return lim && maintenant >= lim;
+    });
+    if (!candidats.length) return;
+    window.__srScanEnCours = true;
+    try {
+      const frais = await (await fetch(CONFIG.API + '?action=getCommandes')).json();
+      const encoreNouveau = new Set((Array.isArray(frais) ? frais : [])
+        .filter(c => norm(c.Statut) === 'nouveau').map(c => String(c.ID != null ? c.ID : c.id).trim()));
+      let n = 0;
+      for (const c of candidats) {
+        const id = String(c.ID != null ? c.ID : c.id).trim();
+        if (!encoreNouveau.has(id)) continue;             // quelqu'un d'autre l'a déjà traitée
+        try {
+          await postAPI({ action: 'updateStatut', idCommande: id, nouveauStatut: 'En attente de paiement' });
+          c.Statut = 'En attente de paiement'; n++;
+        } catch (e) { console.error('Expiration #' + id + ' :', e.message); }
+      }
+      if (n) setTimeout(() => window.refreshAll(), 1200);
+    } finally { window.__srScanEnCours = false; }
+  };
+
+  /* ------------------------------------------------------------------
+     10. ANNUAIRE DES LIVREURS : partagé via le serveur (repli local)
+     ------------------------------------------------------------------ */
+  const CLE_LOCALE_ANNUAIRE = 'annuaire_livreurs';
+  window.chargerAnnuaire = chargerAnnuaire;
+  async function chargerAnnuaire() {
+    const s = await kvLoad('annuaire', CLE_LOCALE_ANNUAIRE);
+    annuaire = Object.assign({}, annuaire, s);
+    return annuaire;
+  }
+  function versInternational(n) {
+    const d = String(n || '').replace(/\D/g, '');
+    if (/^0\d{9}$/.test(d)) return '261' + d.slice(1);
+    return /^261\d{9}$/.test(d) ? d : null;
+  }
+
+  window.genererConfigEquipe = function () {
+    const noms = [...new Set([].concat(listeLivreurs || [],
+      (allData || []).map(c => String(c.Livreur || '').trim())).filter(n => n && n !== 'Non Assigné'))];
+    const box = document.getElementById('liste-livreurs-config');
+    if (!noms.length) {
+      box.innerHTML = `<div style="padding:30px;text-align:center;background:#f8fafc;border-radius:10px;border:2px dashed #cbd5e1;">
+        <p style="color:#64748b;">Aucun livreur trouvé.</p></div>`;
+      return;
+    }
+    box.innerHTML = `<table style="width:100%;border-collapse:collapse;background:white;border:1px solid #e2e8f0;">
+      <tr style="background:#f8fafc;text-align:left;"><th style="padding:12px;color:#64748b;">NOM DU LIVREUR</th><th style="padding:12px;color:#64748b;">NUMÉRO WHATSAPP</th></tr>
+      ${noms.map(nom => `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:12px;"><strong>${esc(nom)}</strong></td>
+        <td style="padding:12px;"><input type="text" data-nom="${esc(nom)}" value="${esc(annuaire[nom] || '')}" placeholder="Ex: 261340000000"
+          style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;"></td></tr>`).join('')}</table>`;
+  };
+
+  window.sauvegarderAnnuaire = async function () {
+    const invalides = [];
+    document.querySelectorAll('#liste-livreurs-config input[data-nom]').forEach(inp => {
+      const nom = inp.getAttribute('data-nom'), brut = inp.value.trim();
+      if (!brut) { delete annuaire[nom]; return; }
+      const intl = versInternational(brut);
+      if (intl) { annuaire[nom] = intl; inp.value = intl; } else invalides.push(nom);
+    });
+    const partage = await kvSave('annuaire', annuaire, CLE_LOCALE_ANNUAIRE);
+    let msg = partage ? '✅ Annuaire enregistré et partagé entre appareils.'
+                      : '⚠️ Annuaire enregistré sur CET appareil seulement (le serveur ne gère pas encore saveConfig).';
+    if (invalides.length) msg += '\n\nNuméros non enregistrés (format 261XXXXXXXXX ou 03XXXXXXXX attendu) : ' + invalides.join(', ');
+    alert(msg);
+  };
+
+  /* Une seule version de envoyerTrajetWhatsApp (les deux d'origine se marchaient dessus) */
+  window.envoyerTrajetWhatsApp = function (nomLivreur) {
+    if (!nomLivreur) {
+      nomLivreur = document.getElementById('filtre-livreur-logistique').value;
+      if (!nomLivreur || nomLivreur === 'TOUS') { alert('⚠️ Veuillez d\u2019abord sélectionner un livreur dans le menu déroulant.'); return; }
+    }
+    const cle = Object.keys(annuaire).find(k => norm(k) === norm(nomLivreur));
+    const tel = cle && versInternational(annuaire[cle]);
+    if (!tel) {
+      alert('⚠️ Le numéro de ' + nomLivreur + ' n\u2019est pas enregistré. Redirection vers l\u2019onglet Équipe…');
+      showTab('tab-equipe', document.querySelector('.nav-link[onclick*="tab-equipe"]'));
+      return;
+    }
+    const colis = (allData || []).filter(c => norm(c.Livreur) === norm(nomLivreur) &&
+                                              (c.Statut === 'SÉRIEUX' || c.Statut === 'PLANIFIÉ'));
+    const lignes = colis.slice(0, 30).map((c, i) =>
+      (i + 1) + '. ' + (c.Client || 'Client') + ' — ' + (c['Lieu Exact'] || 'lieu à préciser') +
+      ' — ' + (extraireProduits(c).map(p => p.qte + 'x ' + p.nom).join(', ') || 'colis') +
+      ' (' + (c['Téléphone'] || 'tél ?') + ')');
+    if (colis.length > 30) lignes.push('… +' + (colis.length - 30) + ' autre(s), voir la feuille de route.');
+    const message = '*SAFETRANS - TRAJET LIVREUR*\n\n🏍️ *Livreur :* ' + nomLivreur +
+      '\n📦 *Colis (' + colis.length + ') :*\n' + (lignes.join('\n') || 'Aucun colis assigné.') +
+      '\n\n_Bonne route et prudence ! 🛡️_';
+    window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(message), '_blank');
+  };
+  window.ouvrirLienWhatsApp = window.envoyerTrajetWhatsApp;   // ancien nom, au cas où
+})();
+
+/* =====================================================================
+   LISEZ-MOI — À FAIRE DANS LE FICHIER D'ORIGINE (5 minutes)
+   ---------------------------------------------------------------------
+   A. Coller CE fichier dans un <script> juste avant </body>.
+
+   B. Rechercher / Remplacer dans tout le fichier (VS Code : Ctrl+H) :
+      1) Mode « expression régulière » ACTIVÉ
+           Chercher :   (\w+)\.includes\(texteAujourdhui\)
+           Remplacer :  SR.jourMatch($1, 0)
+           Chercher :   (\w+)\.includes\(texteDemain\)
+           Remplacer :  SR.jourMatch($1, 1)
+         (corrige les étiquettes et la feuille de route : « 4 juin » ≠ « 14 juin »)
+      2) Mode texte simple (regex DÉSACTIVÉE), remplacer partout :
+           Chercher :   texteLivraison.includes("matin") || /à\s*0[6-9]:|à\s*1[0-1]:/.test(texteLivraison)
+           Remplacer :  SR.vague(texteLivraison) === 'MATIN'
+
+   C. SUPPRIMER dans le fichier d'origine :
+      - le bloc « DÉBUT DE LA SURVEILLANCE AUTOMATIQUE » … « FIN DE LA
+        SURVEILLANCE AUTOMATIQUE » (le 2e setInterval de 5 s, qui démarrait
+        avant la connexion) ;
+      - la constante ANNUAIRE_LIVREURS (code mort) ;
+      - la 1re définition de envoyerTrajetWhatsApp (celle avec SAFETRANS - NOUVEAU TRAJET).
+
+   D. Côté Google Apps Script (facultatif mais recommandé) : voir
+      saferun-apps-script.gs (actions getConfig / saveConfig / updateLivreur /
+      archiverCommandes qui répondent {status:"success"} + expiration serveur).
+   ===================================================================== */
+</script>
 </body>
 </html>
