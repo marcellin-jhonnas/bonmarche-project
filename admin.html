@@ -4371,7 +4371,7 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
   // >>> METTRE true UNIQUEMENT APRÈS avoir installé le script serveur v2 (saferun-apps-script.gs)
   //     (actions getConfig / saveConfig / archiverCommandes). Tant que c'est false, le patch
   //     n'envoie PAS ces actions : votre script actuel créerait une commande vide « Anonyme ».
-  window.SR_SERVEUR_V2 = false;
+  window.SR_SERVEUR_V2 = true;
 
   /* ------------------------------------------------------------------
      0. UTILITAIRES PARTAGÉS (une seule façon de lire dates / montants)
