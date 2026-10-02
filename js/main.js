@@ -1358,8 +1358,16 @@ async function envoyerDonneesAuSheet() {
     }
 
     const idCommande = "SR-" + Date.now().toString().slice(-6);
-    window.dernierIdCommandeEnvoyee = idCommande;
-    const infoLivraison = calculerLivraison(); 
+   window.dernierIdCommandeEnvoyee = idCommande;
+   const infoLivraison = calculerLivraison();
+
+   // La planification ne vaut que pour CETTE commande : on la consomme ici,
+   // pour que toute commande suivante reparte sur l'express par défaut
+   localStorage.removeItem('saferun_creneau_final');
+   localStorage.removeItem('saferun_creneau_brut');
+   datePlanifiee = null;
+   const statusPlanif = document.getElementById('status-planif');
+   if (statusPlanif) statusPlanif.style.display = "none";
     const tokenRecaptcha = await new Promise((resolve) => {
         grecaptcha.ready(function() {
             grecaptcha.execute(SITE_KEY_RECAPTCHA, { action: 'nouvelle_commande' }).then(resolve);
