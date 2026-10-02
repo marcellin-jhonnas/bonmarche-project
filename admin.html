@@ -4972,6 +4972,7 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
     window.__srConnecte = true;
     _entrer.apply(this, arguments);
     chargerAnnuaire();
+    if (typeof chargerLivreursDepuisSheet === 'function') chargerLivreursDepuisSheet();   // ← AJOUT
   };
 
   /* ------------------------------------------------------------------
