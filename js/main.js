@@ -3166,8 +3166,22 @@ function calculerLivraison() {
     // On vérifie si 'datePlanifiee' existe (choix via ouvrirPlanification)
    const creneauPersiste = localStorage.getItem('saferun_creneau_brut');
    const dateManuelle = creneauPersiste || datePlanifiee;
+   let dateManuelleValide = null;
+
    if (dateManuelle) {
-       const d = new Date(dateManuelle);
+      const dTest = new Date(dateManuelle);
+      if (dTest.getTime() > Date.now()) {
+         dateManuelleValide = dTest;
+      } else {
+         // Le créneau planifié est dépassé : on l'efface silencieusement
+         localStorage.removeItem('saferun_creneau_final');
+         localStorage.removeItem('saferun_creneau_brut');
+         datePlanifiee = null;
+      }
+   }
+
+   if (dateManuelleValide) {
+       const d = dateManuelleValide;
         const optionsPlanif = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
         let dateLisible = d.toLocaleString('fr-FR', optionsPlanif);
         return `LIVRAISON : ${dateLisible.charAt(0).toUpperCase() + dateLisible.slice(1)}`;
