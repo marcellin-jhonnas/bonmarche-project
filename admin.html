@@ -5168,5 +5168,475 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
       archiverCommandes qui répondent {status:"success"} + expiration serveur).
    ===================================================================== */
    </script>
+      <script>
+   /* =====================================================================
+   SafeRun Admin OS — PAIEMENT À LA LIVRAISON (COD) : UNE SEULE RÈGLE (v1)
+   À coller dans un 2e <script>, APRÈS celui de saferun-correctifs.js.
+   Règle métier appliquée partout :
+     - le client COD règle d'abord les FRAIS par MVola (commande -> SÉRIEUX,
+       montant des frais enregistré dans la colonne FraisLivraison) ;
+     - à l'arrivée du colis il règle le reste = Montant − frais.
+   Un seul état par commande, affiché de la même façon sur tous les documents :
+     💵 À ENCAISSER x Ar   |   ✅ DÉJÀ PAYÉ — rien à encaisser   |   ⛔ À VÉRIFIER (ne pas partir)
+   ===================================================================== */
+(function () {
+  'use strict';
+  if (window.__srCOD) return;
+  if (!window.SR || !window.SR.postAPI) {
+    console.error('[COD] Chargez d\u2019abord saferun-correctifs.js (le patch précédent).');
+    return;
+  }
+  window.__srCOD = true;
+
+  /* ---- RÉGLAGES (à vérifier sur UNE vraie commande COD avec SR.diagnosticCOD()) ---- */
+  // true  : Montant = produits + frais (ex. 24 000 = 20 000 + 4 000)  -> à encaisser 20 000
+  // false : Montant = produits seulement (ex. 20 000)                -> à encaisser 20 000
+  const MONTANT_INCLUT_FRAIS = true;
+  // Une note est « paiement à la livraison » si elle contient l'une de ces expressions
+  // (texte sans accent, en minuscules) :
+  const RE_COD = /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/;
+  // Une note qui parle de « livraison » SANS être reconnue ci-dessus est AMBIGUË -> à vérifier
+  const RE_AMBIGU = /livraison/;
+
+  const norm = SR.norm, esc = SR.esc, parse = SR.parseMontant;
+  const nb = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const toDate = v => { const d = new Date(v); return isNaN(d) ? null : d; };
+  const debutJour = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const memeJour = (a, b) => a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  /* ------------------------------------------------------------------
+     1. LA règle unique
+     ------------------------------------------------------------------ */
+  function cod(c) {
+    const note = norm(c && c.Note);
+    const montant = parse(c && c.Montant);
+    const frais = parse(c && c.FraisLivraison);
+    const r = { mode: 'PREPAYE', etat: 'RIEN', montant: montant, frais: frais, aEncaisser: 0, raison: '' };
+    if (RE_COD.test(note)) {
+      r.mode = 'COD';
+      if (frais <= 0) {
+        r.etat = 'A_VERIFIER';
+        r.raison = 'Frais de livraison non confirmés (colonne FraisLivraison vide)';
+        return r;
+      }
+      const du = MONTANT_INCLUT_FRAIS ? montant - frais : montant;
+      if (du <= 0) {
+        r.etat = 'A_VERIFIER';
+        r.raison = 'Montant à encaisser nul ou négatif (Montant ' + nb(montant) + ', frais ' + nb(frais) + ')';
+        return r;
+      }
+      r.etat = 'A_ENCAISSER';
+      r.aEncaisser = du;
+      return r;
+    }
+    if (RE_AMBIGU.test(note)) {
+      r.mode = 'INCONNU';
+      r.etat = 'A_VERIFIER';
+      r.raison = 'Note ambiguë : « ' + String((c && c.Note) || '').trim().slice(0, 60) + ' »';
+    }
+    return r;
+  }
+  const detailCalcul = k => MONTANT_INCLUT_FRAIS
+    ? 'Total commande ' + nb(k.montant) + ' − frais de livraison déjà payés ' + nb(k.frais)
+    : 'Frais de livraison ' + nb(k.frais) + ' déjà payés (non inclus dans ' + nb(k.montant) + ')';
+  const consigneCourte = c => {
+    const k = cod(c);
+    return k.etat === 'A_ENCAISSER' ? 'ENCAISSER ' + nb(k.aEncaisser) + ' Ar'
+         : k.etat === 'A_VERIFIER' ? 'À VÉRIFIER' : 'RIEN À ENCAISSER';
+  };
+  SR.cod = cod;
+  SR.consigneCourte = consigneCourte;
+
+  /* ------------------------------------------------------------------
+     2. Badge du tableau Logistique + bandeau « à régler avant départ »
+     ------------------------------------------------------------------ */
+  window.obtenirBadgePaiement = function (c) {
+    const k = cod(c);
+    const base = 'font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;margin-left:6px;';
+    if (k.etat === 'A_ENCAISSER') {
+      return '<span style="' + base + 'background:#fef3c7;color:#92400e;">💵 ENCAISSER ' + nb(k.aEncaisser) + ' Ar</span>';
+    }
+    if (k.etat === 'A_VERIFIER') {
+      return '<span title="' + esc(k.raison) + '" style="' + base + 'background:#fee2e2;color:#991b1b;">⛔ À VÉRIFIER</span>';
+    }
+    return '<span style="' + base + 'background:#dcfce7;color:#15803d;">✅ DÉJÀ PAYÉ</span>';
+  };
+
+  function majLogistiqueCOD(serieuses) {
+    let total = 0;
+    const verif = [];
+    (serieuses || []).forEach(c => {
+      const k = cod(c);
+      if (k.etat === 'A_ENCAISSER') total += k.aEncaisser;
+      else if (k.etat === 'A_VERIFIER') verif.push({ c: c, k: k });
+    });
+    const kpi = document.getElementById('count-cash-total');
+    if (kpi) kpi.innerText = nb(total) + ' Ar';          // = ce que les livreurs doivent vraiment rapporter
+
+    const cont = document.getElementById('logistique-container');
+    if (!cont || !cont.parentNode) return;
+    let bandeau = document.getElementById('sr-cod-alerte');
+    if (!bandeau) {
+      bandeau = document.createElement('div');
+      bandeau.id = 'sr-cod-alerte';
+      cont.parentNode.insertBefore(bandeau, cont);
+    }
+    bandeau.innerHTML = verif.length
+      ? '<div style="background:#fee2e2;border:2px solid #dc2626;color:#7f1d1d;padding:12px 14px;border-radius:8px;margin:10px 0;">' +
+        '<strong>⛔ ' + verif.length + ' commande(s) à régler AVANT le départ :</strong><ul style="margin:6px 0 0 18px;padding:0;">' +
+        verif.map(v => '<li><strong>' + esc(v.c.Client || 'Client') + '</strong> (#' + esc(v.c.ID || '---') + ') — ' + esc(v.k.raison) + '</li>').join('') +
+        '</ul></div>'
+      : '<div style="background:#dcfce7;border:1px solid #16a34a;color:#14532d;padding:8px 12px;border-radius:8px;margin:10px 0;font-size:13px;">✅ Toutes les commandes affichées sont claires : le livreur sait quoi encaisser.</div>';
+  }
+  if (typeof genererTableauLogistique === 'function') {
+    const _gtl = window.genererTableauLogistique;
+    window.genererTableauLogistique = function (serieuses) {
+      _gtl.apply(this, arguments);
+      try { majLogistiqueCOD(serieuses); } catch (e) { console.error('[COD] logistique :', e); }
+    };
+  }
+
+  // Marquer LIVRÉ : on rappelle la somme que le livreur doit avoir remise
+  const _updateStatus = window.updateStatus;
+  window.updateStatus = function (id, nouveauStatut) {
+    if (nouveauStatut === 'LIVRÉ') {
+      const c = (allData || []).find(x => String(x.ID) === String(id));
+      if (c) {
+        const k = cod(c);
+        if (k.etat === 'A_ENCAISSER' &&
+            !confirm('Commande #' + id + ' — ' + (c.Client || '') + '\n\nÀ encaisser : ' + nb(k.aEncaisser) +
+                     ' Ar.\nLe livreur a-t-il bien remis cette somme ?')) return;
+        if (k.etat === 'A_VERIFIER' &&
+            !confirm('⚠️ Commande #' + id + ' : ' + k.raison + '.\n\nMarquer LIVRÉ quand même ?')) return;
+      }
+    }
+    return _updateStatus.apply(this, arguments);
+  };
+
+  /* ------------------------------------------------------------------
+     3. BON DE LIVRAISON (ticket imprimé) — un seul message, en gros
+     ------------------------------------------------------------------ */
+  window.genererFactureLivreur = function (commande) {
+    const k = cod(commande);
+    const datePropre = new Date(commande.Date || new Date()).toLocaleDateString('fr-FR');
+    const adresse = commande['Lieu Exact'] || 'Non précisé';
+    const tel = commande['Téléphone'] || commande.Telephone || '---';
+    const lienMaps = 'https://maps.google.com/?q=' + encodeURIComponent(adresse);
+    const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(lienMaps);
+
+    let bloc, liste;
+    if (k.etat === 'A_ENCAISSER') {
+      bloc = '<div style="background:#111827;color:#fff;padding:12px;margin:10px 0;text-align:center;">' +
+        '<div style="font-size:13px;letter-spacing:1px;">💵 À ENCAISSER</div>' +
+        '<div style="font-size:30px;font-weight:900;line-height:1.2;">' + nb(k.aEncaisser) + ' Ar</div>' +
+        '<div style="font-size:11px;margin-top:6px;">' + esc(detailCalcul(k)) + '</div></div>';
+      liste = '[ ] Colis complet &amp; vérifié<br>[ ] ' + nb(k.aEncaisser) + ' Ar encaissés<br>[ ] Reçu remis au client';
+    } else if (k.etat === 'A_VERIFIER') {
+      bloc = '<div style="background:#fee2e2;border:3px solid #dc2626;color:#7f1d1d;padding:12px;margin:10px 0;text-align:center;font-weight:900;">' +
+        '⛔ NE PAS PARTIR — À VÉRIFIER<div style="font-size:12px;font-weight:600;margin-top:6px;">' + esc(k.raison) +
+        '<br>Appelez le bureau avant le départ.</div></div>';
+      liste = '[ ] Vérification faite avec le bureau';
+    } else {
+      bloc = '<div style="background:#dcfce7;border:3px solid #16a34a;color:#14532d;padding:12px;margin:10px 0;text-align:center;font-weight:900;font-size:1.1em;">' +
+        '✅ DÉJÀ PAYÉ — NE RIEN ENCAISSER</div>';
+      liste = '[ ] Colis complet &amp; vérifié<br>[ ] Identité du client confirmée';
+    }
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('Fenêtre bloquée par le navigateur : autorisez les pop-ups pour ce site.'); return; }
+    w.document.write(
+      '<html><head><meta charset="utf-8"><title>Bon - ' + esc(commande.Client) + '</title><style>' +
+      "body{font-family:'Courier New',Courier,monospace;padding:20px;text-align:center;}" +
+      '.ticket{border:2px dashed #000;padding:15px;width:300px;margin:auto;text-align:left;}' +
+      '.header{text-align:center;border-bottom:1px solid #000;margin-bottom:10px;}' +
+      '.info-client{background:#f9f9f9;padding:8px;border:1px solid #ddd;margin:10px 0;}' +
+      '.qr-section{text-align:center;margin-top:20px;}.qr-section img{width:130px;height:130px;border:1px solid #eee;}' +
+      '.checklist{border-top:1px solid #000;margin-top:10px;padding-top:10px;font-size:12px;line-height:1.6;}' +
+      '@media print{.no-print{display:none;}}</style></head><body><div class="ticket">' +
+      '<div class="header"><h2 style="margin:0;">BON MARCHÉ</h2><p style="margin:0;">Bon de Livraison #' + esc(commande.ID || '---') + '</p></div>' +
+      '<p><strong>DATE:</strong> ' + datePropre + '</p>' +
+      '<div class="info-client"><p style="margin:5px 0;"><strong>CLIENT:</strong> ' + esc(commande.Client) + '</p>' +
+      '<p style="margin:5px 0;"><strong>📞 TEL:</strong> ' + esc(tel) + '</p>' +
+      '<p style="margin:5px 0;"><strong>📍 LIEU:</strong> ' + esc(adresse) + '</p></div><hr>' +
+      '<p><strong>PRODUITS:</strong><br>' + esc(commande.Produits || 'Commande standard').replace(/\n/g, '<br>') + '</p>' +
+      bloc + '<div class="checklist">' + liste + '</div>' +
+      '<div class="qr-section"><img src="' + qr + '" alt="QR Code"><p style="font-size:10px;margin-top:5px;">Scanner pour l\u2019itinéraire Maps</p></div></div>' +
+      '<div class="no-print" style="margin-top:20px;"><button onclick="window.print()" style="padding:10px;cursor:pointer;font-weight:bold;">IMPRIMER LE BON</button></div>' +
+      '</body></html>');
+    w.document.close();
+  };
+
+  /* ------------------------------------------------------------------
+     4. FEUILLE DE TRAJET (PDF) — consigne dans le cadre + page de caisse
+        (2 petites modifications manuelles dans genererFeuilleRoute : voir LISEZ-MOI)
+     ------------------------------------------------------------------ */
+  SR.dessinerConsigneTournee = function (doc, c, x, top, w) {
+    const k = cod(c);
+    let fill, l1, s1, l2, s2;
+    if (k.etat === 'A_ENCAISSER') { fill = [17, 24, 39]; l1 = 'À ENCAISSER'; s1 = 8; l2 = nb(k.aEncaisser) + ' Ar'; s2 = 15; }
+    else if (k.etat === 'A_VERIFIER') { fill = [185, 28, 28]; l1 = 'À VÉRIFIER'; s1 = 12; l2 = 'NE PAS PARTIR'; s2 = 9; }
+    else { fill = [22, 163, 74]; l1 = 'DÉJÀ PAYÉ'; s1 = 11; l2 = 'RIEN À ENCAISSER'; s2 = 8.5; }
+    doc.setFillColor(fill[0], fill[1], fill[2]);
+    doc.rect(x + 1, top + 1, w - 2, 14, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(s1); doc.text(l1, x + w / 2, top + 6, { align: 'center' });
+    doc.setFontSize(s2); doc.text(l2, x + w / 2, top + 12.5, { align: 'center' });
+    doc.setTextColor(30, 41, 59);
+    doc.setFont(undefined, 'normal');
+    if (k.etat === 'A_ENCAISSER') {
+      doc.setFontSize(6.5);
+      doc.text('Total ' + nb(k.montant) + ' - frais payes ' + nb(k.frais), x + w / 2, top + 32, { align: 'center' });
+    }
+  };
+
+  SR.pageRecapTournee = function (doc, commandes, nomLivreur) {
+    doc.addPage();
+    let y = 22, total = 0, nbVerif = 0;
+    doc.setTextColor(15, 23, 42);
+    doc.setFont(undefined, 'bold'); doc.setFontSize(16);
+    doc.text('RÉCAPITULATIF CAISSE - ' + nomLivreur, 15, y); y += 8;
+    doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+    doc.text('Date : ' + new Date().toLocaleDateString('fr-FR'), 15, y); y += 9;
+    doc.setFont(undefined, 'bold');
+    doc.text('Client', 15, y); doc.text('Réf.', 95, y); doc.text('À encaisser', 195, y, { align: 'right' });
+    y += 2; doc.line(15, y, 195, y); y += 6;
+    doc.setFont(undefined, 'normal');
+    commandes.forEach((c, i) => {
+      if (y > 255) { doc.addPage(); y = 20; }
+      const k = cod(c);
+      doc.text((i + 1) + '. ' + String(c.Client || '').slice(0, 30), 15, y);
+      doc.text(String(c.ID || '').slice(0, 20), 95, y);
+      if (k.etat === 'A_ENCAISSER') { total += k.aEncaisser; doc.setFont(undefined, 'bold'); doc.text(nb(k.aEncaisser) + ' Ar', 195, y, { align: 'right' }); doc.setFont(undefined, 'normal'); }
+      else if (k.etat === 'A_VERIFIER') { nbVerif++; doc.text('A VÉRIFIER', 195, y, { align: 'right' }); }
+      else { doc.text('déjà payé', 195, y, { align: 'right' }); }
+      y += 7;
+    });
+    if (y > 215) { doc.addPage(); y = 20; }
+    y += 2; doc.line(15, y, 195, y); y += 9;
+    doc.setFont(undefined, 'bold'); doc.setFontSize(14);
+    doc.text('TOTAL À ENCAISSER : ' + nb(total) + ' Ar', 15, y); y += 7;
+    doc.setFontSize(9); doc.setFont(undefined, 'normal');
+    if (nbVerif) { doc.text(nbVerif + ' commande(s) À VÉRIFIER non comptée(s) dans ce total.', 15, y); y += 7; }
+    y += 8;
+    doc.setFontSize(11);
+    doc.text('Montant remis par le livreur : ______________________ Ar', 15, y); y += 12;
+    doc.text('Écart : ______________________ Ar', 15, y); y += 16;
+    doc.text('Signature livreur : ______________________', 15, y);
+    doc.text('Visa responsable : ______________________', 105, y);
+    doc.setTextColor(30, 41, 59);
+  };
+
+  if (typeof genererFeuilleRoute === 'function') {
+    const _route = window.genererFeuilleRoute;
+    window.genererFeuilleRoute = function (nomLivreur) {
+      const aVerifier = (allData || []).filter(c => norm(c.Livreur) === norm(nomLivreur) &&
+        (c.Statut === 'SÉRIEUX' || c.Statut === 'PLANIFIÉ') && cod(c).etat === 'A_VERIFIER');
+      if (aVerifier.length && !confirm('⛔ ' + aVerifier.length + ' commande(s) de ' + nomLivreur + ' sont À VÉRIFIER :\n\n' +
+          aVerifier.map(c => '• ' + (c.Client || '') + ' : ' + cod(c).raison).join('\n') +
+          '\n\nImprimer quand même ? (elles seront marquées « NE PAS PARTIR »)')) return;
+      return _route.apply(this, arguments);
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     5. ÉTIQUETTE COLIS (PDF) — la bande « ENCAISSER … » remplace le prix brut
+        (1 petite modification manuelle dans genererEtiquettesColis : voir LISEZ-MOI)
+     ------------------------------------------------------------------ */
+  SR.dessinerConsigneEtiquette = function (doc, cmd, x, y, w, h) {
+    const k = cod(cmd);
+    const bw = 44, bh = 7, bx = x + w - bw - 4, by = y + h - 6 - 5;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+    if (k.etat === 'A_ENCAISSER') {
+      doc.setFillColor(17, 24, 39); doc.rect(bx, by, bw, bh, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.text('ENCAISSER ' + nb(k.aEncaisser) + ' Ar', bx + bw / 2, by + 4.8, { align: 'center' });
+    } else if (k.etat === 'A_VERIFIER') {
+      doc.setFillColor(185, 28, 28); doc.rect(bx, by, bw, bh, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.text('A VÉRIFIER', bx + bw / 2, by + 4.8, { align: 'center' });
+    } else {
+      doc.setDrawColor(22, 163, 74); doc.setLineWidth(0.6); doc.rect(bx, by, bw, bh);
+      doc.setTextColor(22, 163, 74);
+      doc.text('DÉJÀ PAYÉ', bx + bw / 2, by + 4.8, { align: 'center' });
+    }
+    doc.setTextColor(0, 0, 0); doc.setDrawColor(0); doc.setLineWidth(0.2);
+  };
+
+  /* ------------------------------------------------------------------
+     6. CAISSE DU SOIR : même règle que les documents
+     ------------------------------------------------------------------ */
+  const COLS_DATE = ['DateLivraison', 'Date Livraison', 'DateLivré', 'Date Livré'];
+  function dateEncaissement(c) {
+    for (const k of COLS_DATE) { const d = c[k] && toDate(c[k]); if (d) return d; }
+    return SR.dateLivraison(c.Livraison) || toDate(c.Date) || new Date();
+  }
+  function jourChoisi() {
+    const el = document.getElementById('caisse-date');
+    if (el && el.value) { const p = el.value.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+    return debutJour(new Date());
+  }
+  function calculerCaisse(jour) {
+    const livrees = (allData || []).filter(c => c.Statut === 'LIVRÉ' && memeJour(dateEncaissement(c), jour));
+    let aEncaisser = 0, dejaPaye = 0, nbVerif = 0;
+    const parLivreur = {};
+    const lignes = livrees.map(c => {
+      const k = cod(c);
+      if (k.etat === 'A_ENCAISSER') aEncaisser += k.aEncaisser;
+      else if (k.etat === 'A_VERIFIER') nbVerif++;
+      else dejaPaye += k.montant;
+      const nom = c.Livreur || 'Non assigné';
+      parLivreur[nom] = (parLivreur[nom] || 0) + k.aEncaisser;
+      return { c: c, k: k };
+    });
+    return { livrees: livrees, lignes: lignes, aEncaisser: aEncaisser, dejaPaye: dejaPaye, nbVerif: nbVerif, parLivreur: parLivreur };
+  }
+
+  window.genererJournalCaisse = function () {
+    const tab = document.getElementById('tab-caisse');
+    let input = document.getElementById('caisse-date');
+    if (tab && !input) {
+      const t = new Date();
+      const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin:10px 0 15px;';
+      wrap.innerHTML = '<label style="font-size:12px;font-weight:bold;color:#64748b;">Journée : </label>' +
+        '<input type="date" id="caisse-date" value="' + iso + '" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;">';
+      const h2 = tab.querySelector('h2');
+      if (h2) h2.insertAdjacentElement('afterend', wrap); else tab.prepend(wrap);
+      input = wrap.querySelector('input');
+    }
+    if (input) input.onchange = window.genererJournalCaisse;
+
+    const k = calculerCaisse(jourChoisi());
+    document.getElementById('caisse-total').innerText = nb(k.aEncaisser) + ' Ar';
+    document.getElementById('caisse-count').innerText = k.livrees.length;
+    const petit = document.getElementById('caisse-total').parentElement.querySelector('small');
+    if (petit) petit.textContent = 'Espèces à récupérer chez les livreurs' +
+      (k.dejaPaye ? ' — déjà payé : ' + nb(k.dejaPaye) + ' Ar (rien à encaisser)' : '') +
+      (k.nbVerif ? ' — ⚠️ ' + k.nbVerif + ' commande(s) à vérifier non comptée(s)' : '');
+
+    const box = document.getElementById('caisse-details-container');
+    if (!k.livrees.length) { box.innerHTML = "<p style='padding:20px;color:gray;'>Aucun encaissement pour cette journée.</p>"; return; }
+    const resume = Object.keys(k.parLivreur).sort().map(n =>
+      '<span style="display:inline-block;background:#f1f5f9;border-radius:12px;padding:4px 10px;margin:0 6px 6px 0;font-size:12px;"><strong>' +
+      esc(n) + '</strong> : ' + nb(k.parLivreur[n]) + ' Ar</span>').join('');
+    box.innerHTML = '<div style="margin-bottom:10px;">' + resume + '</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="border-bottom:2px solid #f1f5f9;text-align:left;color:#64748b;">' +
+      '<th style="padding:10px;">Client</th><th style="padding:10px;">Livreur</th><th style="padding:10px;">Paiement</th>' +
+      '<th style="padding:10px;text-align:right;">À encaisser</th></tr></thead><tbody>' +
+      k.lignes.map(l => '<tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px;">' + esc(l.c.Client) + '</td>' +
+        '<td style="padding:10px;">' + esc(l.c.Livreur || '---') + '</td><td style="padding:10px;">' +
+        (l.k.etat === 'A_ENCAISSER' ? '💵 À la livraison' : l.k.etat === 'A_VERIFIER' ? '⛔ À vérifier : ' + esc(l.k.raison) : '✅ Déjà payé') +
+        '</td><td style="padding:10px;text-align:right;font-weight:bold;">' + nb(l.k.aEncaisser) + ' Ar</td></tr>').join('') +
+      '</tbody></table>';
+  };
+
+  window.cloturerJournee = async function () {
+    if (!window.SR_SERVEUR_V2) {
+      alert('⚠️ Clôture indisponible : activez d\u2019abord le script serveur v2 (SR_SERVEUR_V2 = true).');
+      return;
+    }
+    const jour = jourChoisi();
+    const k = calculerCaisse(jour);
+    if (!k.livrees.length) { alert('Rien à clôturer pour le ' + jour.toLocaleDateString('fr-FR') + ' : aucune commande « LIVRÉ ».'); return; }
+    if (!confirm('Clôturer la journée du ' + jour.toLocaleDateString('fr-FR') + ' ?\n\nEspèces attendues des livreurs : ' + nb(k.aEncaisser) +
+        ' Ar\nColis remis : ' + k.livrees.length + (k.nbVerif ? '\n⚠️ ' + k.nbVerif + ' commande(s) à vérifier non comptée(s)' : '') +
+        '\n\nCes commandes seront archivées.')) return;
+    try {
+      await SR.postAPI({ action: 'archiverCommandes', ids: k.livrees.map(c => c.ID) });
+      alert('✅ Journée clôturée : ' + k.livrees.length + ' commande(s) archivée(s).');
+      await window.refreshAll();
+      window.genererJournalCaisse();
+    } catch (e) {
+      console.error(e);
+      alert('❌ Clôture NON effectuée : ' + e.message);
+    }
+  };
+
+  /* ------------------------------------------------------------------
+     7. Message WhatsApp du trajet : une consigne par colis + total
+     ------------------------------------------------------------------ */
+  function versInternational(n) {
+    const d = String(n || '').replace(/\D/g, '');
+    if (/^0\d{9}$/.test(d)) return '261' + d.slice(1);
+    return /^261\d{9}$/.test(d) ? d : null;
+  }
+  window.envoyerTrajetWhatsApp = function (nomLivreur) {
+    if (!nomLivreur) {
+      const sel = document.getElementById('filtre-livreur-logistique');
+      nomLivreur = sel && sel.value;
+      if (!nomLivreur || nomLivreur === 'TOUS') { alert('⚠️ Veuillez d\u2019abord sélectionner un livreur dans le menu déroulant.'); return; }
+    }
+    const cle = Object.keys(annuaire).find(x => norm(x) === norm(nomLivreur));
+    const tel = cle && versInternational(annuaire[cle]);
+    if (!tel) {
+      alert('⚠️ Le numéro de ' + nomLivreur + ' n\u2019est pas enregistré. Redirection vers l\u2019onglet Équipe…');
+      showTab('tab-equipe', document.querySelector('.nav-link[onclick*="tab-equipe"]'));
+      return;
+    }
+    const colis = (allData || []).filter(c => norm(c.Livreur) === norm(nomLivreur) &&
+      (c.Statut === 'SÉRIEUX' || c.Statut === 'PLANIFIÉ'));
+    let total = 0, nbVerif = 0;
+    colis.forEach(c => { const k = cod(c); if (k.etat === 'A_ENCAISSER') total += k.aEncaisser; else if (k.etat === 'A_VERIFIER') nbVerif++; });
+    const lignes = colis.slice(0, 30).map((c, i) => {
+      const k = cod(c);
+      const consigne = k.etat === 'A_ENCAISSER' ? '💵 ENCAISSER ' + nb(k.aEncaisser) + ' Ar'
+                     : k.etat === 'A_VERIFIER' ? '⛔ À VÉRIFIER — ne pas partir' : '✅ Rien à encaisser';
+      return (i + 1) + '. ' + (c.Client || 'Client') + ' — ' + (c['Lieu Exact'] || 'lieu à préciser') +
+        ' (' + (c['Téléphone'] || 'tél ?') + ')\n    ' + consigne;
+    });
+    if (colis.length > 30) lignes.push('… +' + (colis.length - 30) + ' autre(s), voir la feuille de trajet.');
+    const message = '*SAFETRANS - TRAJET LIVREUR*\n\n🏍️ *Livreur :* ' + nomLivreur +
+      '\n📦 *Colis (' + colis.length + ') :*\n' + (lignes.join('\n') || 'Aucun colis assigné.') +
+      '\n\n💰 *TOTAL À ENCAISSER : ' + nb(total) + ' Ar*' +
+      (nbVerif ? '\n⛔ ' + nbVerif + ' colis à vérifier avec le bureau avant de partir.' : '') +
+      '\n\n_Bonne route et prudence ! 🛡️_';
+    window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(message), '_blank');
+  };
+  window.ouvrirLienWhatsApp = window.envoyerTrajetWhatsApp;
+
+  /* ------------------------------------------------------------------
+     8. DIAGNOSTIC : à lancer UNE FOIS dans la console avant de s'y fier
+        SR.diagnosticCOD()
+     ------------------------------------------------------------------ */
+  SR.diagnosticCOD = function () {
+    const stats = {};
+    (allData || []).filter(c => ['SÉRIEUX', 'PLANIFIÉ', 'LIVRÉ'].includes(c.Statut)).forEach(c => {
+      const k = cod(c);
+      const cle = (String(c.Note || '').trim().slice(0, 70) || '(vide)') + '  →  ' + k.mode + ' / ' + k.etat;
+      stats[cle] = (stats[cle] || 0) + 1;
+    });
+    console.table(Object.keys(stats).sort((a, b) => stats[b] - stats[a]).map(n => ({ note_et_decision: n, commandes: stats[n] })));
+    const ex = (allData || []).find(c => cod(c).mode === 'COD' && cod(c).frais > 0);
+    if (ex) {
+      const k = cod(ex);
+      console.log('Exemple COD #' + ex.ID + ' : Montant=' + k.montant + ', FraisLivraison=' + k.frais +
+        '  →  à encaisser ' + k.aEncaisser + ' Ar  (MONTANT_INCLUT_FRAIS=' + MONTANT_INCLUT_FRAIS + ')');
+    } else console.log('Aucune commande COD avec frais confirmés trouvée dans les données chargées.');
+  };
+})();
+
+/* =====================================================================
+   LISEZ-MOI — 3 petites modifications dans le code d'ORIGINE (Ctrl+F)
+   ---------------------------------------------------------------------
+   1) Feuille de trajet (genererFeuilleRoute) — remplacer LA LIGNE :
+        doc.text(`${prix} Ar`, 167.5, y + 6, {align: "center"});
+      par :
+        SR.dessinerConsigneTournee(doc, c, 140, y - 2, 55);
+
+   2) Même fonction — remplacer LA LIGNE :
+        doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
+      par ces DEUX lignes :
+        SR.pageRecapTournee(doc, commandes, nomLivreur);
+        doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
+
+   3) Étiquettes (genererEtiquettesColis) — remplacer LA LIGNE :
+        doc.text(`${prix} Ar`, x + labelWidth - 4, footY, { align: "right" });
+      par :
+        SR.dessinerConsigneEtiquette(doc, cmd, x, y, labelWidth, labelHeight);
+   ===================================================================== */
+   </script>
 </body>
 </html>
