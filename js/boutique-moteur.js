@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("shop-hero").style.backgroundImage = `url('${configVisuelle.bannerImg}')`;
 
     // Lien de liaison vers votre Google Sheet existant (Modifier avec votre vrai ID de script si besoin)
-    const API_URL = "https://google.com"; 
+    // Mettez à jour la ligne 62 (ou la ligne de votre définition d'URL) avec le vrai lien :
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec"; 
 
     fetch(API_URL)
         .then(response => response.json())
