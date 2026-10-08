@@ -1,8 +1,8 @@
 (function() {
     const IMAGES_DEMO_BOUTIQUES = {
-        "VETEMENTS": "https://flaticon.com", 
-        "CHAUSSURES": "https://flaticon.com",
-        "DEFAUT": "https://flaticon.com"
+        "VETEMENTS": "https://imgur.com/jKHHTgl", 
+        "CHAUSSURES": "https://imgur.com/Fo4VcB7",
+        "DEFAUT": "https://imgur.com/L5uiDsH"
     };
 
     document.addEventListener("DOMContentLoaded", () => {
