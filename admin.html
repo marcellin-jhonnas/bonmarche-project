@@ -2772,7 +2772,7 @@ async function genererEtiquettesColis() {
         
         doc.setFontSize(13);
         const prix = (cmd.Montant || "0").toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        doc.text(`${prix} Ar`, x + labelWidth - 4, footY, { align: "right" });
+        SR.dessinerConsigneEtiquette(doc, cmd, x, y, labelWidth, labelHeight);
     }
 
     doc.save(`Etiquettes_SafeRun_${new Date().getTime()}.pdf`);
@@ -2962,7 +2962,7 @@ async function genererFeuilleRoute(nomLivreur) {
         doc.setFont(undefined, 'bold');
         
         const prix = (c.Montant || "0").toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        doc.text(`${prix} Ar`, 167.5, y + 6, {align: "center"});
+        SR.dessinerConsigneTournee(doc, c, 140, y - 2, 55);
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.text("Signature Client :", 143, y + 16);
@@ -2971,7 +2971,8 @@ async function genererFeuilleRoute(nomLivreur) {
         y += 49;
     });
 
-    doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
+      SR.pageRecapTournee(doc, commandes, nomLivreur);
+  doc.save(`Guide_Tournee_${nomLivreur}.pdf`);
 }
 function genererRadarIntelligence() {
     const conteneurAlertes = document.getElementById('liste-alertes-achat');
@@ -5234,6 +5235,9 @@ async function scruterEtMettreAJourCommandesDirectes(tableauCommandes) {
       r.mode = 'INCONNU';
       r.etat = 'A_VERIFIER';
       r.raison = 'Note ambiguë : « ' + String((c && c.Note) || '').trim().slice(0, 60) + ' »';
+    } else if (frais > 0) {
+      r.etat = 'A_VERIFIER';
+      r.raison = 'Frais de livraison enregistrés (' + nb(frais) + ' Ar) mais la note n\u2019indique pas le mode de paiement';
     }
     return r;
   }
