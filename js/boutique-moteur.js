@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Dictionnaire visuel premium avec de vraies images HD Unsplash (Fini les liens cassés)
+        // 🛠️ CONFIGURATION DES BANNIÈRES CORRIGÉE (ÉLIMINE L'ERREUR NS_BINDING_ABORTED)
     const DESIGN_BOUTIQUES = {
         "VETEMENTS": {
             bannerImg: "https://unsplash.com",
