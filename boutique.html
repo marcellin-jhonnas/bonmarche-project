@@ -76,71 +76,316 @@
             <!-- Injecté dynamiquement -->
         </div>
     </main>
-    <!-- ==========================================================
-         FOOTER PREMIUM HARMONISÉ (IDENTIQUE À INDEX.HTML)
-         ========================================================== -->
-    <footer class="footer-premium" style="background-color: #111a24; color: #ecf0f1; position: relative; padding-top: 50px; font-family: 'Poppins', sans-serif; margin-top: 50px;">
-        <div class="footer-container" style="width: 90%; max-width: 1200px; margin: 0 auto; padding: 20px 0 50px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px;">
-            
-            <!-- SECTION 1 : LOGO & HORAIRES -->
-            <div class="footer-brand">
-                <div class="logo-wrapper" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <img src="https://imgur.com" alt="Logo SafeRun" class="footer-logo" style="height: 45px; filter: drop-shadow(0 2px 8px rgba(39, 174, 96, 0.3)); transition: transform 0.5s ease;">
-                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: 1px;">SAFERUN <span style="color: #27ae60;">MARKET</span></h3>
-                </div>
-                <div class="footer-hours" style="background: rgba(255,255,255,0.03); padding: 12px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
-                    <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: #ddd;"><i class="fas fa-clock" style="color: #e67e22; margin-right: 8px;"></i> <b>Lun - Sam :</b> 08h à 17h</p>
-                    <p style="margin: 0; font-size: 0.8rem; color: #27ae60; display: flex; align-items: center; gap: 8px;">
-                        <span class="status-dot" style="display: inline-block; width: 8px; height: 8px; background-color: #27ae60; border-radius: 50%; box-shadow: 0 0 8px #27ae60;"></span> 
-                        Ouvert actuellement
-                    </p>
-                </div>
-                <div class="social-icons" style="display: flex; gap: 12px;">
-                    <a href="#" class="social-btn" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border-radius: 50%; text-decoration: none;"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="social-btn" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border-radius: 50%; text-decoration: none;"><i class="fab fa-whatsapp"></i></a>
-                    <a href="#" class="social-btn" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: rgba(255,255,255,0.05); color: #fff; border-radius: 50%; text-decoration: none;"><i class="fab fa-instagram"></i></a>
-                </div>
+    <!-- ============ FOOTER SAFERUN MARKET (version premium) ============ -->
+<!-- Prérequis (déjà présents chez vous) : Font Awesome 5/6 + police Poppins -->
+<style>
+    .footer-premium {
+        --fp-bg: #0d151e;
+        --fp-bg-deep: #080e14;
+        --fp-green: #27ae60;
+        --fp-green-light: #2ecc71;
+        --fp-orange: #e67e22;
+        --fp-text: #aeb9c4;
+        --fp-white: #ffffff;
+        position: relative;
+        background:
+            radial-gradient(900px 400px at 8% -10%, rgba(39,174,96,0.14), transparent 60%),
+            radial-gradient(700px 360px at 95% 0%, rgba(230,126,34,0.08), transparent 60%),
+            linear-gradient(180deg, #111a24 0%, var(--fp-bg) 100%);
+        color: #ecf0f1;
+        font-family: 'Poppins', sans-serif;
+        margin-top: 60px;
+        padding-top: 0;
+        overflow: hidden;
+    }
+    .footer-premium *, .footer-premium *::before, .footer-premium *::after { box-sizing: border-box; }
+ 
+    /* Liseré dégradé en haut */
+    .footer-premium .fp-topline {
+        height: 4px;
+        background: linear-gradient(90deg, var(--fp-green), var(--fp-green-light), var(--fp-orange), var(--fp-green));
+        background-size: 200% 100%;
+        animation: fpFlow 8s linear infinite;
+    }
+    @keyframes fpFlow { to { background-position: 200% 0; } }
+ 
+    /* Bandeau de réassurance */
+    .footer-premium .fp-trust {
+        width: 90%; max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px;
+        padding: 34px 0 10px;
+    }
+    .footer-premium .fp-trust-item {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 16px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        backdrop-filter: blur(6px);
+        transition: transform .35s ease, border-color .35s ease, background .35s ease;
+    }
+    .footer-premium .fp-trust-item:hover {
+        transform: translateY(-4px);
+        border-color: rgba(39,174,96,0.5);
+        background: rgba(39,174,96,0.07);
+    }
+    .footer-premium .fp-trust-ico {
+        flex: 0 0 42px; height: 42px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, rgba(39,174,96,0.25), rgba(39,174,96,0.05));
+        color: var(--fp-green-light); font-size: 1.05rem;
+    }
+    .footer-premium .fp-trust-item b { display: block; font-size: .85rem; color: var(--fp-white); font-weight: 600; }
+    .footer-premium .fp-trust-item small { font-size: .74rem; color: var(--fp-text); }
+ 
+    /* Grille principale */
+    .footer-premium .footer-container {
+        width: 90%; max-width: 1200px; margin: 0 auto;
+        padding: 40px 0 50px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 44px;
+    }
+    .footer-premium h4.fp-title {
+        position: relative;
+        color: var(--fp-white); font-weight: 700; font-size: .95rem;
+        text-transform: uppercase; letter-spacing: 1.4px;
+        margin: 0 0 24px; padding-bottom: 12px;
+    }
+    .footer-premium h4.fp-title::after {
+        content: ""; position: absolute; left: 0; bottom: 0;
+        width: 36px; height: 3px; border-radius: 3px;
+        background: linear-gradient(90deg, var(--fp-green), var(--fp-orange));
+    }
+ 
+    /* Marque */
+    .footer-premium .logo-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .footer-premium .footer-logo {
+        height: 48px; filter: drop-shadow(0 2px 8px rgba(39,174,96,0.35));
+        transition: transform .5s ease;
+    }
+    .footer-premium .logo-wrapper:hover .footer-logo { transform: rotate(-6deg) scale(1.08); }
+    .footer-premium .logo-wrapper h3 {
+        margin: 0; font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: 1.2px;
+    }
+    .footer-premium .logo-wrapper h3 span { color: var(--fp-green); }
+    .footer-premium .fp-tagline { margin: 0 0 18px; font-size: .82rem; line-height: 1.6; color: var(--fp-text); }
+ 
+    .footer-premium .footer-hours {
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+        padding: 14px 16px; border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.09);
+        margin-bottom: 22px;
+    }
+    .footer-premium .footer-hours p { margin: 0 0 8px; font-size: .85rem; color: #e3e8ec; }
+    .footer-premium .footer-hours p:last-child { margin: 0; }
+    .footer-premium .footer-hours i { color: var(--fp-orange); margin-right: 8px; }
+    .footer-premium .fp-status { font-size: .8rem; display: flex; align-items: center; gap: 8px; color: var(--fp-green); font-weight: 600; }
+    .footer-premium .status-dot {
+        display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+        background: var(--fp-green); box-shadow: 0 0 0 0 rgba(39,174,96,.7);
+        animation: fpPulse 2s infinite;
+    }
+    .footer-premium .fp-status.is-closed { color: #e74c3c; }
+    .footer-premium .fp-status.is-closed .status-dot { background: #e74c3c; animation: none; box-shadow: 0 0 8px #e74c3c; }
+    @keyframes fpPulse {
+        0% { box-shadow: 0 0 0 0 rgba(39,174,96,.65); }
+        70% { box-shadow: 0 0 0 9px rgba(39,174,96,0); }
+        100% { box-shadow: 0 0 0 0 rgba(39,174,96,0); }
+    }
+ 
+    /* Réseaux sociaux */
+    .footer-premium .social-icons { display: flex; gap: 12px; }
+    .footer-premium .social-btn {
+        display: flex; align-items: center; justify-content: center;
+        width: 42px; height: 42px; border-radius: 50%;
+        background: rgba(255,255,255,0.06); color: #fff; text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform .3s ease, background .3s ease, box-shadow .3s ease, border-color .3s ease;
+    }
+    .footer-premium .social-btn:hover { transform: translateY(-5px) scale(1.05); border-color: transparent; }
+    .footer-premium .social-btn.fb:hover { background: #1877f2; box-shadow: 0 8px 20px rgba(24,119,242,.4); }
+    .footer-premium .social-btn.wa:hover { background: #25d366; box-shadow: 0 8px 20px rgba(37,211,102,.4); }
+    .footer-premium .social-btn.ig:hover { background: linear-gradient(45deg,#f09433,#dc2743,#bc1888); box-shadow: 0 8px 20px rgba(220,39,67,.4); }
+ 
+    /* Contact */
+    .footer-premium .fp-contact-row {
+        display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px;
+    }
+    .footer-premium .fp-contact-ico {
+        flex: 0 0 38px; height: 38px; border-radius: 11px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.06); font-size: .9rem;
+        transition: transform .3s ease, background .3s ease;
+    }
+    .footer-premium .fp-contact-row:hover .fp-contact-ico { transform: scale(1.1); background: rgba(255,255,255,0.12); }
+    .footer-premium .fp-contact-row span,
+    .footer-premium .fp-contact-row a { color: #cfd6dc; font-size: .85rem; line-height: 1.5; text-decoration: none; align-self: center; transition: color .25s ease; }
+    .footer-premium .fp-contact-row a:hover { color: var(--fp-green-light); }
+    .footer-premium .fp-contact-row b { color: #fff; }
+ 
+    /* Paiements */
+    .footer-premium .footer-pay-icons { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+    .footer-premium .pay-badge {
+        background: rgba(255,255,255,0.92); padding: 0; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        height: 36px; width: 36px; overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        transition: transform .3s ease;
+    }
+    .footer-premium .pay-badge:hover { transform: translateY(-3px); }
+    .footer-premium .pay-badge img { height: 100%; width: 100%; object-fit: cover; }
+    .footer-premium .footer-pay-icons > i { font-size: 2.2rem; color: #fff; opacity: .9; transition: transform .3s ease, opacity .3s ease; }
+    .footer-premium .footer-pay-icons > i:hover { transform: translateY(-3px); opacity: 1; }
+ 
+    .footer-premium .footer-links ul { list-style: none; padding: 0; margin: 0; }
+    .footer-premium .footer-links li { margin-bottom: 12px; }
+    .footer-premium .footer-links li a {
+        display: inline-flex; align-items: center;
+        color: #cfd6dc; text-decoration: none; font-size: .86rem;
+        transition: color .25s ease, transform .25s ease;
+    }
+    .footer-premium .footer-links li a i { color: var(--fp-green); margin-right: 10px; width: 18px; text-align: center; }
+    .footer-premium .footer-links li a:hover { color: #fff; transform: translateX(6px); }
+ 
+    /* Copyright */
+    .footer-premium .footer-copyright {
+        background: var(--fp-bg-deep);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding: 20px 0; text-align: center; font-size: .8rem; color: #7f8c8d;
+    }
+    .footer-premium .footer-copyright p { margin: 0; padding: 0 16px; }
+    .footer-premium .footer-copyright .fp-heart { color: #e74c3c; display: inline-block; animation: fpBeat 1.6s ease-in-out infinite; }
+    .footer-premium .footer-copyright .fp-author { color: var(--fp-green-light); font-weight: 600; }
+    @keyframes fpBeat { 0%,100% { transform: scale(1);} 50% { transform: scale(1.25);} }
+ 
+    /* Bouton retour en haut */
+    .footer-premium .fp-totop {
+        position: absolute; right: 24px; top: 24px;
+        width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: .95rem;
+        transition: transform .3s ease, background .3s ease;
+    }
+    .footer-premium .fp-totop:hover { transform: translateY(-4px); background: var(--fp-green); border-color: transparent; }
+ 
+    @media (max-width: 600px) {
+        .footer-premium .footer-container { gap: 34px; padding-top: 24px; }
+        .footer-premium .fp-totop { top: 14px; right: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .footer-premium *, .footer-premium *::before { animation: none !important; transition: none !important; }
+    }
+</style>
+ 
+<footer class="footer-premium">
+    <div class="fp-topline"></div>
+    <button type="button" class="fp-totop" aria-label="Retour en haut" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+ 
+    <!-- BANDEAU RÉASSURANCE -->
+    <div class="fp-trust">
+        <div class="fp-trust-item">
+            <div class="fp-trust-ico"><i class="fas fa-truck"></i></div>
+            <div><b>Livraison express</b><small>Rapide et suivie</small></div>
+        </div>
+        <div class="fp-trust-item">
+            <div class="fp-trust-ico"><i class="fas fa-shield-alt"></i></div>
+            <div><b>Garantie qualité</b><small>Produits contrôlés</small></div>
+        </div>
+        <div class="fp-trust-item">
+            <div class="fp-trust-ico"><i class="fas fa-lock"></i></div>
+            <div><b>Paiement sécurisé</b><small>MVola, Visa, Mastercard</small></div>
+        </div>
+        <div class="fp-trust-item">
+            <div class="fp-trust-ico"><i class="fas fa-headset"></i></div>
+            <div><b>Service client</b><small>Du lundi au samedi</small></div>
+        </div>
+    </div>
+ 
+    <div class="footer-container">
+ 
+        <!-- SECTION 1 : LOGO & HORAIRES -->
+        <div class="footer-brand">
+            <div class="logo-wrapper">
+                <img src="https://imgur.com" alt="Logo SafeRun" class="footer-logo">
+                <h3>SAFERUN <span>MARKET</span></h3>
             </div>
-
-            <!-- SECTION 2 : ADRESSE & CONTACTS -->
-            <div class="footer-contact">
-                <h4 style="color: #fff; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 0; margin-bottom: 20px;">Adresse & Contact</h4>
-                <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px;">
-                    <i class="fas fa-map-marker-alt" style="color: #e74c3c; margin-top: 3px;"></i>
-                    <span style="color: #ccc; font-size: 0.85rem; line-height: 1.4;">Ankadikely-Ilafy<br><b>Antananarivo Avaradrano 103</b></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <i class="fas fa-envelope" style="color: #3498db;"></i>
-                    <a href="mailto:contact@saferunmarket.com" style="color: #ccc; text-decoration: none; font-size: 0.85rem;">contact@saferunmarket.com</a>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-phone-alt" style="color: #2ab7ca;"></i>
-                    <a href="tel:+261382453610" style="color: #ccc; text-decoration: none; font-size: 0.85rem; font-weight: bold;">+261 38 24 536 10</a>
-                </div>
+            <p class="fp-tagline">Vos courses en toute confiance : qualité, rapidité et sécurité, directement chez vous.</p>
+            <div class="footer-hours">
+                <p><i class="fas fa-clock"></i> <b>Lun - Sam :</b> 08h à 17h</p>
+                <p class="fp-status" id="fp-status">
+                    <span class="status-dot"></span>
+                    <span id="fp-status-text">Ouvert actuellement</span>
+                </p>
             </div>
-
-            <!-- SECTION 3 : LOGISTIQUE & PAIEMENTS -->
-            <div class="footer-links">
-                <h4 style="color: #fff; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 0; margin-bottom: 20px;">Paiement Sécurisé</h4>
-                <div class="footer-pay-icons" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                    <div class="pay-badge" style="background: rgba(255, 255, 255, 0.9); padding: 5px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: center; height: 32px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                        <img src="https://imgur.com" alt="MVola" style="height: 32px; width: 32px; object-fit: cover; border-radius: 8px;">
-                    </div>
-                    <i class="fab fa-cc-visa" style="font-size: 2rem; color: #fff;"></i>
-                    <i class="fab fa-cc-mastercard" style="font-size: 2rem; color: #fff;"></i>
-                </div>
-                <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem;">
-                    <li style="margin-bottom: 10px;"><a href="#" style="color: #ccc; text-decoration: none;"><i class="fas fa-truck" style="color: #27ae60; margin-right: 8px;"></i> Livraison Express</a></li>
-                    <li style="margin-bottom: 10px;"><a href="#" style="color: #ccc; text-decoration: none;"><i class="fas fa-shield-alt" style="color: #27ae60; margin-right: 8px;"></i> Garantie Qualité</a></li>
-                </ul>
+            <div class="social-icons">
+                <a href="#" class="social-btn fb" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="social-btn wa" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" class="social-btn ig" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
             </div>
         </div>
-
-        <!-- COPYRIGHT BAND -->
-        <div class="footer-copyright" style="background: #0b1118; border-top: 1px solid rgba(255, 255, 255, 0.05); padding: 20px 0; text-align: center; font-size: 0.8rem; color: #7f8c8d;">
-            <p style="margin: 0;">© 2026 SafeRun Market. Développé avec ❤ par MJ-R.</p>
+ 
+        <!-- SECTION 2 : ADRESSE & CONTACTS -->
+        <div class="footer-contact">
+            <h4 class="fp-title">Adresse &amp; Contact</h4>
+            <div class="fp-contact-row">
+                <div class="fp-contact-ico"><i class="fas fa-map-marker-alt" style="color:#e74c3c;"></i></div>
+                <span>Ankadikely-Ilafy<br><b>Antananarivo Avaradrano 103</b></span>
+            </div>
+            <div class="fp-contact-row">
+                <div class="fp-contact-ico"><i class="fas fa-envelope" style="color:#3498db;"></i></div>
+                <a href="mailto:contact@saferunmarket.com">contact@saferunmarket.com</a>
+            </div>
+            <div class="fp-contact-row">
+                <div class="fp-contact-ico"><i class="fas fa-phone-alt" style="color:#2ab7ca;"></i></div>
+                <a href="tel:+261382453610" style="font-weight:600;">+261 38 24 536 10</a>
+            </div>
         </div>
-    </footer>
+ 
+        <!-- SECTION 3 : LOGISTIQUE & PAIEMENTS -->
+        <div class="footer-links">
+            <h4 class="fp-title">Paiement Sécurisé</h4>
+            <div class="footer-pay-icons">
+                <div class="pay-badge">
+                    <img src="https://imgur.com" alt="MVola">
+                </div>
+                <i class="fab fa-cc-visa" aria-label="Visa"></i>
+                <i class="fab fa-cc-mastercard" aria-label="Mastercard"></i>
+            </div>
+            <ul>
+                <li><a href="#"><i class="fas fa-truck"></i> Livraison Express</a></li>
+                <li><a href="#"><i class="fas fa-shield-alt"></i> Garantie Qualité</a></li>
+            </ul>
+        </div>
+    </div>
+ 
+    <!-- COPYRIGHT BAND -->
+    <div class="footer-copyright">
+        <p>© 2026 SafeRun Market. Tous droits réservés. Développé avec <span class="fp-heart">❤</span> par <span class="fp-author">MJ-R</span>.</p>
+    </div>
+</footer>
+ 
+<script>
+/* Statut ouvert/fermé selon l'heure de Madagascar (Lun-Sam, 08h-17h).
+   Isolé dans une fonction : n'interfère avec aucun autre script de la page. */
+(function () {
+    try {
+        var box = document.getElementById('fp-status');
+        var txt = document.getElementById('fp-status-text');
+        if (!box || !txt) return;
+        var parts = new Intl.DateTimeFormat('fr-FR', {
+            timeZone: 'Indian/Antananarivo', weekday: 'short', hour: 'numeric', hour12: false
+        }).formatToParts(new Date());
+        var day = parts.find(function (p) { return p.type === 'weekday'; }).value.toLowerCase();
+        var hour = parseInt(parts.find(function (p) { return p.type === 'hour'; }).value, 10) % 24;
+        var open = day.indexOf('dim') !== 0 && hour >= 8 && hour < 17;
+        box.classList.toggle('is-closed', !open);
+        txt.textContent = open ? 'Ouvert actuellement' : 'Fermé actuellement';
+    } catch (e) { /* en cas d'erreur, le texte statique reste affiché */ }
+})();
+</script>
     <script src="js/boutique-moteur.js"></script>
     <script src="js/boutique-extensions.js"></script>
 </body>
