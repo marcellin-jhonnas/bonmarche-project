@@ -7,7 +7,10 @@ const CACHE_NAME = 'saferun-v1';
 // On ne met en cache que les ressources vitales pour éviter tout risque de 404
 const assets = [
   'index.html',
-  'manifest.json'
+  'boutique.html',
+  'manifest.json',
+  'js/boutique-moteur.js',
+  'js/boutique-extensions.js'
 ];
 
 // 1. Installation : boucle tolérante qui n'échoue jamais
