@@ -1,9 +1,19 @@
 (function() {
+    // Images de secours uniquement (le menu utilise d'abord l'image réelle d'un produit de la boutique)
     const IMAGES_DEMO_BOUTIQUES = {
         "VETEMENTS": "https://i.imgur.com/jKHHTgl.jpeg", 
         "CHAUSSURES": "https://i.imgur.com/Fo4VcB7.jpeg",
         "DEFAUT": "https://i.imgur.com/L5uiDsH.png"
     };
+
+    // [AJOUT] Outils pour le menu dynamique
+    function normaliserCle(texte) {
+        return String(texte || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+    }
+
+    function echapper(texte) {
+        return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         // Clic à l'extérieur pour fermer le menu déroulant haut
@@ -39,19 +49,43 @@
         window.genererMenuDropdownBoutiques(produits);
     };
 
+    // [MODIFIÉ] Le menu est construit à partir des catégories réellement présentes dans la Sheet
     window.genererMenuDropdownBoutiques = function(tousLesProduits) {
         const dropdown = document.getElementById("liste-dropdown-boutiques");
         if (!dropdown) return;
-        let boutiques = ["VETEMENTS", "CHAUSSURES"]; // Boutiques par défaut
+
+        let source = Array.isArray(tousLesProduits) ? tousLesProduits : [];
+        if (!source.length) {
+            try { source = JSON.parse(localStorage.getItem("saferun_cache_produits") || "[]"); } catch (e) { source = []; }
+        }
+
+        // 1 boutique par catégorie + 1re image valide d'un produit non épuisé de cette catégorie
+        const boutiques = new Map();
+        source.forEach(p => {
+            const nom = String((p && p.Categorie) || "").trim();
+            if (!nom) return;
+            const cle = normaliserCle(nom);
+            if (!boutiques.has(cle)) boutiques.set(cle, { cle: cle, nom: nom, image: "" });
+            const b = boutiques.get(cle);
+            const url = String(p.Image || "").trim();
+            const epuise = String(p.Options_Disponibles || "").trim().toUpperCase() === "EPUISE";
+            if (!b.image && !epuise && /^https?:\/\//i.test(url)) b.image = url;
+        });
+
+        // Secours si la Sheet n'a pas encore été chargée
+        if (!boutiques.size) {
+            ["VETEMENTS", "CHAUSSURES"].forEach(n => boutiques.set(n, { cle: n, nom: n, image: "" }));
+        }
 
         dropdown.innerHTML = "";
         boutiques.forEach(b => {
-            const nomPropre = b.charAt(0) + b.slice(1).toLowerCase();
-            const urlImage = IMAGES_DEMO_BOUTIQUES[b] || IMAGES_DEMO_BOUTIQUES["DEFAUT"];
+            const nomPropre = b.nom.charAt(0).toUpperCase() + b.nom.slice(1).toLowerCase();
+            const secours = IMAGES_DEMO_BOUTIQUES[b.cle] || IMAGES_DEMO_BOUTIQUES["DEFAUT"];
+            const urlImage = b.image || secours;
             const item = document.createElement("a");
-            item.href = `boutique.html?type=${nomPropre}`;
+            item.href = `boutique.html?type=${encodeURIComponent(b.nom)}`;
             item.style = "display:flex; justify-content:space-between; align-items:center; padding:10px 15px; color:#1a1a1a; text-decoration:none; font-size:0.85rem; font-weight:600; border-bottom:1px solid #f9f9f9;";
-            item.innerHTML = `<div><span>Espace ${nomPropre}</span></div><img src="${urlImage}" style="width:28px; height:28px; object-fit:contain; margin-left:10px;">`;
+            item.innerHTML = `<div><span>Espace ${echapper(nomPropre)}</span></div><img src="${echapper(urlImage)}" onerror="this.onerror=null;this.src='${IMAGES_DEMO_BOUTIQUES["DEFAUT"]}'" style="width:28px; height:28px; object-fit:cover; border-radius:6px; margin-left:10px;">`;
             dropdown.appendChild(item);
         });
     };
