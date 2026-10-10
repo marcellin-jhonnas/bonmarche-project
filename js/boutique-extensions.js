@@ -5,16 +5,16 @@
         "CHAUSSURES": "https://i.imgur.com/Fo4VcB7.jpeg",
         "DEFAUT": "https://i.imgur.com/L5uiDsH.png"
     };
-
+ 
     // [AJOUT] Outils pour le menu dynamique
     function normaliserCle(texte) {
         return String(texte || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     }
-
+ 
     function echapper(texte) {
         return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
-
+ 
     document.addEventListener("DOMContentLoaded", () => {
         // Clic à l'extérieur pour fermer le menu déroulant haut
         document.addEventListener("click", function(e) {
@@ -38,7 +38,7 @@
             searchWrapper.parentNode.insertBefore(menuContainer, searchWrapper);
         }
     });
-
+ 
     window.toggleMenuBoutiques = function(event) {
         event.stopPropagation();
         const dropdown = document.getElementById("liste-dropdown-boutiques");
@@ -48,17 +48,17 @@
         const produits = window.tousLesProduits || [];
         window.genererMenuDropdownBoutiques(produits);
     };
-
+ 
     // [MODIFIÉ] Le menu est construit à partir des catégories réellement présentes dans la Sheet
     window.genererMenuDropdownBoutiques = function(tousLesProduits) {
         const dropdown = document.getElementById("liste-dropdown-boutiques");
         if (!dropdown) return;
-
+ 
         let source = Array.isArray(tousLesProduits) ? tousLesProduits : [];
         if (!source.length) {
             try { source = JSON.parse(localStorage.getItem("saferun_cache_produits") || "[]"); } catch (e) { source = []; }
         }
-
+ 
         // 1 boutique par catégorie + 1re image valide d'un produit non épuisé de cette catégorie
         const boutiques = new Map();
         source.forEach(p => {
@@ -71,12 +71,12 @@
             const epuise = String(p.Options_Disponibles || "").trim().toUpperCase() === "EPUISE";
             if (!b.image && !epuise && /^https?:\/\//i.test(url)) b.image = url;
         });
-
+ 
         // Secours si la Sheet n'a pas encore été chargée
         if (!boutiques.size) {
             ["VETEMENTS", "CHAUSSURES"].forEach(n => boutiques.set(n, { cle: n, nom: n, image: "" }));
         }
-
+ 
         dropdown.innerHTML = "";
         boutiques.forEach(b => {
             const nomPropre = b.nom.charAt(0).toUpperCase() + b.nom.slice(1).toLowerCase();
@@ -89,7 +89,7 @@
             dropdown.appendChild(item);
         });
     };
-
+ 
     window.genererStructureOptionsStock = function(produit) {
         const optionsBrutes = produit.Options_Disponibles ? produit.Options_Disponibles.trim() : "";
         if (optionsBrutes.toUpperCase() === "EPUISE") return `<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">Rupture de stock</span>`;
@@ -100,7 +100,7 @@
         listeOptions.forEach(opt => { htmlSelect += `<option value="${opt}">${opt}</option>`; });
         return htmlSelect + `</select></div>`;
     };
-
+ 
     window.ajouterAuPanierNouveauSysteme = function(produitId, categorie) {
         const selecteur = document.getElementById(`opt-taille-${produitId}`);
         const optionChoisie = selecteur ? selecteur.value : "Unique";
@@ -110,193 +110,256 @@
         alert(`Produit ajouté au panier avec l'option : ${optionChoisie}`);
     };
 })();
-// --- MODULE DE CHAT SYNCHRONISÉ ENTRE PAGES (PWA COMPATIBLE) ---
-
-// Ouvrir ou fermer la fenêtre de discussion
-window.toggleChatExtension = function() {
-    const chatWindow = document.getElementById('chat-window');
-    if (!chatWindow) return;
-    
-    if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
-        chatWindow.style.display = "flex";
-        window.chargerHistoriqueMessagesPartages(); // Charger les messages au moment de l'ouverture
-    } else {
-        chatWindow.style.display = "none";
-    }
-};
-
-// Charger et afficher l'historique de discussion partagé
-window.chargerHistoriqueMessagesPartages = function() {
-    const msgContainer = document.getElementById('chat-messages');
-    if (!msgContainer) return;
-    
-    // Récupérer la base de discussion commune de la PWA
-    const historiqueBrut = localStorage.getItem("saferun_chat_history");
-    const historique = historiqueBrut ? JSON.parse(historiqueBrut) : [
-        { expediteur: "admin", texte: "Manao ahoana! Inona no afaka ampiana anao?" } // Message d'accueil par défaut
-    ];
-
-    msgContainer.innerHTML = ""; // Nettoyer l'affichage avant de recharger
-
-    historique.forEach(msg => {
-        const bulle = document.createElement("div");
-        
-        // Appliquer exactement vos styles CSS d'origine pour les bulles de discussion
-        bulle.style.position = "relative";
-        bulle.style.padding = "8px 12px";
-        bulle.style.fontSize = "0.92rem";
-        bulle.style.lineHeight = "1.4";
-        bulle.style.maxWidth = "75%";
-        bulle.style.wordWrap = "break-word";
-        bulle.style.borderRadius = msg.expediteur === "client" ? "15px 15px 0 15px" : "15px 15px 15px 0";
-        bulle.style.background = msg.expediteur === "client" ? "#dcf8c6" : "#ffffff";
-        bulle.style.alignSelf = msg.expediteur === "client" ? "flex-end" : "flex-start";
-        bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
-        
-        bulle.innerText = msg.texte;
-        msgContainer.appendChild(bulle);
-    });
-
-    // Forcer le défilement automatique vers le bas de la discussion
-    msgContainer.scrollTop = msgContainer.scrollHeight;
-};
-
-// Fonction d'envoi de message connectée en direct avec votre Google Sheet
-window.envoyerMessageChatExtension = function() {
-    const input = document.getElementById("chat-input");
-    if (!input || !input.value.trim()) return;
-
-    const texteMessage = input.value.trim();
-    const userNom = document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Utilisateur";
-    const userTel = document.getElementById("side-user-tel") ? document.getElementById("side-user-tel").innerText : "Non renseigné";
-
-    // 1. Mise à jour de la mémoire locale PWA instantanée (Ce que le client voit)
-    const historiqueBrut = localStorage.getItem("saferun_chat_history");
-    const historique = historiqueBrut ? JSON.parse(historiqueBrut) : [];
-    
-    const nouveauMessage = { expediteur: "client", texte: texteMessage, date: new Date().toISOString() };
-    historique.push(nouveauMessage);
-    localStorage.setItem("saferun_chat_history", JSON.stringify(historique));
-
-    // Rafraîchir l'écran du chat immédiatement et vider le champ de saisie
-    input.value = "";
-    window.chargerHistoriqueMessagesPartages();
-
-    // 2. TRANSMISSION EN DIRECT AU GOOGLE SHEET (Ce que vous recevez sur votre tableau)
-    const API_URL = "https://google.com";
-
-    const donneesAction = {
-        action: "nouveauMessageChat", // L'action lue par votre script Google Apps Script
-        nom: userNom,
-        telephone: userTel,
-        message: texteMessage,
-        provenance: "Boutique Exclusive"
-    };
-
-    // Envoi asynchrone sans bloquer l'animation du chat
-    fetch(API_URL, {
-        method: "POST",
-        mode: "no-cors", // Évite les blocages de sécurité CORS sur les serveurs de test
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(donneesAction)
-    })
-    .then(() => console.log("[SafeRun Live] Message synchronisé avec le tableur d'administration."))
-    .catch(err => console.warn("[SafeRun] Erreur d'envoi réseau au Sheet, stocké en attente hors-ligne.", err));
-};
-
-// 📸 GESTION ET AFFICHAGE DES PHOTOS EN MINIATURES DANS LE CHAT ET ENVOI AU SHEET
-window.envoyerPhotoChatExtension = function(event) {
-    const file = event.target.files[0]; // Récupérer le premier fichier sélectionné
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64Image = e.target.result; // L'image convertie en texte sécurisé pour le stockage
-
-        // Étape A : Sauvegarde de l'image directement dans l'historique partagé
-        const historique = JSON.parse(localStorage.getItem("saferun_chat_history") || "[]");
-        historique.push({ expediteur: "client", texte: base64Image, date: new Date().toISOString() });
-        localStorage.setItem("saferun_chat_history", JSON.stringify(historique));
-        
-        // Mettre à jour l'affichage sur la boutique
-        if (typeof window.chargerHistoriqueMessagesPartages === "function") {
-            window.chargerHistoriqueMessagesPartages();
+ 
+// =========================================================================
+// MODULE DE CHAT (branché sur le Google Apps Script : feuille "Chat")
+// - envoi : action "sendChatMessage" (texte ou photo, la photo part sur Cloudinary côté script)
+// - réception : action "readChat" (affiche aussi les réponses de l'admin et de l'assistante)
+// - l'historique local "saferun_chat_history" reste partagé avec la page d'accueil
+// Tout est dans une fonction isolée : aucun risque de conflit de noms avec main.js
+// =========================================================================
+(function () {
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+    const CLE_HISTORIQUE = "saferun_chat_history";
+    const INTERVALLE_MS = 10000;   // vérification des nouvelles réponses quand le chat est ouvert
+    let timer = null;
+ 
+    /* ------------------------------ Outils ------------------------------ */
+ 
+    // Identité du client : EXACTEMENT la même règle que la page d'accueil (téléphone, sinon GUEST-xxxx)
+    // → une seule conversation par client, quelle que soit la page utilisée.
+    function idClient() {
+        // Si main.js est chargé sur la page, on utilise directement sa fonction (garantie d'identité unique)
+        if (typeof window.obtenirIdentiteChat === "function") {
+            try { return window.obtenirIdentiteChat(); } catch (e) {}
         }
-
-        // Étape B : Envoi automatique de la photo convertie vers votre Google Sheet d'administration
-        const API_URL = "https://google.com";
-        
-        fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                action: "envoiPhotoChat",
-                image: base64Image,
-                nom: document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Client de Tana"
-            })
+        // Sinon : copie fidèle de la même règle
+        try {
+            const telClient = localStorage.getItem('saferun_tel');
+            if (telClient && telClient !== "") return telClient;
+ 
+            let guestId = localStorage.getItem('saferun_guest_id');
+            if (!guestId) {
+                guestId = "GUEST-" + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('saferun_guest_id', guestId);
+            }
+            return guestId;
+        } catch (e) {
+            return "GUEST-" + Math.floor(1000 + Math.random() * 9000);
+        }
+    }
+ 
+    function lireHistorique() {
+        try { return JSON.parse(localStorage.getItem(CLE_HISTORIQUE) || "[]"); } catch (e) { return []; }
+    }
+ 
+    function ecrireHistorique(liste) {
+        try { localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(liste)); } catch (e) {
+            console.warn("[SafeRun] Mémoire locale pleine : l'historique du chat n'a pas pu être sauvegardé.");
+        }
+    }
+ 
+    function estImage(texte) {
+        return /^data:image/.test(texte) ||
+               /^https?:\/\/res\.cloudinary\.com\//i.test(texte) ||
+               /^https?:\/\/\S+\.(png|jpe?g|webp|gif)(\?\S*)?$/i.test(texte);
+    }
+ 
+    // Réduit la photo avant envoi (max 1024 px, JPEG) : plus rapide et ne remplit pas la mémoire du téléphone
+    function reduireImage(file, maxCote, qualite) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const ratio = Math.min(1, maxCote / Math.max(img.width, img.height));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.round(img.width * ratio);
+                    canvas.height = Math.round(img.height * ratio);
+                    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", qualite));
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
         });
-    };
-    reader.readAsDataURL(file);
-};
-
-// =========================================================================
-// SYNCHRONISATION AUTOMATIQUE DU CHAT SUR LE MARCHÉ PRINCIPAL (INDEX.HTML)
-// =========================================================================
-
-// Cette fonction s'exécute uniquement si on se trouve sur la page d'accueil index.html
-function synchroniserChatSurMarchePrincipal() {
-    // Vérifier si la zone de messages du marché principal existe sur la page actuelle
-    const msgContainerMarche = document.getElementById('chat-messages');
-    if (!msgContainerMarche || window.location.search.includes('type=')) return;
-
-    // Lire la clé commune partagée dans la mémoire locale de la PWA
-    const historiqueBrut = localStorage.getItem("saferun_chat_history");
-    if (!historiqueBrut) return;
-
-    const historique = JSON.parse(historiqueBrut);
-    msgContainerMarche.innerHTML = ""; // Vider l'ancien affichage du marché pour éviter les doublons
-
-    historique.forEach(msg => {
+    }
+ 
+    // Bulle de discussion (mêmes styles qu'avant) ; variante "marche" pour la page d'accueil
+    function creerBulle(msg, variante) {
+        const client = msg.expediteur === "client";
         const bulle = document.createElement("div");
-        
-        // Appliquer exactement la structure et les classes CSS d'origine de votre main.css
-        bulle.className = msg.expediteur === "client" ? "message msg-client" : "message msg-admin";
-        
-        // Styles de base de vos bulles de discussion d'origine
+        const texte = String(msg.texte || "");
+ 
+        if (variante === "marche") {
+            bulle.className = client ? "message msg-client" : "message msg-admin";
+            bulle.style.marginBottom = "10px";
+        } else {
+            bulle.style.maxWidth = "75%";
+            bulle.style.background = client ? "#dcf8c6" : "#ffffff";
+        }
         bulle.style.position = "relative";
-        bulle.style.marginBottom = "10px";
         bulle.style.padding = "8px 12px";
         bulle.style.fontSize = "0.92rem";
         bulle.style.lineHeight = "1.4";
-        bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
         bulle.style.wordWrap = "break-word";
-        bulle.style.borderRadius = msg.expediteur === "client" ? "15px 15px 0 15px" : "15px 15px 15px 0";
-        bulle.style.alignSelf = msg.expediteur === "client" ? "flex-end" : "flex-start";
-
-        // Si le message est une image stockée
-        if (msg.texte.startsWith("data:image")) {
-            bulle.innerHTML = `<img src="${msg.texte}" style="max-width: 100%; border-radius: 10px; display: block; margin-top: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">`;
+        bulle.style.borderRadius = client ? "15px 15px 0 15px" : "15px 15px 15px 0";
+        bulle.style.alignSelf = client ? "flex-end" : "flex-start";
+        bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
+ 
+        if (estImage(texte)) {
+            const img = document.createElement("img");
+            img.src = texte;
+            img.style.cssText = "max-width: 100%; border-radius: 10px; display: block; margin-top: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);";
+            bulle.appendChild(img);
         } else {
-            bulle.innerText = msg.texte;
+            bulle.textContent = texte;
         }
-
-        msgContainerMarche.appendChild(bulle);
-    });
-
-    // Forcer le défilement automatique vers le bas de la discussion du marché
-    msgContainerMarche.scrollTop = msgContainerMarche.scrollHeight;
-}
-
-// Intercepter chaque modification du localStorage pour mettre à jour le chat de l'accueil en direct
-window.addEventListener('storage', (e) => {
-    if (e.key === "saferun_chat_history") {
-        synchroniserChatSurMarchePrincipal();
-        // Si la fenêtre de chat de la sous-boutique est ouverte, on la met à jour aussi
-        if (typeof window.chargerHistoriqueMessagesPartages === "function") {
-            window.chargerHistoriqueMessagesPartages();
-        }
+        return bulle;
     }
-});
-
-// Lancer la synchronisation initiale après un court instant pour laisser le temps à votre main.js de s'initialiser
-setTimeout(synchroniserChatSurMarchePrincipal, 1000);
+ 
+    /* ------------------------- Affichage du chat ------------------------- */
+ 
+    // Charger et afficher l'historique de discussion partagé (fenêtre de la boutique)
+    window.chargerHistoriqueMessagesPartages = function () {
+        const msgContainer = document.getElementById('chat-messages');
+        if (!msgContainer) return;
+ 
+        const historiqueBrut = localStorage.getItem(CLE_HISTORIQUE);
+        let historique = [];
+        try { historique = historiqueBrut ? JSON.parse(historiqueBrut) : []; } catch (e) { historique = []; }
+        if (!historique.length) {
+            historique = [{ expediteur: "admin", texte: "Manao ahoana! Inona no afaka ampiana anao?" }]; // Message d'accueil par défaut
+        }
+ 
+        msgContainer.innerHTML = "";
+        historique.forEach(msg => msgContainer.appendChild(creerBulle(msg, "boutique")));
+        msgContainer.scrollTop = msgContainer.scrollHeight;   // défilement automatique vers le bas
+    };
+ 
+    // Synchronisation du chat sur le marché principal (index.html)
+    window.synchroniserChatSurMarchePrincipal = function () {
+        const msgContainerMarche = document.getElementById('chat-messages');
+        if (!msgContainerMarche || window.location.search.includes('type=')) return;
+ 
+        const historiqueBrut = localStorage.getItem(CLE_HISTORIQUE);
+        if (!historiqueBrut) return;
+        let historique = [];
+        try { historique = JSON.parse(historiqueBrut); } catch (e) { return; }
+ 
+        msgContainerMarche.innerHTML = "";
+        historique.forEach(msg => msgContainerMarche.appendChild(creerBulle(msg, "marche")));
+        msgContainerMarche.scrollTop = msgContainerMarche.scrollHeight;
+    };
+ 
+    function rafraichirAffichage() {
+        window.chargerHistoriqueMessagesPartages();
+        window.synchroniserChatSurMarchePrincipal();
+    }
+ 
+    /* --------------------------- Réception serveur --------------------------- */
+ 
+    function rafraichirDepuisServeur() {
+        return fetch(API_URL + "?action=readChat&idClient=" + encodeURIComponent(idClient()))
+            .then(r => r.json())
+            .then(liste => {
+                if (!Array.isArray(liste) || !liste.length) return;
+ 
+                const serveur = liste.map(m => ({
+                    expediteur: String(m.expediteur || "").toLowerCase().includes("admin") ? "admin" : "client",
+                    texte: String(m.message || ""),
+                    date: m.date
+                }));
+ 
+                // On garde les messages envoyés depuis moins d'une minute que le serveur n'a pas encore renvoyés
+                const enAttente = lireHistorique().filter(m =>
+                    m.pending &&
+                    (Date.now() - new Date(m.date).getTime()) < 60000 &&
+                    !serveur.some(s => s.expediteur === "client" && s.texte === m.texte)
+                );
+ 
+                ecrireHistorique(serveur.concat(enAttente));
+                rafraichirAffichage();
+            })
+            .catch(err => console.warn("[SafeRun] Lecture du chat impossible pour l'instant.", err));
+    }
+ 
+    /* ----------------------------- Envoi serveur ----------------------------- */
+ 
+    function envoyerAuServeur(extra) {
+        const corps = Object.assign({
+            action: "sendChatMessage",      // l'action réellement lue par votre Apps Script
+            idClient: idClient(),
+            expediteur: "Client"
+        }, extra);
+ 
+        return fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",                // évite les blocages CORS ; la réponse n'est pas lisible
+            body: JSON.stringify(corps)
+        }).catch(err => console.warn("[SafeRun] Erreur d'envoi du message au serveur.", err));
+    }
+ 
+    function ajouterMessageLocal(texte) {
+        const historique = lireHistorique();
+        historique.push({ expediteur: "client", texte: texte, date: new Date().toISOString(), pending: true });
+        ecrireHistorique(historique);
+        rafraichirAffichage();
+    }
+ 
+    // Ouvrir ou fermer la fenêtre de discussion
+    window.toggleChatExtension = function () {
+        const chatWindow = document.getElementById('chat-window');
+        if (!chatWindow) return;
+ 
+        if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+            chatWindow.style.display = "flex";
+            window.chargerHistoriqueMessagesPartages();
+            rafraichirDepuisServeur();
+            if (!timer) timer = setInterval(rafraichirDepuisServeur, INTERVALLE_MS);
+        } else {
+            chatWindow.style.display = "none";
+            if (timer) { clearInterval(timer); timer = null; }
+        }
+    };
+ 
+    // Envoi d'un message texte
+    window.envoyerMessageChatExtension = function () {
+        const input = document.getElementById("chat-input");
+        if (!input || !input.value.trim()) return;
+ 
+        const texteMessage = input.value.trim();
+        input.value = "";
+        ajouterMessageLocal(texteMessage);   // affichage immédiat côté client
+ 
+        envoyerAuServeur({ message: texteMessage })
+            .then(() => setTimeout(rafraichirDepuisServeur, 2000));
+    };
+ 
+    // Envoi d'une photo (réduite avant envoi, puis hébergée par le script sur Cloudinary)
+    window.envoyerPhotoChatExtension = function (event) {
+        const file = event.target.files[0];
+        if (!file || !/^image\//.test(file.type)) return;
+ 
+        reduireImage(file, 1024, 0.7)
+            .then(dataUrl => {
+                ajouterMessageLocal(dataUrl);
+                return envoyerAuServeur({ image: dataUrl, message: "" });
+            })
+            .then(() => setTimeout(rafraichirDepuisServeur, 4000))
+            .catch(err => console.warn("[SafeRun] Photo illisible.", err));
+ 
+        event.target.value = "";   // permet de renvoyer la même photo plus tard
+    };
+ 
+    // Mise à jour en direct quand une autre page/onglet modifie l'historique
+    window.addEventListener('storage', (e) => {
+        if (e.key === CLE_HISTORIQUE) rafraichirAffichage();
+    });
+ 
+    // Synchronisation initiale après un court instant pour laisser le temps à main.js de s'initialiser
+    setTimeout(window.synchroniserChatSurMarchePrincipal, 1000);
+})();
+ 
