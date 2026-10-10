@@ -248,6 +248,13 @@ function traiterEtAfficherGrilleEtanche(produits, cleFiltre) {
     if (!grille) return;
     grille.innerHTML = ""; // Vider l'icône de chargement
 
+    // IDENTIFIANT STABLE : la feuille n'a pas forcément de colonne ID -> on le déduit du nom
+    (produits || []).forEach(p => {
+        if (p && (p.ID === undefined || p.ID === null || String(p.ID).trim() === "")) {
+            p.ID = "P-" + normaliserCle(p.Nom).replace(/[^A-Z0-9]/g, "");
+        }
+    });
+
     // FILTRAGE STRICT : la catégorie doit correspondre à la boutique ouverte
     const produitsFiltres = produits.filter(p => normaliserCle(p.Categorie) === cleFiltre);
 

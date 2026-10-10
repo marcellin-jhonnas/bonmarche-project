@@ -5,12 +5,12 @@
         "CHAUSSURES": "https://i.imgur.com/Fo4VcB7.jpeg",
         "DEFAUT": "https://i.imgur.com/L5uiDsH.png"
     };
- 
+
     // [AJOUT] Outils pour le menu dynamique
     function normaliserCle(texte) {
         return String(texte || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     }
- 
+
     // Répare les liens d'images "page" (imgur.com/xxxx, Google Drive) en liens directs
     function normaliserUrlImage(brut) {
         let url = String(brut || "").trim();
@@ -24,11 +24,11 @@
         if (m) return "https://lh3.googleusercontent.com/d/" + m[1];
         return url;
     }
- 
+
     function echapper(texte) {
         return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
- 
+
     document.addEventListener("DOMContentLoaded", () => {
         // Clic à l'extérieur pour fermer le menu déroulant haut
         document.addEventListener("click", function(e) {
@@ -52,7 +52,7 @@
             searchWrapper.parentNode.insertBefore(menuContainer, searchWrapper);
         }
     });
- 
+
     window.toggleMenuBoutiques = function(event) {
         event.stopPropagation();
         const dropdown = document.getElementById("liste-dropdown-boutiques");
@@ -62,17 +62,17 @@
         const produits = window.tousLesProduits || [];
         window.genererMenuDropdownBoutiques(produits);
     };
- 
+
     // [MODIFIÉ] Le menu est construit à partir des catégories réellement présentes dans la Sheet
     window.genererMenuDropdownBoutiques = function(tousLesProduits) {
         const dropdown = document.getElementById("liste-dropdown-boutiques");
         if (!dropdown) return;
- 
+
         let source = Array.isArray(tousLesProduits) ? tousLesProduits : [];
         if (!source.length) {
             try { source = JSON.parse(localStorage.getItem("saferun_cache_produits") || "[]"); } catch (e) { source = []; }
         }
- 
+
         // 1 boutique par catégorie + 1re image valide d'un produit non épuisé de cette catégorie
         const boutiques = new Map();
         source.forEach(p => {
@@ -85,12 +85,12 @@
             const epuise = String(p.Options_Disponibles || "").trim().toUpperCase() === "EPUISE";
             if (!b.image && !epuise && /^https?:\/\//i.test(url)) b.image = url;
         });
- 
+
         // Secours si la Sheet n'a pas encore été chargée
         if (!boutiques.size) {
             ["VETEMENTS", "CHAUSSURES"].forEach(n => boutiques.set(n, { cle: n, nom: n, image: "" }));
         }
- 
+
         dropdown.innerHTML = "";
         boutiques.forEach(b => {
             const nomPropre = b.nom.charAt(0).toUpperCase() + b.nom.slice(1).toLowerCase();
@@ -103,7 +103,7 @@
             dropdown.appendChild(item);
         });
     };
- 
+
     window.genererStructureOptionsStock = function(produit) {
         const optionsBrutes = produit.Options_Disponibles ? produit.Options_Disponibles.trim() : "";
         if (optionsBrutes.toUpperCase() === "EPUISE") return `<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">Rupture de stock</span>`;
@@ -114,17 +114,80 @@
         listeOptions.forEach(opt => { htmlSelect += `<option value="${opt}">${opt}</option>`; });
         return htmlSelect + `</select></div>`;
     };
- 
+
+    /* ---- PANIER PARTAGÉ avec main.js (même clé localStorage : saferun_panier) ---- */
+    function lirePanier() {
+        try { const p = JSON.parse(localStorage.getItem('saferun_panier') || '[]'); return Array.isArray(p) ? p : []; }
+        catch (err) { return []; }
+    }
+    function compterArticles() {
+        let n = 0;
+        lirePanier().forEach(a => { n += Number(a.quantite) || 0; });
+        try {
+            const snap = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || '[]');
+            if (Array.isArray(snap)) snap.forEach(a => { n += Number(a.quantite) || 0; });
+        } catch (err) {}
+        return n;
+    }
+    function afficherToast(html) {
+        let t = document.getElementById('sr-toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'sr-toast';
+            t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 18px;border-radius:12px;font:500 0.85rem Poppins,sans-serif;z-index:100000;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center;';
+            document.body.appendChild(t);
+        }
+        t.innerHTML = html;
+        t.style.display = 'block';
+        clearTimeout(t._t);
+        t._t = setTimeout(() => { t.style.display = 'none'; }, 3200);
+    }
+    function mettreAJourBoutonPanier() {
+        if (!document.getElementById('grille-boutique-dediee')) return;
+        let b = document.getElementById('sr-btn-panier');
+        if (!b) {
+            b = document.createElement('a');
+            b.id = 'sr-btn-panier';
+            b.href = 'index.html?panier=1';
+            b.style.cssText = 'position:fixed;right:16px;bottom:20px;background:#27ae60;color:#fff;padding:12px 18px;border-radius:30px;font:600 0.9rem Poppins,sans-serif;text-decoration:none;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.25);';
+            document.body.appendChild(b);
+        }
+        const n = compterArticles();
+        b.style.display = n > 0 ? 'block' : 'none';
+        b.innerHTML = '\uD83D\uDED2 Panier (' + n + ')';
+    }
+    function ajouterAuPanierPartage(produitId, option) {
+        const liste = window.tousLesProduits || [];
+        const prod = liste.find(p => String(p.ID) === String(produitId));
+        if (!prod) { afficherToast("Produit introuvable, rechargez la page."); return; }
+
+        if (!localStorage.getItem('saferun_secteur_valide')) {
+            afficherToast('Choisissez d\'abord votre zone de livraison sur <a href="index.html" style="color:#7CFC9A;font-weight:700;">la page d\'accueil</a>.');
+            return;
+        }
+
+        const nom = (option && option !== "Unique") ? prod.Nom + " [" + option + "]" : prod.Nom;
+        const prix = Number(String(prod.Prix).replace(/[^0-9.]/g, "")) || 0;
+        const panier = lirePanier();
+        const ligne = panier.find(a => a.nom === nom);
+        if (ligne) ligne.quantite = (Number(ligne.quantite) || 0) + 1;
+        else panier.push({ nom: nom, prix: prix, quantite: 1 });
+        localStorage.setItem('saferun_panier', JSON.stringify(panier));
+
+        afficherToast('\u2705 ' + nom + ' ajouté au panier');
+        mettreAJourBoutonPanier();
+    }
+    window.addEventListener('storage', mettreAJourBoutonPanier);
+    document.addEventListener('DOMContentLoaded', () => setTimeout(mettreAJourBoutonPanier, 800));
+
     window.ajouterAuPanierNouveauSysteme = function(produitId, categorie) {
         const selecteur = document.getElementById(`opt-taille-${produitId}`);
         const optionChoisie = selecteur ? selecteur.value : "Unique";
         
-        // Exécute votre fonction d'origine pour ajouter au panier
-        if (typeof window.ajouterAuPanierPermanence === "function") { window.ajouterAuPanierPermanence(produitId); }
-        alert(`Produit ajouté au panier avec l'option : ${optionChoisie}`);
+        ajouterAuPanierPartage(produitId, optionChoisie);
     };
 })();
- 
+
 // =========================================================================
 // MODULE DE CHAT (branché sur le Google Apps Script : feuille "Chat")
 // - envoi : action "sendChatMessage" (texte ou photo, la photo part sur Cloudinary côté script)
@@ -137,9 +200,9 @@
     const CLE_HISTORIQUE = "saferun_chat_history";
     const INTERVALLE_MS = 10000;   // vérification des nouvelles réponses quand le chat est ouvert
     let timer = null;
- 
+
     /* ------------------------------ Outils ------------------------------ */
- 
+
     // Identité du client : EXACTEMENT la même règle que la page d'accueil (téléphone, sinon GUEST-xxxx)
     // → une seule conversation par client, quelle que soit la page utilisée.
     function idClient() {
@@ -151,7 +214,7 @@
         try {
             const telClient = localStorage.getItem('saferun_tel');
             if (telClient && telClient !== "") return telClient;
- 
+
             let guestId = localStorage.getItem('saferun_guest_id');
             if (!guestId) {
                 guestId = "GUEST-" + Math.floor(1000 + Math.random() * 9000);
@@ -162,23 +225,23 @@
             return "GUEST-" + Math.floor(1000 + Math.random() * 9000);
         }
     }
- 
+
     function lireHistorique() {
         try { return JSON.parse(localStorage.getItem(CLE_HISTORIQUE) || "[]"); } catch (e) { return []; }
     }
- 
+
     function ecrireHistorique(liste) {
         try { localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(liste)); } catch (e) {
             console.warn("[SafeRun] Mémoire locale pleine : l'historique du chat n'a pas pu être sauvegardé.");
         }
     }
- 
+
     function estImage(texte) {
         return /^data:image/.test(texte) ||
                /^https?:\/\/res\.cloudinary\.com\//i.test(texte) ||
                /^https?:\/\/\S+\.(png|jpe?g|webp|gif)(\?\S*)?$/i.test(texte);
     }
- 
+
     // Réduit la photo avant envoi (max 1024 px, JPEG) : plus rapide et ne remplit pas la mémoire du téléphone
     function reduireImage(file, maxCote, qualite) {
         return new Promise((resolve, reject) => {
@@ -200,13 +263,13 @@
             reader.readAsDataURL(file);
         });
     }
- 
+
     // Bulle de discussion (mêmes styles qu'avant) ; variante "marche" pour la page d'accueil
     function creerBulle(msg, variante) {
         const client = msg.expediteur === "client";
         const bulle = document.createElement("div");
         const texte = String(msg.texte || "");
- 
+
         if (variante === "marche") {
             bulle.className = client ? "message msg-client" : "message msg-admin";
             bulle.style.marginBottom = "10px";
@@ -222,7 +285,7 @@
         bulle.style.borderRadius = client ? "15px 15px 0 15px" : "15px 15px 15px 0";
         bulle.style.alignSelf = client ? "flex-end" : "flex-start";
         bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
- 
+
         if (estImage(texte)) {
             const img = document.createElement("img");
             img.src = texte;
@@ -233,101 +296,111 @@
         }
         return bulle;
     }
- 
+
     /* ------------------------- Affichage du chat ------------------------- */
- 
+
     // Charger et afficher l'historique de discussion partagé (fenêtre de la boutique)
     window.chargerHistoriqueMessagesPartages = function () {
         const msgContainer = document.getElementById('chat-messages');
         if (!msgContainer) return;
- 
+        if (typeof window.chargerMessagesChat === "function") return; // main.js est propriétaire du chat
+
         const historiqueBrut = localStorage.getItem(CLE_HISTORIQUE);
         let historique = [];
         try { historique = historiqueBrut ? JSON.parse(historiqueBrut) : []; } catch (e) { historique = []; }
         if (!historique.length) {
             historique = [{ expediteur: "admin", texte: "Manao ahoana! Inona no afaka ampiana anao?" }]; // Message d'accueil par défaut
         }
- 
+
         msgContainer.innerHTML = "";
         historique.forEach(msg => msgContainer.appendChild(creerBulle(msg, "boutique")));
         msgContainer.scrollTop = msgContainer.scrollHeight;   // défilement automatique vers le bas
     };
- 
+
     // Synchronisation du chat sur le marché principal (index.html)
     window.synchroniserChatSurMarchePrincipal = function () {
         const msgContainerMarche = document.getElementById('chat-messages');
         if (!msgContainerMarche || window.location.search.includes('type=')) return;
- 
+        if (typeof window.chargerMessagesChat === "function") return; // main.js est propriétaire du chat
+
         const historiqueBrut = localStorage.getItem(CLE_HISTORIQUE);
         if (!historiqueBrut) return;
         let historique = [];
         try { historique = JSON.parse(historiqueBrut); } catch (e) { return; }
- 
+
         msgContainerMarche.innerHTML = "";
         historique.forEach(msg => msgContainerMarche.appendChild(creerBulle(msg, "marche")));
         msgContainerMarche.scrollTop = msgContainerMarche.scrollHeight;
     };
- 
+
     function rafraichirAffichage() {
         window.chargerHistoriqueMessagesPartages();
         window.synchroniserChatSurMarchePrincipal();
     }
- 
+
     /* --------------------------- Réception serveur --------------------------- */
- 
+
     function rafraichirDepuisServeur() {
         return fetch(API_URL + "?action=readChat&idClient=" + encodeURIComponent(idClient()))
             .then(r => r.json())
             .then(liste => {
                 if (!Array.isArray(liste) || !liste.length) return;
- 
+
                 const serveur = liste.map(m => ({
-                    expediteur: String(m.expediteur || "").toLowerCase().includes("admin") ? "admin" : "client",
+                    expediteur: /admin|support/i.test(String(m.expediteur || "")) ? "admin" : "client",
                     texte: String(m.message || ""),
                     date: m.date
                 }));
- 
+
                 // On garde les messages envoyés depuis moins d'une minute que le serveur n'a pas encore renvoyés
                 const enAttente = lireHistorique().filter(m =>
                     m.pending &&
                     (Date.now() - new Date(m.date).getTime()) < 60000 &&
                     !serveur.some(s => s.expediteur === "client" && s.texte === m.texte)
                 );
- 
+
                 ecrireHistorique(serveur.concat(enAttente));
                 rafraichirAffichage();
             })
             .catch(err => console.warn("[SafeRun] Lecture du chat impossible pour l'instant.", err));
     }
- 
+
     /* ----------------------------- Envoi serveur ----------------------------- */
- 
+
+    function expediteurClient() {
+        try {
+            const n = localStorage.getItem('saferun_nom');
+            if (n && n !== "Anonyme") return n;
+        } catch (err) {}
+        return idClient();
+    }
+
     function envoyerAuServeur(extra) {
         const corps = Object.assign({
             action: "sendChatMessage",      // l'action réellement lue par votre Apps Script
             idClient: idClient(),
-            expediteur: "Client"
+            expediteur: expediteurClient()
         }, extra);
- 
+
         return fetch(API_URL, {
             method: "POST",
             mode: "no-cors",                // évite les blocages CORS ; la réponse n'est pas lisible
             body: JSON.stringify(corps)
         }).catch(err => console.warn("[SafeRun] Erreur d'envoi du message au serveur.", err));
     }
- 
+
     function ajouterMessageLocal(texte) {
         const historique = lireHistorique();
         historique.push({ expediteur: "client", texte: texte, date: new Date().toISOString(), pending: true });
         ecrireHistorique(historique);
         rafraichirAffichage();
     }
- 
+
     // Ouvrir ou fermer la fenêtre de discussion
     window.toggleChatExtension = function () {
         const chatWindow = document.getElementById('chat-window');
         if (!chatWindow) return;
- 
+
         if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
             chatWindow.style.display = "flex";
             window.chargerHistoriqueMessagesPartages();
@@ -338,25 +411,25 @@
             if (timer) { clearInterval(timer); timer = null; }
         }
     };
- 
+
     // Envoi d'un message texte
     window.envoyerMessageChatExtension = function () {
         const input = document.getElementById("chat-input");
         if (!input || !input.value.trim()) return;
- 
+
         const texteMessage = input.value.trim();
         input.value = "";
         ajouterMessageLocal(texteMessage);   // affichage immédiat côté client
- 
+
         envoyerAuServeur({ message: texteMessage })
             .then(() => setTimeout(rafraichirDepuisServeur, 2000));
     };
- 
+
     // Envoi d'une photo (réduite avant envoi, puis hébergée par le script sur Cloudinary)
     window.envoyerPhotoChatExtension = function (event) {
         const file = event.target.files[0];
         if (!file || !/^image\//.test(file.type)) return;
- 
+
         reduireImage(file, 1024, 0.7)
             .then(dataUrl => {
                 ajouterMessageLocal(dataUrl);
@@ -364,16 +437,15 @@
             })
             .then(() => setTimeout(rafraichirDepuisServeur, 4000))
             .catch(err => console.warn("[SafeRun] Photo illisible.", err));
- 
+
         event.target.value = "";   // permet de renvoyer la même photo plus tard
     };
- 
+
     // Mise à jour en direct quand une autre page/onglet modifie l'historique
     window.addEventListener('storage', (e) => {
         if (e.key === CLE_HISTORIQUE) rafraichirAffichage();
     });
- 
+
     // Synchronisation initiale après un court instant pour laisser le temps à main.js de s'initialiser
     setTimeout(window.synchroniserChatSurMarchePrincipal, 1000);
 })();
- 
