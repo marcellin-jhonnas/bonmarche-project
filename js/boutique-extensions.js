@@ -170,22 +170,26 @@ window.envoyerMessageChatExtension = function() {
     .catch(err => console.warn("[SafeRun] Erreur d'envoi réseau au Sheet, stocké en attente hors-ligne.", err));
 };
 
-// 📸 GESTION ET ENVOI DE PHOTOS AU SHEET DEPUIS LE CHAT
+// 📸 GESTION ET AFFICHAGE DES PHOTOS EN MINIATURES DANS LE CHAT ET ENVOI AU SHEET
 window.envoyerPhotoChatExtension = function(event) {
-    const file = event.target.files[0];
+    const file = event.target.files[0]; // Récupérer le premier fichier sélectionné
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const base64Image = e.target.result; // Conversion de l'image en texte sécurisé
+        const base64Image = e.target.result; // L'image convertie en texte sécurisé pour le stockage
 
-        // Étape A : Affichage dans le chat local
+        // Étape A : Sauvegarde de l'image directement dans l'historique partagé
         const historique = JSON.parse(localStorage.getItem("saferun_chat_history") || "[]");
-        historique.push({ expediteur: "client", texte: "📷 [Image envoyée]" });
+        historique.push({ expediteur: "client", texte: base64Image, date: new Date().toISOString() });
         localStorage.setItem("saferun_chat_history", JSON.stringify(historique));
-        window.chargerHistoriqueMessagesPartages();
+        
+        // Mettre à jour l'affichage sur la boutique
+        if (typeof window.chargerHistoriqueMessagesPartages === "function") {
+            window.chargerHistoriqueMessagesPartages();
+        }
 
-        // Étape B : Envoi de la photo convertie au Google Sheet
+        // Étape B : Envoi automatique de la photo convertie vers votre Google Sheet d'administration
         const API_URL = "https://google.com";
         
         fetch(API_URL, {
@@ -194,10 +198,71 @@ window.envoyerPhotoChatExtension = function(event) {
             body: JSON.stringify({
                 action: "envoiPhotoChat",
                 image: base64Image,
-                nom: document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Client"
+                nom: document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Client de Tana"
             })
         });
     };
     reader.readAsDataURL(file);
 };
 
+// =========================================================================
+// SYNCHRONISATION AUTOMATIQUE DU CHAT SUR LE MARCHÉ PRINCIPAL (INDEX.HTML)
+// =========================================================================
+
+// Cette fonction s'exécute uniquement si on se trouve sur la page d'accueil index.html
+function synchroniserChatSurMarchePrincipal() {
+    // Vérifier si la zone de messages du marché principal existe sur la page actuelle
+    const msgContainerMarche = document.getElementById('chat-messages');
+    if (!msgContainerMarche || window.location.search.includes('type=')) return;
+
+    // Lire la clé commune partagée dans la mémoire locale de la PWA
+    const historiqueBrut = localStorage.getItem("saferun_chat_history");
+    if (!historiqueBrut) return;
+
+    const historique = JSON.parse(historiqueBrut);
+    msgContainerMarche.innerHTML = ""; // Vider l'ancien affichage du marché pour éviter les doublons
+
+    historique.forEach(msg => {
+        const bulle = document.createElement("div");
+        
+        // Appliquer exactement la structure et les classes CSS d'origine de votre main.css
+        bulle.className = msg.expediteur === "client" ? "message msg-client" : "message msg-admin";
+        
+        // Styles de base de vos bulles de discussion d'origine
+        bulle.style.position = "relative";
+        bulle.style.marginBottom = "10px";
+        bulle.style.padding = "8px 12px";
+        bulle.style.fontSize = "0.92rem";
+        bulle.style.lineHeight = "1.4";
+        bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
+        bulle.style.wordWrap = "break-word";
+        bulle.style.borderRadius = msg.expediteur === "client" ? "15px 15px 0 15px" : "15px 15px 15px 0";
+        bulle.style.alignSelf = msg.expediteur === "client" ? "flex-end" : "flex-start";
+
+        // Si le message est une image stockée
+        if (msg.texte.startsWith("data:image")) {
+            bulle.innerHTML = `<img src="${msg.texte}" style="max-width: 100%; border-radius: 10px; display: block; margin-top: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">`;
+        } else {
+            bulle.innerText = msg.texte;
+        }
+
+        msgContainerMarche.appendChild(bulle);
+    });
+
+    // Forcer le défilement automatique vers le bas de la discussion du marché
+    msgContainerMarche.scrollTop = msgContainerMarche.scrollHeight;
+}
+
+// Intercepter chaque modification du localStorage pour mettre à jour le chat de l'accueil en direct
+window.addEventListener('storage', (e) => {
+    if (e.key === "saferun_chat_history") {
+        synchroniserChatSurMarchePrincipal();
+        // Si la fenêtre de chat de la sous-boutique est ouverte, on la met à jour aussi
+        if (typeof window.chargerHistoriqueMessagesPartages === "function") {
+            window.chargerHistoriqueMessagesPartages();
+        }
+    }
+});
+
+// Lancer la synchronisation initiale après un court instant pour laisser le temps à votre main.js de s'initialiser
+setTimeout(synchroniserChatSurMarchePrincipal, 1000);
