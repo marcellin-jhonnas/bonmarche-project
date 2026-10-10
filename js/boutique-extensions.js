@@ -11,6 +11,20 @@
         return String(texte || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     }
  
+    // Répare les liens d'images "page" (imgur.com/xxxx, Google Drive) en liens directs
+    function normaliserUrlImage(brut) {
+        let url = String(brut || "").trim();
+        if (!url) return "";
+        if (/^\/\//.test(url)) url = "https:" + url;
+        if (!/^https?:\/\//i.test(url) && /^(i\.)?imgur\.com\//i.test(url)) url = "https://" + url;
+        url = url.replace(/^http:\/\//i, "https://");
+        let m = url.match(/^https:\/\/(?:www\.)?imgur\.com\/(?!a\/|gallery\/)([A-Za-z0-9]{5,8})(?:\.[a-z]{3,4})?(?:[?#].*)?$/i);
+        if (m) return "https://i.imgur.com/" + m[1] + ".jpg";
+        m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/) || url.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([\w-]+)/);
+        if (m) return "https://lh3.googleusercontent.com/d/" + m[1];
+        return url;
+    }
+ 
     function echapper(texte) {
         return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -67,7 +81,7 @@
             const cle = normaliserCle(nom);
             if (!boutiques.has(cle)) boutiques.set(cle, { cle: cle, nom: nom, image: "" });
             const b = boutiques.get(cle);
-            const url = String(p.Image || "").trim();
+            const url = normaliserUrlImage(p.Image_URL || p.Image);
             const epuise = String(p.Options_Disponibles || "").trim().toUpperCase() === "EPUISE";
             if (!b.image && !epuise && /^https?:\/\//i.test(url)) b.image = url;
         });
