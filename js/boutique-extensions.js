@@ -1,8 +1,8 @@
 (function() {
     const IMAGES_DEMO_BOUTIQUES = {
-        "VETEMENTS": "https://imgur.com/jKHHTgl", 
-        "CHAUSSURES": "https://imgur.com/Fo4VcB7",
-        "DEFAUT": "https://imgur.com/L5uiDsH"
+        "VETEMENTS": "https://i.imgur.com/jKHHTgl.jpeg", 
+        "CHAUSSURES": "https://i.imgur.com/Fo4VcB7.jpeg",
+        "DEFAUT": "https://i.imgur.com/L5uiDsH.png"
     };
 
     document.addEventListener("DOMContentLoaded", () => {
