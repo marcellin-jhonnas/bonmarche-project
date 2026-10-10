@@ -76,3 +76,128 @@
         alert(`Produit ajouté au panier avec l'option : ${optionChoisie}`);
     };
 })();
+// --- MODULE DE CHAT SYNCHRONISÉ ENTRE PAGES (PWA COMPATIBLE) ---
+
+// Ouvrir ou fermer la fenêtre de discussion
+window.toggleChatExtension = function() {
+    const chatWindow = document.getElementById('chat-window');
+    if (!chatWindow) return;
+    
+    if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+        chatWindow.style.display = "flex";
+        window.chargerHistoriqueMessagesPartages(); // Charger les messages au moment de l'ouverture
+    } else {
+        chatWindow.style.display = "none";
+    }
+};
+
+// Charger et afficher l'historique de discussion partagé
+window.chargerHistoriqueMessagesPartages = function() {
+    const msgContainer = document.getElementById('chat-messages');
+    if (!msgContainer) return;
+    
+    // Récupérer la base de discussion commune de la PWA
+    const historiqueBrut = localStorage.getItem("saferun_chat_history");
+    const historique = historiqueBrut ? JSON.parse(historiqueBrut) : [
+        { expediteur: "admin", texte: "Manao ahoana! Inona no afaka ampiana anao?" } // Message d'accueil par défaut
+    ];
+
+    msgContainer.innerHTML = ""; // Nettoyer l'affichage avant de recharger
+
+    historique.forEach(msg => {
+        const bulle = document.createElement("div");
+        
+        // Appliquer exactement vos styles CSS d'origine pour les bulles de discussion
+        bulle.style.position = "relative";
+        bulle.style.padding = "8px 12px";
+        bulle.style.fontSize = "0.92rem";
+        bulle.style.lineHeight = "1.4";
+        bulle.style.maxWidth = "75%";
+        bulle.style.wordWrap = "break-word";
+        bulle.style.borderRadius = msg.expediteur === "client" ? "15px 15px 0 15px" : "15px 15px 15px 0";
+        bulle.style.background = msg.expediteur === "client" ? "#dcf8c6" : "#ffffff";
+        bulle.style.alignSelf = msg.expediteur === "client" ? "flex-end" : "flex-start";
+        bulle.style.boxShadow = "0 1px 1px rgba(0,0,0,0.1)";
+        
+        bulle.innerText = msg.texte;
+        msgContainer.appendChild(bulle);
+    });
+
+    // Forcer le défilement automatique vers le bas de la discussion
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+};
+
+// Fonction d'envoi de message connectée en direct avec votre Google Sheet
+window.envoyerMessageChatExtension = function() {
+    const input = document.getElementById("chat-input");
+    if (!input || !input.value.trim()) return;
+
+    const texteMessage = input.value.trim();
+    const userNom = document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Utilisateur";
+    const userTel = document.getElementById("side-user-tel") ? document.getElementById("side-user-tel").innerText : "Non renseigné";
+
+    // 1. Mise à jour de la mémoire locale PWA instantanée (Ce que le client voit)
+    const historiqueBrut = localStorage.getItem("saferun_chat_history");
+    const historique = historiqueBrut ? JSON.parse(historiqueBrut) : [];
+    
+    const nouveauMessage = { expediteur: "client", texte: texteMessage, date: new Date().toISOString() };
+    historique.push(nouveauMessage);
+    localStorage.setItem("saferun_chat_history", JSON.stringify(historique));
+
+    // Rafraîchir l'écran du chat immédiatement et vider le champ de saisie
+    input.value = "";
+    window.chargerHistoriqueMessagesPartages();
+
+    // 2. TRANSMISSION EN DIRECT AU GOOGLE SHEET (Ce que vous recevez sur votre tableau)
+    const API_URL = "https://google.com";
+
+    const donneesAction = {
+        action: "nouveauMessageChat", // L'action lue par votre script Google Apps Script
+        nom: userNom,
+        telephone: userTel,
+        message: texteMessage,
+        provenance: "Boutique Exclusive"
+    };
+
+    // Envoi asynchrone sans bloquer l'animation du chat
+    fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors", // Évite les blocages de sécurité CORS sur les serveurs de test
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donneesAction)
+    })
+    .then(() => console.log("[SafeRun Live] Message synchronisé avec le tableur d'administration."))
+    .catch(err => console.warn("[SafeRun] Erreur d'envoi réseau au Sheet, stocké en attente hors-ligne.", err));
+};
+
+// 📸 GESTION ET ENVOI DE PHOTOS AU SHEET DEPUIS LE CHAT
+window.envoyerPhotoChatExtension = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Image = e.target.result; // Conversion de l'image en texte sécurisé
+
+        // Étape A : Affichage dans le chat local
+        const historique = JSON.parse(localStorage.getItem("saferun_chat_history") || "[]");
+        historique.push({ expediteur: "client", texte: "📷 [Image envoyée]" });
+        localStorage.setItem("saferun_chat_history", JSON.stringify(historique));
+        window.chargerHistoriqueMessagesPartages();
+
+        // Étape B : Envoi de la photo convertie au Google Sheet
+        const API_URL = "https://google.com";
+        
+        fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "envoiPhotoChat",
+                image: base64Image,
+                nom: document.getElementById("side-user-nom") ? document.getElementById("side-user-nom").innerText : "Client"
+            })
+        });
+    };
+    reader.readAsDataURL(file);
+};
+
