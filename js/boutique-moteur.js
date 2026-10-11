@@ -50,12 +50,20 @@ function normaliserCle(texte) {
     return String(texte || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 }
 
-// Liste des boutiques = catégories distinctes trouvées dans les produits
+// Rayons déjà gérés par l'accueil (index.html) : ils ne créent PAS de bouton de boutique
+const RAYONS_ACCUEIL = ["PPN", "PRODUITSDEPREMIERENECESSITE", "ALIMENTAIRE", "CONSERVES", "FRAIS", "HYGIENE", "ENERGIE", "BOULANGERIE"];
+function estRayonAccueil(nomOuCle) {
+    const k = normaliserCle(nomOuCle).replace(/[^A-Z0-9]/g, "");
+    return RAYONS_ACCUEIL.indexOf(k) !== -1;
+}
+
+// Liste des boutiques = catégories distinctes trouvées dans les produits (hors rayons de l'accueil)
 function listerBoutiques(produits) {
     const vues = new Map();
     (produits || []).forEach(p => {
         const nom = String((p && p.Categorie) || "").trim();
         if (!nom) return;
+        if (estRayonAccueil(nom)) return;
         const cle = normaliserCle(nom);
         if (!vues.has(cle)) vues.set(cle, { cle: cle, nom: nom });
     });
@@ -237,7 +245,7 @@ function executerFetchServeur(boutiqueUrl, silencieux) {
             console.log("Erreur de synchronisation réseau:", err);
             if (silencieux) return;   // le cache est déjà affiché : on ne gâche pas l'écran
             const grille = document.getElementById("grille-boutique-dediee");
-            if (grille) grille.innerHTML = `<div style="grid-column: span 3; text-align:center; padding: 40px; color: #ef4444;">Erreur de connexion. Vérifiez votre réseau à Antananarivo.</div>`;
+            if (grille) grille.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 40px; color: #ef4444;">Erreur de connexion. Vérifiez votre réseau à Antananarivo.</div>`;
         });
 }
 
@@ -260,32 +268,139 @@ function traiterEtAfficherGrilleEtanche(produits, cleFiltre) {
 
     if (produitsFiltres.length === 0) {
         grille.innerHTML = `
-            <div style="grid-column: span 3; text-align:center; padding: 50px 20px; color: #7f8c8d; font-family: 'Poppins', sans-serif;">
+            <div style="grid-column: 1 / -1; text-align:center; padding: 50px 20px; color: #7f8c8d; font-family: 'Poppins', sans-serif;">
                 <i class="fas fa-box-open" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
                 Aucun article disponible pour la catégorie <b>${cleFiltre}</b> actuellement.
             </div>`;
         return;
     }
 
-    produitsFiltres.forEach(prod => {
-        const htmlOptionsStock = window.genererStructureOptionsStock ? window.genererStructureOptionsStock(prod) : "";
+    injecterStylesGrille();
+    const nomBoutique = String(produitsFiltres[0].Categorie || cleFiltre).trim();
+    const positions = positionsAnnonces(produitsFiltres.length);
+
+    produitsFiltres.forEach((prod, idx) => {
         const epuise = estEpuise(prod);
+        const htmlOptionsStock = window.genererStructureOptionsStock ? window.genererStructureOptionsStock(prod) : "";
+        const prix = Number(String(prod.Prix).replace(/[^0-9.]/g, "")) || 0;
+        const img = normaliserUrlImage(prod.Image_URL || prod.Image) || 'https://placehold.co/400x500?text=SafeRun';
 
         const carte = document.createElement("div");
-        carte.className = "carte-premium";
+        carte.className = "carte-premium zl-carte" + (epuise ? " zl-epuise" : "");
         carte.innerHTML = `
-            <div class="prix-tag-premium">${prod.Prix ? Number(prod.Prix).toLocaleString('fr-FR') : 0} Ar</div>
-            <div class="img-container-premium">
-                <img src="${normaliserUrlImage(prod.Image_URL || prod.Image) || 'https://placehold.co/400x400?text=SafeRun'}" alt="${prod.Nom}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=SafeRun'">
+            <div class="img-container-premium zl-img">
+                <img src="${echapperHtml(img)}" alt="${echapperHtml(prod.Nom)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://placehold.co/400x500?text=SafeRun'">
+                ${epuise ? '<span class="zl-badge">Rupture</span>' : ''}
             </div>
-            <div class="infos-produit">
-                <h3>${prod.Nom}</h3>
+            <div class="infos-produit zl-infos">
+                <h3 class="zl-nom">${echapperHtml(prod.Nom)}</h3>
+                <div class="zl-prix">${prix.toLocaleString('fr-FR')} Ar</div>
                 ${htmlOptionsStock}
-                <button class="btn-panier-premium" ${epuise ? "disabled style='background:#cbd5e1;color:#64748b;cursor:not-allowed;'" : ""} onclick="window.ajouterAuPanierNouveauSysteme('${prod.ID}', '${prod.Categorie}')">
+                <button type="button" class="btn-panier-premium zl-btn" ${epuise ? "disabled" : ""}>
                     <i class="${epuise ? 'fas fa-minus-circle' : 'fas fa-shopping-bag'}"></i>
-                    ${epuise ? "RUPTURE DE STOCK" : "AJOUTER AU PANIER"}
+                    ${epuise ? "Rupture de stock" : "Ajouter"}
                 </button>
             </div>`;
+        const bouton = carte.querySelector(".zl-btn");
+        if (bouton && !epuise) bouton.addEventListener("click", () => window.ajouterAuPanierNouveauSysteme(prod.ID, prod.Categorie));
         grille.appendChild(carte);
+
+        // Annonce insérée au milieu de la grille
+        const rang = positions.indexOf(idx + 1);
+        if (rang !== -1) grille.appendChild(construireAnnonce(rang, nomBoutique, produitsFiltres));
     });
+}
+
+/* --------------------------- Annonces dans la grille --------------------------- */
+
+function echapperHtml(t) {
+    return String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Après quel produit insérer une annonce (1 au milieu ; 2 si la boutique est grande)
+function positionsAnnonces(n) {
+    if (n < 4) return [];
+    if (n >= 12) return [Math.round(n / 3 / 2) * 2, Math.round(n * 2 / 3 / 2) * 2];
+    return [Math.max(2, Math.round(n / 2 / 2) * 2)];
+}
+
+// Textes particuliers à une boutique (facultatif) — sinon texte automatique construit avec la catégorie
+const ANNONCES_BOUTIQUE = {
+    "VETEMENTS":  { accroche: "Nouvelle tenue, nouveau look", texte: "Les pièces de la saison sont arrivées. Stock limité, ne laissez pas votre taille partir." },
+    "CHAUSSURES": { accroche: "Trouvez la paire parfaite", texte: "Confort et style à chaque pas. Les pointures partent vite." }
+};
+
+function produitsAvecImage(produits) {
+    return melanger((produits || []).filter(p => !estEpuise(p) && /^https?:\/\//i.test(normaliserUrlImage(p.Image_URL || p.Image))));
+}
+
+function construireAnnonce(rang, nomBoutique, produits) {
+    const cle = normaliserCle(nomBoutique);
+    const candidats = produitsAvecImage(produits);
+    const vedette = candidats[0] || null;
+    const div = document.createElement("div");
+    div.className = "zl-annonce " + (rang % 2 === 0 ? "zl-annonce-promo" : "zl-annonce-boutique");
+    const imageUrl = vedette ? normaliserUrlImage(vedette.Image_URL || vedette.Image) : "";
+    const imgHtml = imageUrl
+        ? `<img src="${echapperHtml(imageUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'">`
+        : "";
+
+    if (rang % 2 === 0) {
+        // Annonce commune à toutes les boutiques : stimule l'achat
+        div.innerHTML = `
+            <div class="zl-annonce-txt">
+                <span class="zl-annonce-tag">Offre SafeRun</span>
+                <h4>Commandez aujourd'hui, recevez vite</h4>
+                <p>Livraison rapide à Antananarivo · Paiement sécurisé MVola · Votre commande suivie en direct.</p>
+            </div>
+            <div class="zl-annonce-img">${imgHtml}</div>`;
+    } else {
+        // Annonce propre à la boutique, tirée de ses produits dans la Sheet
+        const perso = ANNONCES_BOUTIQUE[cle];
+        const accroche = perso ? perso.accroche : `Coup de cœur ${nomBoutique}`;
+        const texte = perso ? perso.texte : (vedette
+            ? `Découvrez « ${vedette.Nom} » à ${(Number(String(vedette.Prix).replace(/[^0-9.]/g, "")) || 0).toLocaleString('fr-FR')} Ar, choisi dans l'espace ${nomBoutique}.`
+            : `Toute la sélection ${nomBoutique} sur SafeRun Market.`);
+        div.innerHTML = `
+            <div class="zl-annonce-txt">
+                <span class="zl-annonce-tag">Espace ${echapperHtml(nomBoutique)}</span>
+                <h4>${echapperHtml(accroche)}</h4>
+                <p>${echapperHtml(texte)}</p>
+            </div>
+            <div class="zl-annonce-img">${imgHtml}</div>`;
+    }
+    return div;
+}
+
+/* ------------------- Styles de la grille (façon boutique mode) ------------------- */
+
+function injecterStylesGrille() {
+    if (document.getElementById("zl-styles")) return;
+    const s = document.createElement("style");
+    s.id = "zl-styles";
+    s.textContent = `
+    #grille-boutique-dediee { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px 10px !important; align-items:start; }
+    @media (min-width: 900px) { #grille-boutique-dediee { grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:22px 16px !important; } }
+    #grille-boutique-dediee .zl-carte { background:transparent !important; box-shadow:none !important; border:0 !important; border-radius:0 !important; padding:0 !important; display:flex; flex-direction:column; }
+    #grille-boutique-dediee .zl-img { position:relative; width:100%; aspect-ratio:3/4; height:auto !important; background:#f1f3f5; border-radius:6px; overflow:hidden; }
+    #grille-boutique-dediee .zl-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
+    #grille-boutique-dediee .zl-carte:hover .zl-img img { transform:scale(1.04); }
+    #grille-boutique-dediee .zl-badge { position:absolute; left:8px; top:8px; background:#1e293b; color:#fff; font:600 .68rem Poppins,sans-serif; padding:4px 8px; border-radius:4px; }
+    #grille-boutique-dediee .zl-epuise .zl-img img { filter:grayscale(1); opacity:.55; }
+    #grille-boutique-dediee .zl-infos { padding:8px 2px 0 !important; text-align:left; }
+    #grille-boutique-dediee .zl-nom { font:500 .85rem Poppins,sans-serif; color:#1a1a1a; margin:0 0 3px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    #grille-boutique-dediee .zl-prix { font:700 .95rem Poppins,sans-serif; color:#1a1a1a; margin-bottom:6px; }
+    #grille-boutique-dediee .zl-btn { width:100%; padding:9px 10px !important; border-radius:6px !important; font:600 .78rem Poppins,sans-serif !important; letter-spacing:.2px; }
+    #grille-boutique-dediee .zl-btn:disabled { background:#e2e8f0 !important; color:#64748b !important; cursor:not-allowed; }
+    .zl-annonce { grid-column:1 / -1; display:flex; align-items:stretch; justify-content:space-between; gap:14px; border-radius:14px; overflow:hidden; min-height:130px; font-family:Poppins,sans-serif; }
+    .zl-annonce-promo { background:linear-gradient(135deg,#0f3d2e,#27ae60); color:#fff; }
+    .zl-annonce-boutique { background:linear-gradient(135deg,#1e293b,#475569); color:#fff; }
+    .zl-annonce-txt { padding:18px 16px; flex:1; display:flex; flex-direction:column; justify-content:center; gap:6px; }
+    .zl-annonce-tag { align-self:flex-start; background:rgba(255,255,255,.18); padding:3px 10px; border-radius:20px; font-size:.68rem; font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
+    .zl-annonce h4 { margin:0; font-size:1.05rem; font-weight:700; line-height:1.25; }
+    .zl-annonce p { margin:0; font-size:.78rem; opacity:.9; line-height:1.45; }
+    .zl-annonce-img { width:38%; max-width:260px; flex-shrink:0; }
+    .zl-annonce-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    `;
+    document.head.appendChild(s);
 }

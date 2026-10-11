@@ -25,6 +25,12 @@
         return url;
     }
 
+    // Rayons déjà gérés par l'accueil : pas de bouton de boutique pour eux
+    function estRayonAccueil(nomOuCle) {
+        const k = normaliserCle(nomOuCle).replace(/[^A-Z0-9]/g, "");
+        return ["PPN", "PRODUITSDEPREMIERENECESSITE", "ALIMENTAIRE", "CONSERVES", "FRAIS", "HYGIENE", "ENERGIE", "BOULANGERIE"].indexOf(k) !== -1;
+    }
+
     function echapper(texte) {
         return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -78,6 +84,7 @@
         source.forEach(p => {
             const nom = String((p && p.Categorie) || "").trim();
             if (!nom) return;
+            if (estRayonAccueil(nom)) return;   // rayons déjà présents sur l'accueil
             const cle = normaliserCle(nom);
             if (!boutiques.has(cle)) boutiques.set(cle, { cle: cle, nom: nom, image: "" });
             const b = boutiques.get(cle);
@@ -92,6 +99,10 @@
         }
 
         dropdown.innerHTML = "";
+        if (!boutiques.size) {
+            dropdown.innerHTML = '<div style="padding:12px 15px;font-size:.8rem;color:#64748b;">Aucune autre boutique pour le moment</div>';
+            return;
+        }
         boutiques.forEach(b => {
             const nomPropre = b.nom.charAt(0).toUpperCase() + b.nom.slice(1).toLowerCase();
             const secours = IMAGES_DEMO_BOUTIQUES[b.cle] || IMAGES_DEMO_BOUTIQUES["DEFAUT"];
@@ -120,21 +131,20 @@
         try { const p = JSON.parse(localStorage.getItem('saferun_panier') || '[]'); return Array.isArray(p) ? p : []; }
         catch (err) { return []; }
     }
+    function ecrirePanier(p) { localStorage.setItem('saferun_panier', JSON.stringify(p)); }
     function compterArticles() {
         let n = 0;
         lirePanier().forEach(a => { n += Number(a.quantite) || 0; });
-        try {
-            const snap = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || '[]');
-            if (Array.isArray(snap)) snap.forEach(a => { n += Number(a.quantite) || 0; });
-        } catch (err) {}
         return n;
     }
+    function fmtAr(n) { return (Number(n) || 0).toLocaleString('fr-FR') + ' Ar'; }
+
     function afficherToast(html) {
         let t = document.getElementById('sr-toast');
         if (!t) {
             t = document.createElement('div');
             t.id = 'sr-toast';
-            t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 18px;border-radius:12px;font:500 0.85rem Poppins,sans-serif;z-index:100000;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center;';
+            t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 18px;border-radius:12px;font:500 0.85rem Poppins,sans-serif;z-index:100002;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center;pointer-events:none;';
             document.body.appendChild(t);
         }
         t.innerHTML = html;
@@ -142,20 +152,165 @@
         clearTimeout(t._t);
         t._t = setTimeout(() => { t.style.display = 'none'; }, 3200);
     }
-    function mettreAJourBoutonPanier() {
-        if (!document.getElementById('grille-boutique-dediee')) return;
-        let b = document.getElementById('sr-btn-panier');
-        if (!b) {
-            b = document.createElement('a');
-            b.id = 'sr-btn-panier';
-            b.href = 'index.html?panier=1';
-            b.style.cssText = 'position:fixed;right:16px;bottom:20px;background:#27ae60;color:#fff;padding:12px 18px;border-radius:30px;font:600 0.9rem Poppins,sans-serif;text-decoration:none;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.25);';
-            document.body.appendChild(b);
+
+    // Retrouve le produit de la Sheet d'après le nom du panier (« Nom [option] »)
+    function trouverProduitParNom(nomPanier) {
+        const base = String(nomPanier).replace(/\s*\[[^\]]*\]\s*$/, "").trim();
+        let liste = window.tousLesProduits;
+        if (!Array.isArray(liste) || !liste.length) {
+            try { liste = JSON.parse(localStorage.getItem('saferun_cache_produits') || '[]'); } catch (err) { liste = []; }
         }
-        const n = compterArticles();
-        b.style.display = n > 0 ? 'block' : 'none';
-        b.innerHTML = '\uD83D\uDED2 Panier (' + n + ')';
+        return liste.find(p => String(p.Nom).trim() === base) || null;
     }
+
+    /* ---- Icône panier (en-tête + bouton flottant) avec pastille du nombre d'articles ---- */
+    function creerIcones() {
+        if (!document.getElementById('grille-boutique-dediee')) return;
+        const style = 'position:relative;background:#1a1a1a;color:#fff;border:0;width:42px;height:42px;border-radius:50%;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;margin-left:10px;flex-shrink:0;';
+        const searchWrapper = document.querySelector('.search-wrapper');
+        if (searchWrapper && !document.getElementById('sr-icone-panier')) {
+            const b = document.createElement('button');
+            b.id = 'sr-icone-panier'; b.type = 'button'; b.setAttribute('aria-label', 'Ouvrir le panier');
+            b.style.cssText = style;
+            b.innerHTML = '<i class="fas fa-shopping-cart"></i><span class="sr-pastille"></span>';
+            b.addEventListener('click', ouvrirPanier);
+            searchWrapper.parentNode.insertBefore(b, searchWrapper.nextSibling);
+        }
+        if (!document.getElementById('sr-btn-panier')) {
+            const f = document.createElement('button');
+            f.id = 'sr-btn-panier'; f.type = 'button'; f.setAttribute('aria-label', 'Ouvrir le panier');
+            f.style.cssText = 'position:fixed;right:16px;bottom:20px;background:#27ae60;color:#fff;border:0;width:56px;height:56px;border-radius:50%;font-size:1.2rem;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer;';
+            f.innerHTML = '<i class="fas fa-shopping-cart"></i><span class="sr-pastille"></span>';
+            f.addEventListener('click', ouvrirPanier);
+            document.body.appendChild(f);
+        }
+        if (!document.getElementById('sr-styles-panier')) {
+            const s = document.createElement('style');
+            s.id = 'sr-styles-panier';
+            s.textContent = `
+            .sr-pastille{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#ef4444;color:#fff;font:700 .7rem/20px Poppins,sans-serif;text-align:center;box-sizing:border-box;}
+            #sr-fond{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:none;}
+            #sr-volet{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#fff;z-index:100001;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s;font-family:Poppins,sans-serif;box-shadow:-10px 0 30px rgba(0,0,0,.2);}
+            #sr-volet.ouvert{transform:translateX(0);}
+            .sr-vol-tete{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #eee;font-weight:700;font-size:1rem;}
+            .sr-vol-tete button{background:none;border:0;font-size:1.3rem;cursor:pointer;color:#475569;}
+            .sr-vol-corps{flex:1;overflow-y:auto;padding:8px 16px;}
+            .sr-ligne{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5;align-items:center;}
+            .sr-ligne img{width:64px;height:80px;object-fit:cover;border-radius:6px;background:#f1f3f5;flex-shrink:0;}
+            .sr-ligne-info{flex:1;min-width:0;}
+            .sr-ligne-nom{font-size:.85rem;font-weight:600;color:#1a1a1a;line-height:1.25;}
+            .sr-ligne-opt{font-size:.72rem;color:#64748b;margin-top:2px;}
+            .sr-ligne-prix{font-size:.85rem;font-weight:700;margin-top:4px;}
+            .sr-qte{display:flex;align-items:center;gap:8px;margin-top:6px;}
+            .sr-qte button{width:28px;height:28px;border-radius:50%;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:1rem;line-height:1;}
+            .sr-qte span{min-width:18px;text-align:center;font-weight:600;font-size:.85rem;}
+            .sr-qte .sr-poubelle{margin-left:auto;border:0;color:#ef4444;font-size:1rem;}
+            .sr-vide{text-align:center;color:#64748b;padding:50px 10px;font-size:.9rem;}
+            .sr-vol-pied{padding:14px 18px 18px;border-top:1px solid #eee;}
+            .sr-total{display:flex;justify-content:space-between;font-weight:700;font-size:1rem;margin-bottom:12px;}
+            #sr-valider{width:100%;background:#27ae60;color:#fff;border:0;padding:14px;border-radius:10px;font:700 .95rem Poppins,sans-serif;cursor:pointer;}
+            #sr-valider:disabled{background:#cbd5e1;cursor:not-allowed;}
+            `;
+            document.head.appendChild(s);
+        }
+        mettreAJourPastilles();
+    }
+
+    function mettreAJourPastilles() {
+        const n = compterArticles();
+        document.querySelectorAll('.sr-pastille').forEach(p => { p.textContent = n; p.style.display = n > 0 ? 'block' : 'none'; });
+    }
+
+    /* ---- Volet récapitulatif ---- */
+    function ouvrirPanier() {
+        if (!document.getElementById('sr-volet')) {
+            const fond = document.createElement('div');
+            fond.id = 'sr-fond';
+            fond.addEventListener('click', fermerPanier);
+            const volet = document.createElement('aside');
+            volet.id = 'sr-volet';
+            volet.innerHTML = `
+                <div class="sr-vol-tete"><span>🛒 Mon panier</span><button type="button" aria-label="Fermer" id="sr-fermer">&times;</button></div>
+                <div class="sr-vol-corps" id="sr-corps"></div>
+                <div class="sr-vol-pied">
+                    <div class="sr-total"><span>Total</span><span id="sr-total">0 Ar</span></div>
+                    <button type="button" id="sr-valider">Valider ma commande</button>
+                </div>`;
+            document.body.appendChild(fond);
+            document.body.appendChild(volet);
+            document.getElementById('sr-fermer').addEventListener('click', fermerPanier);
+            document.getElementById('sr-valider').addEventListener('click', validerCommande);
+        }
+        const toast = document.getElementById('sr-toast'); if (toast) toast.style.display = 'none';
+        rendreVolet();
+        document.getElementById('sr-fond').style.display = 'block';
+        requestAnimationFrame(() => document.getElementById('sr-volet').classList.add('ouvert'));
+    }
+    function fermerPanier() {
+        const v = document.getElementById('sr-volet'), f = document.getElementById('sr-fond');
+        if (v) v.classList.remove('ouvert');
+        if (f) f.style.display = 'none';
+    }
+
+    function rendreVolet() {
+        const corps = document.getElementById('sr-corps');
+        if (!corps) return;
+        const panier = lirePanier();
+        corps.innerHTML = '';
+        let total = 0;
+        if (!panier.length) {
+            corps.innerHTML = '<div class="sr-vide">Votre panier est vide.<br>Ajoutez des articles depuis la boutique.</div>';
+        }
+        panier.forEach((a, i) => {
+            const q = Number(a.quantite) || 0, px = Number(a.prix) || 0;
+            total += q * px;
+            const prod = trouverProduitParNom(a.nom);
+            const img = prod ? (normaliserUrlImage(prod.Image_URL || prod.Image) || '') : '';
+            const m = String(a.nom).match(/^(.*?)\s*\[([^\]]*)\]\s*$/);
+            const nomAff = m ? m[1] : a.nom, opt = m ? m[2] : '';
+            const ligne = document.createElement('div');
+            ligne.className = 'sr-ligne';
+            ligne.innerHTML = `
+                <img src="${echapper(img || 'https://placehold.co/128x160?text=SafeRun')}" alt="" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://placehold.co/128x160?text=SafeRun'">
+                <div class="sr-ligne-info">
+                    <div class="sr-ligne-nom">${echapper(nomAff)}</div>
+                    ${opt ? `<div class="sr-ligne-opt">Option : ${echapper(opt)}</div>` : ''}
+                    <div class="sr-ligne-prix">${fmtAr(px)}</div>
+                    <div class="sr-qte">
+                        <button type="button" data-act="moins" aria-label="Diminuer">&minus;</button>
+                        <span>${q}</span>
+                        <button type="button" data-act="plus" aria-label="Augmenter">+</button>
+                        <button type="button" class="sr-poubelle" data-act="suppr" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            ligne.querySelectorAll('button[data-act]').forEach(btn => btn.addEventListener('click', () => modifierLigne(i, btn.getAttribute('data-act'))));
+            corps.appendChild(ligne);
+        });
+        document.getElementById('sr-total').textContent = fmtAr(total);
+        document.getElementById('sr-valider').disabled = !panier.length;
+    }
+
+    function modifierLigne(i, action) {
+        const panier = lirePanier();
+        if (!panier[i]) return;
+        if (action === 'plus') panier[i].quantite = (Number(panier[i].quantite) || 0) + 1;
+        else if (action === 'moins') panier[i].quantite = (Number(panier[i].quantite) || 0) - 1;
+        if (action === 'suppr' || panier[i].quantite <= 0) panier.splice(i, 1);
+        ecrirePanier(panier);
+        rendreVolet();
+        mettreAJourPastilles();
+    }
+
+    // Validation : l'envoi à la Sheet et le paiement se font sur l'accueil (main.js), qui recharge la page et la sidebar
+    function validerCommande() {
+        if (!lirePanier().length) return;
+        if (!localStorage.getItem('saferun_secteur_valide')) {
+            afficherToast('Choisissez d\'abord votre zone de livraison sur <a href="index.html" style="color:#7CFC9A;font-weight:700;">la page d\'accueil</a>.');
+            return;
+        }
+        window.location.href = 'index.html?panier=1';
+    }
+
     function ajouterAuPanierPartage(produitId, option) {
         const liste = window.tousLesProduits || [];
         const prod = liste.find(p => String(p.ID) === String(produitId));
@@ -172,13 +327,15 @@
         const ligne = panier.find(a => a.nom === nom);
         if (ligne) ligne.quantite = (Number(ligne.quantite) || 0) + 1;
         else panier.push({ nom: nom, prix: prix, quantite: 1 });
-        localStorage.setItem('saferun_panier', JSON.stringify(panier));
+        ecrirePanier(panier);
 
-        afficherToast('\u2705 ' + nom + ' ajouté au panier');
-        mettreAJourBoutonPanier();
+        afficherToast('✅ ' + nom + ' ajouté au panier');
+        mettreAJourPastilles();
+        if (document.getElementById('sr-volet') && document.getElementById('sr-volet').classList.contains('ouvert')) rendreVolet();
     }
-    window.addEventListener('storage', mettreAJourBoutonPanier);
-    document.addEventListener('DOMContentLoaded', () => setTimeout(mettreAJourBoutonPanier, 800));
+    window.addEventListener('storage', () => { mettreAJourPastilles(); if (document.getElementById('sr-corps')) rendreVolet(); });
+    document.addEventListener('DOMContentLoaded', () => setTimeout(creerIcones, 600));
+    window.ouvrirPanierBoutique = ouvrirPanier;
 
     window.ajouterAuPanierNouveauSysteme = function(produitId, categorie) {
         const selecteur = document.getElementById(`opt-taille-${produitId}`);
