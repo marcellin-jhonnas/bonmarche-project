@@ -292,18 +292,41 @@ function traiterEtAfficherGrilleEtanche(produits, cleFiltre) {
                 <img src="${echapperHtml(img)}" alt="${echapperHtml(prod.Nom)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://placehold.co/400x500?text=SafeRun'">
                 ${epuise ? '<span class="zl-badge">Rupture</span>' : ''}
             </div>
+            <div class="zl-like">
+                <button type="button" class="zl-like-btn" aria-label="Noter ce produit" title="Noter ce produit">${COEUR_SVG}</button>
+                <div class="zl-pop" role="menu">
+                    <div class="zl-pop-ligne">
+                        ${STICKERS_NOTE.map((s, i) => `<button type="button" class="zl-sticker" data-i="${i}" role="menuitem" aria-label="${s.libelle}" title="${s.libelle}">${s.emoji}</button>`).join("")}
+                    </div>
+                    <div class="zl-pop-legende">Votre avis</div>
+                </div>
+            </div>
             <div class="infos-produit zl-infos">
                 <h3 class="zl-nom">${echapperHtml(prod.Nom)}</h3>
                 <div class="zl-prix">${prix.toLocaleString('fr-FR')} Ar</div>
                 ${htmlOptionsStock}
-                <button type="button" class="btn-panier-premium zl-btn" ${epuise ? "disabled" : ""}>
-                    <i class="${epuise ? 'fas fa-minus-circle' : 'fas fa-shopping-bag'}"></i>
-                    ${epuise ? "Rupture de stock" : "Ajouter"}
-                </button>
+                ${epuise
+                    ? '<div class="zl-rupture">Rupture de stock</div>'
+                    : `<div class="zl-qte" role="group" aria-label="Quantité">
+                           <button type="button" class="zl-qbtn" data-act="moins" aria-label="Retirer un" disabled>&minus;</button>
+                           <span class="zl-compteur" data-pid="${echapperHtml(prod.ID)}" aria-live="polite">0</span>
+                           <button type="button" class="zl-qbtn" data-act="plus" aria-label="Ajouter un">+</button>
+                       </div>`}
             </div>`;
-        const bouton = carte.querySelector(".zl-btn");
-        if (bouton && !epuise) bouton.addEventListener("click", () => window.ajouterAuPanierNouveauSysteme(prod.ID, prod.Categorie));
+
+        // Sélecteur −/0/+ lié au panier partagé
+        if (!epuise) {
+            carte.querySelectorAll(".zl-qbtn").forEach(btn => btn.addEventListener("click", () => {
+                if (window.ajusterQuantitePanier) window.ajusterQuantitePanier(prod.ID, btn.getAttribute("data-act") === "plus" ? 1 : -1);
+            }));
+            const sel = carte.querySelector("select");
+            if (sel) sel.addEventListener("change", () => { if (window.rafraichirCompteursCartes) window.rafraichirCompteursCartes(); });
+        }
+
+        // Cœur + stickers de notation (visuel uniquement : revient au cœur après rechargement)
+        brancherLike(carte);
         grille.appendChild(carte);
+        if (window.rafraichirCompteursCartes) window.rafraichirCompteursCartes();
 
         // Annonce insérée au milieu de la grille
         const rang = positions.indexOf(idx + 1);
@@ -372,6 +395,52 @@ function construireAnnonce(rang, nomBoutique, produits) {
     return div;
 }
 
+/* --------------------------- Cœur et stickers de notation --------------------------- */
+
+const COEUR_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.6 5 6 5c2 0 3.4 1.1 4 2.2.6-1.1 2-2.2 4-2.2 3.4 0 5.1 3.4 3.6 6.8C19.5 16.4 12 21 12 21z" fill="none" stroke="#1a1a1a" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const STICKERS_NOTE = [
+    { emoji: "\uD83D\uDE23", libelle: "Médiocre" },
+    { emoji: "\uD83D\uDE10", libelle: "Passable" },
+    { emoji: "\uD83D\uDE42", libelle: "Assez bien" },
+    { emoji: "\uD83D\uDE0A", libelle: "Bien" },
+    { emoji: "\uD83D\uDE0D", libelle: "Très bien" }
+];
+
+function brancherLike(carte) {
+    const zone = carte.querySelector(".zl-like");
+    const bouton = carte.querySelector(".zl-like-btn");
+    const legende = carte.querySelector(".zl-pop-legende");
+    if (!zone || !bouton) return;
+
+    const fermer = () => zone.classList.remove("ouvert");
+    bouton.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        zone.classList.remove("force-ferme");
+        // Un seul menu ouvert à la fois
+        document.querySelectorAll(".zl-like.ouvert").forEach(z => { if (z !== zone) z.classList.remove("ouvert"); });
+        zone.classList.toggle("ouvert");
+    });
+    carte.querySelectorAll(".zl-sticker").forEach(st => {
+        const s = STICKERS_NOTE[Number(st.getAttribute("data-i"))];
+        const montrer = () => { if (legende) legende.textContent = s.libelle; };
+        st.addEventListener("mouseenter", montrer);
+        st.addEventListener("focus", montrer);
+        st.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            bouton.innerHTML = '<span class="zl-note" aria-hidden="true">' + s.emoji + '</span>';
+            bouton.setAttribute("aria-label", "Votre avis : " + s.libelle + " (cliquer pour changer)");
+            bouton.title = "Votre avis : " + s.libelle;
+            zone.classList.add("note");
+            fermer();
+            zone.classList.add("force-ferme");   // reste fermé tant que la souris est dessus
+        });
+    });
+    zone.addEventListener("mouseleave", () => { zone.classList.remove("force-ferme"); if (legende) legende.textContent = "Votre avis"; });
+}
+document.addEventListener("click", () => {
+    document.querySelectorAll(".zl-like.ouvert").forEach(z => z.classList.remove("ouvert"));
+});
+
 /* ------------------- Styles de la grille (façon boutique mode) ------------------- */
 
 function injecterStylesGrille() {
@@ -392,6 +461,25 @@ function injecterStylesGrille() {
     #grille-boutique-dediee .zl-prix { font:700 .95rem Poppins,sans-serif; color:#1a1a1a; margin-bottom:6px; }
     #grille-boutique-dediee .zl-btn { width:100%; padding:9px 10px !important; border-radius:6px !important; font:600 .78rem Poppins,sans-serif !important; letter-spacing:.2px; }
     #grille-boutique-dediee .zl-btn:disabled { background:#e2e8f0 !important; color:#64748b !important; cursor:not-allowed; }
+    #grille-boutique-dediee .zl-carte { position:relative; }
+    #grille-boutique-dediee .zl-qte { display:flex; align-items:center; justify-content:space-between; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; background:#fff; }
+    #grille-boutique-dediee .zl-qbtn { width:44px; height:38px; border:0; background:#f8fafc; font:600 1.15rem Poppins,sans-serif; color:#1a1a1a; cursor:pointer; transition:background .15s; }
+    #grille-boutique-dediee .zl-qbtn[data-act="plus"] { background:#27ae60; color:#fff; }
+    #grille-boutique-dediee .zl-qbtn:active { filter:brightness(.92); }
+    #grille-boutique-dediee .zl-qbtn:disabled { color:#cbd5e1; cursor:not-allowed; }
+    #grille-boutique-dediee .zl-compteur { flex:1; text-align:center; font:700 .95rem Poppins,sans-serif; color:#1a1a1a; }
+    #grille-boutique-dediee .zl-rupture { text-align:center; padding:9px; border-radius:8px; background:#e2e8f0; color:#64748b; font:600 .78rem Poppins,sans-serif; }
+    .zl-like { position:absolute; top:8px; right:8px; z-index:5; }
+    .zl-like-btn { width:36px; height:36px; border-radius:50%; border:0; background:rgba(255,255,255,.92); box-shadow:0 2px 8px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:transform .15s; }
+    .zl-like-btn:hover { transform:scale(1.08); }
+    .zl-note { font-size:1.35rem; line-height:1; }
+    .zl-pop { display:none; position:absolute; top:100%; right:0; padding-top:6px; }
+    .zl-like.ouvert .zl-pop, .zl-like:hover .zl-pop { display:block; }
+    .zl-like.force-ferme .zl-pop { display:none !important; }
+    .zl-pop-ligne { display:flex; gap:2px; background:#fff; border-radius:24px; padding:5px 6px; box-shadow:0 6px 20px rgba(0,0,0,.22); }
+    .zl-pop-legende { text-align:center; margin-top:4px; font:600 .68rem Poppins,sans-serif; color:#fff; background:rgba(15,23,42,.8); border-radius:10px; padding:2px 8px; }
+    .zl-sticker { width:32px; height:32px; border:0; background:transparent; font-size:1.4rem; line-height:1; cursor:pointer; border-radius:50%; transition:transform .15s; padding:0; }
+    .zl-sticker:hover, .zl-sticker:focus { transform:scale(1.3); outline:none; }
     .zl-annonce { grid-column:1 / -1; display:flex; align-items:stretch; justify-content:space-between; gap:14px; border-radius:14px; overflow:hidden; min-height:130px; font-family:Poppins,sans-serif; }
     .zl-annonce-promo { background:linear-gradient(135deg,#0f3d2e,#27ae60); color:#fff; }
     .zl-annonce-boutique { background:linear-gradient(135deg,#1e293b,#475569); color:#fff; }
