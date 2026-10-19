@@ -1,0 +1,54 @@
+{
+  "suivi": false,
+  "whatsapp": "261382453610",
+  "message_annoncer": "Bonjour, je souhaite annoncer sur SafeRun Market.",
+  "plein_ecran": { "croix_apres_s": 3, "ferme_apres_s": 6 },
+  "annonces": [
+    {
+      "id": "maison-plein-ecran",
+      "partenaire": "SafeRun Market",
+      "maison": true,
+      "emplacement": "plein-ecran",
+      "image": "pub/plein-ecran.jpg",
+      "boutique": "",
+      "debut": "2026-01-01",
+      "fin": "2099-12-31"
+    },
+    {
+      "id": "maison-banniere",
+      "partenaire": "SafeRun Market",
+      "maison": true,
+      "emplacement": "banniere",
+      "image": "pub/banniere-annoncer.jpg",
+      "boutique": "",
+      "debut": "2026-01-01",
+      "fin": "2099-12-31"
+    },
+    {
+      "id": "maison-grille",
+      "partenaire": "SafeRun Market",
+      "maison": true,
+      "emplacement": "grille",
+      "position": 6,
+      "image": "pub/grille-annoncer.jpg",
+      "boutique": "",
+      "debut": "2026-01-01",
+      "fin": "2099-12-31"
+    },
+    {
+      "id": "exemple-partenaire-desactive",
+      "actif": false,
+      "partenaire": "Chez Rado",
+      "etiquette": "Sponsorisé",
+      "emplacement": "grille",
+      "position": 10,
+      "image": "pub/chez-rado.jpg",
+      "lien": "",
+      "whatsapp": "261340000000",
+      "message": "Bonjour Chez Rado, je vous contacte depuis SafeRun Market.",
+      "boutique": "Food Express",
+      "debut": "2026-10-20",
+      "fin": "2026-10-27"
+    }
+  ]
+}
