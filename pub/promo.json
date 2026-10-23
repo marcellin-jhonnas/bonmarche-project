@@ -37,7 +37,7 @@
     },
     {
       "id": "SFRMkt",
-      "actif": true,
+      "actif": false,
       "partenaire": "Chez Nous",
       "etiquette": "Sponsorisé",
       "emplacement": "grille",
@@ -46,7 +46,7 @@
       "lien": "",
       "whatsapp": "261382453610",
       "message": "Bonjour Chez Rado, je vous contacte depuis SafeRun Market.",
-      "boutique": "",
+      "boutique": "Food Express",
       "debut": "2026-10-20",
       "fin": "2026-10-27"
     }
