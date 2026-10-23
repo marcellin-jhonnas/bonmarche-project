@@ -10,7 +10,7 @@
       "maison": true,
       "emplacement": "plein-ecran",
       "image": "pub/5f27df62-ff80-4f23-929f-a9b78a7605b9.png",
-      "boutique": "CHAUSSURES",
+      "boutique": "",
       "debut": "2026-01-01",
       "fin": "2099-12-31"
     },
@@ -20,7 +20,7 @@
       "maison": true,
       "emplacement": "banniere",
       "image": "pub/7e60adb7-6d49-468e-a639-e454e001a744.png",
-      "boutique": "CHAUSSURES",
+      "boutique": "",
       "debut": "2026-01-01",
       "fin": "2099-12-31"
     },
@@ -31,7 +31,7 @@
       "emplacement": "grille",
       "position": 6,
       "image": "pub/14a5ba6d-9270-4b4d-933f-d78c024672ea.png",
-      "boutique": "CHAUSSURES",
+      "boutique": "",
       "debut": "2026-01-01",
       "fin": "2099-12-31"
     },
