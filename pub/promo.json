@@ -36,17 +36,17 @@
       "fin": "2099-12-31"
     },
     {
-      "id": "exemple-partenaire-desactive",
-      "actif": false,
-      "partenaire": "Chez Rado",
+      "id": "SFRMkt",
+      "actif": true,
+      "partenaire": "Chez Nous",
       "etiquette": "Sponsorisé",
       "emplacement": "grille",
       "position": 10,
-      "image": "pub/chez-rado.jpg",
+      "image": "pub/def.png",
       "lien": "",
-      "whatsapp": "261340000000",
+      "whatsapp": "261382453610",
       "message": "Bonjour Chez Rado, je vous contacte depuis SafeRun Market.",
-      "boutique": "Food Express",
+      "boutique": "",
       "debut": "2026-10-20",
       "fin": "2026-10-27"
     }
