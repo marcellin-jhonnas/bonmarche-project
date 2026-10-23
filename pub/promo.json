@@ -38,7 +38,7 @@
     },
     {
       "id": "SFRMkt",
-      "actif": false,
+      "actif": true,
       "partenaire": "Chez Nous",
       "etiquette": "Sponsorisé",
       "emplacement": "grille",
