@@ -51,6 +51,18 @@
       "boutique": "Food Express",
       "debut": "2026-10-20",
       "fin": "2026-10-27"
-    }
+    },
+    {
+  "id": "banniere-2",
+  "partenaire": "Chez Nous",
+  "etiquette": "Sponsorisé",
+  "emplacement": "banniere",
+  "image": "pub/def.png",
+  "whatsapp": "261382453610",
+  "message": "Bonjour, je vous contacte depuis SafeRun Market.",
+  "boutique": "",
+  "debut": "2026-10-20",
+  "fin": "2026-10-27"
+} 
   ]
 }
