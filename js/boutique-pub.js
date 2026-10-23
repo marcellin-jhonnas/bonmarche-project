@@ -17,7 +17,8 @@
 
     const params = new URLSearchParams(window.location.search);
     const boutiqueBrute = (params.get("type") || "").trim();
-    const forcer = params.get("pub") === "force";           // ?pub=force : ignore la règle « 1 fois par jour » (tests)
+    const modeDebug = params.get("pub") === "debug";
+    const forcer = params.get("pub") === "force" || modeDebug;           // ?pub=force : ignore la règle « 1 fois par jour » (tests)
     const sansPub = params.get("pub") === "off";            // ?pub=off : aucune publicité
 
     /* ------------------------------ Outils ------------------------------ */
@@ -99,8 +100,9 @@
         .sr-pub-pts{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:5px;z-index:3;}
         .sr-pub-pts i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);}
         .sr-pub-pts i.on{background:#fff;}
-        .sr-pub-gr{grid-column:1 / -1;position:relative;border-radius:14px;overflow:hidden;background:#e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.08);}
-        .sr-pub-gr img{width:100%;display:block;max-height:240px;object-fit:cover;}
+        .sr-pub-gr{grid-column:1 / -1;position:relative;border-radius:14px;overflow:hidden;background:#e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.08);aspect-ratio:4/1;display:block;}
+        .sr-pub-gr img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;}
+        @media (max-width:768px){.sr-pub-gr{aspect-ratio:16/7;}}
         .sr-pub-lien{cursor:pointer;}
         #sr-pub-ecran{position:fixed;inset:0;z-index:100020;background:rgba(2,6,23,.9);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;animation:srPubIn .35s ease-out;}
         @keyframes srPubIn{from{opacity:0}to{opacity:1}}
@@ -114,13 +116,15 @@
     }
 
     /* ------------------------------ Précharger une image ------------------------------ */
-    function charger(src) {
+    function charger(src, delai) {
         return new Promise(resolve => {
             const i = new Image();
-            i.onload = () => resolve(true);
-            i.onerror = () => resolve(false);
+            let fini = false;
+            const fin = (ok, why) => { if (fini) return; fini = true; if (!ok) console.warn("[pub] image non affichée (" + why + ") : " + src); resolve(ok); };
+            i.onload = () => fin(true);
+            i.onerror = () => fin(false, "introuvable : vérifiez le nom et le dossier pub/");
             i.src = src;
-            setTimeout(() => resolve(false), 5000);
+            setTimeout(() => fin(false, "trop lourde ou trop lente (plus de " + Math.round((delai || 12000) / 1000) + " s) : compressez-la"), delai || 12000);
         });
     }
 
@@ -188,9 +192,10 @@
         if (!hero || document.getElementById("sr-pub-bandeau")) return;
         const liste = cfg.annonces.filter(a => a.emplacement === "banniere" && annonceActive(a));
         if (!liste.length) return;
-        const ok = [];
-        for (const a of liste) { if (await charger(a.image)) ok.push(a); }
+        const verifs = await Promise.all(liste.map(a => charger(a.image)));
+        const ok = liste.filter((a, i) => verifs[i]);
         if (!ok.length) return;
+        if (document.getElementById("sr-pub-bandeau")) return;
         styles();
         const boite = el("div", { class: "sr-pub-ban" });
         const pts = el("div", { class: "sr-pub-pts" });
@@ -198,7 +203,7 @@
             const lien = lienDe(a);
             const s = el(lien ? "a" : "div", { class: "sr-pub-sl" + (lien ? " sr-pub-lien" : "") });
             if (lien) { s.setAttribute("href", lien); s.setAttribute("target", "_blank"); s.setAttribute("rel", "noopener noreferrer sponsored"); s.addEventListener("click", () => suivre(a, "clic")); }
-            s.appendChild(el("img", { src: a.image, alt: a.partenaire || "Publicité", loading: "lazy" }));
+            s.appendChild(el("img", { src: a.image, alt: a.partenaire || "Publicité" }));
             s.appendChild(el("span", { class: "sr-pub-chip", text: a.maison ? "Publicité" : (a.etiquette || "Sponsorisé") }));
             boite.appendChild(s);
             if (ok.length > 1) pts.appendChild(el("i"));
@@ -231,10 +236,13 @@
     }
 
     /* ------------------------------ 3. Cartes dans la grille ------------------------------ */
-    function grille() {
+    async function grille() {
         const g = document.getElementById("grille-boutique-dediee");
         if (!g) return;
-        const liste = cfg.annonces.filter(a => a.emplacement === "grille" && annonceActive(a));
+        const candidates = cfg.annonces.filter(a => a.emplacement === "grille" && annonceActive(a));
+        if (!candidates.length) return;
+        const verifs = await Promise.all(candidates.map(a => charger(a.image)));   // l'annonce n'apparaît qu'une fois l'image prête : plus de zone vide qui clignote
+        const liste = candidates.filter((a, i) => verifs[i]);
         if (!liste.length) return;
         styles();
         let occupe = false;
@@ -248,14 +256,15 @@
                     liste.forEach((a, rang) => {
                         if (g.querySelector('.sr-pub-gr[data-id="' + (window.CSS && CSS.escape ? CSS.escape(a.id) : a.id) + '"]')) return;
                         let pos = Math.max(2, Number(a.position) || (6 + rang * 6));
-                        if (cartes.length < pos) return;       // boutique trop petite pour cette annonce
+                        if (cartes.length < 2) return;
+                        if (cartes.length < pos) pos = Math.floor(cartes.length / 2) * 2;   // petite boutique : on place l'annonce après le dernier produit pair
                         let apres = cartes[pos - 1];
                         // pas d'annonce collée à celle de la boutique : on décale de deux produits
                         if (apres.nextElementSibling && apres.nextElementSibling.classList.contains("zl-annonce") && cartes[pos + 1]) apres = cartes[pos + 1];
                         const lien = lienDe(a);
                         const bloc = el(lien ? "a" : "div", { class: "sr-pub-gr" + (lien ? " sr-pub-lien" : ""), "data-id": a.id });
                         if (lien) { bloc.setAttribute("href", lien); bloc.setAttribute("target", "_blank"); bloc.setAttribute("rel", "noopener noreferrer sponsored"); bloc.addEventListener("click", () => suivre(a, "clic")); }
-                        const im = el("img", { src: a.image, alt: a.partenaire || "Publicité", loading: "lazy" });
+                        const im = el("img", { src: a.image, alt: a.partenaire || "Publicité" });
                         im.addEventListener("error", () => bloc.remove());
                         bloc.appendChild(im);
                         bloc.appendChild(el("span", { class: "sr-pub-chip", text: a.maison ? "Publicité" : (a.etiquette || "Sponsorisé") }));
@@ -302,15 +311,50 @@
             try { return JSON.parse(lire(CLE_CACHE) || "null"); } catch (e2) { return null; }
         }
     }
+    // ?pub=debug : petit panneau qui explique, annonce par annonce, pourquoi elle s'affiche ou non (utile sur mobile)
+    async function debug() {
+        const lignes = [];
+        lignes.push("boutique de la page : " + (boutiqueBrute || "(aucune)") + "  [" + cle(boutiqueBrute) + "]");
+        for (const a of cfg.annonces) {
+            let etat = [];
+            if (a.actif === false) etat.push("actif=false");
+            const j = aujourdhui();
+            if (a.debut && j < String(a.debut)) etat.push("pas encore commencée");
+            if (a.fin && j > String(a.fin)) etat.push("terminée");
+            if (!imageSure(a.image)) etat.push("chemin d'image invalide");
+            const b = String(a.boutique || "").trim();
+            const bOk = !b || b === "*" || cle(b) === "TOUS" || cle(b) === "TOUTES" || b.split(",").some(x => cle(x) === cle(boutiqueBrute));
+            if (!bOk) etat.push("autre boutique (" + b + ")");
+            if (!etat.length) {
+                try {
+                    const t = performance.now();
+                    const r = await fetch(a.image, { cache: "no-store" });
+                    if (!r.ok) etat.push("IMAGE HTTP " + r.status + " (introuvable)");
+                    else { const bl = await r.blob(); etat.push("OK, image " + Math.round(bl.size / 1024) + " Ko, " + Math.round(performance.now() - t) + " ms" + (bl.size > 400 * 1024 ? "  ⚠ TROP LOURDE : compressez" : "")); }
+                } catch (e) { etat.push("IMAGE inaccessible"); }
+            }
+            lignes.push(a.id + " [" + a.emplacement + "] : " + etat.join(", "));
+        }
+        lignes.push("produits dans la grille : " + document.querySelectorAll("#grille-boutique-dediee > .zl-carte").length);
+        lignes.push("zone du bandeau : " + (document.getElementById("sr-pub-bandeau") ? "présente" : "absente"));
+        lignes.push("cartes pub dans la grille : " + document.querySelectorAll(".sr-pub-gr").length);
+        const box = el("pre", { style: "position:fixed;left:8px;right:8px;bottom:8px;z-index:100030;background:#0f172a;color:#e2e8f0;font:11px/1.4 monospace;padding:10px;border-radius:10px;white-space:pre-wrap;max-height:45vh;overflow:auto;opacity:.96;" });
+        box.textContent = "DIAGNOSTIC PUB (touchez pour fermer)\n" + lignes.join("\n");
+        box.addEventListener("click", () => box.remove());
+        document.body.appendChild(box);
+        console.log(box.textContent);
+    }
+
     async function demarrer() {
         if (sansPub) return;
         const j = await chargerConfig();
         if (!j || !Array.isArray(j.annonces)) return;           // pas de promo.json : le site fonctionne normalement
         cfg = Object.assign({}, cfg, j, { plein_ecran: Object.assign({}, cfg.plein_ecran, j.plein_ecran || {}) });
         cfg.suivi = j.suivi === true;
-        try { bandeau(); } catch (e) { console.warn("[pub] bandeau :", e); }
-        try { grille(); } catch (e) { console.warn("[pub] grille :", e); }
+        bandeau().catch(e => console.warn("[pub] bandeau :", e));
+        grille().catch(e => console.warn("[pub] grille :", e));
         try { await pleinEcran(); } catch (e) { console.warn("[pub] plein écran :", e); }
+        if (modeDebug) setTimeout(debug, 1500);
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(demarrer, 300));
     else setTimeout(demarrer, 300);
