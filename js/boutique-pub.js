@@ -9,18 +9,18 @@
 // =========================================================================
 (function () {
     "use strict";
- 
+
     const API_URL = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
     const PROMO_URL = "pub/promo.json";
     const CLE_CACHE = "saferun_pub_cache";
     const CLE_JOUR = "saferun_pub_plein_ecran_jour";
- 
+
     const params = new URLSearchParams(window.location.search);
     const boutiqueBrute = (params.get("type") || "").trim();
     const modeDebug = params.get("pub") === "debug";
     const forcer = params.get("pub") === "force" || modeDebug;           // ?pub=force : ignore la règle « 1 fois par jour » (tests)
     const sansPub = params.get("pub") === "off";            // ?pub=off : aucune publicité
- 
+
     /* ------------------------------ Outils ------------------------------ */
     const cle = t => String(t || "").trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
     const aujourdhui = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
@@ -38,9 +38,9 @@
         (enfants || []).forEach(c => n.appendChild(c));
         return n;
     }
- 
+
     let cfg = { suivi: false, whatsapp: "", message_annoncer: "Bonjour, je souhaite annoncer sur SafeRun Market.", plein_ecran: { croix_apres_s: 3, ferme_apres_s: 6 }, annonces: [] };
- 
+
     function annonceActive(a) {
         if (!a || a.actif === false || !imageSure(a.image)) return false;
         const j = aujourdhui();
@@ -62,7 +62,7 @@
         const num = String(cfg.whatsapp || "").replace(/[^0-9]/g, "");
         return num ? "https://wa.me/" + num + "?text=" + encodeURIComponent(cfg.message_annoncer) : "";
     }
- 
+
     /* ------------------------------ Suivi (vues / clics) ------------------------------ */
     const dejaEnvoye = {};
     function suivre(a, evenement) {
@@ -82,7 +82,7 @@
         window.open(l, "_blank", "noopener,noreferrer");
         return true;
     }
- 
+
     /* ------------------------------ Styles ------------------------------ */
     function styles() {
         if (document.getElementById("sr-pub-styles")) return;
@@ -105,7 +105,7 @@
         .sr-pub-hs{position:absolute;inset:0;display:none;}
         .sr-pub-hs.on{display:block;}
         .sr-pub-hs .sr-pub-bg{position:absolute;inset:-24px;background-size:cover;background-position:center;filter:blur(22px) brightness(.65);}
-        .sr-pub-hs img{position:relative;display:block;width:100%;height:100%;object-fit:contain;}
+        .sr-pub-hs img{position:relative;display:block;width:100%;height:100%;object-fit:cover;object-position:center;}
         .sr-pub-hero .sr-pub-chip{top:14px;left:14px;}
         .sr-pub-hero .sr-pub-annoncer{right:14px;bottom:14px;}
         .sr-pub-gr{grid-column:1 / -1;position:relative;border-radius:14px;overflow:hidden;background:#e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,.08);aspect-ratio:4/1;display:block;}
@@ -124,7 +124,7 @@
         `;
         document.head.appendChild(s);
     }
- 
+
     /* ------------------------------ Précharger une image ------------------------------ */
     function charger(src, delai) {
         return new Promise(resolve => {
@@ -137,7 +137,7 @@
             setTimeout(() => fin(false, "trop lourde ou trop lente (plus de " + Math.round((delai || 12000) / 1000) + " s) : compressez-la"), delai || 12000);
         });
     }
- 
+
     /* ------------------------------ 1. Plein écran ------------------------------ */
     function choisirPleinEcran() {
         const l = cfg.annonces.filter(a => a.emplacement === "plein-ecran" && annonceActive(a));
@@ -158,7 +158,7 @@
         if (document.getElementById("sr-pub-ecran")) return;
         styles();
         ecrire(CLE_JOUR, aujourdhui());
- 
+
         const cadre = el("div", { class: "sr-pub-cadre" });
         const img = el("img", { src: a.image, alt: a.partenaire || "Publicité" });
         const x = el("button", { id: "sr-pub-x", type: "button", "aria-label": "Fermer la publicité" });
@@ -173,7 +173,7 @@
         }
         document.body.appendChild(fond);
         suivre(a, "vue");
- 
+
         const croixApres = Math.max(1, Number(cfg.plein_ecran.croix_apres_s) || 3);
         const fermeApres = Math.max(croixApres + 1, Number(cfg.plein_ecran.ferme_apres_s) || 6);
         let reste = croixApres, fini = false;
@@ -195,7 +195,7 @@
         // Filet de sécurité : la croix finit toujours par apparaître, même si le minuteur est ralenti
         setTimeout(() => { if (!fini && !x.classList.contains("pret")) { x.textContent = "✕"; x.classList.add("pret"); } }, (croixApres + 2) * 1000);
     }
- 
+
     /* ------------------------------ 2. Bandeau sous le diaporama ------------------------------ */
     // Les annonces s'affichent DANS le grand bandeau de la boutique : le visuel normal, puis une annonce, puis le visuel, etc.
     // Réglages (facultatifs) dans promo.json : "banniere": { "mode": "hero", "premiere_ms": 2500, "pause_ms": 6000, "duree_ms": 4000 }
@@ -219,7 +219,7 @@
         an.addEventListener("click", ev => { ev.stopPropagation(); suivre({ id: "annoncer-ici", emplacement: "banniere" }, "clic"); });
         couche.appendChild(an);
         hero.appendChild(couche);
- 
+
         let i = Math.floor(Math.random() * ok.length), timer = null;       // départ aléatoire : chaque annonceur passe en premier à tour de rôle
         const afficher = () => {
             if (document.hidden) { timer = setTimeout(afficher, 1000); return; }
@@ -233,7 +233,7 @@
         };
         timer = setTimeout(afficher, premiere);
     }
- 
+
     async function bandeau() {
         const hero = document.getElementById("shop-hero");
         if (!hero || document.getElementById("sr-pub-bandeau")) return;
@@ -266,7 +266,7 @@
         }
         const zone = el("section", { id: "sr-pub-bandeau", "aria-label": "Publicité" }, [boite]);
         hero.parentNode.insertBefore(zone, hero.nextSibling);
- 
+
         let courant = 0, minuteur = null;
         const montrer = i => {
             courant = i;
@@ -283,7 +283,7 @@
             boite.addEventListener("mouseleave", demarrer);
         }
     }
- 
+
     /* ------------------------------ 3. Cartes dans la grille ------------------------------ */
     // Les annonces de la grille se regroupent par « slot » (champ "slot" de promo.json, 1 par défaut).
     // Toutes les annonces d'un même slot tournent dans UN SEUL carrousel : 8 annonceurs = 8 images qui défilent
@@ -331,7 +331,7 @@
         }
         return bloc;
     }
- 
+
     async function grille() {
         const g = document.getElementById("grille-boutique-dediee");
         if (!g) return;
@@ -341,7 +341,7 @@
         const liste = candidates.filter((a, i) => verifs[i]);
         if (!liste.length) return;
         styles();
- 
+
         const groupes = new Map();
         liste.forEach(a => { const k = String(a.slot || "1"); if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(a); });
         const slots = Array.from(groupes.entries()).sort((x, y) => x[0].localeCompare(y[0], undefined, { numeric: true }))
@@ -394,7 +394,7 @@
         }), { threshold: [0, 0.5] });
         return _io;
     }
- 
+
     /* ------------------------------ Démarrage ------------------------------ */
     async function chargerConfig() {
         try {
@@ -441,7 +441,7 @@
         document.body.appendChild(box);
         console.log(box.textContent);
     }
- 
+
     async function demarrer() {
         if (sansPub) return;
         const j = await chargerConfig();
@@ -456,4 +456,3 @@
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(demarrer, 300));
     else setTimeout(demarrer, 300);
 })();
- 
