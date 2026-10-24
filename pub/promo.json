@@ -52,5 +52,16 @@
       "debut": "2026-10-20",
       "fin": "2026-10-27"
     }
+       ,
+   {
+     "id": "banniere-2",
+     "partenaire": "SafeRun Market",
+     "maison": true,
+     "emplacement": "banniere",
+     "image": "pub/SafeRun Market _ vos courses livrées.png",
+     "boutique": "",
+     "debut": "2026-01-01",
+     "fin": "2099-12-31"
+   }
   ]
 }
