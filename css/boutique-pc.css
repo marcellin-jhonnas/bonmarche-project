@@ -2,18 +2,18 @@
    Fichier additionnel : s'applique uniquement aux écrans >= 900 px.
    Il ne contient que du style : aucune fonction du site n'est modifiée. */
 @media (min-width: 900px) {
- 
+
   /* ---- Grand bandeau ---- */
-  #shop-hero.premium-hero { height: 420px; margin: 24px auto; max-width: 1240px; border-radius: 28px; box-shadow: 0 24px 50px rgba(15, 23, 42, .18); }
+  #shop-hero.premium-hero { box-shadow: 0 24px 50px rgba(15, 23, 42, .18); }  /* taille, marges et largeur d'origine conservées */
   #shop-hero .hero-overlay { background: linear-gradient(95deg, rgba(15,23,42,.92) 0%, rgba(15,23,42,.62) 45%, rgba(15,23,42,.12) 100%); }
-  #shop-hero .hero-content { padding-left: 76px; max-width: 680px; }
+  #shop-hero .hero-content { max-width: 680px; }
   #shop-hero .hero-badge { padding: 7px 18px; font-size: .74rem; letter-spacing: .6px; box-shadow: 0 6px 18px rgba(255, 153, 0, .35); }
   #shop-hero .hero-content h1 { font-size: 3.4rem; line-height: 1.05; letter-spacing: -1.2px; text-shadow: 0 4px 24px rgba(0,0,0,.35); margin-bottom: 18px; }
   #shop-hero .hero-content p { font-size: 1.12rem; line-height: 1.6; color: #e2e8f0; max-width: 520px; }
- 
+
   /* ---- Titre de section ---- */
   .section-title { font-size: 1.6rem; letter-spacing: -.4px; }
- 
+
   /* ---- Cartes produits : survol plus doux ---- */
   #grille-boutique-dediee .zl-carte { transition: transform .3s ease; }
   #grille-boutique-dediee .zl-carte:hover { transform: translateY(-4px); }
@@ -22,7 +22,7 @@
   #grille-boutique-dediee .zl-nom { font-size: .92rem; }
   #grille-boutique-dediee .zl-prix { font-size: 1.05rem; }
   #grille-boutique-dediee .zl-btn { border-radius: 10px !important; padding: 11px 12px !important; }
- 
+
   /* ---- Annonces insérées dans la grille ("Offre SafeRun", "Espace ...") ---- */
   #grille-boutique-dediee .zl-annonce { position: relative; isolation: isolate; gap: 0; min-height: 240px; border-radius: 24px; box-shadow: 0 18px 40px rgba(15, 23, 42, .16); }
   #grille-boutique-dediee .zl-annonce::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -35,10 +35,4 @@
   #grille-boutique-dediee .zl-annonce { height: 260px; }
   #grille-boutique-dediee .zl-annonce-img { position: relative; z-index: 1; width: 34%; max-width: 420px; margin: 18px 18px 18px auto; border-radius: 18px; background: #fff; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
   #grille-boutique-dediee .zl-annonce-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; }
-}
- 
-/* Très grands écrans : on garde un bandeau proportionné */
-@media (min-width: 1500px) {
-  #shop-hero.premium-hero { height: 460px; }
-  #shop-hero .hero-content h1 { font-size: 3.8rem; }
 }
