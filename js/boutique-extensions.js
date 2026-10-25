@@ -1131,7 +1131,7 @@
             return;
         }
         b.disabled = true; b.textContent = "Connexion…";
-        await envoyer(payloadCommande("ATTENTE VISA", ""));
+        await envoyer(payloadCommande("NOUVEAU", ""));
         const usd = (((co.r.total / 4900) + 0.30) / (1 - 0.044)).toFixed(2);
         ouvrirModale("Paiement par carte", true);
         corps('<div class="sr-co-centre" style="margin-bottom:10px">Montant : <b>' + fmt(co.r.total) + '</b> (≈ ' + usd + ' USD)</div><div id="sr-paypal" style="min-height:200px"></div><button class="sr-co-btn sr-b-gris" id="sr-cb-retour">← Autre moyen de paiement</button>');
