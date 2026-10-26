@@ -276,7 +276,8 @@ function normaliser(c) {
     montant: nombre(c.Montant), quartier: String(c["Lieu Exact"] || ""), livraisonTxt: String(c.Livraison || ""),
     livreur: String(c.Livreur || ""), transaction: String(c.Transaction_ID || ""), note: String(c.Note || ""),
     boutiques: boutiques, boutique: boutiques.join(" + "), source: String(c.Source || ""),
-    type: type, creneau: String(c["Créneau"] || c.Creneau || ""), dateLiv: jourDe(c.Date_Livraison), frais: nombre(c.Frais_Livraison),
+    type: type, creneau: String(c["Créneau"] || c.Creneau || ""), dateLiv: jourDe(c.Date_Livraison), frais: nombre(c.Frais_Annonce),
+    fraisPaye: nombre(c.FraisLivraison != null ? c.FraisLivraison : (c["Frais Livraison"] != null ? c["Frais Livraison"] : c["Frais_Livraison"])),
     dateCmd: dateCmd && !isNaN(dateCmd) ? dateCmd : null, jourCmd: dateCmd && !isNaN(dateCmd) ? jourLocal(dateCmd) : ""
   };
 }
@@ -390,7 +391,8 @@ function carteCommande(c) {
   var liv = [];
   if (c.dateLiv) liv.push("📅 " + dateLongue(c.dateLiv)); else if (c.livraisonTxt) liv.push("📅 " + c.livraisonTxt);
   if (c.creneau) liv.push("🕒 " + c.creneau);
-  if (c.frais) liv.push("🚚 frais " + ar(c.frais));
+  if (c.frais) liv.push("🚚 frais annoncés " + ar(c.frais));
+  if (c.fraisPaye) liv.push("✅ frais payés " + ar(c.fraisPaye));
   if (c.transaction) liv.push("🔖 " + c.transaction);
   if (liv.length) h += '<div class="mute" style="margin-top:6px">' + esc(liv.join("  ·  ")) + "</div>";
   if (c.note) h += '<div class="cmd-n">📝 ' + esc(c.note) + "</div>";
