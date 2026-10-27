@@ -110,6 +110,7 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   <button type="button" data-t="prod">🛍️ Produits</button>
   <button type="button" data-t="pub">📣 Publicités</button>
   <button type="button" data-t="rev">💰 Revenus</button>
+  <button type="button" data-t="rec">👥 Recrutement <span class="nb" id="nb-rec" style="display:none">0</span></button>
 </nav>
 
 <main>
@@ -216,6 +217,19 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   </section>
 
   <!-- REVENUS -->
+  <!-- RECRUTEMENT -->
+  <section class="sec" id="s-rec">
+    <div class="bar">
+      <select id="r-vue"><option value="cand">Candidatures</option><option value="offres">Offres d'emploi</option></select>
+      <select id="r-poste"></select>
+      <select id="r-statut"><option value="">Tous les statuts</option><option value="RECUE">Reçues</option><option value="VUE">Vues</option><option value="RETENUE">Retenues</option><option value="ENTRETIEN">Entretien</option><option value="REFUSEE">Refusées</option></select>
+      <input type="search" id="r-q" placeholder="Rechercher un nom, téléphone, e-mail…">
+      <button class="btn pri" id="r-nouvelle" type="button">＋ Nouvelle offre</button>
+      <button class="btn" id="r-csv" type="button">⬇ Export CSV</button>
+    </div>
+    <div id="r-corps"><div class="vide">Chargement…</div></div>
+  </section>
+
   <section class="sec" id="s-rev">
     <div class="bar">
       <select id="r-periode">
@@ -231,6 +245,16 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   </section>
 </main>
 <div class="modal" id="modal"></div>
+<div class="modal" id="m-cv"><div class="mbox" style="max-width:980px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><h3 id="cv-titre" style="margin:0;flex:1"></h3><a class="btn" id="cv-ouvrir" target="_blank" rel="noopener">↗ Ouvrir dans un onglet</a><button class="btn" id="cv-fermer" type="button">✖ Fermer</button></div><div id="cv-corps" style="min-height:300px"></div></div></div>
+<div class="modal" id="m-offre"><div class="mbox"><h3 id="of-titre">Nouvelle offre</h3><div class="frm">
+ <div class="full"><label>Intitulé du poste *</label><input id="of-titre-in" maxlength="120"></div>
+ <div><label>Type de contrat</label><select id="of-type"><option>CDI</option><option>CDD</option><option>Stage</option><option>Freelance</option><option>Temps partiel</option><option>Autre</option></select></div>
+ <div><label>Lieu</label><input id="of-lieu" value="Antananarivo" maxlength="80"></div>
+ <div><label>Date de publication</label><input id="of-pub" type="date"></div>
+ <div><label>Date limite (facultatif)</label><input id="of-lim" type="date"></div>
+ <div class="full"><label>Description (une ligne « - … » = une puce)</label><textarea id="of-desc" style="min-height:160px" maxlength="8000"></textarea></div>
+ <div><label>Visible sur le site</label><select id="of-actif"><option value="OUI">OUI — publiée</option><option value="NON">NON — masquée</option></select></div>
+</div><div class="mact"><button class="btn" id="of-annuler" type="button">Annuler</button><button class="btn pri" id="of-ok" type="button">Enregistrer</button></div></div></div>
 <div id="apercu"><div class="tb"><b id="ap-titre"></b><button class="btn pri" id="ap-print" type="button">🖨️ Imprimer / Enregistrer en PDF</button><button class="btn" id="ap-fermer" type="button">✖ Fermer</button></div><iframe id="ap-frame" title="Aperçu"></iframe></div>
 <div id="toast"></div>
 
@@ -653,13 +677,13 @@ function tout() {
   rendreChips(); badgeNav();
   var o = etat.onglet;
   if (o === "dash") rendreDash(); else if (o === "cmd") rendreCommandes(); else if (o === "prep") rendrePrep();
-  else if (o === "doc") rendreDocs(); else if (o === "prod") rendreProduits(); else if (o === "pub") rendrePubs(); else if (o === "rev") rendreRevenus();
+  else if (o === "doc") rendreDocs(); else if (o === "prod") rendreProduits(); else if (o === "pub") rendrePubs(); else if (o === "rev") rendreRevenus(); else if (o === "rec") rendreRecrutement();
 }
 function ouvrirOnglet(t) {
   etat.onglet = t;
   document.querySelectorAll("#onglets button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-t") === t); });
   document.querySelectorAll(".sec").forEach(function (s) { s.classList.toggle("on", s.id === "s-" + t); s.classList.toggle("imprimer", s.id === "s-" + t); });
-  $("chips-boutiques").style.display = (t === "pub" || t === "doc") ? "none" : "flex";
+  $("chips-boutiques").style.display = (t === "pub" || t === "doc" || t === "rec") ? "none" : "flex";
   tout();
 }
 
@@ -886,6 +910,141 @@ function docsListe() {
   if (!l.length) { toast("Aucune commande à livrer à cette date (vérifiez la date et les filtres)"); return null; }
   return l;
 }
+
+
+/* ---------------- Recrutement ---------------- */
+var rec = { offres: [], cands: [], charge: false, editLigne: 0 };
+var STATUTS_REC = { RECUE: ["Reçue", "p-warn"], VUE: ["Vue", "p-warn"], RETENUE: ["Retenue", "p-ok"], ENTRETIEN: ["Entretien", "p-ok"], REFUSEE: ["Refusée", "p-bad"] };
+async function chargerRecrutement(force) {
+  if (rec.charge && !force) return;
+  try {
+    var d = await postAPI({ action: "gestionRecrutement", operation: "lister" });
+    rec.offres = d.offres || []; rec.cands = (d.candidatures || []).slice().reverse(); rec.charge = true;
+    var n = rec.cands.filter(function (c) { return cle(c.Statut) === "RECUE"; }).length, b = $("nb-rec"); b.textContent = n; b.style.display = n ? "" : "none";
+  } catch (e) { $("r-corps").innerHTML = '<div class="vide">❌ ' + esc(e.message) + '<br><small>Le script Google (étape 7) est-il installé et publié en nouvelle version ?</small></div>'; return; }
+  rendreRecrutement();
+}
+function rendreRecrutement() {
+  if (!rec.charge) { chargerRecrutement(); return; }
+  var vue = $("r-vue").value, selP = $("r-poste"), memo = selP.value;
+  var postes = {}; rec.cands.forEach(function (c) { postes[c.ID_Poste] = c.Poste; });
+  selP.innerHTML = '<option value="">Tous les postes</option>' + Object.keys(postes).map(function (k) { return '<option value="' + esc(k) + '">' + esc(postes[k]) + "</option>"; }).join("");
+  selP.value = memo; selP.style.display = vue === "cand" ? "" : "none"; $("r-statut").style.display = vue === "cand" ? "" : "none"; $("r-q").style.display = vue === "cand" ? "" : "none"; $("r-csv").style.display = vue === "cand" ? "" : "none";
+  $("r-nouvelle").style.display = vue === "offres" ? "" : "none";
+  $("r-corps").innerHTML = vue === "cand" ? htmlCandidatures() : htmlOffres();
+}
+function htmlCandidatures() {
+  var p = $("r-poste").value, st = $("r-statut").value, q = cle($("r-q").value);
+  var l = rec.cands.filter(function (c) {
+    if (p && String(c.ID_Poste) !== p) return false;
+    if (st && cle(c.Statut) !== st) return false;
+    return !q || cle([c.Nom, c.Telephone, c.Email, c.Poste, c.Quartier].join(" ")).indexOf(q) >= 0;
+  });
+  if (!l.length) return '<div class="vide">Aucune candidature.</div>';
+  var h = '<div class="mute" style="margin-bottom:10px">' + l.length + " candidature(s) · données lues directement dans la feuille « Candidatures »</div>";
+  var groupes = {}, ordre = [];
+  l.forEach(function (c) { var k = c.Poste || "—"; if (!groupes[k]) { groupes[k] = []; ordre.push(k); } groupes[k].push(c); });
+  ordre.forEach(function (k) {
+    var avant = groupes[k].filter(function (c) { return cle(c.Apres_Limite) !== "OUI"; }), apres = groupes[k].filter(function (c) { return cle(c.Apres_Limite) === "OUI"; });
+    h += '<div class="card"><h3>' + esc(k) + ' <span class="mute" style="font-weight:500">· ' + groupes[k].length + "</span></h3>";
+    h += avant.map(carteCand).join("");
+    if (apres.length) h += '<h4 style="margin:14px 0 8px;color:#b45309">⏰ Après la date limite (' + apres.length + ")</h4>" + apres.map(carteCand).join("");
+    h += "</div>";
+  });
+  return h;
+}
+function carteCand(c) {
+  var s = cle(c.Statut) || "RECUE", inf = STATUTS_REC[s] || [s, ""];
+  var opts = Object.keys(STATUTS_REC).map(function (k) { return '<option value="' + k + '"' + (k === s ? " selected" : "") + ">" + STATUTS_REC[k][0] + "</option>"; }).join("");
+  var wa = lienWhatsApp(c.Telephone, "Bonjour " + c.Nom + ", c'est SafeRun Market à propos de votre candidature (" + c.Poste + ").");
+  return '<div class="cmd ' + (s === "RETENUE" || s === "ENTRETIEN" ? "serieux" : s === "REFUSEE" ? "annule" : "nouveau") + '" data-cand="' + esc(c.ID_Candidature) + '">' +
+    '<div class="cmd-h"><span class="id">' + esc(c.Nom) + '</span><span class="pill ' + inf[1] + '">' + inf[0] + "</span><span class=\"mute\">" + esc(String(c.Date || "")) + " · " + esc(c.ID_Candidature) + "</span></div>" +
+    '<div class="cmd-b">📞 ' + esc(String(c.Telephone || "").replace(/^'/, "")) + " · ✉️ " + esc(c.Email) + " · 📍 " + esc(c.Quartier) + (c.Niveau ? " · 🎓 " + esc(c.Niveau) : "") + (c.Disponibilite ? " · ⏱️ " + esc(c.Disponibilite) : "") + "</div>" +
+    '<details class="mt"><summary style="cursor:pointer;font-weight:600">📝 Lettre de motivation</summary><div style="white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:12px;margin-top:6px;line-height:1.6">' + esc(c.Lettre) + "</div></details>" +
+    '<div class="cmd-a"><button class="btn sm dark" data-rc="cv" type="button">📄 Voir le CV</button>' + (c.LM_Chemin ? '<button class="btn sm" data-rc="lm" type="button">✍️ Voir la lettre scannée</button>' : "") +
+    (wa ? '<a class="btn sm ok" target="_blank" rel="noopener" href="' + esc(wa) + '">WhatsApp</a>' : "") +
+    '<select data-rstatut>' + opts + '</select><button class="btn sm" data-rc="note" type="button">🗒️ Note</button><button class="btn sm bad" data-rc="sup" type="button">🗑️</button></div>' +
+    (c.Note ? '<div class="cmd-n">🗒️ ' + esc(c.Note) + "</div>" : "") + "</div>";
+}
+function htmlOffres() {
+  if (!rec.offres.length) return '<div class="vide">Aucune offre. Cliquez sur « Nouvelle offre ».</div>';
+  var auj = aujourdhui();
+  return '<div class="card tw"><table><thead><tr><th>Poste</th><th>Type</th><th>Publiée</th><th>Limite</th><th>Candidatures</th><th>Site</th><th></th></tr></thead><tbody>' + rec.offres.map(function (o) {
+    var n = rec.cands.filter(function (c) { return String(c.ID_Poste) === String(o.ID); }).length, actif = cle(o.Actif) !== "NON", lim = jourDe(o.Date_Limite);
+    return '<tr data-ligne="' + o._ligne + '"><td><b>' + esc(o.Intitule_Poste) + "</b><br><small class=\"mute\">" + esc(o.Lieu || "") + "</small></td><td>" + esc(o.Type) + "</td><td>" + esc(jourDe(o.Date_Publication) || "—") + "</td><td>" + (lim ? esc(lim) + (lim < auj ? ' <span class="pill p-bad">Clôturée</span>' : "") : "—") + "</td><td>" + n + '</td><td><span class="pill ' + (actif ? "p-ok" : "p-bad") + '">' + (actif ? "Publiée" : "Masquée") + '</span></td><td style="white-space:nowrap"><button class="btn sm" data-ro="edit" type="button">✏️</button> <button class="btn sm" data-ro="toggle" type="button">' + (actif ? "Masquer" : "Publier") + '</button> <button class="btn sm bad" data-ro="del" type="button">🗑️</button></td></tr>';
+  }).join("") + "</tbody></table></div>";
+}
+function ouvrirOffre(o) {
+  rec.editLigne = o ? o._ligne : 0; $("of-titre").textContent = o ? "Modifier l'offre" : "Nouvelle offre";
+  $("of-titre-in").value = o ? o.Intitule_Poste : ""; $("of-type").value = o && o.Type ? o.Type : "CDI"; $("of-lieu").value = o ? (o.Lieu || "") : "Antananarivo";
+  $("of-pub").value = o ? jourDe(o.Date_Publication) : aujourdhui(); $("of-lim").value = o ? jourDe(o.Date_Limite) : ""; $("of-desc").value = o ? (o.Description || "") : ""; $("of-actif").value = o && cle(o.Actif) === "NON" ? "NON" : "OUI";
+  $("m-offre").classList.add("on");
+}
+async function enregistrerOffre() {
+  var v = { Intitule_Poste: $("of-titre-in").value.trim(), Type: $("of-type").value, Lieu: $("of-lieu").value.trim(), Date_Publication: $("of-pub").value, Date_Limite: $("of-lim").value, Description: $("of-desc").value.trim(), Actif: $("of-actif").value };
+  if (!v.Intitule_Poste) { toast("L'intitulé du poste est obligatoire"); return; }
+  try {
+    await postAPI({ action: "gestionRecrutement", operation: rec.editLigne ? "modifierOffre" : "ajouterOffre", ligne: rec.editLigne, valeurs: v });
+    $("m-offre").classList.remove("on"); toast("✔ Offre enregistrée"); await chargerRecrutement(true);
+  } catch (e) { toast("❌ " + e.message); }
+}
+async function actionOffre(ligne, act) {
+  var o = rec.offres.filter(function (x) { return x._ligne === ligne; })[0]; if (!o) return;
+  if (act === "edit") { ouvrirOffre(o); return; }
+  try {
+    if (act === "toggle") await postAPI({ action: "gestionRecrutement", operation: "modifierOffre", ligne: ligne, valeurs: { Actif: cle(o.Actif) === "NON" ? "OUI" : "NON" } });
+    else { if (!confirm("Supprimer définitivement l'offre « " + o.Intitule_Poste + " » ?\n(Les candidatures déjà reçues sont conservées.)")) return; await postAPI({ action: "gestionRecrutement", operation: "supprimerOffre", ligne: ligne }); }
+    toast("✔ Fait"); await chargerRecrutement(true);
+  } catch (e) { toast("❌ " + e.message); }
+}
+var cvUrl = "";
+async function voirFichier(id, quel) {
+  var c = rec.cands.filter(function (x) { return x.ID_Candidature === id; })[0]; if (!c) return;
+  $("cv-titre").textContent = (quel === "LM" ? "Lettre de " : "CV de ") + c.Nom; $("cv-corps").innerHTML = '<div class="vide">Chargement du document…</div>'; $("cv-ouvrir").removeAttribute("href"); $("m-cv").classList.add("on");
+  try {
+    var d = await postAPI({ action: "gestionRecrutement", operation: "fichier", idCandidature: id, fichier: quel });
+    var bin = atob(d.base64), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    if (cvUrl) URL.revokeObjectURL(cvUrl); cvUrl = URL.createObjectURL(new Blob([arr], { type: d.mime }));
+    $("cv-ouvrir").href = cvUrl;
+    $("cv-corps").innerHTML = d.mime === "application/pdf" ? '<iframe title="CV" src="' + cvUrl + '" style="width:100%;height:72vh;border:1px solid #e2e8f0;border-radius:10px"></iframe>' : '<img alt="CV" src="' + cvUrl + '" style="max-width:100%;border-radius:10px">';
+    if (cle(c.Statut) === "RECUE") changerStatutCand(id, "VUE", true);
+  } catch (e) { $("cv-corps").innerHTML = '<div class="vide">❌ ' + esc(e.message) + "</div>"; }
+}
+async function changerStatutCand(id, st, silencieux) {
+  try { await postAPI({ action: "gestionRecrutement", operation: "majStatut", idCandidature: id, statut: st }); rec.cands.forEach(function (c) { if (c.ID_Candidature === id) c.Statut = st; }); if (!silencieux) toast("✔ Statut enregistré"); rendreRecrutement(); }
+  catch (e) { toast("❌ " + e.message); }
+}
+async function actionCand(id, act) {
+  var c = rec.cands.filter(function (x) { return x.ID_Candidature === id; })[0]; if (!c) return;
+  if (act === "cv") return voirFichier(id, "CV");
+  if (act === "lm") return voirFichier(id, "LM");
+  try {
+    if (act === "note") { var n = prompt("Note interne sur " + c.Nom + " :", c.Note || ""); if (n === null) return; await postAPI({ action: "gestionRecrutement", operation: "majNote", idCandidature: id, note: n }); c.Note = n; toast("✔ Note enregistrée"); rendreRecrutement(); }
+    else if (act === "sup") { if (!confirm("Supprimer la candidature de " + c.Nom + " et ses fichiers sur Dropbox ?\nCette action est définitive.")) return; await postAPI({ action: "gestionRecrutement", operation: "supprimerCandidature", idCandidature: id }); toast("✔ Supprimée"); await chargerRecrutement(true); }
+  } catch (e) { toast("❌ " + e.message); }
+}
+function exportCandidatures() {
+  var l = [["Date", "Réf", "Poste", "Nom", "Téléphone", "E-mail", "Quartier", "Niveau", "Disponibilité", "Statut", "Après limite", "Note"]];
+  rec.cands.forEach(function (c) { l.push([c.Date, c.ID_Candidature, c.Poste, c.Nom, String(c.Telephone || "").replace(/^'/, ""), c.Email, c.Quartier, c.Niveau, c.Disponibilite, c.Statut, c.Apres_Limite, c.Note]); });
+  csv(l, "candidatures");
+}
+document.addEventListener("click", function (e) {
+  var t = e.target; if (!t.closest) return;
+  var b;
+  if ((b = t.closest("[data-rc]"))) { var cr = b.closest("[data-cand]"); if (cr) actionCand(cr.getAttribute("data-cand"), b.getAttribute("data-rc")); return; }
+  if ((b = t.closest("[data-ro]"))) { var tr = b.closest("tr"); if (tr) actionOffre(Number(tr.getAttribute("data-ligne")), b.getAttribute("data-ro")); return; }
+  if (t.closest("#r-nouvelle")) ouvrirOffre(null);
+  else if (t.closest("#of-annuler")) $("m-offre").classList.remove("on");
+  else if (t.closest("#of-ok")) enregistrerOffre();
+  else if (t.closest("#r-csv")) exportCandidatures();
+  else if (t.closest("#cv-fermer")) { $("m-cv").classList.remove("on"); $("cv-corps").innerHTML = ""; }
+});
+document.addEventListener("change", function (e) {
+  var t = e.target; if (!t.matches) return;
+  if (t.matches("[data-rstatut]")) { var cr = t.closest("[data-cand]"); if (cr) changerStatutCand(cr.getAttribute("data-cand"), t.value); }
+  else if (t.matches("#r-vue,#r-poste,#r-statut")) rendreRecrutement();
+});
+document.addEventListener("input", function (e) { if (e.target && e.target.id === "r-q") rendreRecrutement(); });
 
 /* ---------------- Événements ---------------- */
 document.addEventListener("click", function (e) {
