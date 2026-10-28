@@ -110,6 +110,7 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   <button type="button" data-t="prod">🛍️ Produits</button>
   <button type="button" data-t="pub">📣 Publicités</button>
   <button type="button" data-t="rev">💰 Revenus</button>
+  <button type="button" data-t="cad">🎁 Cadeaux</button>
   <button type="button" data-t="rec">👥 Recrutement <span class="nb" id="nb-rec" style="display:none">0</span></button>
 </nav>
 
@@ -217,6 +218,18 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   </section>
 
   <!-- REVENUS -->
+  <!-- CADEAUX -->
+  <section class="sec" id="s-cad">
+    <div class="bar">
+      <select id="g-vue"><option value="regles">Règles automatiques</option><option value="promesses">Cadeaux promis aux clients</option></select>
+      <button class="btn pri" id="g-nouvelle" type="button">＋ Nouvelle règle</button>
+      <button class="btn" id="g-promesse" type="button">🎁 Offrir un cadeau à un client</button>
+      <button class="btn" id="g-inter" type="button">…</button>
+    </div>
+    <div class="grid kpis" id="g-kpis"></div>
+    <div id="g-corps"><div class="vide">Chargement…</div></div>
+  </section>
+
   <!-- RECRUTEMENT -->
   <section class="sec" id="s-rec">
     <div class="bar">
@@ -245,6 +258,29 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
   </section>
 </main>
 <div class="modal" id="modal"></div>
+<div class="modal" id="m-regle"><div class="mbox"><h3 id="rg-titre">Nouvelle règle</h3><div class="frm">
+ <div class="full"><label>Nom (visible dans le suivi interne)</label><input id="rg-nom" maxlength="120"></div>
+ <div><label>Déclencheur</label><select id="rg-decl"><option value="PANIER">Montant du panier (livraison comprise)</option><option value="BIENVENUE">1ʳᵉ commande (bienvenue)</option><option value="FIDELITE">Fidélité : n-ième commande livrée</option><option value="PARRAINAGE_AMI">Ami parrainé (1ʳᵉ commande)</option><option value="PARRAINAGE_PARRAIN">Parrain (après la 1ʳᵉ livraison du filleul)</option></select></div>
+ <div><label>Type de cadeau</label><select id="rg-type"><option value="LIVRAISON_OFFERTE">Livraison offerte</option><option value="REMISE_PCT">Remise en %</option><option value="REMISE_AR">Remise en Ar</option><option value="OBJET">Objet offert</option></select></div>
+ <div><label id="rg-l1">Seuil minimum (Ar)</label><input id="rg-smin" type="number" min="0"></div>
+ <div><label>Seuil maximum (Ar, facultatif)</label><input id="rg-smax" type="number" min="0"></div>
+ <div><label id="rg-lv">Valeur</label><input id="rg-val" type="number" min="0"></div>
+ <div><label>Plafond (Ar)</label><input id="rg-plaf" type="number" min="0"></div>
+ <div><label>Début (facultatif)</label><input id="rg-deb" type="date"></div>
+ <div><label>Fin (facultatif)</label><input id="rg-fin" type="date"></div>
+ <div><label>Stock maximum (facultatif)</label><input id="rg-stock" type="number" min="0"></div>
+ <div><label>Active</label><select id="rg-actif"><option value="OUI">OUI</option><option value="NON">NON</option></select></div>
+</div><div class="mute mt" id="rg-aide" style="font-size:.78rem"></div><div class="mact"><button class="btn" id="rg-annuler" type="button">Annuler</button><button class="btn pri" id="rg-ok" type="button">Enregistrer</button></div></div></div>
+<div class="modal" id="m-promesse"><div class="mbox"><h3 id="pm-titre">🎁 Offrir un cadeau à un client</h3><div class="frm">
+ <div><label>Téléphone du client *</label><input id="pm-tel" type="tel" placeholder="034 00 000 00"></div>
+ <div><label>Type de cadeau</label><select id="pm-type"><option value="LIVRAISON_OFFERTE">Livraison offerte</option><option value="REMISE_PCT">Remise en %</option><option value="REMISE_AR">Remise en Ar</option><option value="OBJET">Objet offert</option></select></div>
+ <div><label id="pm-lv">Valeur (Ar)</label><input id="pm-val" type="number" min="0"></div>
+ <div><label>Plafond (Ar)</label><input id="pm-plaf" type="number" min="0" placeholder="Ex. 6000"></div>
+ <div class="full"><label>Nom du cadeau (affiché au client)</label><input id="pm-nom" maxlength="100" placeholder="Ex. Livraison offerte pour vous remercier"></div>
+ <div class="full"><label>Motif (interne)</label><input id="pm-motif" maxlength="200" placeholder="Ex. hésitation, appel du jour"></div>
+ <div><label>Valable (jours)</label><input id="pm-jours" type="number" min="1" max="90" value="7"></div>
+</div><div class="mute mt" style="font-size:.78rem">Le cadeau est rattaché au numéro : le client le verra dans « Mes cadeaux » et il s'appliquera à sa prochaine commande, une seule fois.</div>
+<div class="mact"><button class="btn" id="pm-annuler" type="button">Annuler</button><button class="btn pri" id="pm-ok" type="button">Offrir le cadeau</button></div></div></div>
 <div class="modal" id="m-cv"><div class="mbox" style="max-width:980px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><h3 id="cv-titre" style="margin:0;flex:1"></h3><a class="btn" id="cv-ouvrir" target="_blank" rel="noopener">↗ Ouvrir dans un onglet</a><button class="btn" id="cv-fermer" type="button">✖ Fermer</button></div><div id="cv-corps" style="min-height:300px"></div></div></div>
 <div class="modal" id="m-offre"><div class="mbox"><h3 id="of-titre">Nouvelle offre</h3><div class="frm">
  <div class="full"><label>Intitulé du poste *</label><input id="of-titre-in" maxlength="120"></div>
@@ -352,6 +388,7 @@ function normaliser(c) {
     type: type, creneau: String(c["Créneau"] || c.Creneau || "").replace(/^'/, "") || creneauDepuisTexte(c.Livraison), dateLiv: jourDe(c.Date_Livraison) || dateDepuisTexte(c.Livraison), frais: nombre(c.Frais_Annonce),
     modePaiement: String(c.Paiement_Mode || "").trim(), prepa: String(c.Preparation || "").trim(),
     fraisPaye: nombre(c.FraisLivraison != null ? c.FraisLivraison : (c["Frais Livraison"] != null ? c["Frais Livraison"] : c["Frais_Livraison"])),
+    cadeau: String(c.Cadeau || "").trim(), cadeauType: cle(c.Cadeau_Type), cadeauValeur: nombre(c.Cadeau_Valeur), cadeauOrigine: cle(c.Cadeau_Origine),
     dateCmd: dateCmd && !isNaN(dateCmd) ? dateCmd : null, jourCmd: dateCmd && !isNaN(dateCmd) ? jourLocal(dateCmd) : ""
   };
 }
@@ -442,21 +479,27 @@ function creneauDepuisTexte(txt) {
   return "";
 }
 var VALIDES_PAIEMENT = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "LIVRE"];
+function cadeauDeduit(c) { return c.cadeau && c.cadeauType !== "OBJET" ? Math.max(0, c.cadeauValeur) : 0; }
 function paiement(c) {
-  var r = { etat: "", total: c.montant, frais: c.fraisPaye, reste: 0, raison: "", detail: "", mode: c.modePaiement || "" };
+  var ded = cadeauDeduit(c), mCad = ded ? " − cadeau « " + c.cadeau + " » " + nbr(ded) : "";
+  var r = { etat: "", total: c.montant, frais: c.fraisPaye, reste: 0, raison: "", detail: "", mode: c.modePaiement || "", deduit: ded };
   if (c.statut === "ANNULE") { r.etat = "ANNULE"; return r; }
   var note = sansAccent(c.note).toLowerCase();
   var cod = /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/.test(note);
   if (r.mode === "DEJA_PAYE") { r.etat = "DEJA"; return r; }
   if (r.mode === "TOUT_LIVRAISON") {
     if (c.montant >= PLAFOND_LIVRAISON) { r.etat = "VERIF"; r.raison = "Montant au-dessus du plafond de " + nbr(PLAFOND_LIVRAISON) + " Ar pour un paiement 100 % à la livraison"; return r; }
-    r.etat = "ENC"; r.reste = c.montant; r.detail = "Aucun paiement d'avance : tout est à régler au livreur"; return r;
+    r.reste = Math.max(0, c.montant - ded); r.etat = r.reste > 0 ? "ENC" : "DEJA"; r.detail = "Aucun paiement d'avance : tout est à régler au livreur" + mCad; return r;
   }
   if (r.mode === "FRAIS_AVANCE" || (r.mode === "" && cod)) {
+    if (c.fraisPaye <= 0 && c.cadeauType === "LIVRAISON_OFFERTE") {      // livraison offerte : le client n'avance aucun frais
+      r.reste = Math.max(0, c.montant - ded); r.etat = r.reste > 0 ? "ENC" : "DEJA"; r.detail = "Livraison offerte : aucun frais d'avance. Total " + nbr(c.montant) + mCad + " = " + nbr(r.reste); return r;
+    }
     if (c.fraisPaye <= 0) { r.etat = "VERIF"; r.raison = "Frais de livraison non enregistrés (colonne FraisLivraison vide)"; return r; }
-    var du = c.montant - c.fraisPaye;
-    if (du <= 0) { r.etat = "VERIF"; r.raison = "Reste à encaisser nul ou négatif (total " + nbr(c.montant) + ", frais " + nbr(c.fraisPaye) + ")"; return r; }
-    r.etat = "ENC"; r.reste = du; r.detail = "Total " + nbr(c.montant) + " − frais de livraison déjà payés " + nbr(c.fraisPaye) + " = " + nbr(du); return r;
+    var du = c.montant - c.fraisPaye - ded;
+    if (du <= 0 && !ded) { r.etat = "VERIF"; r.raison = "Reste à encaisser nul ou négatif (total " + nbr(c.montant) + ", frais " + nbr(c.fraisPaye) + ")"; return r; }
+    if (du <= 0) { r.etat = "DEJA"; r.detail = "Rien à encaisser grâce au cadeau"; return r; }
+    r.etat = "ENC"; r.reste = du; r.detail = "Total " + nbr(c.montant) + " − frais de livraison déjà payés " + nbr(c.fraisPaye) + mCad + " = " + nbr(du); return r;
   }
   if (VALIDES_PAIEMENT.indexOf(c.statut) !== -1) { r.etat = "DEJA"; return r; }
   r.etat = "VERIF"; r.raison = "Paiement non confirmé (statut « " + (LIBELLES[c.statut] || c.statut) + " »)";
@@ -538,8 +581,10 @@ function carteCommande(c) {
   if (c.transaction) liv.push("🔖 " + c.transaction);
   if (liv.length) h += '<div class="mute" style="margin-top:6px">' + esc(liv.join("  ·  ")) + "</div>";
   if (c.note) h += '<div class="cmd-n">📝 ' + esc(c.note) + "</div>";
+  if (c.cadeau) h += '<div class="cmd-n" style="background:#ecfdf5;color:#065f46">🎁 Cadeau : <b>' + esc(c.cadeau) + "</b>" + (c.cadeauValeur ? " (" + ar(c.cadeauValeur) + ")" : "") + " · " + (c.cadeauOrigine === "MANUEL" ? "manuel" : c.cadeauOrigine === "PROMESSE" ? "promis par l'admin" : c.cadeauOrigine === "PARRAIN" ? "parrainage" : "automatique") + "</div>";
   h += blocPaiementHtml(c) + controlesPaiementHtml(c);
   h += '<div class="cmd-a">';
+  if (c.statut !== "ANNULE" && c.statut !== "LIVRE") h += c.cadeau ? '<button class="btn sm" data-cad-cmd="retirer" type="button">🎁✖ Retirer le cadeau</button>' : '<button class="btn sm" data-cad-cmd="ajouter" type="button">🎁 Ajouter un cadeau</button>';
   if (estATraiter(c)) h += '<button class="btn ok sm" data-act="SÉRIEUX" type="button">✔ Valider</button>';
   if (["SERIEUX", "PLANIFIE", "NOUVEAU", "A VERIFIER", "ATTENTE VISA"].indexOf(c.statut) !== -1) h += '<button class="btn sm" data-act="PAYÉ" type="button">💳 Marquer payé</button>';
   if (["LIVRE", "ANNULE"].indexOf(c.statut) === -1) h += '<button class="btn dark sm" data-act="LIVRÉ" type="button">📦 Livrée</button>';
@@ -677,13 +722,13 @@ function tout() {
   rendreChips(); badgeNav();
   var o = etat.onglet;
   if (o === "dash") rendreDash(); else if (o === "cmd") rendreCommandes(); else if (o === "prep") rendrePrep();
-  else if (o === "doc") rendreDocs(); else if (o === "prod") rendreProduits(); else if (o === "pub") rendrePubs(); else if (o === "rev") rendreRevenus(); else if (o === "rec") rendreRecrutement();
+  else if (o === "doc") rendreDocs(); else if (o === "prod") rendreProduits(); else if (o === "pub") rendrePubs(); else if (o === "rev") rendreRevenus(); else if (o === "rec") rendreRecrutement(); else if (o === "cad") rendreCadeaux();
 }
 function ouvrirOnglet(t) {
   etat.onglet = t;
   document.querySelectorAll("#onglets button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-t") === t); });
   document.querySelectorAll(".sec").forEach(function (s) { s.classList.toggle("on", s.id === "s-" + t); s.classList.toggle("imprimer", s.id === "s-" + t); });
-  $("chips-boutiques").style.display = (t === "pub" || t === "doc" || t === "rec") ? "none" : "flex";
+  $("chips-boutiques").style.display = (t === "pub" || t === "doc" || t === "rec" || t === "cad") ? "none" : "flex";
   tout();
 }
 
@@ -819,20 +864,24 @@ function etiquetteHtml(c) {
   var p = paiement(c), liv = [];
   if (c.dateLiv) liv.push(dateLongue(c.dateLiv)); if (c.creneau) liv.push(c.creneau);
   var pay;
-  if (p.etat === "ENC") pay = '<div class="pay enc"><div class="t">À ENCAISSER</div><div class="g">' + nbr(p.reste) + ' Ar</div><div class="s">' + esc(p.mode === "TOUT_LIVRAISON" ? "Rien payé d'avance : tout à la livraison" : "Total " + nbr(p.total) + " − frais déjà payés " + nbr(p.frais)) + "</div></div>";
+  if (p.etat === "ENC") pay = '<div class="pay enc"><div class="t">À ENCAISSER</div><div class="g">' + nbr(p.reste) + ' Ar</div><div class="s">' + esc(p.mode === "TOUT_LIVRAISON" ? "Rien payé d'avance : tout à la livraison" : "Total " + nbr(p.total) + " − frais déjà payés " + nbr(p.frais)) + (p.deduit ? " − cadeau " + nbr(p.deduit) : "") + "</div></div>";
   else if (p.etat === "DEJA") pay = '<div class="pay ok"><div class="g">DÉJÀ PAYÉ</div><div class="s">Rien à encaisser</div></div>';
   else pay = '<div class="pay bad"><div class="g">À VÉRIFIER</div><div class="s">NE PAS PARTIR · ' + esc(p.raison) + "</div></div>";
   var arts = c.lignes.map(function (l) { return "<li><b>" + l.qte + " ×</b> " + esc(l.nom) + "</li>"; }).join("");
   return '<div class="etq"><div class="top"><span class="brand">SAFERUN</span><span class="num">#' + esc(c.id) + "</span>" + (/flash/i.test(c.type) ? '<span class="fl">FLASH</span>' : "") + "</div>" +
     '<div class="cli"><b>' + esc(c.client) + "</b> · " + esc(c.tel) + "<br>" + (c.quartier ? "Lieu : <b>" + esc(c.quartier) + "</b>" : "") + "</div>" +
     '<div class="liv">' + esc(liv.join(" · ")) + (c.livreur ? " · Livreur : " + esc(c.livreur) : "") + "</div>" +
-    '<div class="art" data-fit data-max="10.5"><ul>' + arts + "</ul></div>" + pay + "</div>";
+    '<div class="art" data-fit data-max="10.5"><ul>' + arts + "</ul></div>" + cadeauEtiquette(c) + pay + "</div>";
+}
+function cadeauEtiquette(c) {
+  if (!c.cadeau) return "";
+  return '<div class="gift">🎁 CADEAU : ' + esc(c.cadeau) + (c.cadeauType === "OBJET" ? " — à joindre au colis" : c.cadeauType === "LIVRAISON_OFFERTE" ? " — déjà déduit" : " — déjà déduit du montant") + "</div>";
 }
 function htmlEtiquettes(l) {
   var css = "@page{size:A4 portrait;margin:0}.pg{width:210mm;height:297mm;display:grid;grid-template-columns:105mm 105mm;grid-template-rows:repeat(4,74.25mm);break-after:page;page-break-after:always}.pg:last-child{break-after:auto;page-break-after:auto}" +
     ".etq{width:105mm;height:74.25mm;padding:3mm 4mm;border:.3mm dashed #777;display:flex;flex-direction:column;overflow:hidden}.etq.vide{border-style:dotted;border-color:#ddd}" +
     ".top{display:flex;align-items:center;gap:3mm;border-bottom:.4mm solid #000;padding-bottom:1.2mm}.brand{font-size:7.5pt;font-weight:800;letter-spacing:.5px}.num{font-size:17pt;font-weight:900;flex:1;text-align:right}.fl{background:#000;color:#fff;font-size:8pt;font-weight:800;padding:.4mm 2mm;border-radius:1mm}" +
-    ".cli{font-size:9.5pt;line-height:1.3;margin-top:1.3mm}.liv{font-size:8pt;color:#333;margin:.6mm 0 1mm}" +
+    ".gift{font-size:8pt;font-weight:800;border:.3mm solid #000;padding:.4mm 1.5mm;margin-top:.8mm;border-radius:1mm}.cli{font-size:9.5pt;line-height:1.3;margin-top:1.3mm}.liv{font-size:8pt;color:#333;margin:.6mm 0 1mm}" +
     ".art{flex:1;min-height:0;overflow:hidden;line-height:1.18;border-top:.2mm solid #bbb;padding-top:1mm}.art ul{margin:0;padding:0;list-style:none}.art li{break-inside:avoid;padding:.1mm 0}" +
     ".pay{margin-top:1.5mm;border-radius:1.5mm;padding:1.2mm 2mm;text-align:center}.pay .t{font-size:8.5pt;font-weight:800}.pay .g{font-size:16pt;font-weight:900;line-height:1.1}.pay .s{font-size:6.8pt;line-height:1.2}" +
     ".pay.enc{background:#000;color:#fff}.pay.ok{border:.6mm solid #000;color:#000}.pay.bad{border:.8mm dashed #000;color:#000;font-weight:800}" +
@@ -862,7 +911,7 @@ function htmlFicheLivreur(l, dt) {
       if (p.etat === "ENC") { tot += p.reste; deja = p.mode === "TOUT_LIVRAISON" ? "0 Ar (rien d'avance)" : nbr(p.frais) + " Ar (frais)"; aenc = '<td class="enc">' + nbr(p.reste) + " Ar</td>"; }
       else if (p.etat === "DEJA") { deja = "TOUT (" + nbr(p.total) + " Ar)"; aenc = '<td class="ok">RIEN À<br>ENCAISSER</td>'; }
       else { nbV++; deja = "?"; aenc = '<td class="bad">À VÉRIFIER<br><span style="font-size:7pt;font-weight:400">' + esc(p.raison) + "</span></td>"; }
-      return "<tr><td>" + (i + 1) + "</td><td><b>" + esc(c.creneau || "—") + "</b><br>" + esc(c.quartier || "") + "</td><td><b>" + esc(c.client) + "</b><br>" + esc(c.tel) + "<br>#" + esc(c.id) + (/flash/i.test(c.type) ? " · FLASH" : "") + '</td><td class="arts">' +
+      return "<tr><td>" + (i + 1) + "</td><td><b>" + esc(c.creneau || "—") + "</b><br>" + esc(c.quartier || "") + "</td><td><b>" + esc(c.client) + "</b><br>" + esc(c.tel) + "<br>#" + esc(c.id) + (/flash/i.test(c.type) ? " · FLASH" : "") + (c.cadeau ? "<br><b>🎁 " + esc(c.cadeau) + (c.cadeauType === "OBJET" ? " (à remettre)" : " (déduit)") + "</b>" : "") + '</td><td class="arts">' +
         c.lignes.map(function (x) { return x.qte + " × " + esc(x.nom); }).join("<br>") + "</td><td>" + nbr(p.total) + " Ar</td><td>" + esc(deja) + "</td>" + aenc + '<td class="chk">☐</td></tr>';
     }).join("");
     return '<div class="sec"><h1>FICHE LIVREUR · ' + esc(nom) + '</h1><div class="sub">Livraisons du ' + esc(dateLongue(dt)) + " · " + cs.length + " colis" + (nbV ? " · " + nbV + " à vérifier avant le départ" : "") + "</div>" +
@@ -895,6 +944,8 @@ function htmlRecuperation(l, dt) {
   var css = "@page{size:A4 portrait;margin:12mm}h1{font-size:15pt;margin:0}.sub{font-size:9.5pt;color:#333;margin:1mm 0 5mm}h2{font-size:12.5pt;margin:6mm 0 1.5mm;padding:1.5mm 2.5mm;background:#222;color:#fff;break-after:avoid}" +
     "table{width:100%;border-collapse:collapse;font-size:10pt}td,th{border-bottom:.25mm solid #999;padding:1.7mm 1.5mm;text-align:left;vertical-align:top}th{font-size:8pt;color:#444}tr{break-inside:avoid}.q{font-weight:900;width:14mm;text-align:center;font-size:12pt}.c{width:9mm;text-align:center}.cm{font-size:8pt;color:#444;width:42mm}" +
     ".foot{margin-top:6mm;font-size:9pt}@media screen{body{background:#94a3b8}.pp{background:#fff;margin:6mm auto;padding:12mm;width:210mm;box-shadow:0 4px 20px rgba(0,0,0,.35)}}";
+  var objets = l.filter(function (c) { return c.cadeau && c.cadeauType === "OBJET"; });
+  var objetsHtml = objets.length ? "<h2>🎁 CADEAUX À PRÉPARER · " + objets.length + "</h2><table><tbody>" + objets.map(function (c) { return "<tr><td class='c'>☐</td><td>" + esc(c.cadeau) + "</td><td class='cm'>#" + esc(c.id) + " · " + esc(c.client) + "</td></tr>"; }).join("") + "</tbody></table>" : "";
   var corps = '<div class="pp"><h1>FICHE DE RÉCUPÉRATION</h1><div class="sub">Livraisons du ' + esc(dateLongue(dt)) + " · " + l.length + " commande(s) · imprimée le " + esc(dateLongue(aujourdhui())) + "</div>" +
     (cles.length ? cles.map(function (s) {
       var noms = Object.keys(src[s]).sort(function (a, b) { return a.localeCompare(b, "fr"); }), tq = 0;
@@ -902,7 +953,7 @@ function htmlRecuperation(l, dt) {
       return "<h2>" + (s === "GROSSISTE" ? "GROSSISTE — produits de l'accueil" : esc(s)) + " · " + tq + " article(s)</h2><table><thead><tr><th class='c'>OK</th><th class='q'>Qté</th><th>Produit</th><th class='cm'>Commandes</th></tr></thead><tbody>" +
         noms.map(function (n) { var o = src[s][n]; return "<tr><td class='c'>☐</td><td class='q'>" + o.qte + "</td><td>" + esc(n) + "</td><td class='cm'>" + o.cmds.map(function (i) { return "#" + esc(i); }).join(", ") + "</td></tr>"; }).join("") + "</tbody></table>";
     }).join("") : "<p>Aucun produit à récupérer pour cette date.</p>") +
-    '<div class="foot">Contrôle final avant emballage : tous les articles cochés · Récupéré par : ______________________</div></div>';
+    objetsHtml + '<div class="foot">Contrôle final avant emballage : tous les articles cochés · Récupéré par : ______________________</div></div>';
   return enveloppeDoc("Fiche de récupération", css, corps);
 }
 function docsListe() {
@@ -911,6 +962,144 @@ function docsListe() {
   return l;
 }
 
+
+/* ---------------- Cadeaux ---------------- */
+var cad = { regles: [], promesses: [], actif: true, cout: 0, nb: 0, max: 15000, charge: false, ligne: 0 };
+var LIB_TYPE = { LIVRAISON_OFFERTE: "Livraison offerte", REMISE_PCT: "Remise en %", REMISE_AR: "Remise en Ar", OBJET: "Objet offert" };
+var LIB_DECL = { PANIER: "Montant du panier", BIENVENUE: "1ʳᵉ commande", FIDELITE: "Fidélité", PARRAINAGE_AMI: "Ami parrainé", PARRAINAGE_PARRAIN: "Parrain" };
+async function chargerCadeaux(force) {
+  if (cad.charge && !force) return;
+  try {
+    var d = await postAPI({ action: "gestionCadeaux", operation: "lister" });
+    cad.regles = d.regles || []; cad.promesses = (d.promesses || []).slice().reverse(); cad.actif = d.actif !== false; cad.cout = d.cout || 0; cad.nb = d.nbCadeaux || 0; cad.max = d.manuelMax || 15000; cad.charge = true;
+  } catch (e) {
+    $("g-corps").innerHTML = '<div class="vide">❌ ' + esc(e.message) + '<br><small>Le script Google (étape 8) est-il installé et publié en nouvelle version ?</small></div>'; return;
+  }
+  rendreCadeaux();
+}
+function rendreCadeaux() {
+  if (!cad.charge) { chargerCadeaux(); return; }
+  var vue = $("g-vue").value;
+  $("g-nouvelle").style.display = vue === "regles" ? "" : "none";
+  var ib = $("g-inter"); ib.textContent = cad.actif ? "⏸ Désactiver tous les cadeaux" : "▶ Réactiver les cadeaux"; ib.className = "btn " + (cad.actif ? "bad" : "ok");
+  var actives = cad.regles.filter(function (r) { return cle(r.Actif) === "OUI"; }).length;
+  $("g-kpis").innerHTML = '<div class="kpi ' + (cad.actif ? "ok" : "bad") + '"><small>Cadeaux sur le site</small><b>' + (cad.actif ? "Actifs" : "Coupés") + '</b></div><div class="kpi"><small>Règles actives</small><b>' + actives + " / " + cad.regles.length + '</b></div><div class="kpi"><small>Cadeaux accordés (commandes non annulées)</small><b>' + cad.nb + '</b></div><div class="kpi warn"><small>Coût estimé des cadeaux</small><b>' + ar(cad.cout) + "</b></div>";
+  $("g-corps").innerHTML = vue === "regles" ? htmlRegles() : htmlPromesses();
+}
+function descRegle(r) {
+  var t = cle(r.Type), v = nombre(r.Valeur), pl = nombre(r.Plafond);
+  if (t === "LIVRAISON_OFFERTE") return "Livraison offerte" + (pl ? " (max " + ar(pl) + ")" : "");
+  if (t === "REMISE_PCT") return v + " %" + (pl ? " (max " + ar(pl) + ")" : "");
+  if (t === "REMISE_AR") return ar(v); return "Objet" + (v ? " (~" + ar(v) + ")" : "");
+}
+function condRegle(r) {
+  var d = cle(r.Declencheur), a = nombre(r.Seuil_Min), b = nombre(r.Seuil_Max);
+  if (d === "PANIER") return "Panier ≥ " + ar(a) + (b ? " et ≤ " + ar(b) : "");
+  if (d === "BIENVENUE") return "1ʳᵉ commande" + (a ? " ≥ " + ar(a) : "");
+  if (d === "FIDELITE") return a + "ᵉ commande (après " + (a - 1) + " livrée" + (a > 2 ? "s" : "") + ")";
+  if (d === "PARRAINAGE_AMI") return "Ami parrainé, 1ʳᵉ commande" + (a ? " ≥ " + ar(a) : "");
+  return "Après la 1ʳᵉ livraison d'un filleul";
+}
+function htmlRegles() {
+  if (!cad.regles.length) return '<div class="vide">Aucune règle : aucun cadeau n\'apparaît sur le site.<br><br><button class="btn pri" id="g-feuilles" type="button">Créer les feuilles de cadeaux</button><br><small>Puis « ＋ Nouvelle règle », ou importez cadeaux-regles-depart.tsv dans l\'onglet « Cadeaux » de la Sheet.</small></div>';
+  return '<div class="card tw"><table><thead><tr><th>Règle</th><th>Condition</th><th>Cadeau</th><th>Période / stock</th><th>État</th><th></th></tr></thead><tbody>' + cad.regles.map(function (r) {
+    var on = cle(r.Actif) === "OUI", per = (r.Debut || r.Fin) ? (esc(r.Debut || "…") + " → " + esc(r.Fin || "…")) : "Toujours", st = nombre(r.Stock);
+    return '<tr data-ligne="' + r._ligne + '"><td><b>' + esc(r.Nom) + '</b><br><small class="mute">' + esc(LIB_DECL[cle(r.Declencheur)] || r.Declencheur) + "</small></td><td>" + esc(condRegle(r)) + "</td><td>" + esc(LIB_TYPE[cle(r.Type)] || r.Type) + "<br><b>" + esc(descRegle(r)) + "</b></td><td>" + per + (st ? "<br>Stock : " + st : "") + '</td><td><span class="pill ' + (on ? "p-ok" : "p-bad") + '">' + (on ? "Active" : "Désactivée") + '</span></td><td style="white-space:nowrap"><button class="btn sm" data-rg="edit" type="button">✏️</button> <button class="btn sm" data-rg="toggle" type="button">' + (on ? "Désactiver" : "Activer") + '</button> <button class="btn sm bad" data-rg="del" type="button">🗑️</button></td></tr>';
+  }).join("") + "</tbody></table></div>";
+}
+function htmlPromesses() {
+  if (!cad.promesses.length) return '<div class="vide">Aucun cadeau promis. Utilisez « 🎁 Offrir un cadeau à un client » après un appel ou un message.</div>';
+  var auj = aujourdhui();
+  return '<div class="card tw"><table><thead><tr><th>Client</th><th>Cadeau</th><th>Motif</th><th>Expire</th><th>État</th><th></th></tr></thead><tbody>' + cad.promesses.map(function (p) {
+    var st = cle(p.Statut), exp = jourDe(p.Expire), perime = st === "ACTIVE" && exp && exp < auj;
+    var etiq = st === "ANNULEE" ? ["Annulé", "p-bad"] : perime ? ["Expiré", "p-warn"] : st === "ACTIVE" ? ["En attente", "p-ok"] : [st, ""];
+    return '<tr data-ligne="' + p._ligne + '"><td><b>' + esc(p.Telephone) + "</b></td><td>" + esc(p.Nom) + "<br><small class=\"mute\">" + esc(LIB_TYPE[cle(p.Type)] || p.Type) + (nombre(p.Valeur) ? " · " + nombre(p.Valeur) : "") + "</small></td><td>" + esc(p.Motif) + "</td><td>" + esc(exp || "—") + '</td><td><span class="pill ' + etiq[1] + '">' + etiq[0] + '</span></td><td>' + (st === "ACTIVE" && !perime ? '<button class="btn sm bad" data-pm="annuler" type="button">Annuler</button>' : "") + "</td></tr>";
+  }).join("") + "</tbody></table></div>";
+}
+function aideRegle() {
+  var d = $("rg-decl").value, t = $("rg-type").value;
+  $("rg-l1").textContent = d === "FIDELITE" ? "Numéro de commande (ex. 3 = 3ᵉ commande)" : d === "PARRAINAGE_PARRAIN" ? "Seuil (laisser 0)" : "Seuil minimum (Ar)";
+  $("rg-lv").textContent = t === "REMISE_PCT" ? "Pourcentage (1 à 50)" : t === "REMISE_AR" ? "Montant de la remise (Ar)" : t === "OBJET" ? "Valeur estimée de l'objet (Ar)" : "Valeur (inutile)";
+  $("rg-aide").textContent = (d === "PANIER" ? "Le seuil se compare au total de la commande, livraison comprise. " : "") + (t === "LIVRAISON_OFFERTE" ? "Le plafond est le frais maximum offert (ex. 6000). " : t === "REMISE_PCT" ? "La remise s'applique au montant de la commande, limitée au plafond. " : "") + "Un seul cadeau par commande : le plus avantageux est retenu.";
+}
+function ouvrirRegle(r) {
+  cad.ligne = r ? r._ligne : 0; $("rg-titre").textContent = r ? "Modifier la règle" : "Nouvelle règle";
+  $("rg-nom").value = r ? r.Nom : ""; $("rg-decl").value = r ? cle(r.Declencheur) : "PANIER"; $("rg-type").value = r ? cle(r.Type) : "LIVRAISON_OFFERTE";
+  $("rg-smin").value = r ? r.Seuil_Min : ""; $("rg-smax").value = r ? r.Seuil_Max : ""; $("rg-val").value = r ? r.Valeur : ""; $("rg-plaf").value = r ? r.Plafond : "";
+  $("rg-deb").value = r ? jourDe(r.Debut) : ""; $("rg-fin").value = r ? jourDe(r.Fin) : ""; $("rg-stock").value = r ? r.Stock : ""; $("rg-actif").value = r && cle(r.Actif) === "NON" ? "NON" : "OUI";
+  aideRegle(); $("m-regle").classList.add("on");
+}
+async function enregistrerRegle() {
+  var v = { Nom: $("rg-nom").value.trim(), Declencheur: $("rg-decl").value, Type: $("rg-type").value, Seuil_Min: $("rg-smin").value, Seuil_Max: $("rg-smax").value, Valeur: $("rg-val").value, Plafond: $("rg-plaf").value, Debut: $("rg-deb").value, Fin: $("rg-fin").value, Stock: $("rg-stock").value, Actif: $("rg-actif").value };
+  if (!v.Nom) { toast("Donnez un nom à la règle"); return; }
+  try {
+    await postAPI({ action: "gestionCadeaux", operation: cad.ligne ? "modifierRegle" : "ajouterRegle", ligne: cad.ligne, valeurs: v });
+    $("m-regle").classList.remove("on"); toast("✔ Règle enregistrée"); await chargerCadeaux(true);
+  } catch (e) { toast("❌ " + e.message); }
+}
+async function actionRegle(ligne, act) {
+  var r = cad.regles.filter(function (x) { return x._ligne === ligne; })[0]; if (!r) return;
+  if (act === "edit") { ouvrirRegle(r); return; }
+  try {
+    if (act === "toggle") {
+      var v = {}; ["Nom", "Declencheur", "Type", "Seuil_Min", "Seuil_Max", "Valeur", "Plafond", "Stock"].forEach(function (k) { v[k] = r[k]; }); v.Debut = jourDe(r.Debut); v.Fin = jourDe(r.Fin); v.Actif = cle(r.Actif) === "OUI" ? "NON" : "OUI";
+      await postAPI({ action: "gestionCadeaux", operation: "modifierRegle", ligne: ligne, valeurs: v });
+    } else { if (!confirm("Supprimer la règle « " + r.Nom + " » ?\n(Les cadeaux déjà accordés aux commandes sont conservés.)")) return; await postAPI({ action: "gestionCadeaux", operation: "supprimerRegle", ligne: ligne }); }
+    toast("✔ Fait"); await chargerCadeaux(true);
+  } catch (e) { toast("❌ " + e.message); }
+}
+function ouvrirPromesse() {
+  ["pm-tel", "pm-val", "pm-plaf", "pm-nom", "pm-motif"].forEach(function (i) { $(i).value = ""; }); $("pm-type").value = "LIVRAISON_OFFERTE"; $("pm-jours").value = 7; $("pm-plaf").value = 6000; $("m-promesse").classList.add("on");
+}
+async function offrirPromesse(forcer) {
+  var tel = $("pm-tel").value.trim(); if (!tel) { toast("Indiquez le téléphone du client"); return; }
+  try {
+    await postAPI({ action: "gestionCadeaux", operation: "offrirPromesse", tel: tel, type: $("pm-type").value, valeur: $("pm-val").value, plafond: $("pm-plaf").value, nom: $("pm-nom").value.trim(), motif: $("pm-motif").value.trim(), jours: $("pm-jours").value, forcer: !!forcer });
+    $("m-promesse").classList.remove("on"); toast("✔ Cadeau promis"); $("g-vue").value = "promesses"; await chargerCadeaux(true);
+  } catch (e) {
+    if (/dépasse/.test(e.message) && !forcer && confirm(e.message + "\n\nOffrir quand même ?")) return offrirPromesse(true);
+    toast("❌ " + e.message);
+  }
+}
+async function cadeauSurCommande(id, act, forcer, saisie) {
+  var s = saisie;
+  try {
+    if (act === "retirer") { if (!confirm("Retirer le cadeau de la commande #" + id + " ?")) return; await postAPI({ action: "gestionCadeaux", operation: "retirerCadeauCommande", idCommande: id }); }
+    else {
+      if (!s) {
+        var nom = prompt("Cadeau pour la commande #" + id + " (ex. Sachet de bonbons, Livraison offerte, Remise) :"); if (!nom) return;
+        var type = (prompt("Type : 1 = Objet offert (sans déduction)\n2 = Livraison offerte\n3 = Remise en Ar", "1") || "1").trim();
+        var typ = type === "2" ? "LIVRAISON_OFFERTE" : type === "3" ? "REMISE_AR" : "OBJET";
+        var val = prompt(typ === "OBJET" ? "Valeur estimée de l'objet en Ar (pour le suivi des coûts) :" : "Montant déduit du reste à payer, en Ar :", typ === "LIVRAISON_OFFERTE" ? "6000" : "0");
+        if (val === null) return; s = { nom: nom, type: typ, valeur: val };
+      }
+      await postAPI({ action: "gestionCadeaux", operation: "cadeauCommande", idCommande: id, nom: s.nom, type: s.type, valeur: s.valeur, forcer: !!forcer });
+    }
+    toast("✔ Fait"); await charger(true); cad.charge = false;
+  } catch (e) {
+    if (/dépasse/.test(e.message) && !forcer && s && confirm(e.message + "\n\nAjouter quand même ?")) return cadeauSurCommande(id, act, true, s);
+    toast("❌ " + e.message);
+  }
+}
+document.addEventListener("click", function (e) {
+  var t = e.target; if (!t.closest) return;
+  var b;
+  if ((b = t.closest("[data-cad-cmd]"))) { var cr = b.closest(".cmd"); if (cr) { var id = cr.getAttribute("data-id"), act = b.getAttribute("data-cad-cmd"); cadeauSurCommande(id, act, false, null).catch(function () {}); } return; }
+  if ((b = t.closest("[data-rg]"))) { var tr = b.closest("tr"); if (tr) actionRegle(Number(tr.getAttribute("data-ligne")), b.getAttribute("data-rg")); return; }
+  if ((b = t.closest("[data-pm]"))) { var tp = b.closest("tr"); if (tp && confirm("Annuler ce cadeau promis ?")) postAPI({ action: "gestionCadeaux", operation: "annulerPromesse", ligne: Number(tp.getAttribute("data-ligne")) }).then(function () { toast("✔ Annulé"); return chargerCadeaux(true); }).catch(function (er) { toast("❌ " + er.message); }); return; }
+  if (t.closest("#g-nouvelle")) ouvrirRegle(null);
+  else if (t.closest("#g-promesse")) ouvrirPromesse();
+  else if (t.closest("#rg-annuler")) $("m-regle").classList.remove("on");
+  else if (t.closest("#rg-ok")) enregistrerRegle();
+  else if (t.closest("#pm-annuler")) $("m-promesse").classList.remove("on");
+  else if (t.closest("#pm-ok")) offrirPromesse(false);
+  else if (t.closest("#g-inter")) { var veut = !cad.actif; if (confirm(veut ? "Réactiver les cadeaux sur le site ?" : "Désactiver TOUS les cadeaux sur le site ?\n(Les commandes déjà enregistrées gardent leur cadeau.)")) postAPI({ action: "gestionCadeaux", operation: "interrupteur", actif: veut }).then(function () { toast("✔ Fait"); return chargerCadeaux(true); }).catch(function (er) { toast("❌ " + er.message); }); }
+  else if (t.closest("#g-feuilles")) postAPI({ action: "gestionCadeaux", operation: "creerFeuilles" }).then(function () { toast("✔ Feuilles créées"); return chargerCadeaux(true); }).catch(function (er) { toast("❌ " + er.message); });
+});
+document.addEventListener("change", function (e) {
+  var t = e.target; if (!t || !t.matches) return;
+  if (t.matches("#g-vue")) rendreCadeaux(); else if (t.matches("#rg-decl,#rg-type")) aideRegle();
+});
 
 /* ---------------- Recrutement ---------------- */
 var rec = { offres: [], cands: [], charge: false, editLigne: 0 };
