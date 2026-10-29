@@ -412,6 +412,16 @@ async function chargerProduits(force) {
   var l = await getJSON(CONFIG.API);
   if (Array.isArray(l)) { produits = l; produitsEntetes = l.length ? Object.keys(l[0]) : []; }
 }
+var cadDispo = null;
+async function fusionnerCadeaux() {
+  if (cadDispo === false) return;
+  try {
+    var g = await postAPI({ action: "gestionCadeaux", operation: "cadeauxCommandes" });
+    if (!g.cadeaux) throw new Error("script non mis à jour");
+    cadDispo = true;
+    commandes.forEach(function (c) { var x = g.cadeaux[c.id]; if (x) { c.cadeau = x.Cadeau; c.cadeauType = cle(x.Cadeau_Type); c.cadeauValeur = nombre(x.Cadeau_Valeur); c.cadeauOrigine = cle(x.Cadeau_Origine); } });
+  } catch (e) { cadDispo = false; }                   // étape 8 pas encore installée : aucun cadeau, tout le reste fonctionne
+}
 async function charger(silencieux) {
   $("etat").textContent = silencieux ? $("etat").textContent : "Chargement…";
   try {
@@ -422,6 +432,7 @@ async function charger(silencieux) {
     ]);
     if (Array.isArray(r[1])) livreurs = r[1];
     commandes = (Array.isArray(r[0]) ? r[0] : []).map(normaliser).reverse();      // plus récentes d'abord
+    await fusionnerCadeaux();                           // cadeaux enregistrés dans la feuille « Cadeaux_Commandes » (aucune colonne ajoutée à « Commandes »)
     $("etat").textContent = "Mis à jour à " + heureDe(new Date()) + " · " + commandes.length + " commandes";
   } catch (e) {
     $("etat").textContent = "⚠ Connexion impossible — nouvelle tentative…";
@@ -1075,7 +1086,7 @@ async function cadeauSurCommande(id, act, forcer, saisie) {
       }
       await postAPI({ action: "gestionCadeaux", operation: "cadeauCommande", idCommande: id, nom: s.nom, type: s.type, valeur: s.valeur, forcer: !!forcer });
     }
-    toast("✔ Fait"); await charger(true); cad.charge = false;
+    toast("✔ Fait"); cadDispo = null; await charger(true); cad.charge = false;
   } catch (e) {
     if (/dépasse/.test(e.message) && !forcer && s && confirm(e.message + "\n\nAjouter quand même ?")) return cadeauSurCommande(id, act, true, s);
     toast("❌ " + e.message);
