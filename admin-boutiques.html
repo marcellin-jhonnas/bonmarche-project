@@ -388,7 +388,7 @@ function normaliser(c) {
     type: type, creneau: String(c["Créneau"] || c.Creneau || "").replace(/^'/, "") || creneauDepuisTexte(c.Livraison), dateLiv: jourDe(c.Date_Livraison) || dateDepuisTexte(c.Livraison), frais: nombre(c.Frais_Annonce),
     modePaiement: String(c.Paiement_Mode || "").trim(), prepa: String(c.Preparation || "").trim(),
     fraisPaye: nombre(c.FraisLivraison != null ? c.FraisLivraison : (c["Frais Livraison"] != null ? c["Frais Livraison"] : c["Frais_Livraison"])),
-    cadeau: String(c.Cadeau || "").trim(), cadeauType: cle(c.Cadeau_Type), cadeauValeur: nombre(c.Cadeau_Valeur), cadeauOrigine: cle(c.Cadeau_Origine),
+    cadeau: String(c.Cadeau || "").trim(), cadeauType: cle(c.Cadeau_Type), cadeauValeur: nombre(c.Cadeau_Valeur), cadeauOrigine: cle(c.Cadeau_Origine), cadeauDeja: false, cadeauVerif: "",
     dateCmd: dateCmd && !isNaN(dateCmd) ? dateCmd : null, jourCmd: dateCmd && !isNaN(dateCmd) ? jourLocal(dateCmd) : ""
   };
 }
@@ -412,15 +412,16 @@ async function chargerProduits(force) {
   var l = await getJSON(CONFIG.API);
   if (Array.isArray(l)) { produits = l; produitsEntetes = l.length ? Object.keys(l[0]) : []; }
 }
-var cadDispo = null;
+var cadDispo = null, suivi = {};
 async function fusionnerCadeaux() {
   if (cadDispo === false) return;
   try {
     var g = await postAPI({ action: "gestionCadeaux", operation: "cadeauxCommandes" });
     if (!g.cadeaux) throw new Error("script non mis à jour");
     cadDispo = true;
-    commandes.forEach(function (c) { var x = g.cadeaux[c.id]; if (x) { c.cadeau = x.Cadeau; c.cadeauType = cle(x.Cadeau_Type); c.cadeauValeur = nombre(x.Cadeau_Valeur); c.cadeauOrigine = cle(x.Cadeau_Origine); } });
-  } catch (e) { cadDispo = false; }                   // étape 8 pas encore installée : aucun cadeau, tout le reste fonctionne
+    commandes.forEach(function (c) { var x = g.cadeaux[c.id]; if (x) { c.cadeau = x.Cadeau; c.cadeauType = cle(x.Cadeau_Type); c.cadeauValeur = nombre(x.Cadeau_Valeur); c.cadeauOrigine = cle(x.Cadeau_Origine); c.cadeauDeja = cle(x.Deja_Deduit) === "OUI"; c.cadeauVerif = String(x.Verif || "OK"); } });
+  } catch (e) { cadDispo = false; }
+  try { var sv = await postAPI({ action: "gestionCadeaux", operation: "suiviCommandes" }); suivi = sv.suivi || {}; } catch (e) { /* étape 9 non installée */ }                   // étape 8 pas encore installée : aucun cadeau, tout le reste fonctionne
 }
 async function charger(silencieux) {
   $("etat").textContent = silencieux ? $("etat").textContent : "Chargement…";
@@ -490,7 +491,22 @@ function creneauDepuisTexte(txt) {
   return "";
 }
 var VALIDES_PAIEMENT = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "LIVRE"];
-function cadeauDeduit(c) { return c.cadeau && c.cadeauType !== "OBJET" ? Math.max(0, c.cadeauValeur) : 0; }
+function cadeauDeduit(c) { return c.cadeau && c.cadeauType !== "OBJET" && !c.cadeauDeja ? Math.max(0, c.cadeauValeur) : 0; }   // cadeau déjà déduit du montant par le site : on ne déduit pas deux fois
+function estCOD(c) { return /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/.test(sansAccent(c.note).toLowerCase()); }
+function badgePaiementHtml(c) {
+  if (c.statut === "ANNULE") return "";
+  var h = "", vide = !String(c.note || "").trim();
+  if (estCOD(c)) h = '<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa">💵 Payer à la livraison</span>';
+  else if (vide) h = '<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">📲 MVola</span>';
+  var al = "";
+  if (vide && estATraiter(c) && c.modePaiement !== "DEJA_PAYE" && c.dateCmd) { var hh = (Date.now() - c.dateCmd.getTime()) / 3600000; if (hh >= 2) al = '<span class="badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca">⏱️ MVola non reçu depuis ' + (hh >= 24 ? Math.floor(hh / 24) + " j" : Math.floor(hh) + " h") + "</span>"; }
+  return '<div style="text-align:right;margin-top:4px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">' + al + h + "</div>";
+}
+function appelsHtml(c) {
+  if (!estCOD(c) || ["ANNULE", "LIVRE"].indexOf(c.statut) !== -1) return "";
+  var n = (suivi[c.id] && suivi[c.id].tentatives) || 0;
+  return '<div class="cmd-n" style="background:#fff7ed;color:#9a3412">📞 Appels sans réponse : <b>' + n + "/3</b>" + (suivi[c.id] && suivi[c.id].dernier ? " (dernier " + esc(suivi[c.id].dernier) + ")" : "") + ' <button class="btn sm" data-appel="non" type="button">📞 Appel sans réponse</button>' + (n > 0 ? '<button class="btn sm" data-appel="raz" type="button">↺ Remettre à 0</button>' : "") + (n >= 3 ? '<button class="btn bad sm" data-appel="annuler" type="button">✖ Annuler (3 appels sans réponse)</button>' : "") + "</div>";
+}
 function paiement(c) {
   var ded = cadeauDeduit(c), mCad = ded ? " − cadeau « " + c.cadeau + " » " + nbr(ded) : "";
   var r = { etat: "", total: c.montant, frais: c.fraisPaye, reste: 0, raison: "", detail: "", mode: c.modePaiement || "", deduit: ded };
@@ -582,7 +598,7 @@ function carteCommande(c) {
   var h = '<div class="cmd ' + classeStatut(c.statut) + '" data-id="' + esc(c.id) + '">';
   h += '<div class="cmd-h"><span class="id">#' + esc(c.id) + "</span>" + badgeStatut(c.statut) + badgeType(c.type) +
        (c.boutique ? '<span class="badge">' + esc(c.boutique) + "</span>" : '<span class="badge">Accueil</span>') +
-       '<span class="mute">' + esc(c.dateCmd ? dateLongue(c.jourCmd) + " " + heureDe(c.dateCmd) : "") + '</span><span class="m">' + ar(c.montant) + "</span></div>";
+       '<span class="mute">' + esc(c.dateCmd ? dateLongue(c.jourCmd) + " " + heureDe(c.dateCmd) : "") + '</span><span class="m">' + ar(c.montant) + "</span></div>" + badgePaiementHtml(c);
   h += '<div class="cmd-b"><b>' + esc(c.client) + "</b> · " + esc(c.tel) + (c.quartier ? " · 📍 " + esc(c.quartier) : "") + "<br>" + esc(c.produits) + "</div>";
   var liv = [];
   if (c.dateLiv) liv.push("📅 " + dateLongue(c.dateLiv)); else if (c.livraisonTxt) liv.push("📅 " + c.livraisonTxt);
@@ -593,7 +609,8 @@ function carteCommande(c) {
   if (liv.length) h += '<div class="mute" style="margin-top:6px">' + esc(liv.join("  ·  ")) + "</div>";
   if (c.note) h += '<div class="cmd-n">📝 ' + esc(c.note) + "</div>";
   if (c.cadeau) h += '<div class="cmd-n" style="background:#ecfdf5;color:#065f46">🎁 Cadeau : <b>' + esc(c.cadeau) + "</b>" + (c.cadeauValeur ? " (" + ar(c.cadeauValeur) + ")" : "") + " · " + (c.cadeauOrigine === "MANUEL" ? "manuel" : c.cadeauOrigine === "PROMESSE" ? "promis par l'admin" : c.cadeauOrigine === "PARRAIN" ? "parrainage" : "automatique") + "</div>";
-  h += blocPaiementHtml(c) + controlesPaiementHtml(c);
+  if (c.cadeau && c.cadeauVerif && c.cadeauVerif !== "OK") h += '<div class="cmd-n" style="background:#fef2f2;color:#b91c1c">⚠️ Cadeau à vérifier : ' + esc(c.cadeauVerif) + " (le montant reçu ne correspond pas au calcul du serveur)</div>";
+  h += appelsHtml(c) + blocPaiementHtml(c) + controlesPaiementHtml(c);
   h += '<div class="cmd-a">';
   if (c.statut !== "ANNULE" && c.statut !== "LIVRE") h += c.cadeau ? '<button class="btn sm" data-cad-cmd="retirer" type="button">🎁✖ Retirer le cadeau</button>' : '<button class="btn sm" data-cad-cmd="ajouter" type="button">🎁 Ajouter un cadeau</button>';
   if (estATraiter(c)) h += '<button class="btn ok sm" data-act="SÉRIEUX" type="button">✔ Valider</button>';
@@ -1092,9 +1109,20 @@ async function cadeauSurCommande(id, act, forcer, saisie) {
     toast("❌ " + e.message);
   }
 }
+async function appelCommande(id, act) {
+  var c = commandes.find(function (x) { return x.id === id; }); if (!c) return;
+  var op = act === "non" ? "appelSansReponse" : act === "raz" ? "reinitialiserAppels" : "annulerNonReponse";
+  if (act === "annuler" && !confirm("Annuler la commande #" + id + " (" + c.client + ") après 3 appels sans réponse ?")) return;
+  try {
+    var d = await postAPI({ action: "gestionCadeaux", operation: op, idCommande: id });
+    toast("✔ " + (d.message || "Enregistré"));
+    await charger(true); tout();
+  } catch (e) { toast("❌ " + e.message); }
+}
 document.addEventListener("click", function (e) {
   var t = e.target; if (!t.closest) return;
   var b;
+  if ((b = t.closest("[data-appel]"))) { var ca = b.closest(".cmd"); if (ca) appelCommande(ca.getAttribute("data-id"), b.getAttribute("data-appel")); return; }
   if ((b = t.closest("[data-cad-cmd]"))) { var cr = b.closest(".cmd"); if (cr) { var id = cr.getAttribute("data-id"), act = b.getAttribute("data-cad-cmd"); cadeauSurCommande(id, act, false, null).catch(function () {}); } return; }
   if ((b = t.closest("[data-rg]"))) { var tr = b.closest("tr"); if (tr) actionRegle(Number(tr.getAttribute("data-ligne")), b.getAttribute("data-rg")); return; }
   if ((b = t.closest("[data-pm]"))) { var tp = b.closest("tr"); if (tp && confirm("Annuler ce cadeau promis ?")) postAPI({ action: "gestionCadeaux", operation: "annulerPromesse", ligne: Number(tp.getAttribute("data-ligne")) }).then(function () { toast("✔ Annulé"); return chargerCadeaux(true); }).catch(function (er) { toast("❌ " + er.message); }); return; }

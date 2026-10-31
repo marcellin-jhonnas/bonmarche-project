@@ -837,6 +837,8 @@ if (sousTotal > 0 && !contraintePoids.bloque) {
     fraisLivraison += contraintePoids.suppPoids;
 }
 let totalFinal = sousTotal + fraisLivraison;
+// [CADEAUX] accroche 1/2 : ajuste frais/total si un cadeau s'applique (sans effet si cadeaux.js absent)
+if (window.srCadeauPanier) { try { const _cd = window.srCadeauPanier(sousTotal, fraisLivraison); if (_cd) { fraisLivraison = _cd.fraisLivraison; totalFinal = _cd.totalFinal; } } catch (e) {} }
  // --- RENDER FINAL ---
  detail.innerHTML = `
  <div class="panier-header-sticky" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
@@ -1029,7 +1031,10 @@ function calculerTotauxAvecLivraison(listeProduits) {
         fraisLivraison += contraintePoids.suppPoids;
     }
 
-    return { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison, contraintePoids };
+    const _res = { sousTotal, fraisLivraison, totalFinal: sousTotal + fraisLivraison, contraintePoids };
+    // [CADEAUX] accroche 2/2 (sans effet si cadeaux.js absent)
+    if (window.srCadeauAjuster) { try { const _aj = window.srCadeauAjuster(_res); if (_aj) return _aj; } catch (e) {} }
+    return _res;
 }
 function fusionnerNouveauxProduitsDansSnapshot(snapshot) {
     panier.forEach(nouvelItem => {
