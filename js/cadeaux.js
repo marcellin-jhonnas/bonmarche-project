@@ -99,6 +99,10 @@ if (typeof window.fetch === "function") {
     try {
       if (opts && opts.method === "POST" && typeof opts.body === "string" && String(url).indexOf("script.google.com") !== -1 && opts.body.indexOf('"nouvelleCommande"') !== -1) {
         var p = JSON.parse(opts.body);
+        if (p && p.action === "nouvelleCommande" && p.id && !("livraison" in p) && (p.statut === "NOUVEAU" || p.statut === "ATTENTE VISA")) {
+          var md = p.statut === "ATTENTE VISA" ? "VISA" : (/livraison/i.test(String(p.note || "")) ? "LIVRAISON" : "MVOLA");   // 2e envoi de main.js = le choix du client
+          ecrire("saferun_mode_" + p.id, md); envoyerChoix(p.id, p.telClient || telPropre(), md);
+        }
         if (p && p.action === "nouvelleCommande" && p.id && !p.cadeauDeclare) {
           var cle = "saferun_cadeau_" + p.id, m = null;
           try { m = JSON.parse(lire(cle) || "null"); } catch (e) {}
@@ -111,6 +115,13 @@ if (typeof window.fetch === "function") {
     } catch (e) { /* on n'empêche jamais l'envoi */ }
     return fetchOriginal.call(this, url, opts);
   };
+}
+function envoyerChoix(id, tel, mode) {                      // dit au serveur comment le client paie ; idempotent, répété 3 fois (la ligne de commande peut arriver un peu après)
+  [1500, 7000, 25000].forEach(function (ms) {
+    setTimeout(function () {
+      try { fetchOriginal.call(window, API, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "choixPaiement", id: id, tel: String(tel || "").replace(/\D/g, ""), mode: mode }) }); } catch (e) {}
+    }, ms);
+  });
 }
 function consommerLocalement(m) {                         // évite de réutiliser le même cadeau avant le prochain rafraîchissement
   try {
@@ -135,10 +146,23 @@ async function rafraichir() {
   etat.enCours = true;
   try { etat.donnees = await charger(); etat.tel = telPropre(); etat.maj = Date.now(); } catch (e) { /* silencieux : le site reste normal */ }
   etat.enCours = false;
+  reparerChoix();
   majMenu(); majPanier(); decorerListes();
   try {                                                  // le panier ouvert pendant le chargement est recalculé avec le cadeau
     var mp = $("modal-panier");
     if (actif() && typeof afficherPanier === "function" && mp && mp.style.display === "flex" && typeof panier !== "undefined" && panier.length > 0 && lire("saferun_snapshot_commande") === "") afficherPanier();
+  } catch (e) {}
+}
+
+var choixRepares = {};
+function reparerChoix() {                                  // si le serveur n'a pas reçu le choix de paiement d'une commande en attente, on le renvoie une fois
+  try {
+    var sv = (etat.donnees && etat.donnees.suivi) || {};
+    Object.keys(sv).forEach(function (id) {
+      var s = sv[id], loc = lire("saferun_mode_" + id);
+      if (!loc || s.choisi || choixRepares[id] || ["NOUVEAU", "ATTENTE VISA", "A VERIFIER", "EN ATTENTE DE PAIEMENT"].indexOf(s.statut) === -1) return;
+      choixRepares[id] = true; envoyerChoix(id, etat.tel || telPropre(), loc);
+    });
   } catch (e) {}
 }
 
@@ -203,20 +227,60 @@ function lignePourCommande(g) {
   else e = '<span style="color:#047857">Cadeau appliqué à cette commande</span>';
   return '<div class="sr-cad-cmd" style="margin-top:8px;padding:8px 10px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:12px;font-size:.76rem;color:#065f46;line-height:1.45;text-align:left">' + contenu + "<br>" + e + "</div>";
 }
+var PENDANT = ["NOUVEAU", "ATTENTE VISA", "A VERIFIER", "EN ATTENTE DE PAIEMENT"], CONFIRME = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE"];
+function heure(iso) { try { var d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
+function blocEtat(id, s, g) {
+  var st = String(s.statut || ""), titre = "", texte = "", fond = "#f8fafc", bord = "#cbd5e1", clr = "#334155";
+  if (st.indexOf("ANNUL") === 0) {
+    titre = "❌ Annulée"; fond = "#fef2f2"; bord = "#fecaca"; clr = "#991b1b";
+    texte = /appel/i.test(s.motif || "") ? "Commande annulée après 3 appels sans réponse. Vous pouvez recommander quand vous voulez." : "Cette commande a été annulée. Contactez-nous si vous avez une question.";
+  } else if (st === "LIVRE") {
+    titre = "✅ Livrée"; fond = "#f0fdf4"; bord = "#bbf7d0"; clr = "#166534"; texte = "Merci pour votre confiance !";
+  } else if (PENDANT.indexOf(st) !== -1) {
+    if (s.mode === "LIVRAISON") {
+      titre = "📞 À confirmer"; fond = "#fff7ed"; bord = "#fed7aa"; clr = "#9a3412";
+      texte = "SafeRun Market va vous appeler pour valider votre commande. <b>Gardez votre téléphone allumé.</b>";
+      if (s.tentatives > 0) texte += "<br>Notre équipe a essayé de vous joindre (<b>" + s.tentatives + "/3</b>)" + (s.dernier ? ", dernier essai à " + heure(s.dernier) : "") + ". Sans réponse après 3 appels, la commande est annulée.";
+    } else if (s.mode === "VISA") {
+      titre = "💳 Paiement par carte en cours"; fond = "#eff6ff"; bord = "#bfdbfe"; clr = "#1e40af"; texte = "Terminez le paiement pour valider votre commande.";
+    } else {
+      titre = "🟡 À payer par MVola"; fond = "#fffbeb"; bord = "#fde68a"; clr = "#92400e";
+      var tard = s.date && (Date.now() - new Date(s.date).getTime()) > 2 * 3600000;
+      texte = tard ? "⏱️ Le délai de 2 h est dépassé. Si vous avez déjà payé, notre équipe vérifie votre paiement ; sinon contactez-nous."
+        : "Envoyez <b>" + ar(s.montant) + "</b> par MVola au <b>038 24 536 10</b> dans les 2 h. Passé ce délai, la commande peut être annulée par notre équipe.";
+    }
+  } else if (CONFIRME.indexOf(st) !== -1) {
+    titre = "🟢 Confirmée"; fond = "#ecfdf5"; bord = "#6ee7b7"; clr = "#065f46";
+    if (s.mode === "LIVRAISON") {
+      var reste = s.fraisPaye > 0 ? s.montant - s.fraisPaye : (g && g.type === "LIVRAISON_OFFERTE" ? s.montant : null);
+      if (reste !== null && g && g.type !== "OBJET" && !g.dejaDeduit) reste -= g.valeur;
+      texte = "Votre commande est confirmée." + (reste !== null && reste >= 0 ? " Préparez <b>" + ar(reste) + "</b> pour le livreur." : "");
+    } else texte = "Paiement reçu, merci ! Votre commande est en préparation.";
+  } else return "";
+  return '<div class="sr-etat" data-sig="' + esc([st, s.mode, s.tentatives, s.dernier, s.montant, s.fraisPaye, g ? g.statut : "", Math.floor(Date.now() / 600000)].join("|")) + '" style="margin-top:8px;padding:9px 11px;background:' + fond + ";border:1px solid " + bord + ";border-left:4px solid " + bord + ";border-radius:12px;font-size:.76rem;color:" + clr + ';line-height:1.5;text-align:left"><b>' + titre + "</b><br>" + texte + "</div>";
+}
 var decorEnCours = false;
 function decorerListes() {
   try {
-    var d = etat.donnees; if (!d || !d.actif || !d.commandes || decorEnCours) return;
+    var d = etat.donnees; if (!d || decorEnCours) return;
+    var sv = d.suivi || {}, cmds = d.actif ? (d.commandes || {}) : {};
+    if (!Object.keys(sv).length && !Object.keys(cmds).length) return;
     decorEnCours = true;
     var cartes = [];
     var liv = $("liste-livraisons"); if (liv) Array.prototype.forEach.call(liv.children, function (c) { cartes.push(c); });
     var det = $("detail-panier"); if (det) det.querySelectorAll(".recu-card").forEach(function (c) { cartes.push(c); });
     cartes.forEach(function (c) {
-      if (c.querySelector(".sr-cad-cmd")) return;
-      var m = (c.textContent || "").match(/(SR-\d+)/); if (!m) return;
-      var g = d.commandes[m[1]]; if (!g) return;
-      var w = document.createElement("div"); w.innerHTML = lignePourCommande(g);
-      var pied = c.querySelector(".recu-footer"); if (pied) c.insertBefore(w.firstChild, pied); else c.appendChild(w.firstChild);
+      var m = (c.textContent || "").match(/(SR-?\d+)/); if (!m) return;
+      var id = m[1], g = cmds[id], s = sv[id], pied = c.querySelector(".recu-footer");
+      var ancienG = c.querySelector(".sr-cad-cmd");
+      if (g && !ancienG) { var w = document.createElement("div"); w.innerHTML = lignePourCommande(g); ancienG = w.firstChild; if (pied) c.insertBefore(ancienG, pied); else c.appendChild(ancienG); }
+      if (s) {
+        var h = blocEtat(id, s, g), ex = c.querySelector(".sr-etat");
+        if (!h) { if (ex) ex.remove(); return; }
+        var t = document.createElement("div"); t.innerHTML = h; var nv = t.firstChild;
+        if (ex) { if (ex.getAttribute("data-sig") !== nv.getAttribute("data-sig")) ex.parentNode.replaceChild(nv, ex); }
+        else if (ancienG) c.insertBefore(nv, ancienG); else if (pied) c.insertBefore(nv, pied); else c.appendChild(nv);
+      }
     });
   } catch (e) {}
   decorEnCours = false;

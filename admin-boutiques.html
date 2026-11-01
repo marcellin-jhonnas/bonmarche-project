@@ -142,6 +142,7 @@ td{padding:10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}tr:last-ch
       <select id="c-statut">
         <option value="">Tous les statuts</option>
         <option value="TRAITER">À traiter</option>
+        <option value="URGENT">⚡ À traiter maintenant (appels, MVola en retard, cadeaux)</option>
         <option value="NOUVEAU">Nouveau</option>
         <option value="ATTENTE VISA">Attente Visa</option>
         <option value="A VERIFIER">À vérifier</option>
@@ -388,7 +389,7 @@ function normaliser(c) {
     type: type, creneau: String(c["Créneau"] || c.Creneau || "").replace(/^'/, "") || creneauDepuisTexte(c.Livraison), dateLiv: jourDe(c.Date_Livraison) || dateDepuisTexte(c.Livraison), frais: nombre(c.Frais_Annonce),
     modePaiement: String(c.Paiement_Mode || "").trim(), prepa: String(c.Preparation || "").trim(),
     fraisPaye: nombre(c.FraisLivraison != null ? c.FraisLivraison : (c["Frais Livraison"] != null ? c["Frais Livraison"] : c["Frais_Livraison"])),
-    cadeau: String(c.Cadeau || "").trim(), cadeauType: cle(c.Cadeau_Type), cadeauValeur: nombre(c.Cadeau_Valeur), cadeauOrigine: cle(c.Cadeau_Origine), cadeauDeja: false, cadeauVerif: "",
+    cadeau: String(c.Cadeau || "").trim(), cadeauType: cle(c.Cadeau_Type), cadeauValeur: nombre(c.Cadeau_Valeur), cadeauOrigine: cle(c.Cadeau_Origine), cadeauDeja: false, cadeauVerif: "", mode: "",
     dateCmd: dateCmd && !isNaN(dateCmd) ? dateCmd : null, jourCmd: dateCmd && !isNaN(dateCmd) ? jourLocal(dateCmd) : ""
   };
 }
@@ -420,8 +421,17 @@ async function fusionnerCadeaux() {
     if (!g.cadeaux) throw new Error("script non mis à jour");
     cadDispo = true;
     commandes.forEach(function (c) { var x = g.cadeaux[c.id]; if (x) { c.cadeau = x.Cadeau; c.cadeauType = cle(x.Cadeau_Type); c.cadeauValeur = nombre(x.Cadeau_Valeur); c.cadeauOrigine = cle(x.Cadeau_Origine); c.cadeauDeja = cle(x.Deja_Deduit) === "OUI"; c.cadeauVerif = String(x.Verif || "OK"); } });
-  } catch (e) { cadDispo = false; }
-  try { var sv = await postAPI({ action: "gestionCadeaux", operation: "suiviCommandes" }); suivi = sv.suivi || {}; } catch (e) { /* étape 9 non installée */ }                   // étape 8 pas encore installée : aucun cadeau, tout le reste fonctionne
+  } catch (e) { cadDispo = false; }                   // étape 8 pas encore installée : aucun cadeau, tout le reste fonctionne
+}
+var suiviDispo = null;
+async function chargerSuivi() {                         // mode de paiement choisi par le client (MVola / livraison / carte) et appels sans réponse
+  if (suiviDispo === false) return;
+  try {
+    var sv = await postAPI({ action: "gestionCadeaux", operation: "suiviCommandes" });
+    if (!sv.suivi) throw new Error("script non mis à jour");
+    suiviDispo = true; suivi = sv.suivi;
+    commandes.forEach(function (c) { var x = suivi[c.id]; c.mode = x && x.mode ? x.mode : ""; });
+  } catch (e) { suiviDispo = false; }                  // script pas encore mis à jour : on retombe sur la colonne Note
 }
 async function charger(silencieux) {
   $("etat").textContent = silencieux ? $("etat").textContent : "Chargement…";
@@ -433,6 +443,7 @@ async function charger(silencieux) {
     ]);
     if (Array.isArray(r[1])) livreurs = r[1];
     commandes = (Array.isArray(r[0]) ? r[0] : []).map(normaliser).reverse();      // plus récentes d'abord
+    await chargerSuivi();
     await fusionnerCadeaux();                           // cadeaux enregistrés dans la feuille « Cadeaux_Commandes » (aucune colonne ajoutée à « Commandes »)
     $("etat").textContent = "Mis à jour à " + heureDe(new Date()) + " · " + commandes.length + " commandes";
   } catch (e) {
@@ -492,15 +503,23 @@ function creneauDepuisTexte(txt) {
 }
 var VALIDES_PAIEMENT = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "LIVRE"];
 function cadeauDeduit(c) { return c.cadeau && c.cadeauType !== "OBJET" && !c.cadeauDeja ? Math.max(0, c.cadeauValeur) : 0; }   // cadeau déjà déduit du montant par le site : on ne déduit pas deux fois
-function estCOD(c) { return /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/.test(sansAccent(c.note).toLowerCase()); }
+function estCOD(c) { if (c.mode) return c.mode === "LIVRAISON"; return /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/.test(sansAccent(c.note).toLowerCase()); }
+function modeAffiche(c) { return c.mode || (estCOD(c) ? "LIVRAISON" : (!String(c.note || "").trim() ? "MVOLA" : "")); }
 function badgePaiementHtml(c) {
   if (c.statut === "ANNULE") return "";
-  var h = "", vide = !String(c.note || "").trim();
-  if (estCOD(c)) h = '<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa">💵 Payer à la livraison</span>';
-  else if (vide) h = '<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">📲 MVola</span>';
-  var al = "";
-  if (vide && estATraiter(c) && c.modePaiement !== "DEJA_PAYE" && c.dateCmd) { var hh = (Date.now() - c.dateCmd.getTime()) / 3600000; if (hh >= 2) al = '<span class="badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca">⏱️ MVola non reçu depuis ' + (hh >= 24 ? Math.floor(hh / 24) + " j" : Math.floor(hh) + " h") + "</span>"; }
+  var m = modeAffiche(c), h = "", al = "";
+  if (m === "LIVRAISON") h = '<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa">💵 Payer à la livraison</span>';
+  else if (m === "MVOLA") h = '<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">📲 MVola</span>';
+  else if (m === "VISA") h = '<span class="badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe">💳 Carte</span>';
+  if (m === "MVOLA" && estATraiter(c) && c.modePaiement !== "DEJA_PAYE" && c.dateCmd) { var hh = (Date.now() - c.dateCmd.getTime()) / 3600000; if (hh >= 2) al = '<span class="badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca">⏱️ MVola non reçu depuis ' + (hh >= 24 ? Math.floor(hh / 24) + " j" : Math.floor(hh) + " h") + "</span>"; }
   return '<div style="text-align:right;margin-top:4px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">' + al + h + "</div>";
+}
+function urgent(c) {                                    // commandes qui demandent une action maintenant
+  if (["ANNULE", "LIVRE"].indexOf(c.statut) !== -1) return false;
+  var m = modeAffiche(c);
+  if (m === "LIVRAISON" && estATraiter(c)) return true;                                     // à appeler pour confirmer
+  if (m === "MVOLA" && estATraiter(c) && c.dateCmd && (Date.now() - c.dateCmd.getTime()) >= 2 * 3600000) return true;   // MVola non reçu après 2 h
+  return !!(c.cadeau && c.cadeauVerif && c.cadeauVerif !== "OK");                           // cadeau à vérifier
 }
 function appelsHtml(c) {
   if (!estCOD(c) || ["ANNULE", "LIVRE"].indexOf(c.statut) !== -1) return "";
@@ -512,7 +531,7 @@ function paiement(c) {
   var r = { etat: "", total: c.montant, frais: c.fraisPaye, reste: 0, raison: "", detail: "", mode: c.modePaiement || "", deduit: ded };
   if (c.statut === "ANNULE") { r.etat = "ANNULE"; return r; }
   var note = sansAccent(c.note).toLowerCase();
-  var cod = /\ba la livraison\b|\bcod\b|contre[- ]?remboursement/.test(note);
+  var cod = estCOD(c);
   if (r.mode === "DEJA_PAYE") { r.etat = "DEJA"; return r; }
   if (r.mode === "TOUT_LIVRAISON") {
     if (c.montant >= PLAFOND_LIVRAISON) { r.etat = "VERIF"; r.raison = "Montant au-dessus du plafond de " + nbr(PLAFOND_LIVRAISON) + " Ar pour un paiement 100 % à la livraison"; return r; }
@@ -630,7 +649,7 @@ function commandesFiltrees() {
   var q = sansAccent($("c-q").value).toLowerCase().trim(), st = $("c-statut").value, ty = $("c-type").value, dt = $("c-date").value;
   return commandes.filter(function (c) {
     if (!dansBoutique(c)) return false;
-    if (st === "TRAITER") { if (!estATraiter(c)) return false; } else if (st && c.statut !== st) return false;
+    if (st === "URGENT") { if (!urgent(c)) return false; } else if (st === "TRAITER") { if (!estATraiter(c)) return false; } else if (st && c.statut !== st) return false;
     if (ty && !new RegExp(ty, "i").test(c.type)) return false;
     if (dt && c.dateLiv !== dt) return false;
     if (q && sansAccent([c.id, c.client, c.tel, c.produits, c.quartier, c.boutique].join(" ")).toLowerCase().indexOf(q) === -1) return false;
