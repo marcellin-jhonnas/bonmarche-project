@@ -92,6 +92,42 @@ window.srCadeauPanier = function (sous, frais) {
   } catch (e) { etat.courant = null; return null; }
 };
 
+/* Accroches de boutique.html (boutique-extensions.js) : même logique que le panier de l'accueil */
+window.srCadeauBoutique = function (res) {
+  try {
+    if (!actif() || !res || !(res.sous > 0) || res.bloque || lire("saferun_snapshot_commande") !== "") return null;
+    var c = evaluer(res.sous, res.frais); if (!c) return null;
+    var info = { id: c.id, nom: c.nom, type: c.type, valeur: c.valeur, deduit: c.deduit, origine: c.origine };
+    var o = Object.assign({}, res, { cadeau: info, fraisAvant: res.frais, totalAvant: res.total });
+    if (c.deduit > 0) {
+      o.frais = c.type === "LIVRAISON_OFFERTE" ? Math.max(0, res.frais - c.deduit) : res.frais;
+      o.total = Math.max(0, res.total - c.deduit);
+      if (c.type === "LIVRAISON_OFFERTE" && o.frais === 0) { o.mode = "gratuit"; o.messages = (res.messages || []).filter(function (m) { return m.t !== "prog"; }); }
+    }
+    return o;
+  } catch (e) { return null; }
+};
+window.srCadeauBoutiqueHtml = function (r, court) {
+  try {
+    var d = etat.donnees; if (!d || !d.actif || !r || !(r.sous > 0)) return "";
+    var c = r.cadeau;
+    if (c) {
+      var ded = c.deduit, frais = r.frais, total = r.total, avant = r.totalAvant;
+      var ligne = c.type === "OBJET" ? "🎁 Cadeau : <b>" + esc(c.nom) + "</b> — remis avec votre colis" : c.type === "LIVRAISON_OFFERTE" ? "🎁 <b>Livraison offerte</b> : −" + ar(ded) + (frais > 0 ? " (votre frais de zone dépasse le maximum offert)" : "") : "🎁 <b>" + esc(c.nom) + "</b> : −" + ar(ded);
+      return '<div style="margin-top:8px;padding:10px 12px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:12px;color:#065f46;font-size:.8rem;line-height:1.45">' + ligne +
+        (ded > 0 ? '<div style="margin-top:4px">Prix final à payer : <b style="font-size:.95rem">' + ar(total) + '</b> <span style="text-decoration:line-through;color:#6b7280">' + ar(avant) + "</span></div>" : "") +
+        (ded > 0 && !court ? paiementTexte(total, frais) : "") + "</div>";
+    }
+    if (court) return "";
+    var prochain = null;
+    regles("PANIER").forEach(function (g) { if (g.seuilMin > r.total && (!prochain || g.seuilMin < prochain.seuilMin)) prochain = g; });
+    if (!prochain) return "";
+    var pct = Math.max(4, Math.min(100, Math.round(r.total / prochain.seuilMin * 100)));
+    return '<div style="margin-top:8px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;color:#92400e;font-size:.78rem;font-weight:600">🎁 Plus que ' + ar(prochain.seuilMin - r.total) + " pour : " + esc(decrire(prochain)) +
+      '<div style="height:6px;background:#fde68a;border-radius:6px;margin-top:6px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#ffcc00,#ff9900)"></div></div></div>';
+  } catch (e) { return ""; }
+};
+
 /* ---------------- Déclaration du cadeau au serveur, à l'envoi de la commande ---------------- */
 if (typeof window.fetch === "function") {
   var fetchOriginal = window.fetch;
@@ -99,9 +135,13 @@ if (typeof window.fetch === "function") {
     try {
       if (opts && opts.method === "POST" && typeof opts.body === "string" && String(url).indexOf("script.google.com") !== -1 && opts.body.indexOf('"nouvelleCommande"') !== -1) {
         var p = JSON.parse(opts.body);
-        if (p && p.action === "nouvelleCommande" && p.id && !("livraison" in p) && (p.statut === "NOUVEAU" || p.statut === "ATTENTE VISA")) {
+        if (p && p.action === "nouvelleCommande" && p.id && (!("livraison" in p) || /livraison/i.test(String(p.note || ""))) && (p.statut === "NOUVEAU" || p.statut === "ATTENTE VISA")) {
           var md = p.statut === "ATTENTE VISA" ? "VISA" : (/livraison/i.test(String(p.note || "")) ? "LIVRAISON" : "MVOLA");   // 2e envoi de main.js = le choix du client
           ecrire("saferun_mode_" + p.id, md); envoyerChoix(p.id, p.telClient || telPropre(), md);
+        }
+        if (p && p.action === "nouvelleCommande" && p.id && p.cadeauDeclare) {       // boutique.html : le cadeau est déjà dans la commande, on le mémorise pour l'affichage
+          var cleB = "saferun_cadeau_" + p.id;
+          if (!lire(cleB)) { var cd = p.cadeauDeclare, mB = { id: cd.id, nom: cd.nom, type: cd.type, valeur: cd.valeur, deduit: cd.deduit, origine: cd.origine || "AUTO", frais: cd.frais }; ecrire(cleB, JSON.stringify(mB)); consommerLocalement(mB); }
         }
         if (p && p.action === "nouvelleCommande" && p.id && !p.cadeauDeclare) {
           var cle = "saferun_cadeau_" + p.id, m = null;

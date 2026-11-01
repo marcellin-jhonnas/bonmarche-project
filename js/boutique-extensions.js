@@ -789,8 +789,11 @@
         if (sous > 0 && sous < z.seuilGratuit) messages.push({ t: "prog", x: "Plus que " + fmt(z.seuilGratuit - sous) + " pour la livraison offerte !", pct: Math.min(100, Math.round(sous * 100 / z.seuilGratuit)) });
         if (mode === "gratuit") messages.push({ t: "ok", x: "🎉 Livraison offerte !" });
 
-        return { sous: sous, frais: fraisLiv, total: sous + fraisLiv, mode: mode, flash: flash, fenetre: fenetre, conflit: conflit, groupes: groupes,
+        const _res = { sous: sous, frais: fraisLiv, total: sous + fraisLiv, mode: mode, flash: flash, fenetre: fenetre, conflit: conflit, groupes: groupes,
                  bloque: bloque, raison: raison, messages: messages, poids: poids, seuilGratuit: z.seuilGratuit, tarifMin: z.tarifMin };
+        // [CADEAUX] accroche 1/3 : applique le cadeau éventuel au frais/total (sans effet si cadeaux.js absent)
+        if (window.srCadeauBoutique) { try { const _a = window.srCadeauBoutique(_res); if (_a) return _a; } catch (e) {} }
+        return _res;
     }
 
     function htmlResume(r) {
@@ -805,6 +808,8 @@
             else h += '<div class="sr-msg sr-msg-' + m.t + '">' + esc(m.x) + '</div>';
         });
         if (r.bloque) h += '<div class="sr-msg sr-msg-err">' + esc(r.raison) + '</div>';
+        // [CADEAUX] accroche 2/3 : bloc cadeau + prix final (sans effet si cadeaux.js absent)
+        if (window.srCadeauBoutiqueHtml) { try { h += window.srCadeauBoutiqueHtml(r); } catch (e) {} }
         return h + '</div>';
     }
 
@@ -995,6 +1000,8 @@
     }
     async function viderFile() {
         if (!navigator.onLine) return;
+        // Sur l'accueil, main.js vide déjà la file : on évite un double envoi
+        if (typeof window.traiterFileAttente === "function" || typeof traiterFileAttente === "function") return;
         let f = []; try { f = JSON.parse(lire("saferun_file_attente", "[]")); } catch (e) {}
         for (const it of f) {
             try {
@@ -1024,7 +1031,9 @@
             statut: statut, note: note || "", transactionId: transactionId || "",
             recaptchaToken: co.jeton || "",
             // champs de contrôle pour le serveur (étape 4) : ignorés par l'ancien script
-            source: "boutique", sousTotal: r.sous, fraisLivraison: r.frais, typeLivraison: r.flash ? "Flash" : "Standard",
+            // [CADEAUX] accroche 3/3 : le serveur reçoit le frais AVANT cadeau + le cadeau déclaré (il recalcule et vérifie)
+            cadeauDeclare: r.cadeau ? { id: r.cadeau.id, nom: r.cadeau.nom, type: r.cadeau.type, valeur: r.cadeau.valeur, origine: r.cadeau.origine, frais: r.fraisAvant, deduit: r.cadeau.deduit } : undefined,
+            source: "boutique", sousTotal: r.sous, fraisLivraison: (r.fraisAvant !== undefined ? r.fraisAvant : r.frais), typeLivraison: r.flash ? "Flash" : "Standard",
             horaireLivraison: r.fenetre ? r.fenetre.label : "", dateLivraison: o.iso,
             lignes: co.lignes.map(p => ({ nom: p.nom, prix: Number(p.prix) || 0, quantite: Number(p.quantite) || 0 }))
         };
@@ -1131,7 +1140,7 @@
             return;
         }
         b.disabled = true; b.textContent = "Connexion…";
-        await envoyer(payloadCommande("NOUVEAU", ""));
+        await envoyer(payloadCommande("ATTENTE VISA", ""));
         const usd = (((co.r.total / 4900) + 0.30) / (1 - 0.044)).toFixed(2);
         ouvrirModale("Paiement par carte", true);
         corps('<div class="sr-co-centre" style="margin-bottom:10px">Montant : <b>' + fmt(co.r.total) + '</b> (≈ ' + usd + ' USD)</div><div id="sr-paypal" style="min-height:200px"></div><button class="sr-co-btn sr-b-gris" id="sr-cb-retour">← Autre moyen de paiement</button>');
