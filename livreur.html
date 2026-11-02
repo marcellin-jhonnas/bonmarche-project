@@ -6,381 +6,332 @@
 <title>SafeRun - Espace Livreur</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f8fafc; }
-
-    #ecran-connexion {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #1e3a8a, #274690);
-        padding: 20px;
-    }
-
-    .box-connexion {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        width: 100%;
-        max-width: 360px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        text-align: center;
-    }
-
-    .box-connexion h2 { margin-bottom: 20px; color: #1e3a8a; }
-
-    .box-connexion select, .box-connexion input {
-        width: 100%;
-        padding: 14px;
-        margin-bottom: 12px;
-        border-radius: 10px;
-        border: 1px solid #ddd;
-        font-size: 1rem;
-    }
-
-    .box-connexion button {
-        width: 100%;
-        padding: 14px;
-        background: #ffcc00;
-        border: none;
-        border-radius: 10px;
-        font-weight: 800;
-        cursor: pointer;
-        font-size: 1rem;
-    }
-
-    #ecran-livreur { display: none; padding: 15px; }
-
-    .header-livreur {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #1e3a8a;
-        color: white;
-        padding: 16px;
-        border-radius: 14px;
-        margin-bottom: 15px;
-    }
-
-    .carte-commande {
-        background: white;
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        border-left: 5px solid #f59e0b;
-    }
-
-    .carte-commande.payee { border-left-color: #22c55e; }
-
-    .carte-commande h3 { font-size: 1.05rem; margin-bottom: 6px; }
-    .carte-commande p { font-size: 0.85rem; color: #555; margin: 3px 0; }
-
-    .badge-paiement {
-        display: inline-block;
-        font-size: 0.75rem;
-        font-weight: 800;
-        padding: 4px 10px;
-        border-radius: 20px;
-        margin-top: 8px;
-    }
-    .badge-cod { background: #fef3c7; color: #92400e; }
-    .badge-paye { background: #dcfce7; color: #15803d; }
-
-    .actions-commande {
-        display: flex;
-        gap: 8px;
-        margin-top: 12px;
-    }
-
-    .btn-action {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.8rem;
-        cursor: pointer;
-    }
-
-    .btn-appeler { background: #dbeafe; color: #1e3a8a; }
-    .btn-livre { background: #22c55e; color: white; }
-
-    #message-vide {
-        text-align: center;
-        padding: 40px 20px;
-        color: #94a3b8;
-    }
-    .btn-maps { background: #e0f2fe; color: #0369a1; }
-    .btn-probleme {
-    width: 100%;
-    background: #fee2e2;
-    color: #991b1b;
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-top: 8px;
-    cursor: pointer;
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { background: #f1f5f9; color: #0f172a; padding-bottom: 76px; }
+button { font-family: inherit; }
+#ecran-connexion { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e3a8a, #274690); padding: 20px; }
+.box-connexion { background: #fff; border-radius: 20px; padding: 30px; width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,.3); text-align: center; }
+.box-connexion h2 { margin-bottom: 20px; color: #1e3a8a; }
+.box-connexion select, .box-connexion input { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 1rem; }
+.box-connexion button { width: 100%; padding: 14px; background: #ffcc00; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+#ecran-livreur { display: none; padding: 12px; max-width: 760px; margin: 0 auto; }
+.header-livreur { display: flex; justify-content: space-between; align-items: center; background: #1e3a8a; color: #fff; padding: 14px 16px; border-radius: 14px; margin-bottom: 12px; }
+.header-livreur button { background: rgba(255,255,255,.15); border: none; color: #fff; padding: 9px 12px; border-radius: 8px; cursor: pointer; margin-left: 6px; }
+#bandeau { display: none; background: #fef3c7; color: #92400e; padding: 9px 12px; border-radius: 10px; font-size: .82rem; font-weight: 700; margin-bottom: 10px; }
+.resume { display: flex; gap: 10px; margin-bottom: 12px; }
+.resume > div { flex: 1; background: #fff; border-radius: 12px; padding: 12px; text-align: center; box-shadow: 0 3px 8px rgba(0,0,0,.05); }
+.resume small { display: block; font-size: .68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+.resume b { font-size: 1.3rem; font-weight: 900; }
+.carte-commande { background: #fff; border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.06); border-left: 5px solid #f59e0b; }
+.carte-commande.payee { border-left-color: #22c55e; }
+.carte-commande.attente { opacity: .45; pointer-events: none; }
+.carte-commande h3 { font-size: 1.05rem; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 8px; }
+.carte-commande p { font-size: .85rem; color: #475569; margin: 3px 0; }
+.badge { display: inline-block; font-size: .74rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; margin: 6px 6px 0 0; }
+.b-cod { background: #fef3c7; color: #92400e; } .b-paye { background: #dcfce7; color: #15803d; } .b-cad { background: #ecfdf5; color: #065f46; } .b-gris { background: #e2e8f0; color: #334155; } .b-rouge { background: #fee2e2; color: #991b1b; }
+.actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn { flex: 1; min-width: 90px; padding: 11px 8px; border: none; border-radius: 10px; font-weight: 700; font-size: .8rem; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
+.btn-maps { background: #e0f2fe; color: #0369a1; } .btn-appeler { background: #dbeafe; color: #1e3a8a; } .btn-livre { background: #22c55e; color: #fff; } .btn-wa { background: #dcfce7; color: #166534; }
+.btn-pb { width: 100%; background: #fee2e2; color: #991b1b; border: none; padding: 8px; border-radius: 8px; font-size: .75rem; font-weight: 700; margin-top: 8px; cursor: pointer; }
+.btn-prim { background: #1e3a8a; color: #fff; } .btn-sec { background: #e2e8f0; color: #0f172a; }
+.vide { text-align: center; padding: 40px 20px; color: #94a3b8; }
+.carte { background: #fff; border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 3px 8px rgba(0,0,0,.05); }
+.carte h3 { font-size: 1rem; margin-bottom: 10px; }
+.filtres { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.filtres button { border: 0; background: #e2e8f0; color: #334155; padding: 8px 13px; border-radius: 18px; font-weight: 700; font-size: .8rem; cursor: pointer; }
+.filtres button.on { background: #1e3a8a; color: #fff; }
+.pick { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+.pick input { width: 22px; height: 22px; accent-color: #22c55e; }
+.pick .q { margin-left: auto; font-weight: 900; font-size: 1.1rem; color: #ea580c; background: #fff7ed; padding: 3px 10px; border-radius: 8px; }
+.pick.fait span.n { text-decoration: line-through; color: #94a3b8; }
+.prog { height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 6px 0 10px; } .prog i { display: block; height: 100%; background: #22c55e; }
+.etiq { border: 2px dashed #94a3b8; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: .85rem; background: #fff; line-height: 1.45; }
+.etiq .top { display: flex; justify-content: space-between; font-weight: 900; background: #1e3a8a; color: #fff; margin: -10px -12px 8px; padding: 6px 12px; border-radius: 8px 8px 0 0; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpis > div { background: #f8fafc; border-radius: 10px; padding: 12px; } .kpis small { color: #64748b; font-size: .72rem; font-weight: 700; text-transform: uppercase; display: block; } .kpis b { font-size: 1.25rem; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; background: #1e3a8a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; margin: 0 auto 8px; }
+.lecture { background: #eff6ff; color: #1e40af; padding: 10px 12px; border-radius: 10px; font-size: .8rem; margin-top: 10px; }
+nav#menu { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; box-shadow: 0 -4px 14px rgba(0,0,0,.08); z-index: 50; }
+nav#menu button { flex: 1; border: 0; background: none; padding: 10px 2px 8px; font-size: .68rem; font-weight: 700; color: #64748b; cursor: pointer; }
+nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } nav#menu button.on { color: #1e3a8a; } nav#menu .n { background: #ef4444; color: #fff; border-radius: 9px; font-size: .62rem; padding: 1px 6px; margin-left: 3px; }
+#zone-impression { display: none; }
+@media print {
+  body { background: #fff; padding: 0; }
+  body > *:not(#zone-impression) { display: none !important; }
+  #zone-impression { display: block !important; }
+  .p-titre { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .p-ligne { display: flex; justify-content: space-between; border-bottom: 1px solid #999; padding: 7px 0; font-size: 15px; }
+  .p-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .p-etiq { border: 1.5px solid #000; border-radius: 3mm; padding: 3mm; height: 52mm; overflow: hidden; font-size: 11px; line-height: 1.35; break-inside: avoid; }
+  .p-etiq .h { background: #000; color: #fff; padding: 1.5mm 2mm; font-weight: 800; display: flex; justify-content: space-between; margin: -3mm -3mm 2mm; }
+  .p-saut { break-after: page; grid-column: 1 / -1; height: 0; }
 }
 </style>
 </head>
 <body>
 
 <div id="ecran-connexion">
-    <div class="box-connexion">
-        <h2><i class="fas fa-motorcycle"></i> Espace Livreur</h2>
-        <select id="select-nom-livreur">
-            <option value="">Chargement des livreurs...</option>
-        </select>
-        <input type="password" id="input-pin" placeholder="Code PIN" maxlength="4" inputmode="numeric">
-        <button onclick="connecterLivreur()">Se connecter</button>
-    </div>
+  <div class="box-connexion">
+    <h2><i class="fas fa-motorcycle"></i> Espace Livreur</h2>
+    <select id="select-nom-livreur"><option value="">Chargement des livreurs...</option></select>
+    <input type="password" id="input-pin" placeholder="Code PIN" maxlength="4" inputmode="numeric" autocomplete="off">
+    <button id="btn-connexion" type="button">Se connecter</button>
+  </div>
 </div>
 
 <div id="ecran-livreur">
-    <div class="header-livreur">
-        <div>
-            <div style="font-size:0.75rem; opacity:0.8;">Bonjour</div>
-            <div id="nom-livreur-affiche" style="font-weight:800; font-size:1.1rem;"></div>
-        </div>
-        <button onclick="deconnecterLivreur()" style="background:rgba(255,255,255,0.15); border:none; color:white; padding:8px 12px; border-radius:8px; cursor:pointer;">
-            <i class="fas fa-sign-out-alt"></i>
-        </button>
-    </div>
-
-    <div id="resume-journee" style="display:flex; gap:10px; margin-bottom:15px;">
-        <div style="flex:1; background:white; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.05);">
-            <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">Restant</div>
-            <div id="compteur-restant" style="font-size:1.4rem; font-weight:900; color:#1e3a8a;">0</div>
-        </div>
-        <div style="flex:1; background:white; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.05);">
-            <div style="font-size:0.7rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">Cash à ramener</div>
-            <div id="compteur-cash" style="font-size:1.4rem; font-weight:900; color:#f59e0b;">0 Ar</div>
-        </div>
-    </div>
-
-    <div id="liste-commandes-livreur"></div>
+  <div class="header-livreur">
+    <div><div style="font-size:.75rem;opacity:.8;">Bonjour</div><div id="nom-livreur-affiche" style="font-weight:800;font-size:1.1rem;"></div><div id="maj" style="font-size:.68rem;opacity:.7;"></div></div>
+    <div><button id="btn-maj" type="button" title="Actualiser"><i class="fas fa-sync-alt"></i></button><button id="btn-deco" type="button" title="Quitter"><i class="fas fa-sign-out-alt"></i></button></div>
+  </div>
+  <div id="bandeau"></div>
+  <div id="contenu"></div>
 </div>
+
+<nav id="menu" style="display:none">
+  <button data-o="liv" type="button"><i class="fas fa-box"></i>Livraisons<span class="n" id="n-liv"></span></button>
+  <button data-o="stock" type="button"><i class="fas fa-boxes"></i>Déstockage</button>
+  <button data-o="etiq" type="button"><i class="fas fa-tags"></i>Étiquettes</button>
+  <button data-o="fiche" type="button"><i class="fas fa-id-card"></i>Ma fiche</button>
+</nav>
+<div id="zone-impression"></div>
 
 <script>
-const API_URL_LIVREUR = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+const WA_SUPPORT = "261382453610";
+const K = { nom: "saferun_livreur_nom", pin: "saferun_livreur_pin", file: "saferun_livreur_file_v2", vieux: "saferun_livreur_file_attente", cache: "saferun_livreur_cache" };
+const S = { nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false };
+let minuteur = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const nomSauve = localStorage.getItem('saferun_livreur_nom');
-    if (nomSauve) {
-        afficherEspaceLivreur(nomSauve);
-    } else {
-        chargerListeLivreurs();
-    }
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ar = n => Math.round(n || 0).toLocaleString("fr-FR") + " Ar";
+const digits = t => String(t || "").replace(/\D/g, "");
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, raw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+function wa(tel) { let d = digits(tel); if (d.indexOf("261") === 0) d = d.slice(3); d = d.replace(/^0/, ""); return d ? "https://wa.me/261" + d : ""; }
+
+async function api(payload) {
+  const r = await fetch(API, { method: "POST", body: JSON.stringify(payload) });
+  return await r.json();
+}
+
+/* ---------- Connexion ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  $("btn-connexion").onclick = connecter;
+  $("input-pin").addEventListener("keydown", e => { if (e.key === "Enter") connecter(); });
+  $("btn-deco").onclick = deconnecter;
+  $("btn-maj").onclick = () => charger(true);
+  $("menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) { S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); } });
+  $("contenu").addEventListener("click", clic);
+  $("contenu").addEventListener("change", changement);
+  const nom = ls.raw(K.nom), pin = ls.raw(K.pin);
+  if (nom && pin) { S.nom = nom; S.pin = pin; ouvrir(); } else chargerListeLivreurs();
+  window.addEventListener("online", () => { S.hors = false; setTimeout(vider, 800); });
+  window.addEventListener("offline", () => { S.hors = true; bandeau(); });
 });
-
 async function chargerListeLivreurs() {
-    try {
-        const res = await fetch(API_URL_LIVREUR + "?action=getLivreursActifs");
-        const noms = await res.json();
-        const select = document.getElementById('select-nom-livreur');
-        select.innerHTML = noms.length > 0
-            ? noms.map(n => `<option value="${n}">${n}</option>`).join('')
-            : '<option value="">Aucun livreur actif</option>';
-    } catch (e) {
-        console.error("Erreur chargement livreurs", e);
-    }
+  try {
+    const noms = await (await fetch(API + "?action=getLivreursActifs")).json();
+    $("select-nom-livreur").innerHTML = noms.length ? noms.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("") : '<option value="">Aucun livreur actif</option>';
+  } catch (e) { $("select-nom-livreur").innerHTML = '<option value="">Réseau indisponible</option>'; }
+}
+async function connecter() {
+  const nom = $("select-nom-livreur").value, pin = $("input-pin").value.trim();
+  if (!nom || pin.length !== 4) return alert("Sélectionnez votre nom et entrez votre code PIN.");
+  try {
+    const r = await api({ action: "livreurFiche", nom, pin });
+    if (r && r.success) { S.nom = r.nom; S.pin = pin; try { localStorage.setItem(K.nom, r.nom); localStorage.setItem(K.pin, pin); } catch (e) {} S.data = r; ouvrir(true); }
+    else alert(r && r.message ? r.message : "Code PIN incorrect.");
+  } catch (e) { alert("Erreur de connexion. Vérifiez votre réseau."); }
+}
+function deconnecter() {
+  if (ls.get(K.file, []).length && !confirm("Des livraisons n'ont pas encore été envoyées. Quitter quand même ?")) return;
+  localStorage.removeItem(K.nom); localStorage.removeItem(K.pin); localStorage.removeItem(K.cache);
+  clearInterval(minuteur); S.nom = S.pin = ""; S.data = null;
+  $("ecran-livreur").style.display = "none"; $("menu").style.display = "none"; $("ecran-connexion").style.display = "flex"; $("input-pin").value = ""; chargerListeLivreurs();
+}
+function ouvrir(dejaCharge) {
+  $("ecran-connexion").style.display = "none"; $("ecran-livreur").style.display = "block"; $("menu").style.display = "flex"; $("nom-livreur-affiche").innerText = S.nom;
+  if (!dejaCharge) { const c = ls.get(K.cache, null); if (c && c.nom === S.nom) S.data = c; }
+  dessiner(); migrerVieuxFile(); charger(true);
+  clearInterval(minuteur); minuteur = setInterval(() => { if (!document.hidden) charger(false); }, 120000);
 }
 
-async function connecterLivreur() {
-    const nom = document.getElementById('select-nom-livreur').value;
-    const pin = document.getElementById('input-pin').value.trim();
-
-    if (!nom || pin.length !== 4) {
-        alert("Sélectionnez votre nom et entrez votre code PIN.");
-        return;
-    }
-
-    try {
-        const res = await fetch(API_URL_LIVREUR, {
-            method: "POST",
-            body: JSON.stringify({ action: "connexionLivreur", nom: nom, pin: pin })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            localStorage.setItem('saferun_livreur_nom', data.nom);
-            afficherEspaceLivreur(data.nom);
-        } else if (data.bloque) {
-            alert(data.message);
-        } else {
-            alert("Code PIN incorrect.");
-        }
-    } catch (e) {
-        alert("Erreur de connexion. Vérifiez votre réseau.");
-    }
+/* ---------- Données ---------- */
+async function charger(manuel) {
+  if (!S.nom) return;
+  if (!navigator.onLine) { S.hors = true; bandeau(); return; }
+  try {
+    await vider();
+    const r = await api({ action: "livreurFiche", nom: S.nom, pin: S.pin });
+    if (!r || !r.success) { if (r && r.bloque) alert(r.message); else if (r && /PIN/.test(r.message || "")) { alert("Votre code PIN n'est plus valide. Reconnectez-vous."); deconnecter(); } else if (manuel) alert((r && r.message) || "Erreur de chargement."); return; }
+    S.data = r; S.hors = false; ls.set(K.cache, r); dessiner();
+  } catch (e) { S.hors = true; bandeau(); }
+}
+function attentes() { return ls.get(K.file, []); }
+function enAttenteIds() { return attentes().filter(p => p.action === "livreurLivre").map(p => String(p.id)); }
+async function vider() {
+  let f = attentes(); if (!f.length || !navigator.onLine) return;
+  const reste = [];
+  for (const p of f) {
+    try { const r = await api(Object.assign({}, p, { nom: S.nom, pin: S.pin })); if (!(r && (r.success || /introuvable|pas la vôtre|annulée/i.test(r.message || "")))) reste.push(p); }
+    catch (e) { reste.push(p); }
+  }
+  ls.set(K.file, reste);
+}
+function migrerVieuxFile() {                              // anciennes livraisons en attente de l'ancienne version de la page
+  const v = ls.get(K.vieux, []); if (!v.length) return;
+  const f = attentes(); v.forEach(p => { if (p && p.id) f.push({ action: "livreurLivre", id: p.id }); });
+  ls.set(K.file, f); localStorage.removeItem(K.vieux);
+}
+function bandeau() {
+  const b = $("bandeau"), n = attentes().length; let t = "";
+  if (S.hors || !navigator.onLine) t = "📴 Hors connexion : affichage des dernières données" + (n ? " · " + n + " livraison(s) à envoyer" : "");
+  else if (n) t = "⏳ " + n + " livraison(s) en attente d'envoi";
+  b.style.display = t ? "block" : "none"; b.innerText = t;
 }
 
-function deconnecterLivreur() {
-    localStorage.removeItem('saferun_livreur_nom');
-    document.getElementById('ecran-livreur').style.display = 'none';
-    document.getElementById('ecran-connexion').style.display = 'flex';
-    chargerListeLivreurs();
+/* ---------- Outils métier ---------- */
+const aujourdhui = () => (S.data && S.data.aujourdhui) || "";
+function demain() { const d = new Date(aujourdhui() + "T12:00:00"); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
+function commandes() { const att = enAttenteIds(); return (S.data ? S.data.commandes : []).map(c => Object.assign({ enAttente: att.indexOf(String(c.id)) !== -1 }, c)); }
+function filtrer() {
+  const a = aujourdhui(), d = demain();
+  return commandes().filter(c => !c.enAttente).filter(c => {
+    if (S.jour === "AUJ" && c.jour && c.jour > a) return false;      // aujourd'hui = aujourd'hui + retards + sans date
+    if (S.jour === "DEM" && c.jour !== d) return false;
+    if (S.vague !== "TOUS" && c.vague !== S.vague) return false;
+    return true;
+  });
+}
+function lignesProduits(texte) {
+  const out = [];
+  String(texte || "").split(/,(?![^(]*\))|\+/).forEach(it => {
+    const t = it.trim(); if (!t) return;
+    let m = t.match(/^(.+?)\s*\(\s*x\s*(\d+)\s*\)\s*$/i), nom, q = 1;
+    if (m) { nom = m[1]; q = +m[2]; } else if ((m = t.match(/^(\d+)\s*x\s*(.+)$/i))) { q = +m[1]; nom = m[2]; } else nom = t;
+    out.push({ nom: nom.trim(), q: q || 1 });
+  });
+  return out;
+}
+function cumul(liste) {
+  const m = {}; liste.forEach(c => lignesProduits(c.produits).forEach(l => { const k = l.nom.toUpperCase(); m[k] = m[k] || { nom: l.nom, q: 0 }; m[k].q += l.q; }));
+  return Object.keys(m).sort().map(k => m[k]);
+}
+const cleCoches = () => "sr_liv_pick_" + S.nom + "_" + aujourdhui();
+function libelleJour(c) { if (!c.jour) return ""; const a = aujourdhui(); if (c.jour < a) return "⚠️ En retard (" + c.jour.split("-").reverse().join("/") + ")"; if (c.jour === a) return "Aujourd'hui"; if (c.jour === demain()) return "Demain"; return c.jour.split("-").reverse().join("/"); }
+
+/* ---------- Écrans ---------- */
+function dessiner() {
+  bandeau();
+  document.querySelectorAll("#menu [data-o]").forEach(b => b.classList.toggle("on", b.dataset.o === S.onglet));
+  $("maj").innerText = S.data ? "Données du " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+  const n = S.data ? commandes().filter(c => !c.enAttente).length : 0; $("n-liv").innerText = n || ""; $("n-liv").style.display = n ? "" : "none";
+  if (!S.data) { $("contenu").innerHTML = '<div class="vide"><i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><p style="margin-top:10px">Chargement...</p></div>'; return; }
+  $("contenu").innerHTML = ({ liv: ecranLivraisons, stock: ecranStock, etiq: ecranEtiquettes, fiche: ecranFiche }[S.onglet] || ecranLivraisons)();
+}
+function resume() {
+  const cs = commandes().filter(c => !c.enAttente), cash = cs.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0);
+  return '<div class="resume"><div><small>Restant</small><b style="color:#1e3a8a">' + cs.length + '</b></div><div><small>Cash à ramener</small><b style="color:#f59e0b">' + ar(cash) + "</b></div></div>";
+}
+function badgesPaiement(c) {
+  let h = c.mode === "LIVRAISON" ? `<span class="badge b-cod">💵 Collecter ${c.incertain ? "≈ " : ""}${ar(c.encaisser)}</span>` : c.mode === "VISA" ? '<span class="badge b-paye">💳 Déjà payé par carte</span>' : '<span class="badge b-paye">✅ Déjà payé (MVola)</span>';
+  if (c.incertain) h += '<span class="badge b-rouge">⚠️ Montant à confirmer avec SafeRun</span>';
+  if (c.cadeau) h += `<span class="badge b-cad">🎁 ${esc(c.cadeau)}</span>`;
+  return h;
+}
+function ecranLivraisons() {
+  const cs = commandes(), a = aujourdhui();
+  if (!cs.length) return resume() + '<div class="vide"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#22c55e"></i><p style="margin-top:10px">Aucune livraison en attente. Bravo !</p></div>';
+  return resume() + cs.map(c => {
+    const tel = digits(c.tel), lien = "https://maps.google.com/?q=" + encodeURIComponent(c.adresse || ""), w = wa(c.tel);
+    return `<div class="carte-commande ${c.mode === "LIVRAISON" ? "" : "payee"} ${c.enAttente ? "attente" : ""}" data-id="${esc(c.id)}">
+      <h3><span>${esc(c.client || "Client")}</span><span style="font-size:.75rem;color:#64748b">#${esc(c.id)}</span></h3>
+      <p><i class="fas fa-clock"></i> ${esc(libelleJour(c))} ${c.vague === "MATIN" ? "· Matin" : c.vague ? "· Après-midi" : ""}</p>
+      <p><i class="fas fa-map-marker-alt"></i> ${esc(c.adresse || "Non précisé")}</p>
+      <p><i class="fas fa-box"></i> ${esc(c.produits)}</p>
+      ${badgesPaiement(c)}${c.enAttente ? '<span class="badge b-gris">⏳ Livraison en attente d\'envoi</span>' : ""}
+      <div class="actions">
+        <a href="${esc(lien)}" target="_blank" rel="noopener" class="btn btn-maps"><i class="fas fa-map-marked-alt"></i> Itinéraire</a>
+        <a href="tel:${esc(tel)}" class="btn btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
+        ${w ? `<a href="${esc(w)}" target="_blank" rel="noopener" class="btn btn-wa"><i class="fab fa-whatsapp"></i></a>` : ""}
+        <button class="btn btn-livre" data-livre="${esc(c.id)}" type="button"><i class="fas fa-check"></i> Livré</button>
+      </div>
+      <button class="btn-pb" data-pb="${esc(c.id)}" type="button"><i class="fas fa-exclamation-triangle"></i> Signaler un problème</button>
+    </div>`;
+  }).join("");
+}
+function barreFiltres() {
+  const J = [["AUJ", "Aujourd'hui"], ["DEM", "Demain"], ["TOUS", "Tout"]], V = [["TOUS", "Toute la journée"], ["MATIN", "Matin"], ["APRES-MIDI", "Après-midi"]];
+  return '<div class="filtres">' + J.map(x => `<button data-fj="${x[0]}" class="${S.jour === x[0] ? "on" : ""}" type="button">${x[1]}</button>`).join("") + '</div><div class="filtres">' + V.map(x => `<button data-fv="${x[0]}" class="${S.vague === x[0] ? "on" : ""}" type="button">${x[1]}</button>`).join("") + "</div>";
+}
+function ecranStock() {
+  const liste = filtrer(), prod = cumul(liste), coches = ls.get(cleCoches(), {}), fait = prod.filter(p => coches[p.nom.toUpperCase()]).length;
+  let h = '<div class="carte"><h3>🧺 Mon déstockage</h3><div style="font-size:.8rem;color:#64748b;margin-bottom:8px">Les produits à sortir du stock pour <b>vos</b> ' + liste.length + " colis. Cochez au fur et à mesure.</div>" + barreFiltres();
+  if (!prod.length) return h + '<div class="vide">Rien à préparer pour cette sélection</div></div>';
+  h += `<div style="font-weight:800">${fait} / ${prod.length} produits préparés</div><div class="prog"><i style="width:${Math.round(fait / prod.length * 100)}%"></i></div>`;
+  h += prod.map(p => `<label class="pick ${coches[p.nom.toUpperCase()] ? "fait" : ""}"><input type="checkbox" data-pick="${esc(p.nom.toUpperCase())}" ${coches[p.nom.toUpperCase()] ? "checked" : ""}><span class="n">${esc(p.nom)}</span><span class="q">x${p.q}</span></label>`).join("");
+  h += '<div class="actions"><button class="btn btn-prim" data-print="bon" type="button"><i class="fas fa-print"></i> Imprimer mon bon de sortie</button><button class="btn btn-sec" data-raz="1" type="button">Tout décocher</button></div></div>';
+  return h;
+}
+function ecranEtiquettes() {
+  const liste = filtrer();
+  let h = '<div class="carte"><h3>🏷️ Mes étiquettes colis</h3>' + barreFiltres();
+  if (!liste.length) return h + '<div class="vide">Aucun colis pour cette sélection</div></div>';
+  h += liste.map(c => `<div class="etiq"><div class="top"><span>#${esc(c.id)}</span><span>${esc(S.nom)}</span></div><b>${esc(c.client)}</b> · ${esc(c.tel)}<br>📍 ${esc(c.adresse)}<br>📦 ${esc(c.produits)}<br>${c.mode === "LIVRAISON" ? "💵 À COLLECTER : <b>" + (c.incertain ? "≈ " : "") + ar(c.encaisser) + "</b>" : "✅ PAYÉ"}${c.cadeau ? " · 🎁 " + esc(c.cadeau) : ""}<br><span style='color:#64748b'>${esc(libelleJour(c))} ${c.vague === "MATIN" ? "· Matin" : c.vague ? "· Après-midi" : ""}</span></div>`).join("");
+  return h + '<div class="actions"><button class="btn btn-prim" data-print="etiq" type="button"><i class="fas fa-print"></i> Imprimer ' + liste.length + " étiquette(s)</button></div></div>";
+}
+function ecranFiche() {
+  const d = S.data, cs = commandes().filter(c => !c.enAttente), liv = d.livrees || [], st = d.stats || {};
+  const cashRapporte = liv.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0), cashRestant = cs.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0);
+  const tot = (st.livrees30 || 0) + (st.annulees30 || 0), taux = tot ? Math.round((st.livrees30 || 0) / tot * 100) + " %" : "–";
+  return `<div class="carte" style="text-align:center"><div class="avatar">${esc((S.nom || "?").charAt(0).toUpperCase())}</div><b style="font-size:1.2rem">${esc(S.nom)}</b><div style="color:#64748b;font-size:.8rem">Livreur SafeRun Market · ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div></div>
+  <div class="carte"><h3>📅 Aujourd'hui</h3><div class="kpis"><div><small>Livraisons restantes</small><b>${cs.length}</b></div><div><small>Déjà livrées</small><b style="color:#16a34a">${liv.length}</b></div><div><small>Cash déjà collecté</small><b>${ar(cashRapporte)}</b><small style="text-transform:none">à remettre à SafeRun</small></div><div><small>Cash encore à collecter</small><b style="color:#f59e0b">${ar(cashRestant)}</b></div></div>
+  <div style="margin-top:12px;font-weight:800;background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px">💰 À remettre à SafeRun ce soir : ${ar(cashRapporte)}</div></div>
+  <div class="carte"><h3>📈 Mes 30 derniers jours</h3><div class="kpis"><div><small>Livrées</small><b>${st.livrees30 || 0}</b></div><div><small>Annulées</small><b>${st.annulees30 || 0}</b></div><div><small>Taux de livraison</small><b>${taux}</b></div></div></div>
+  <div class="carte"><h3>✅ Livrées aujourd'hui (${liv.length})</h3>${liv.length ? liv.map(c => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.85rem"><span>#${esc(c.id)} · ${esc(c.client)}</span><b>${c.mode === "LIVRAISON" ? ar(c.encaisser) : "payé"}</b></div>`).join("") : '<div class="vide" style="padding:14px">Aucune pour l\'instant</div>'}</div>
+  <div class="lecture">🔒 Vous exécutez votre tournée : adresses, montants et statuts sont gérés par SafeRun. Vous pouvez seulement confirmer une livraison et signaler un problème.</div>`;
 }
 
-async function afficherEspaceLivreur(nom) {
-    document.getElementById('ecran-connexion').style.display = 'none';
-    document.getElementById('ecran-livreur').style.display = 'block';
-    document.getElementById('nom-livreur-affiche').innerText = nom;
-    await chargerCommandesLivreur(nom);
+/* ---------- Actions ---------- */
+function changement(e) {
+  const t = e.target; if (t.dataset && t.dataset.pick) { const c = ls.get(cleCoches(), {}); if (t.checked) c[t.dataset.pick] = 1; else delete c[t.dataset.pick]; ls.set(cleCoches(), c); dessiner(); }
 }
-
-async function chargerCommandesLivreur(nom) {
-    const container = document.getElementById('liste-commandes-livreur');
-    container.innerHTML = "<p style='text-align:center; padding:30px;'>Chargement...</p>";
-
-    try {
-        const res = await fetch(API_URL_LIVREUR + "?action=getCommandesLivreur&nom=" + encodeURIComponent(nom));
-        let commandes = await res.json();
-        commandes = trierParHoraire(commandes);
-
-        if (commandes.length === 0) {
-            container.innerHTML = `<div id="message-vide"><i class="fas fa-check-circle" style="font-size:2.5rem; color:#22c55e;"></i><p style="margin-top:10px;">Aucune livraison en attente. Bravo !</p></div>`;
-            return;
-        }
-
-        container.innerHTML = commandes.map(c => {
-            const note = (c.Note || "").toString().toLowerCase();
-            const estCOD = note.includes("livraison");
-            const frais = parseFloat(c.FraisLivraison) || 0;
-            const montantACollecter = Math.max((parseFloat(c.Montant) || 0) - frais, 0);
-            const telProp = (c.Téléphone || "").toString().replace(/\D/g, '');
-            const adresse = c["Lieu Exact"] || 'Non précisé';
-            const lienMaps = "https://maps.google.com/?q=" + encodeURIComponent(adresse);
-
-            return `
-                <div class="carte-commande ${estCOD ? '' : 'payee'}" data-id="${c.ID}">
-                    <h3>${c.Client || 'Client'}</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> ${adresse}</p>
-                    <p><i class="fas fa-box"></i> ${c.Produits || ''}</p>
-                    ${estCOD
-                        ? `<span class="badge-paiement badge-cod">💵 Collecter ${montantACollecter.toLocaleString()} Ar</span>`
-                        : `<span class="badge-paiement badge-paye">✅ Déjà payé</span>`
-                    }
-                    <div class="actions-commande">
-    <a href="${lienMaps}" target="_blank" class="btn-action btn-maps"><i class="fas fa-map-marked-alt"></i> Itinéraire</a>
-    <a href="tel:${telProp}" class="btn-action btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
-    <button class="btn-action btn-livre" onclick="marquerCommeLivree('${c.ID}', '${nom}')"><i class="fas fa-check"></i> Livré</button>
-</div>
-<button class="btn-probleme" onclick="signalerProbleme('${c.Client}', '${c.ID}', '${adresse}')">
-    <i class="fas fa-exclamation-triangle"></i> Signaler un problème
-</button>
-                </div>
-            `;
-        }).join('');
-
-        container.innerHTML = commandes.map(c => { /* ... contenu inchangé ... */ }).join('');
-
-        // Mise à jour du résumé de la journée
-        let totalCash = 0;
-        commandes.forEach(c => {
-            const note = (c.Note || "").toString().toLowerCase();
-            if (note.includes("livraison")) {
-                const frais = parseFloat(c.FraisLivraison) || 0;
-                totalCash += Math.max((parseFloat(c.Montant) || 0) - frais, 0);
-            }
-        });
-        document.getElementById('compteur-restant').innerText = commandes.length;
-        document.getElementById('compteur-cash').innerText = totalCash.toLocaleString() + " Ar";
-
-    } catch (e) {
-        container.innerHTML = "<p style='text-align:center; color:red;'>Erreur de chargement.</p>";
-    }
+function clic(e) {
+  const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
+  if (d.fj) { S.jour = d.fj; dessiner(); } else if (d.fv) { S.vague = d.fv; dessiner(); }
+  else if (d.raz) { ls.set(cleCoches(), {}); dessiner(); }
+  else if (d.print) imprimer(d.print);
+  else if (d.livre) livrer(d.livre);
+  else if (d.pb) probleme(d.pb);
 }
-
-async function marquerCommeLivree(id, nom) {
-    if (!confirm("Confirmer la livraison de cette commande ?")) return;
-
-    const payload = { action: "marquerLivree", id: id, nom: nom };
-
-    if (!navigator.onLine) {
-        ajouterALaFileAttenteLivreur(payload);
-        alert("📴 Pas de connexion : cette livraison sera confirmée automatiquement dès le retour du réseau.");
-        // On retire quand même la carte visuellement pour ne pas la re-livrer par erreur
-        marquerCarteCommeEnAttente(id);
-        return;
-    }
-
-    try {
-        await fetch(API_URL_LIVREUR, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        await chargerCommandesLivreur(nom);
-    } catch (e) {
-        ajouterALaFileAttenteLivreur(payload);
-        alert("📴 Connexion instable : cette livraison sera confirmée automatiquement dès le retour du réseau.");
-        marquerCarteCommeEnAttente(id);
-    }
+async function livrer(id) {
+  const c = commandes().filter(x => String(x.id) === String(id))[0]; if (!c) return;
+  const msg = c.mode === "LIVRAISON" ? `Avez-vous bien collecté ${c.incertain ? "environ " : ""}${ar(c.encaisser)} auprès de ${c.client} ?\n\nConfirmer la livraison ?` : "Confirmer la livraison de cette commande ?";
+  if (!confirm(msg)) return;
+  const p = { action: "livreurLivre", id: String(id) };
+  const hors = () => { const f = attentes(); f.push(p); ls.set(K.file, f); alert("📴 Pas de connexion : la livraison sera confirmée automatiquement dès le retour du réseau."); dessiner(); };
+  if (!navigator.onLine) return hors();
+  try {
+    const r = await api(Object.assign({ nom: S.nom, pin: S.pin }, p));
+    if (r && r.success) { await charger(false); } else alert((r && r.message) || "Impossible d'enregistrer.");
+  } catch (err) { hors(); }
 }
-
-function ajouterALaFileAttenteLivreur(payload) {
-    const file = JSON.parse(localStorage.getItem('saferun_livreur_file_attente') || '[]');
-    file.push(payload);
-    localStorage.setItem('saferun_livreur_file_attente', JSON.stringify(file));
+function probleme(id) {
+  const c = commandes().filter(x => String(x.id) === String(id))[0]; if (!c) return;
+  const texte = prompt("Quel est le problème ? (ex : client injoignable, adresse introuvable, refuse de payer)", ""); if (texte === null) return;
+  api({ action: "livreurProbleme", nom: S.nom, pin: S.pin, id: String(id), texte }).catch(() => {});
+  const m = `⚠️ PROBLÈME LIVRAISON\nLivreur : ${S.nom}\nCommande : ${c.id}\nClient : ${c.client}\nAdresse : ${c.adresse}\nProblème : ${texte || "(à préciser)"}`;
+  window.open("https://wa.me/" + WA_SUPPORT + "?text=" + encodeURIComponent(m), "_blank");
 }
-
-function marquerCarteCommeEnAttente(id) {
-    const cartes = document.querySelectorAll('.carte-commande');
-    cartes.forEach(carte => {
-        if (carte.dataset.id === id) {
-            carte.style.opacity = "0.4";
-            carte.style.pointerEvents = "none";
-        }
-    });
-}
-
-async function traiterFileAttenteLivreur() {
-    if (!navigator.onLine) return;
-
-    let file = JSON.parse(localStorage.getItem('saferun_livreur_file_attente') || '[]');
-    if (file.length === 0) return;
-
-    for (const payload of file) {
-        try {
-            await fetch(API_URL_LIVREUR, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-        } catch (e) {
-            console.warn("Échec du renvoi, on réessaiera plus tard.");
-            return; // on arrête, on retentera au prochain événement 'online'
-        }
-    }
-
-    localStorage.removeItem('saferun_livreur_file_attente');
-    const nom = localStorage.getItem('saferun_livreur_nom');
-    if (nom) chargerCommandesLivreur(nom);
-}
-
-window.addEventListener('online', () => {
-    setTimeout(traiterFileAttenteLivreur, 1000);
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (navigator.onLine) traiterFileAttenteLivreur();
-});
-function trierParHoraire(commandes) {
-    function extraireOrdre(livraisonTexte) {
-        const texte = (livraisonTexte || "").toLowerCase();
-        if (texte.includes("matin")) return 1;
-        if (texte.includes("après-midi") || texte.includes("apres-midi")) return 2;
-        return 3; // pas d'horaire précisé, en dernier
-    }
-    return commandes.sort((a, b) => extraireOrdre(a.Livraison) - extraireOrdre(b.Livraison));
-}
-function signalerProbleme(client, id, adresse) {
-    const numeroSupport = "261382453610"; // ton numéro WhatsApp existant
-    const message = `⚠️ PROBLÈME LIVRAISON\nCommande: ${id}\nClient: ${client}\nAdresse: ${adresse}\n\nDécrivez le problème svp.`;
-    window.open(`https://wa.me/${numeroSupport}?text=${encodeURIComponent(message)}`, '_blank');
+function imprimer(type) {
+  const liste = filtrer(), z = $("zone-impression"), date = new Date().toLocaleDateString("fr-FR");
+  if (type === "bon") {
+    z.innerHTML = `<div class="p-titre">BON DE SORTIE · ${esc(S.nom)} · ${date}</div><div style="font-size:12px;margin-bottom:8px">${liste.length} colis</div>` + cumul(liste).map(p => `<div class="p-ligne"><span>☐ ${esc(p.nom)}</span><b>x${p.q}</b></div>`).join("");
+  } else {
+    z.innerHTML = '<div class="p-grille">' + liste.map((c, i) => `<div class="p-etiq"><div class="h"><span>#${esc(c.id)}</span><span>${esc(S.nom)}</span></div><b>${esc(c.client)}</b> · ${esc(c.tel)}<br>📍 ${esc(c.adresse)}<br>📦 ${esc(c.produits)}<br>${c.mode === "LIVRAISON" ? "<b>À COLLECTER : " + (c.incertain ? "≈ " : "") + ar(c.encaisser) + "</b>" : "<b>PAYÉ</b>"}${c.cadeau ? " · 🎁 " + esc(c.cadeau) : ""}<br>${esc(libelleJour(c))} ${c.vague === "MATIN" ? "· Matin" : c.vague ? "· Après-midi" : ""}</div>` + ((i + 1) % 10 === 0 ? '<div class="p-saut"></div>' : "")).join("") + "</div>";
+  }
+  window.print();
 }
 </script>
 </body>
