@@ -54,6 +54,17 @@ button { font-family: inherit; }
 nav#menu { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; box-shadow: 0 -4px 14px rgba(0,0,0,.08); z-index: 50; }
 nav#menu button { flex: 1; border: 0; background: none; padding: 10px 2px 8px; font-size: .68rem; font-weight: 700; color: #64748b; cursor: pointer; }
 nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } nav#menu button.on { color: #1e3a8a; } nav#menu .n { background: #ef4444; color: #fff; border-radius: 9px; font-size: .62rem; padding: 1px 6px; margin-left: 3px; }
+#carte-wrap { display: none; margin-bottom: 12px; } #carte { height: 240px; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,.08); z-index: 1; }
+.consigne { background: #fef9c3; border-left: 5px solid #eab308; color: #713f12; padding: 11px 13px; border-radius: 10px; margin-bottom: 12px; font-size: .88rem; font-weight: 600; }
+.retiree { background: #fee2e2; color: #991b1b; padding: 9px 12px; border-radius: 10px; margin-bottom: 8px; font-size: .82rem; font-weight: 700; }
+.prochaine { background: #dcfce7; color: #166534; padding: 10px 13px; border-radius: 10px; margin-bottom: 12px; font-size: .85rem; font-weight: 700; }
+.gps-barre { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; } .gps-barre .btn { flex: 1; min-width: 120px; }
+.num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #1e3a8a; color: #fff; font-size: .72rem; font-weight: 800; margin-right: 6px; }
+.modal { position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; } .modal.on { display: flex; }
+.modal .box { background: #fff; width: 100%; max-width: 520px; border-radius: 18px 18px 0 0; padding: 18px; } .modal h3 { margin-bottom: 10px; }
+.motif { display: block; width: 100%; text-align: left; border: 1px solid #e2e8f0; background: #f8fafc; padding: 13px; border-radius: 10px; margin-bottom: 8px; font-weight: 700; font-size: .9rem; cursor: pointer; } .motif.on { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+.modal textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: .9rem; margin-bottom: 10px; }
+.jour-l { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: .85rem; }
 #zone-impression { display: none; }
 @media print {
   body { background: #fff; padding: 0; }
@@ -88,6 +99,7 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
   <div id="contenu"></div>
 </div>
 
+<div class="modal" id="modal-pb"><div class="box"><h3>⚠️ Quel est le problème ?</h3><div id="motifs"></div><textarea id="pb-texte" rows="2" placeholder="Précision (facultatif)"></textarea><div class="actions"><button class="btn btn-sec" id="pb-annuler" type="button">Annuler</button><button class="btn btn-livre" id="pb-envoyer" type="button" style="background:#dc2626">Envoyer à SafeRun</button></div></div></div>
 <nav id="menu" style="display:none">
   <button data-o="liv" type="button"><i class="fas fa-box"></i>Livraisons<span class="n" id="n-liv"></span></button>
   <button data-o="stock" type="button"><i class="fas fa-boxes"></i>Déstockage</button>
@@ -100,7 +112,9 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 const WA_SUPPORT = "261382453610";
 const K = { nom: "saferun_livreur_nom", pin: "saferun_livreur_pin", file: "saferun_livreur_file_v2", vieux: "saferun_livreur_file_attente", cache: "saferun_livreur_cache" };
-const S = { nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false };
+const S = { nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false, tri: "horaire", pos: null, carte: false, pbId: "", pbMotif: "" };
+const MOTIFS = { INJOIGNABLE: "📵 Client injoignable", ADRESSE: "📍 Adresse introuvable", ABSENT: "🚪 Client absent", REFUSE: "✋ Client refuse la commande", PAIEMENT: "💵 Paiement incomplet ou refusé", AUTRE: "❓ Autre problème" };
+let gpsId = null, dernierEnvoi = { t: 0, lat: 0, lng: 0 }, carteObj = null, couche = null;
 let minuteur = null;
 
 const $ = id => document.getElementById(id);
@@ -124,6 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) { S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); } });
   $("contenu").addEventListener("click", clic);
   $("contenu").addEventListener("change", changement);
+  $("motifs").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; S.pbMotif = b.dataset.m; document.querySelectorAll("#motifs .motif").forEach(x => x.classList.toggle("on", x === b)); });
+  $("pb-annuler").onclick = () => $("modal-pb").classList.remove("on"); $("pb-envoyer").onclick = envoyerProbleme;
+  try { if (navigator.permissions) navigator.permissions.query({ name: "geolocation" }).then(r => { if (r.state === "granted") activerGPS(); }).catch(() => {}); } catch (e) {}
   const nom = ls.raw(K.nom), pin = ls.raw(K.pin);
   if (nom && pin) { S.nom = nom; S.pin = pin; ouvrir(); } else chargerListeLivreurs();
   window.addEventListener("online", () => { S.hors = false; setTimeout(vider, 800); });
@@ -147,13 +164,13 @@ async function connecter() {
 function deconnecter() {
   if (ls.get(K.file, []).length && !confirm("Des livraisons n'ont pas encore été envoyées. Quitter quand même ?")) return;
   localStorage.removeItem(K.nom); localStorage.removeItem(K.pin); localStorage.removeItem(K.cache);
-  clearInterval(minuteur); S.nom = S.pin = ""; S.data = null;
+  clearInterval(minuteur); if (gpsId !== null) { navigator.geolocation.clearWatch(gpsId); gpsId = null; } S.pos = null; S.nom = S.pin = ""; S.data = null;
   $("ecran-livreur").style.display = "none"; $("menu").style.display = "none"; $("ecran-connexion").style.display = "flex"; $("input-pin").value = ""; chargerListeLivreurs();
 }
 function ouvrir(dejaCharge) {
   $("ecran-connexion").style.display = "none"; $("ecran-livreur").style.display = "block"; $("menu").style.display = "flex"; $("nom-livreur-affiche").innerText = S.nom;
   if (!dejaCharge) { const c = ls.get(K.cache, null); if (c && c.nom === S.nom) S.data = c; }
-  dessiner(); migrerVieuxFile(); charger(true);
+  dessiner(); migrerVieuxFile(); charger(true); envoyerPos(true);
   clearInterval(minuteur); minuteur = setInterval(() => { if (!document.hidden) charger(false); }, 120000);
 }
 
@@ -165,7 +182,7 @@ async function charger(manuel) {
     await vider();
     const r = await api({ action: "livreurFiche", nom: S.nom, pin: S.pin });
     if (!r || !r.success) { if (r && r.bloque) alert(r.message); else if (r && /PIN/.test(r.message || "")) { alert("Votre code PIN n'est plus valide. Reconnectez-vous."); deconnecter(); } else if (manuel) alert((r && r.message) || "Erreur de chargement."); return; }
-    S.data = r; S.hors = false; ls.set(K.cache, r); dessiner();
+    S.data = r; S.hors = false; ls.set(K.cache, r); dessiner(); envoyerPos(false);
   } catch (e) { S.hors = true; bandeau(); }
 }
 function attentes() { return ls.get(K.file, []); }
@@ -229,10 +246,11 @@ function dessiner() {
   const n = S.data ? commandes().filter(c => !c.enAttente).length : 0; $("n-liv").innerText = n || ""; $("n-liv").style.display = n ? "" : "none";
   if (!S.data) { $("contenu").innerHTML = '<div class="vide"><i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><p style="margin-top:10px">Chargement...</p></div>'; return; }
   $("contenu").innerHTML = ({ liv: ecranLivraisons, stock: ecranStock, etiq: ecranEtiquettes, fiche: ecranFiche }[S.onglet] || ecranLivraisons)();
+  if (S.onglet === "liv" && S.carte) dessinerCarte();
 }
 function resume() {
-  const cs = commandes().filter(c => !c.enAttente), cash = cs.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0);
-  return '<div class="resume"><div><small>Restant</small><b style="color:#1e3a8a">' + cs.length + '</b></div><div><small>Cash à ramener</small><b style="color:#f59e0b">' + ar(cash) + "</b></div></div>";
+  const cs = commandes().filter(c => !c.enAttente), liv = (S.data.livrees || []).length;
+  return '<div class="resume"><div><small>Restant</small><b style="color:#1e3a8a">' + cs.length + '</b></div><div><small>Livrées aujourd\'hui</small><b style="color:#16a34a">' + liv + "</b></div></div>";
 }
 function badgesPaiement(c) {
   let h = c.mode === "LIVRAISON" ? `<span class="badge b-cod">💵 Collecter ${c.incertain ? "≈ " : ""}${ar(c.encaisser)}</span>` : c.mode === "VISA" ? '<span class="badge b-paye">💳 Déjà payé par carte</span>' : '<span class="badge b-paye">✅ Déjà payé (MVola)</span>';
@@ -240,17 +258,43 @@ function badgesPaiement(c) {
   if (c.cadeau) h += `<span class="badge b-cad">🎁 ${esc(c.cadeau)}</span>`;
   return h;
 }
+function kmTxt(c) { const d = distance(c); return d === null ? "" : (d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(1) + " km"); }
+function distance(c) { return S.pos && c.lat != null ? km(S.pos.lat, S.pos.lng, c.lat, c.lng) : null; }
+function km(a, b, c, d) { const r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r, h = Math.sin(x / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(y / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)); }
+function ordonnees() {
+  const cs = commandes().slice();
+  if (S.tri === "proche" && S.pos) cs.sort((x, y) => (distance(x) === null) - (distance(y) === null) || (distance(x) || 0) - (distance(y) || 0));
+  return cs;
+}
+function prochaine() {
+  if (!S.pos) return null; const a = aujourdhui();
+  const cand = commandes().filter(c => !c.enAttente && c.confirmee && (!c.jour || c.jour <= a) && c.lat != null);
+  if (!cand.length) return null;
+  const premiere = cand.some(c => c.vague === "MATIN") ? "MATIN" : "";
+  const liste = cand.filter(c => !premiere || c.vague === premiere).sort((x, y) => distance(x) - distance(y));
+  return liste[0] || null;
+}
+function noteUtile(c) { const t = String(c.note || "").replace(/payer\s+à\s+la\s+livraison/ig, "").replace(/^[\s\-–:;,.]+|[\s\-–:;,.]+$/g, ""); return t.length > 2 ? t : ""; }
 function ecranLivraisons() {
-  const cs = commandes(), a = aujourdhui();
-  if (!cs.length) return resume() + '<div class="vide"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#22c55e"></i><p style="margin-top:10px">Aucune livraison en attente. Bravo !</p></div>';
-  return resume() + cs.map(c => {
-    const tel = digits(c.tel), lien = "https://maps.google.com/?q=" + encodeURIComponent(c.adresse || ""), w = wa(c.tel);
+  const cs = ordonnees(), a = aujourdhui(), d = S.data;
+  let h = "";
+  if (d.consigne) h += `<div class="consigne">📢 Consigne SafeRun : ${esc(d.consigne)}</div>`;
+  (d.retirees || []).forEach(r => { h += `<div class="retiree">❌ Retirée de votre tournée : #${esc(r.id)} ${esc(r.client)}${r.motif ? " (" + esc(r.motif) + ")" : " (commande annulée)"}</div>`; });
+  h += resume();
+  h += `<div class="gps-barre"><button class="btn ${S.pos ? "btn-sec" : "btn-prim"}" data-gps="1" type="button"><i class="fas fa-location-crosshairs"></i> ${S.pos ? "Position active (±" + Math.round(S.pos.prec) + " m)" : "Activer ma position"}</button><button class="btn btn-sec" data-carte="1" type="button"><i class="fas fa-map"></i> ${S.carte ? "Masquer la carte" : "Voir la carte"}</button>${S.pos ? `<button class="btn ${S.tri === "proche" ? "btn-prim" : "btn-sec"}" data-tri="${S.tri === "proche" ? "horaire" : "proche"}" type="button"><i class="fas fa-sort"></i> ${S.tri === "proche" ? "Tri : plus proche" : "Tri : horaire"}</button>` : ""}</div>`;
+  h += '<div id="carte-wrap" style="display:' + (S.carte ? "block" : "none") + '"><div id="carte"></div></div>';
+  const pr = prochaine(); if (pr) h += `<div class="prochaine">🎯 Suggestion : <b>${esc(pr.client)}</b> (${esc(pr.adresse.split(" --")[0])}) à ${kmTxt(pr)}</div>`;
+  if (!cs.length) return h + '<div class="vide"><i class="fas fa-check-circle" style="font-size:2.5rem;color:#22c55e"></i><p style="margin-top:10px">Aucune livraison en attente. Bravo !</p></div>';
+  return h + cs.map((c, i) => {
+    const tel = digits(c.tel), lien = (c.lat != null && c.src !== "quartier") ? "https://www.google.com/maps/dir/?api=1&destination=" + c.lat + "," + c.lng : "https://maps.google.com/?q=" + encodeURIComponent(c.adresse || ""), w = wa(c.tel), dist = kmTxt(c), nt = noteUtile(c);
     return `<div class="carte-commande ${c.mode === "LIVRAISON" ? "" : "payee"} ${c.enAttente ? "attente" : ""}" data-id="${esc(c.id)}">
-      <h3><span>${esc(c.client || "Client")}</span><span style="font-size:.75rem;color:#64748b">#${esc(c.id)}</span></h3>
+      <h3><span><span class="num">${i + 1}</span>${esc(c.client || "Client")}</span><span style="font-size:.75rem;color:#64748b">#${esc(c.id)}</span></h3>
       <p><i class="fas fa-clock"></i> ${esc(libelleJour(c))} ${c.vague === "MATIN" ? "· Matin" : c.vague ? "· Après-midi" : ""}</p>
       <p><i class="fas fa-map-marker-alt"></i> ${esc(c.adresse || "Non précisé")}</p>
+      ${dist ? `<p><i class="fas fa-route"></i> <b>À ${dist}</b> ${c.src === "quartier" ? '<span style="color:#b45309">(approximatif : centre du quartier)</span>' : c.src === "apprise" ? "(position déjà connue)" : ""}</p>` : ""}
       <p><i class="fas fa-box"></i> ${esc(c.produits)}</p>
-      ${badgesPaiement(c)}${c.enAttente ? '<span class="badge b-gris">⏳ Livraison en attente d\'envoi</span>' : ""}
+      ${nt ? `<p><i class="fas fa-comment"></i> ${esc(nt)}</p>` : ""}
+      ${badgesPaiement(c)}${c.confirmee ? "" : '<span class="badge b-rouge">⚠️ Pas encore confirmée par SafeRun : attendez le feu vert</span>'}${c.enAttente ? '<span class="badge b-gris">⏳ Livraison en attente d\'envoi</span>' : ""}
       <div class="actions">
         <a href="${esc(lien)}" target="_blank" rel="noopener" class="btn btn-maps"><i class="fas fa-map-marked-alt"></i> Itinéraire</a>
         <a href="tel:${esc(tel)}" class="btn btn-appeler"><i class="fas fa-phone"></i> Appeler</a>
@@ -282,14 +326,17 @@ function ecranEtiquettes() {
   return h + '<div class="actions"><button class="btn btn-prim" data-print="etiq" type="button"><i class="fas fa-print"></i> Imprimer ' + liste.length + " étiquette(s)</button></div></div>";
 }
 function ecranFiche() {
-  const d = S.data, cs = commandes().filter(c => !c.enAttente), liv = d.livrees || [], st = d.stats || {};
-  const cashRapporte = liv.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0), cashRestant = cs.reduce((s, c) => s + (c.mode === "LIVRAISON" ? c.encaisser : 0), 0);
+  const d = S.data, cs = commandes().filter(c => !c.enAttente), liv = d.livrees || [], st = d.stats || {}, hi = d.historique || { jours: [], recent: [], problemes: {} }, mo = d.mois || { jours: 0, livraisons: 0 };
   const tot = (st.livrees30 || 0) + (st.annulees30 || 0), taux = tot ? Math.round((st.livrees30 || 0) / tot * 100) + " %" : "–";
+  const pb = Object.keys(hi.problemes || {}).map(k => `${esc(MOTIFS[k] ? MOTIFS[k].replace(/^\S+\s/, "") : k)} : <b>${hi.problemes[k]}</b>`);
+  const nomMois = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   return `<div class="carte" style="text-align:center"><div class="avatar">${esc((S.nom || "?").charAt(0).toUpperCase())}</div><b style="font-size:1.2rem">${esc(S.nom)}</b><div style="color:#64748b;font-size:.8rem">Livreur SafeRun Market · ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div></div>
-  <div class="carte"><h3>📅 Aujourd'hui</h3><div class="kpis"><div><small>Livraisons restantes</small><b>${cs.length}</b></div><div><small>Déjà livrées</small><b style="color:#16a34a">${liv.length}</b></div><div><small>Cash déjà collecté</small><b>${ar(cashRapporte)}</b><small style="text-transform:none">à remettre à SafeRun</small></div><div><small>Cash encore à collecter</small><b style="color:#f59e0b">${ar(cashRestant)}</b></div></div>
-  <div style="margin-top:12px;font-weight:800;background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px">💰 À remettre à SafeRun ce soir : ${ar(cashRapporte)}</div></div>
-  <div class="carte"><h3>📈 Mes 30 derniers jours</h3><div class="kpis"><div><small>Livrées</small><b>${st.livrees30 || 0}</b></div><div><small>Annulées</small><b>${st.annulees30 || 0}</b></div><div><small>Taux de livraison</small><b>${taux}</b></div></div></div>
-  <div class="carte"><h3>✅ Livrées aujourd'hui (${liv.length})</h3>${liv.length ? liv.map(c => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.85rem"><span>#${esc(c.id)} · ${esc(c.client)}</span><b>${c.mode === "LIVRAISON" ? ar(c.encaisser) : "payé"}</b></div>`).join("") : '<div class="vide" style="padding:14px">Aucune pour l\'instant</div>'}</div>
+  <div class="carte"><h3>📅 Aujourd'hui</h3><div class="kpis"><div><small>Livraisons restantes</small><b>${cs.length}</b></div><div><small>Déjà livrées</small><b style="color:#16a34a">${liv.length}</b></div></div>
+  ${liv.length ? '<div style="margin-top:10px">' + liv.map(c => `<div class="jour-l"><span>#${esc(c.id)} · ${esc(c.client)}</span><b>${esc(c.heure || "")}</b></div>`).join("") + "</div>" : ""}</div>
+  <div class="carte"><h3>🗓️ Ce mois (${esc(nomMois)})</h3><div class="kpis"><div><small>Jours travaillés</small><b>${mo.jours}</b></div><div><small>Livraisons</small><b>${mo.livraisons}</b></div></div></div>
+  <div class="carte"><h3>📈 Mes 30 derniers jours</h3><div class="kpis"><div><small>Livrées</small><b>${st.livrees30 || 0}</b></div><div><small>Annulées</small><b>${st.annulees30 || 0}</b></div><div><small>Taux de livraison</small><b>${taux}</b></div><div><small>Problèmes signalés</small><b>${Object.keys(hi.problemes || {}).reduce((s, k) => s + hi.problemes[k], 0)}</b></div></div>${pb.length ? '<div style="margin-top:10px;font-size:.82rem;color:#475569">' + pb.join(" · ") + "</div>" : ""}</div>
+  <div class="carte"><h3>🕘 Historique par jour</h3>${hi.jours.length ? hi.jours.map(j => `<div class="jour-l"><span>${esc(j.jour.split("-").reverse().join("/"))}</span><span><b>${j.livrees}</b> livrée(s)${j.problemes ? ' · <span style="color:#dc2626">' + j.problemes + " problème(s)</span>" : ""}</span></div>`).join("") : '<div class="vide" style="padding:14px">Pas encore d\'historique</div>'}</div>
+  <div class="carte"><h3>✅ Mes dernières livraisons</h3>${hi.recent && hi.recent.length ? hi.recent.slice(0, 15).map(r => `<div class="jour-l"><span>#${esc(r.id)} · ${esc(r.client)}</span><span style="color:#64748b">${esc(r.jour.split("-").reverse().slice(0, 2).join("/"))} ${esc(r.heure)}</span></div>`).join("") : '<div class="vide" style="padding:14px">Aucune pour l\'instant</div>'}</div>
   <div class="lecture">🔒 Vous exécutez votre tournée : adresses, montants et statuts sont gérés par SafeRun. Vous pouvez seulement confirmer une livraison et signaler un problème.</div>`;
 }
 
@@ -304,13 +351,26 @@ function clic(e) {
   else if (d.print) imprimer(d.print);
   else if (d.livre) livrer(d.livre);
   else if (d.pb) probleme(d.pb);
+  else if (d.gps) activerGPS();
+  else if (d.carte) { S.carte = !S.carte; dessiner(); }
+  else if (d.tri) { S.tri = d.tri; dessiner(); }
+}
+function positionFraiche() { return S.pos && Date.now() - S.pos.t < 300000 ? S.pos : null; }
+function unePosition() {
+  return new Promise(res => {
+    const f = positionFraiche(); if (f) return res(f);
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(p => res(majPos(p)), () => res(null), { enableHighAccuracy: true, timeout: 3500, maximumAge: 60000 });
+  });
 }
 async function livrer(id) {
   const c = commandes().filter(x => String(x.id) === String(id))[0]; if (!c) return;
+  if (!c.confirmee && !confirm("Cette commande n'est pas encore confirmée par SafeRun. La livrer quand même ?")) return;
   const msg = c.mode === "LIVRAISON" ? `Avez-vous bien collecté ${c.incertain ? "environ " : ""}${ar(c.encaisser)} auprès de ${c.client} ?\n\nConfirmer la livraison ?` : "Confirmer la livraison de cette commande ?";
   if (!confirm(msg)) return;
-  const p = { action: "livreurLivre", id: String(id) };
-  const hors = () => { const f = attentes(); f.push(p); ls.set(K.file, f); alert("📴 Pas de connexion : la livraison sera confirmée automatiquement dès le retour du réseau."); dessiner(); };
+  const pos = await unePosition(), p = { action: "livreurLivre", id: String(id) };
+  if (pos) { p.lat = pos.lat; p.lng = pos.lng; p.prec = Math.round(pos.prec); }
+  const hors = () => { const f = attentes(); f.push(Object.assign({ quand: 1 }, p)); ls.set(K.file, f); alert("📴 Pas de connexion : la livraison sera confirmée automatiquement dès le retour du réseau."); dessiner(); };
   if (!navigator.onLine) return hors();
   try {
     const r = await api(Object.assign({ nom: S.nom, pin: S.pin }, p));
@@ -318,12 +378,61 @@ async function livrer(id) {
   } catch (err) { hors(); }
 }
 function probleme(id) {
-  const c = commandes().filter(x => String(x.id) === String(id))[0]; if (!c) return;
-  const texte = prompt("Quel est le problème ? (ex : client injoignable, adresse introuvable, refuse de payer)", ""); if (texte === null) return;
-  api({ action: "livreurProbleme", nom: S.nom, pin: S.pin, id: String(id), texte }).catch(() => {});
-  const m = `⚠️ PROBLÈME LIVRAISON\nLivreur : ${S.nom}\nCommande : ${c.id}\nClient : ${c.client}\nAdresse : ${c.adresse}\nProblème : ${texte || "(à préciser)"}`;
+  S.pbId = id; S.pbMotif = ""; $("pb-texte").value = "";
+  $("motifs").innerHTML = Object.keys(MOTIFS).map(k => `<button class="motif" data-m="${k}" type="button">${MOTIFS[k]}</button>`).join("");
+  $("modal-pb").classList.add("on");
+}
+async function envoyerProbleme() {
+  if (!S.pbMotif) return alert("Choisissez le type de problème.");
+  const c = commandes().filter(x => String(x.id) === String(S.pbId))[0]; if (!c) return;
+  const texte = $("pb-texte").value.trim(), pos = positionFraiche();
+  api({ action: "livreurProbleme", nom: S.nom, pin: S.pin, id: String(c.id), motif: S.pbMotif, texte, lat: pos ? pos.lat : "", lng: pos ? pos.lng : "" }).catch(() => {});
+  const m = `⚠️ PROBLÈME LIVRAISON\nLivreur : ${S.nom}\nCommande : ${c.id}\nClient : ${c.client} (${c.tel})\nAdresse : ${c.adresse}\nProblème : ${MOTIFS[S.pbMotif].replace(/^\S+\s/, "")}${texte ? "\nPrécision : " + texte : ""}`;
+  $("modal-pb").classList.remove("on");
   window.open("https://wa.me/" + WA_SUPPORT + "?text=" + encodeURIComponent(m), "_blank");
 }
+
+/* ---------- Position GPS et carte ---------- */
+function majPos(p) {
+  S.pos = { lat: p.coords.latitude, lng: p.coords.longitude, prec: p.coords.accuracy || 0, t: Date.now() };
+  envoyerPos(false);
+  return S.pos;
+}
+function envoyerPos(force) {                                  // le serveur ne garde que la dernière position de chaque livreur
+  if (!S.pos || !S.nom || !navigator.onLine || Date.now() - S.pos.t > 300000) return;
+  const bouge = km(S.pos.lat, S.pos.lng, dernierEnvoi.lat, dernierEnvoi.lng) > 0.15, age = Date.now() - dernierEnvoi.t;
+  if (!force && age < 120000 && !(bouge && age > 30000)) return;
+  dernierEnvoi = { t: Date.now(), lat: S.pos.lat, lng: S.pos.lng };
+  api({ action: "livreurPosition", nom: S.nom, pin: S.pin, lat: S.pos.lat, lng: S.pos.lng, prec: Math.round(S.pos.prec) }).catch(() => {});
+}
+function activerGPS() {
+  if (!navigator.geolocation) return alert("Votre téléphone ne permet pas la localisation.");
+  if (gpsId !== null) return;
+  gpsId = navigator.geolocation.watchPosition(p => { majPos(p); if (S.onglet === "liv" && !document.hidden) rafraichirSansCartes(); }, e => { gpsId = null; alert(e.code === 1 ? "Localisation refusée. Autorisez-la dans les réglages du navigateur pour voir les distances." : "Position indisponible pour l'instant."); }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 });
+}
+function rafraichirSansCartes() { if (Date.now() - (rafraichirSansCartes.t || 0) < 8000) return; rafraichirSansCartes.t = Date.now(); dessiner(); }
+function chargerLeaflet() {
+  return new Promise((ok, ko) => {
+    if (window.L) return ok();
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(l);
+    const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc);
+  });
+}
+async function dessinerCarte() {
+  const el = $("carte"); if (!el || !S.carte) return;
+  try { await chargerLeaflet(); } catch (e) { el.innerHTML = '<div class="vide">Carte indisponible (réseau). Les distances restent affichées.</div>'; return; }
+  if (carteObj) { try { carteObj.remove(); } catch (e) {} carteObj = null; }
+  carteObj = L.map(el, { zoomControl: true, attributionControl: true }).setView([-18.9137, 47.5236], 13);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(carteObj);
+  const pts = [];
+  ordonnees().forEach((c, i) => {
+    if (c.lat == null) return; pts.push([c.lat, c.lng]);
+    L.marker([c.lat, c.lng], { icon: L.divIcon({ className: "", html: `<div style="background:${c.src === "quartier" ? "#f59e0b" : "#1e3a8a"};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${i + 1}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(carteObj).bindPopup(`<b>${esc(c.client)}</b><br>${esc(c.adresse)}${c.src === "quartier" ? "<br><i>position approximative</i>" : ""}`);
+  });
+  if (S.pos) { pts.push([S.pos.lat, S.pos.lng]); L.circle([S.pos.lat, S.pos.lng], { radius: Math.max(S.pos.prec, 10), color: "#2563eb", fillOpacity: .12, weight: 1 }).addTo(carteObj); L.circleMarker([S.pos.lat, S.pos.lng], { radius: 8, color: "#fff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 }).addTo(carteObj).bindPopup("Vous êtes ici"); }
+  if (pts.length > 1) carteObj.fitBounds(pts, { padding: [30, 30], maxZoom: 16 }); else if (pts.length) carteObj.setView(pts[0], 15);
+}
+
 function imprimer(type) {
   const liste = filtrer(), z = $("zone-impression"), date = new Date().toLocaleDateString("fr-FR");
   if (type === "bon") {

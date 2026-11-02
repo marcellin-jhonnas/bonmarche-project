@@ -18,7 +18,7 @@ var DELAI_MVOLA_H = 2;
 var PENDANT = ["NOUVEAU", "ATTENTE VISA", "A VERIFIER", "EN ATTENTE DE PAIEMENT"];
 var ENCOURS = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "REPORTE"];
 var VALIDES = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "REPORTE", "LIVRE"];
-var cache = { suivi: {}, cad: {}, ok: false, t: 0, enCours: false, filtre: "", vue: "jour", produits: [], tProd: 0, parrains: [], promesses: [], journal: null, seg: "", ouvert: "" };
+var cache = { suivi: {}, cad: {}, ok: false, t: 0, enCours: false, filtre: "", vue: "jour", produits: [], tProd: 0, parrains: [], promesses: [], journal: null, seg: "", ouvert: "", livStats: [], positions: [], caisse: [], consignes: [], livOk: false };
 
 function $(i) { return document.getElementById(i); }
 function sansAccent(s) { return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, ""); }
@@ -99,6 +99,8 @@ function alertes(l) {
   if (s7.length >= 5 && an7.length / s7.length > 0.2) out.push({ n: "att", t: "Taux d'annulation élevé sur 7 jours : " + pct(an7.length, s7.length) + " (" + an7.length + "/" + s7.length + ")", f: "", v: "perf" });
   var obj = lsGet("sr_pil_obj", { jour: 0, semaine: 0 }), h = new Date().getHours();
   if (obj.jour > 0 && h >= 16 && stat(l, auj, ajoute(auj, 1)).ca < obj.jour * 0.5) out.push({ n: "att", t: "Objectif du jour en retard : moins de 50 % à " + h + " h", f: "", v: "perf" });
+  var ec = cache.livStats.filter(function (o) { return o.ecart30 < 0; });
+  if (ec.length) out.push({ n: "att", t: "Écart de caisse négatif sur 30 jours : " + ec.map(function (o) { return o.nom + " (" + ar(o.ecart30) + ")"; }).join(", "), f: "", v: "livreurs" });
   var mauvais = clients(l).filter(function (c) { return c.annul >= 2; }).length;
   if (mauvais) out.push({ n: "att", t: mauvais + " client(s) avec 2 annulations ou plus : à surveiller", f: "", v: "clients", seg: "risque" });
   return out;
@@ -200,6 +202,7 @@ function carte(o) {
     if (o.tent > 0) h += '<button class="pil-btn" data-act="raz" type="button">↺ 0</button>';
     if (o.tent >= 3) h += '<button class="pil-btn bad" data-act="annuler" type="button">✖ Annuler (3 appels)</button>';
   } else if (enAttente(o)) h += '<button class="pil-btn ok" data-act="valider" type="button">✔ Paiement reçu : valider</button>';
+  if (actif(o) && ENCOURS.indexOf(o.statut) !== -1 && !o.livreur) h += '<button class="pil-btn" data-act="proche" type="button">🛵 Livreur le plus proche</button>';
   return h + "</div></div>";
 }
 function colonne(titre, liste, couleur) {
@@ -356,6 +359,33 @@ function vueRenta(l) {
 }
 
 /* =============== VUE 5 : LIVREURS =============== */
+function remisDuJour(jour) {
+  var m = {}; cache.caisse.forEach(function (c) { if (c.jour === jour) m[c.livreur] = c.remis; });
+  var loc = lsGet("sr_pil_remis_" + jour, {}); Object.keys(loc).forEach(function (k) { if (m[k] === undefined) m[k] = loc[k]; });
+  return m;
+}
+var MOTIFS_LIB = { INJOIGNABLE: "injoignable", ADRESSE: "adresse introuvable", ABSENT: "absent", REFUSE: "refus", PAIEMENT: "paiement", AUTRE: "autre" };
+function minutesTxt(m) { return m === null || m === undefined ? "" : m < 1 ? "à l'instant" : m < 60 ? "il y a " + m + " min" : m < 1440 ? "il y a " + Math.floor(m / 60) + " h" : "il y a " + Math.floor(m / 1440) + " j"; }
+function blocsLivreurs(noms) {
+  var h = "";
+  if (!cache.livOk) return h + '<div class="pil-vide" style="margin-top:14px">Jours travaillés, positions, consigne et caisse partagée : installez le script Google « Espace livreur V3 ».</div>';
+  var mois = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  h += '<h3 class="pil-t">🗓️ Jours travaillés — ' + esc(mois) + ' <span style="font-weight:400;color:#64748b;font-size:12px">(base de paie à la journée : un jour compte dès qu\'une livraison est confirmée)</span></h3>' +
+    '<table class="pil-tb"><tr><th>Livreur</th><th class="r">Jours travaillés</th><th class="r">Livraisons du mois</th><th class="r">Livraisons 30 j</th><th>Problèmes signalés (30 j)</th><th class="r">Écart de caisse (30 j)</th></tr>' +
+    cache.livStats.map(function (o) { var pb = Object.keys(o.problemes || {}).map(function (k) { return esc(MOTIFS_LIB[k] || k) + " " + o.problemes[k]; }).join(" · ");
+      return "<tr><td><b>" + esc(o.nom) + '</b></td><td class="r"><b>' + o.joursMois + '</b></td><td class="r">' + o.livraisonsMois + '</td><td class="r">' + o.livraisons30 + "</td><td>" + (pb || "–") + '</td><td class="r"><b style="color:' + (o.ecart30 < 0 ? "#dc2626" : o.ecart30 > 0 ? "#f59e0b" : "#16a34a") + '">' + (o.ecart30 > 0 ? "+" : "") + ar(o.ecart30) + "</b></td></tr>"; }).join("") + "</table>" +
+    '<div style="font-size:12px;color:#64748b;margin-top:4px">L\'historique commence à l\'installation du script V3 (les livraisons plus anciennes ne comptent pas).</div>';
+  h += '<h3 class="pil-t">📍 Où sont-ils ? <span style="font-weight:400;color:#64748b;font-size:12px">(position envoyée tant que leur application est ouverte)</span></h3>';
+  h += cache.positions.length ? '<table class="pil-tb"><tr><th>Livreur</th><th>Dernière position</th><th>Précision</th><th></th></tr>' + cache.positions.slice().sort(function (a, b) { return (a.minutes || 0) - (b.minutes || 0); }).map(function (x) { return "<tr><td><b>" + esc(x.nom) + '</b></td><td style="color:' + (x.minutes > 30 ? "#dc2626" : "#16a34a") + '">' + esc(minutesTxt(x.minutes)) + "</td><td>±" + x.prec + ' m</td><td><a class="pil-btn" target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + x.lat + "," + x.lng + '">🗺️ Voir</a></td></tr>'; }).join("") + "</table>" : '<div class="pil-vide">Aucune position reçue pour le moment</div>';
+  var jour = jourStr(debut(new Date()));
+  h += '<h3 class="pil-t">📢 Consigne du jour</h3><div class="pil-kpi" style="margin-bottom:8px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="pil-cs-cible" class="pil-in"><option value="TOUS">Tous les livreurs</option>' + cache.livStats.map(function (o) { return '<option value="' + esc(o.nom) + '">' + esc(o.nom) + "</option>"; }).join("") + '</select><input id="pil-cs-txt" class="pil-in" style="flex:1;min-width:220px" maxlength="300" placeholder="Ex : Pluie, prévoir 30 min de plus"><button class="pil-btn or" data-cs="pub" type="button">Publier</button><button class="pil-btn" data-cs="off" type="button">Retirer</button></div>' +
+    (cache.consignes.length ? '<div style="margin-top:8px;font-size:12px">Actives : ' + cache.consignes.map(function (c) { return "<b>" + esc(c.cible) + "</b> : " + esc(c.texte); }).join(" · ") + "</div>" : "") + "</div>";
+  var sem = {}; cache.caisse.forEach(function (c) { sem[c.livreur] = (sem[c.livreur] || []).concat([c]); });
+  var der = cache.caisse.slice(-14).reverse();
+  if (der.length) h += '<h3 class="pil-t">🧾 Dernières remises de caisse</h3><table class="pil-tb"><tr><th>Jour</th><th>Livreur</th><th class="r">Attendu</th><th class="r">Remis</th><th class="r">Écart</th></tr>' + der.map(function (c) { return "<tr><td>" + esc(c.jour.split("-").reverse().join("/")) + "</td><td>" + esc(c.livreur) + '</td><td class="r">' + ar(c.attendu) + '</td><td class="r">' + ar(c.remis) + '</td><td class="r"><b style="color:' + (c.ecart === 0 ? "#16a34a" : "#dc2626") + '">' + (c.ecart > 0 ? "+" : "") + ar(c.ecart) + "</b></td></tr>"; }).join("") + "</table>" +
+    '<div style="font-size:12px;color:#64748b;margin-top:4px">La caisse n\'est jamais visible par les livreurs.</div>';
+  return h;
+}
 function vueLivreurs(l) {
   var lim = Date.now() - 30 * 86400000, par = {}, auj = debut(new Date()), jour = jourStr(auj);
   l.forEach(function (o) {
@@ -365,15 +395,15 @@ function vueLivreurs(l) {
     else if (o.statut === "ANNULE") r.ann++;
     else if (ENCOURS.indexOf(o.statut) !== -1) { r.enc++; var e2 = aEncaisser(o); if (e2.v === null) r.inc++; else r.aEnc += e2.v; }
   });
-  var noms = Object.keys(par).sort(function (a, b) { return par[b].liv - par[a].liv; }), remis = lsGet("sr_pil_remis_" + jour, {});
+  var noms = Object.keys(par).sort(function (a, b) { return par[b].liv - par[a].liv; }), remis = remisDuJour(jour);
   var h = '<h3 class="pil-t" style="margin-top:0">🛵 Livreurs (30 derniers jours)</h3>';
-  if (!noms.length) return h + '<div class="pil-vide">Aucune commande assignée à un livreur sur la période</div>';
+  if (!noms.length) return h + '<div class="pil-vide">Aucune commande assignée à un livreur sur la période</div>' + blocsLivreurs([]);
   h += '<table class="pil-tb"><tr><th>Livreur</th><th class="r">En cours</th><th class="r">Livrées</th><th class="r">Annulées</th><th class="r">Taux de livraison</th><th class="r">Ventes livrées</th><th class="r">À encaisser (en cours)</th></tr>' +
     noms.map(function (k) { var r = par[k]; return "<tr><td><b>" + esc(k) + '</b></td><td class="r">' + r.enc + '</td><td class="r">' + r.liv + '</td><td class="r">' + r.ann + '</td><td class="r">' + pct(r.liv, r.liv + r.ann) + '</td><td class="r">' + ar(r.ca) + '</td><td class="r"><b>' + ar(r.aEnc) + "</b>" + (r.inc ? ' <span style="color:#dc2626" title="frais non confirmés">⚠️ ' + r.inc + "</span>" : "") + "</td></tr>"; }).join("") + "</table>";
   h += '<h3 class="pil-t">💵 Écart de caisse du jour (' + auj.toLocaleDateString("fr-FR") + ')</h3><div style="font-size:12px;color:#64748b;margin-bottom:6px">« Attendu » = argent à récupérer sur les commandes payées à la livraison et livrées aujourd\'hui. Saisissez ce que chaque livreur vous a remis : l\'écart apparaît tout de suite (enregistré sur cet appareil).</div>' +
     '<table class="pil-tb"><tr><th>Livreur</th><th class="r">Attendu</th><th class="r">Remis</th><th class="r">Écart</th></tr>' +
     noms.map(function (k) { var r = par[k], rem = remis[k], ec = rem === undefined || rem === "" ? null : Number(rem) - r.attendu; return "<tr><td>" + esc(k) + '</td><td class="r">' + ar(r.attendu) + (r.inc2 ? ' <span style="color:#dc2626">⚠️ ' + r.inc2 + "</span>" : "") + '</td><td class="r"><input class="pil-in" type="number" min="0" data-remis="' + esc(k) + '" value="' + (rem === undefined ? "" : esc(rem)) + '" placeholder="montant remis"></td><td class="r">' + (ec === null ? "–" : '<b style="color:' + (ec === 0 ? "#16a34a" : "#dc2626") + '">' + (ec > 0 ? "+" : "") + ar(ec) + (ec === 0 ? " ✔" : ec < 0 ? " manquant" : " en trop") + "</b>") + "</td></tr>"; }).join("") + "</table>";
-  return h;
+  return h + blocsLivreurs(noms);
 }
 
 /* =============== VUE 6 : ALERTES =============== */
@@ -415,6 +445,7 @@ async function charger(force) {
     cache.suivi = s.suivi || {}; cache.cad = c.cadeaux || {}; cache.ok = true;
   } catch (e) { cache.ok = false; }
   try { var pa = await postAPI({ action: "gestionCadeaux", operation: "clientsParrainage" }); cache.parrains = pa.clients || []; } catch (e) {}
+  await chargerLivreurs();
   if (force || Date.now() - cache.tProd > 600000) {
     try { var r = await fetch(apiUrl() + "?t=" + Date.now()); var j = await r.json(); if (Array.isArray(j)) { cache.produits = j; cache.tProd = Date.now(); } } catch (e) {}
   }
@@ -422,11 +453,39 @@ async function charger(force) {
   cache.t = Date.now(); cache.enCours = false;
   var tab = $("tab-pilotage"); if (tab && tab.style.display !== "none") rendre(); else majPastille();
 }
+async function chargerLivreurs() {
+  try {
+    var a = await postAPI({ action: "livreurAdmin", operation: "statsLivreurs" }); cache.livStats = a.livreurs || []; cache.livOk = true;
+    try { cache.positions = (await postAPI({ action: "livreurAdmin", operation: "positions" })).positions || []; } catch (e) {}
+    try { cache.caisse = (await postAPI({ action: "livreurAdmin", operation: "caisseListe" })).caisse || []; } catch (e) {}
+    try { cache.consignes = (await postAPI({ action: "livreurAdmin", operation: "consigneLire" })).consignes || []; } catch (e) {}
+  } catch (e) { cache.livOk = false; }
+}
 async function chargerJournal() { try { var j = await postAPI({ action: "gestionCadeaux", operation: "journal" }); cache.journal = j.journal || []; } catch (e) { cache.journal = []; } }
 function noter(texte) { postAPI({ action: "gestionCadeaux", operation: "journaliser", texte: texte }).catch(function () {}); }
 
 /* ---------------- Actions ---------------- */
+function attenduJour(nom) {
+  var jour = jourStr(debut(new Date())), tot = 0;
+  toutes().forEach(function (o) { if (o.livreur === nom && o.statut === "LIVRE") { var d = dateLiv(o); if (d && jourStr(d) === jour) { var e = aEncaisser(o); if (e.v !== null) tot += e.v; } } });
+  return tot;
+}
+async function publierConsigne(publier) {
+  var cible = ($("pil-cs-cible") || {}).value || "TOUS", texte = publier ? (($("pil-cs-txt") || {}).value || "").trim() : "";
+  if (publier && !texte) { toast("Écrivez la consigne"); return; }
+  try { var r = await postAPI({ action: "livreurAdmin", operation: "consigne", cible: cible, texte: texte }); toast("✔ " + (r.message || "Fait")); noter("Consigne " + cible + " : " + (texte || "retirée")); await chargerLivreurs(); rendre(); }
+  catch (e) { toast("❌ " + e.message); }
+}
+async function plusProche(id) {
+  try {
+    var r = await postAPI({ action: "livreurAdmin", operation: "proches", idCommande: id });
+    var l = (r.livreurs || []).slice(0, 3);
+    if (!l.length) { toast("Aucun livreur n'a envoyé sa position"); return; }
+    toast("🛵 Plus proche de #" + id + " : " + l.map(function (x) { return x.nom + " " + String(x.km).replace(".", ",") + " km (" + minutesTxt(x.minutes) + ")"; }).join(" · ") + (r.commande.src === "quartier" ? " — adresse approximative" : ""));
+  } catch (e) { toast("❌ " + e.message); }
+}
 async function agir(id, act) {
+  if (act === "proche") { plusProche(id); return; }
   try {
     if (act === "valider") { if (typeof updateStatus === "function") await updateStatus(id, "SÉRIEUX"); noter("Commande #" + id + " validée depuis Pilotage"); }
     else if (act === "non" || act === "raz") { var r = await postAPI({ action: "gestionCadeaux", operation: act === "non" ? "appelSansReponse" : "reinitialiserAppels", idCommande: id }); toast("✔ " + (r.message || "Enregistré")); }
@@ -480,6 +539,7 @@ function installer() {
     if ((b = t.closest("[data-gift]"))) { offrirCadeau(b.getAttribute("data-gift")); return; }
     if ((b = t.closest("[data-achat]"))) { saisirAchat(b.getAttribute("data-achat")); return; }
     if (t.closest("#pil-refresh")) { charger(true); if (typeof refreshAll === "function") refreshAll(); return; }
+    if ((b = t.closest("[data-cs]"))) { publierConsigne(b.getAttribute("data-cs") === "pub"); return; }
     if ((b = t.closest("[data-act]"))) { var c = b.closest(".pil-card"); if (c) agir(c.getAttribute("data-id"), b.getAttribute("data-act")); return; }
     if (t.closest("[data-stop]")) return;
     if ((b = t.closest("tr.cl"))) { var k = b.getAttribute("data-cl"); cache.ouvert = cache.ouvert === k ? "" : k; rendre(); }
@@ -487,7 +547,15 @@ function installer() {
   tab.addEventListener("change", function (e) {
     var t = e.target;
     if (t.id === "pil-obj-j" || t.id === "pil-obj-s") { var o = lsGet("sr_pil_obj", { jour: 0, semaine: 0 }); o[t.id === "pil-obj-j" ? "jour" : "semaine"] = num(t.value); lsSet("sr_pil_obj", o); rendre(); }
-    else if (t.getAttribute && t.getAttribute("data-remis") !== null) { var j = "sr_pil_remis_" + jourStr(debut(new Date())), r = lsGet(j, {}); r[t.getAttribute("data-remis")] = t.value; lsSet(j, r); rendre(); }
+    else if (t.getAttribute && t.getAttribute("data-remis") !== null) {
+      var lv = t.getAttribute("data-remis"), jr = jourStr(debut(new Date())), loc = lsGet("sr_pil_remis_" + jr, {}); loc[lv] = t.value; lsSet("sr_pil_remis_" + jr, loc);
+      if (t.value === "") { rendre(); return; }
+      var att = attenduJour(lv), rem = num(t.value);
+      postAPI({ action: "livreurAdmin", operation: "caisseEnregistrer", jour: jr, livreur: lv, attendu: att, remis: rem }).then(function (r) {
+        cache.caisse = cache.caisse.filter(function (c) { return !(c.jour === jr && c.livreur === lv); }).concat([{ jour: jr, livreur: lv, attendu: att, remis: rem, ecart: rem - att }]);
+        toast("✔ Remise de caisse enregistrée"); noter("Caisse " + lv + " : attendu " + att + ", remis " + rem); rendre();
+      }).catch(function () { toast("⚠️ Enregistré sur cet appareil seulement (script Google V3 requis)"); rendre(); });
+    }
   });
 }
 function accrocher() {
