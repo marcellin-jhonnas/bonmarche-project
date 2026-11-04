@@ -18,7 +18,7 @@ var DELAI_MVOLA_H = 2;
 var PENDANT = ["NOUVEAU", "ATTENTE VISA", "A VERIFIER", "EN ATTENTE DE PAIEMENT"];
 var ENCOURS = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "REPORTE"];
 var VALIDES = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE", "REPORTE", "LIVRE"];
-var cache = { suivi: {}, cad: {}, ok: false, t: 0, enCours: false, filtre: "", vue: "jour", produits: [], tProd: 0, parrains: [], promesses: [], journal: null, seg: "", ouvert: "", livStats: [], positions: [], caisse: [], consignes: [], livOk: false };
+var cache = { suivi: {}, cad: {}, ok: false, t: 0, enCours: false, filtre: "", vue: "jour", produits: [], tProd: 0, parrains: [], promesses: [], journal: null, seg: "", ouvert: "", livStats: [], positions: [], caisse: [], consignes: [], livOk: false, reports: [] };
 
 function $(i) { return document.getElementById(i); }
 function sansAccent(s) { return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, ""); }
@@ -188,6 +188,8 @@ function badgeMode(o) {
 /* =============== VUE 1 : AUJOURD'HUI =============== */
 function carte(o) {
   var h = '<div class="pil-card" data-id="' + esc(o.id) + '"><div class="t"><span>#' + esc(o.id) + " · " + esc(o.client) + "</span><span>" + ar(o.montant) + "</span></div>";
+  var nbRep = cache.reports.filter(function (r) { return r.id === o.id; }).length;
+  h += '<div style="color:#0f172a;font-weight:700;margin-top:2px">📅 ' + esc(joliLiv(o.livraison)) + (nbRep ? ' <span class="pil-b" style="background:#fef3c7;color:#92400e">🔁 reportée' + (nbRep > 1 ? " ×" + nbRep : "") + "</span>" : "") + "</div>";
   h += '<div style="color:#64748b">' + esc(o.tel) + (o.quartier ? " · 📍 " + esc(o.quartier.split(" --")[0]) : "") + " · il y a " + depuis(o) + "</div>" + badgeMode(o);
   if (o.mode === "MVOLA" && enAttente(o) && heuresDepuis(o) >= DELAI_MVOLA_H) h += '<span class="pil-b" style="background:#fef2f2;color:#b91c1c">⏱️ MVola non reçu depuis ' + depuis(o) + "</span>";
   if (o.cad && o.cad.Cadeau) h += '<span class="pil-b" style="background:#ecfdf5;color:#065f46">🎁 ' + esc(o.cad.Cadeau) + (o.cad.Cadeau_Valeur ? " (" + ar(o.cad.Cadeau_Valeur) + ")" : "") + "</span>";
@@ -202,6 +204,7 @@ function carte(o) {
     if (o.tent > 0) h += '<button class="pil-btn" data-act="raz" type="button">↺ 0</button>';
     if (o.tent >= 3) h += '<button class="pil-btn bad" data-act="annuler" type="button">✖ Annuler (3 appels)</button>';
   } else if (enAttente(o)) h += '<button class="pil-btn ok" data-act="valider" type="button">✔ Paiement reçu : valider</button>';
+  if (actif(o)) h += '<button class="pil-btn" data-act="report" type="button">📅 Reporter</button>';
   if (actif(o) && ENCOURS.indexOf(o.statut) !== -1 && !o.livreur) h += '<button class="pil-btn" data-act="proche" type="button">🛵 Livreur le plus proche</button>';
   return h + "</div></div>";
 }
@@ -459,6 +462,7 @@ async function chargerLivreurs() {
     try { cache.positions = (await postAPI({ action: "livreurAdmin", operation: "positions" })).positions || []; } catch (e) {}
     try { cache.caisse = (await postAPI({ action: "livreurAdmin", operation: "caisseListe" })).caisse || []; } catch (e) {}
     try { cache.consignes = (await postAPI({ action: "livreurAdmin", operation: "consigneLire" })).consignes || []; } catch (e) {}
+    try { cache.reports = (await postAPI({ action: "livreurAdmin", operation: "reportsListe" })).reports || []; } catch (e) {}
   } catch (e) { cache.livOk = false; }
 }
 async function chargerJournal() { try { var j = await postAPI({ action: "gestionCadeaux", operation: "journal" }); cache.journal = j.journal || []; } catch (e) { cache.journal = []; } }
@@ -484,8 +488,48 @@ async function plusProche(id) {
     toast("🛵 Plus proche de #" + id + " : " + l.map(function (x) { return x.nom + " " + String(x.km).replace(".", ",") + " km (" + minutesTxt(x.minutes) + ")"; }).join(" · ") + (r.commande.src === "quartier" ? " — adresse approximative" : ""));
   } catch (e) { toast("❌ " + e.message); }
 }
+
+/* ---------------- Report de livraison ---------------- */
+function joliLiv(t) { return String(t || "Date non précisée").replace(/^\s*LIVRAISON\s*:\s*/i, "").trim(); }
+function fermerReport() { var m = $("sr-pil-modal"); if (m) m.remove(); }
+function ouvrirReport(id) {
+  var o = toutes().filter(function (x) { return x.id === id; })[0]; if (!o) return; fermerReport();
+  var tard = new Date().getHours() >= 16, m = document.createElement("div"); m.id = "sr-pil-modal";
+  m.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px";
+  var ch = [["AUJ_APM", "Aujourd'hui après-midi (14h–17h)" + (tard ? " — trop tard" : ""), tard], ["DEM_MATIN", "Demain matin (9h–11h)", false], ["DEM_APM", "Demain après-midi (14h–17h)", false], ["APRES_DEM_MATIN", "Après-demain matin", false], ["DATE", "Une date précise…", false]];
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:20px;max-height:92vh;overflow:auto"><h3 style="margin:0 0 4px">📅 Reporter la livraison</h3>' +
+    '<div style="font-size:13px;color:#64748b;margin-bottom:12px">#' + esc(o.id) + " · " + esc(o.client) + '<br>Actuellement : <b>' + esc(joliLiv(o.livraison)) + "</b></div>" +
+    ch.map(function (c, i) { return '<label style="display:block;padding:9px 6px;border-bottom:1px solid #f1f5f9;font-size:14px;' + (c[2] ? "opacity:.45" : "") + '"><input type="radio" name="pil-rp" value="' + c[0] + '"' + (i === 1 ? " checked" : "") + (c[2] ? " disabled" : "") + "> " + c[1] + "</label>"; }).join("") +
+    '<div id="pil-rp-date" style="display:none;margin:8px 0"><input type="date" id="pil-rp-d" class="pil-in" style="width:auto"> <select id="pil-rp-v" class="pil-in" style="width:auto"><option value="MATIN">Matin</option><option value="APRES-MIDI">Après-midi</option></select></div>' +
+    '<div style="margin-top:12px"><select id="pil-rp-m" class="pil-in" style="width:100%"><option value="CLIENT">À la demande du client</option><option value="INJOIGNABLE">Client injoignable</option><option value="STOCK">Problème de stock</option><option value="METEO">Météo</option><option value="AUTRE">Autre raison</option></select></div>' +
+    '<input id="pil-rp-t" class="pil-in" style="width:100%;margin-top:8px" maxlength="200" placeholder="Précision (facultatif)">' +
+    '<div id="pil-rp-res" style="margin-top:10px;font-size:13px"></div><div style="display:flex;gap:8px;margin-top:14px"><button class="pil-btn" id="pil-rp-non" type="button" style="flex:1">Annuler</button><button class="pil-btn or" id="pil-rp-ok" type="button" style="flex:2">Reporter</button></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener("change", function (e) { if (e.target.name === "pil-rp") $("pil-rp-date").style.display = e.target.value === "DATE" ? "block" : "none"; });
+  $("pil-rp-non").onclick = fermerReport;
+  $("pil-rp-ok").onclick = function () { validerReport(o, false); };
+}
+async function validerReport(o, forcer) {
+  var ch = (document.querySelector('input[name="pil-rp"]:checked') || {}).value, res = $("pil-rp-res"), btn = $("pil-rp-ok");
+  var p = { action: "livreurAdmin", operation: "reporter", idCommande: o.id, creneau: ch, motif: $("pil-rp-m").value, texte: $("pil-rp-t").value, forcer: !!forcer };
+  if (ch === "DATE") { p.date = $("pil-rp-d").value; p.vague = $("pil-rp-v").value; if (!p.date) { res.innerHTML = '<span style="color:#dc2626">Choisissez la date.</span>'; return; } }
+  btn.disabled = true; btn.textContent = "…";
+  try {
+    var r = await postAPI(p);
+    var txt = "Bonjour " + o.client + " 😊 SafeRun Market : comme convenu, votre livraison est reportée. Nouvelle date : " + joliLiv(r.livraison) + ". Merci de votre compréhension !", wa = lienWA(o.tel, txt);
+    res.innerHTML = '<div style="color:#16a34a;font-weight:700">✔ Reportée : ' + esc(joliLiv(r.livraison)) + (r.nbReports > 1 ? " (report n°" + r.nbReports + ")" : "") + "</div>" + (wa ? '<a class="pil-btn ok" target="_blank" rel="noopener" href="' + esc(wa) + '">💬 Prévenir le client sur WhatsApp</a>' : "");
+    btn.style.display = "none"; $("pil-rp-non").textContent = "Fermer";
+    cache.reports = cache.reports.concat([{ id: o.id, date: "", ancienne: r.ancienne, nouvelle: r.livraison, motif: p.motif }]);
+    if (typeof refreshAll === "function") await refreshAll(); else rendre();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Reporter";
+    if (/confirmez|Trop tard/i.test(e.message) && !forcer && confirm(e.message + "\n\nContinuer quand même ?")) return validerReport(o, true);
+    res.innerHTML = '<span style="color:#dc2626">❌ ' + esc(e.message) + "</span>";
+  }
+}
 async function agir(id, act) {
   if (act === "proche") { plusProche(id); return; }
+  if (act === "report") { ouvrirReport(id); return; }
   try {
     if (act === "valider") { if (typeof updateStatus === "function") await updateStatus(id, "SÉRIEUX"); noter("Commande #" + id + " validée depuis Pilotage"); }
     else if (act === "non" || act === "raz") { var r = await postAPI({ action: "gestionCadeaux", operation: act === "non" ? "appelSansReponse" : "reinitialiserAppels", idCommande: id }); toast("✔ " + (r.message || "Enregistré")); }

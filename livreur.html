@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SafeRun - Espace Livreur</title>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>404 Not Found</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -81,7 +82,8 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 </head>
 <body>
 
-<div id="ecran-connexion">
+<div id="faux404" style="font-family:Arial,sans-serif;text-align:center;padding:18vh 20px 0;color:#444"><h1 style="font-size:2.2rem;font-weight:600">404</h1><p style="margin-top:10px">Page introuvable.</p></div>
+<div id="ecran-connexion" style="display:none">
   <div class="box-connexion">
     <h2><i class="fas fa-motorcycle"></i> Espace Livreur</h2>
     <select id="select-nom-livreur"><option value="">Chargement des livreurs...</option></select>
@@ -111,7 +113,7 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 const WA_SUPPORT = "261382453610";
-const K = { nom: "saferun_livreur_nom", pin: "saferun_livreur_pin", file: "saferun_livreur_file_v2", vieux: "saferun_livreur_file_attente", cache: "saferun_livreur_cache" };
+const K = { acces: "saferun_livreur_acces", nom: "saferun_livreur_nom", pin: "saferun_livreur_pin", file: "saferun_livreur_file_v2", vieux: "saferun_livreur_file_attente", cache: "saferun_livreur_cache" };
 const S = { nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false, tri: "horaire", pos: null, carte: false, pbId: "", pbMotif: "" };
 const MOTIFS = { INJOIGNABLE: "📵 Client injoignable", ADRESSE: "📍 Adresse introuvable", ABSENT: "🚪 Client absent", REFUSE: "✋ Client refuse la commande", PAIEMENT: "💵 Paiement incomplet ou refusé", AUTRE: "❓ Autre problème" };
 let gpsId = null, dernierEnvoi = { t: 0, lat: 0, lng: 0 }, carteObj = null, couche = null;
@@ -124,9 +126,19 @@ const digits = t => String(t || "").replace(/\D/g, "");
 const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, raw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
 function wa(tel) { let d = digits(tel); if (d.indexOf("261") === 0) d = d.slice(3); d = d.replace(/^0/, ""); return d ? "https://wa.me/261" + d : ""; }
 
+function acces() { return ls.raw(K.acces) || ""; }
+function fermer404() {                                    // appareil non autorisé ou accès retiré : la page redevient « introuvable »
+  localStorage.removeItem(K.acces); localStorage.removeItem(K.nom); localStorage.removeItem(K.pin); localStorage.removeItem(K.cache);
+  clearInterval(minuteur); if (gpsId !== null) { navigator.geolocation.clearWatch(gpsId); gpsId = null; }
+  S.nom = S.pin = ""; S.data = null; document.title = "404 Not Found";
+  ["ecran-livreur", "ecran-connexion", "menu", "modal-pb"].forEach(i => { const e = $(i); if (e) e.style.display = "none"; });
+  $("faux404").style.display = "block";
+}
 async function api(payload) {
-  const r = await fetch(API, { method: "POST", body: JSON.stringify(payload) });
-  return await r.json();
+  const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ acces: acces() }, payload)) });
+  const j = await r.json();
+  if (j && j.acces === false) { fermer404(); throw new Error("acces"); }
+  return j;
 }
 
 /* ---------- Connexion ---------- */
@@ -141,16 +153,20 @@ document.addEventListener("DOMContentLoaded", () => {
   $("motifs").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; S.pbMotif = b.dataset.m; document.querySelectorAll("#motifs .motif").forEach(x => x.classList.toggle("on", x === b)); });
   $("pb-annuler").onclick = () => $("modal-pb").classList.remove("on"); $("pb-envoyer").onclick = envoyerProbleme;
   try { if (navigator.permissions) navigator.permissions.query({ name: "geolocation" }).then(r => { if (r.state === "granted") activerGPS(); }).catch(() => {}); } catch (e) {}
+  const m = location.hash.match(/acces=([A-Za-z0-9]{12,64})/);          // lien personnel remis au livreur : le code est mémorisé puis retiré de l'adresse
+  if (m) { try { localStorage.setItem(K.acces, m[1]); } catch (e) {} history.replaceState(null, "", location.pathname + location.search); }
+  if (!acces()) return;                                                    // aucune autorisation : on reste sur la page « 404 », aucune requête n'est envoyée
+  $("faux404").style.display = "none"; document.title = "SafeRun - Espace Livreur";
   const nom = ls.raw(K.nom), pin = ls.raw(K.pin);
-  if (nom && pin) { S.nom = nom; S.pin = pin; ouvrir(); } else chargerListeLivreurs();
+  if (nom && pin) { S.nom = nom; S.pin = pin; ouvrir(); } else { $("ecran-connexion").style.display = "flex"; chargerListeLivreurs(); }
   window.addEventListener("online", () => { S.hors = false; setTimeout(vider, 800); });
   window.addEventListener("offline", () => { S.hors = true; bandeau(); });
 });
 async function chargerListeLivreurs() {
   try {
-    const noms = await (await fetch(API + "?action=getLivreursActifs")).json();
+    const r = await api({ action: "livreurListe" }), noms = (r && r.noms) || [];
     $("select-nom-livreur").innerHTML = noms.length ? noms.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("") : '<option value="">Aucun livreur actif</option>';
-  } catch (e) { $("select-nom-livreur").innerHTML = '<option value="">Réseau indisponible</option>'; }
+  } catch (e) { if (e.message !== "acces") $("select-nom-livreur").innerHTML = '<option value="">Réseau indisponible</option>'; }
 }
 async function connecter() {
   const nom = $("select-nom-livreur").value, pin = $("input-pin").value.trim();
@@ -159,7 +175,7 @@ async function connecter() {
     const r = await api({ action: "livreurFiche", nom, pin });
     if (r && r.success) { S.nom = r.nom; S.pin = pin; try { localStorage.setItem(K.nom, r.nom); localStorage.setItem(K.pin, pin); } catch (e) {} S.data = r; ouvrir(true); }
     else alert(r && r.message ? r.message : "Code PIN incorrect.");
-  } catch (e) { alert("Erreur de connexion. Vérifiez votre réseau."); }
+  } catch (e) { if (e.message !== "acces") alert("Erreur de connexion. Vérifiez votre réseau."); }
 }
 function deconnecter() {
   if (ls.get(K.file, []).length && !confirm("Des livraisons n'ont pas encore été envoyées. Quitter quand même ?")) return;

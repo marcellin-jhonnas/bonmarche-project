@@ -856,6 +856,7 @@ if (window.srCadeauPanier) { try { const _cd = window.srCadeauPanier(sousTotal, 
    <div class="panier-total-row panier-livraison-row" style="display:flex; justify-content:space-between; font-size:0.85rem; color:#64748b;">
      <span>Frais de Livraison :</span> <span style="font-weight:700; color:${fraisLivraison === 0 ? '#059669' : '#1e293b'}">${fraisLivraison === 0 ? 'Gratuit' : '+ ' + fraisLivraison.toLocaleString() + ' Ar'}</span>
    </div>
+   ${window.srLivraisonPanier ? window.srLivraisonPanier() : ''}
    ${contraintePoids.message ? `
    <div style="margin-top:8px; padding:8px 10px; background:${contraintePoids.bloque ? '#fee2e2' : '#fff7ed'}; color:${contraintePoids.bloque ? '#dc2626' : '#c2410c'}; border-radius:10px; font-size:0.75rem; font-weight:600;">
        <i class="fas ${contraintePoids.bloque ? 'fa-exclamation-triangle' : 'fa-weight-hanging'}"></i> ${contraintePoids.message}

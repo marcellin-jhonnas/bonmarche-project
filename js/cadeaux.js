@@ -269,6 +269,20 @@ function lignePourCommande(g) {
 }
 var PENDANT = ["NOUVEAU", "ATTENTE VISA", "A VERIFIER", "EN ATTENTE DE PAIEMENT"], CONFIRME = ["SERIEUX", "PLANIFIE", "VALIDE", "PAYE"];
 function heure(iso) { try { var d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
+function joliLivraison(t) { return String(t || "").replace(/^LIVRAISON\s*:\s*/i, "").replace(/^\s+|\s+$/g, ""); }
+/* Date de livraison affichée dans le récapitulatif du panier (même calcul que l'envoi de la commande ; recalculée chaque minute) */
+function livraisonPrevue() {
+  try {
+    var pl = localStorage.getItem("saferun_creneau_final");
+    var t = pl ? "LIVRAISON : " + pl : (typeof window.calculerLivraison === "function" ? window.calculerLivraison() : "");
+    t = joliLivraison(t); return /ERREUR/i.test(t) ? "" : t;
+  } catch (e) { return ""; }
+}
+window.srLivraisonPanier = function () {
+  var t = livraisonPrevue(); if (!t) return "";
+  return '<div id="sr-date-livraison" style="margin-top:8px;padding:9px 11px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;font-size:.78rem;color:#9a3412;line-height:1.45;text-align:left">📅 <b>Livraison prévue :</b> <span id="sr-date-txt" style="font-weight:800">' + esc(t) + '</span><div style="font-size:.7rem;color:#b45309;margin-top:2px">Date confirmée par téléphone par SafeRun Market avant la livraison.</div></div>';
+};
+setInterval(function () { try { var e = $("sr-date-txt"); if (!e) return; var t = livraisonPrevue(); if (t && e.textContent !== t) { e.textContent = t; var b = $("sr-date-livraison"); if (b) { b.style.background = "#fef3c7"; setTimeout(function () { b.style.background = "#fff7ed"; }, 1500); } } } catch (x) {} }, 60000);
 function blocEtat(id, s, g) {
   var st = String(s.statut || ""), titre = "", texte = "", fond = "#f8fafc", bord = "#cbd5e1", clr = "#334155";
   if (st.indexOf("ANNUL") === 0) {
@@ -297,7 +311,11 @@ function blocEtat(id, s, g) {
       texte = "Votre commande est confirmée." + (reste !== null && reste >= 0 ? " Préparez <b>" + ar(reste) + "</b> pour le livreur." : "");
     } else texte = "Paiement reçu, merci ! Votre commande est en préparation.";
   } else return "";
-  return '<div class="sr-etat" data-sig="' + esc([st, s.mode, s.tentatives, s.dernier, s.montant, s.fraisPaye, g ? g.statut : "", Math.floor(Date.now() / 600000)].join("|")) + '" style="margin-top:8px;padding:9px 11px;background:' + fond + ";border:1px solid " + bord + ";border-left:4px solid " + bord + ";border-radius:12px;font-size:.76rem;color:" + clr + ';line-height:1.5;text-align:left"><b>' + titre + "</b><br>" + texte + "</div>";
+  if (s.livraison && st !== "LIVRE" && st.indexOf("ANNUL") !== 0) {                    // date de livraison toujours à jour (suit les reports décidés par SafeRun)
+    texte += "<br>📅 <b>Livraison prévue : " + esc(joliLivraison(s.livraison)) + "</b>";
+    if (s.reports) texte += '<br><span style="color:#92400e">🔁 Livraison reportée' + (s.avant ? " (elle était prévue : " + esc(joliLivraison(s.avant)) + ")" : "") + ".</span>";
+  }
+  return '<div class="sr-etat" data-sig="' + esc([st, s.mode, s.tentatives, s.dernier, s.montant, s.fraisPaye, g ? g.statut : "", s.livraison, s.reports, Math.floor(Date.now() / 600000)].join("|")) + '" style="margin-top:8px;padding:9px 11px;background:' + fond + ";border:1px solid " + bord + ";border-left:4px solid " + bord + ";border-radius:12px;font-size:.76rem;color:" + clr + ';line-height:1.5;text-align:left"><b>' + titre + "</b><br>" + texte + "</div>";
 }
 var decorEnCours = false;
 function decorerListes() {
