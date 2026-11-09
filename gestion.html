@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>404 Not Found</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#0f172a;--mut:#64748b;--ligne:#e2e8f0;--vert:#16a34a;--orange:#f59e0b;--rouge:#dc2626;--bleu:#1e3a8a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:84px}
+.wrap{max-width:720px;margin:0 auto;padding:14px 14px 0}
+h1{font-size:1.15rem;margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.top small{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--ligne);border-radius:16px;padding:14px;margin-bottom:12px}
+.big{font-size:2rem;font-weight:800;letter-spacing:-.5px}
+.mut{color:var(--mut);font-size:.82rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi b{display:block;font-size:1.15rem}
+.pos{color:var(--vert)}.neg{color:var(--rouge)}
+.barre{height:9px;background:#e8edf5;border-radius:9px;overflow:hidden;margin:6px 0 4px}
+.barre i{display:block;height:100%;border-radius:9px}
+.jauge .ligne{display:flex;justify-content:space-between;font-size:.9rem;font-weight:600}
+button,.btn{font:inherit;border:0;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer;background:var(--bleu);color:#fff}
+button.sec{background:#e8edf5;color:var(--tx)}
+button.petit{padding:7px 10px;font-size:.8rem;border-radius:9px}
+button.danger{background:#fee2e2;color:#991b1b}
+input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--ligne);border-radius:12px;background:#fff;color:var(--tx)}
+label{display:block;font-size:.8rem;font-weight:700;color:var(--mut);margin:10px 0 4px}
+.seg{display:flex;gap:8px}.seg button{flex:1;background:#e8edf5;color:var(--tx)}
+.seg button.on.e{background:var(--vert);color:#fff}.seg button.on.s{background:var(--rouge);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{background:#e8edf5;color:var(--tx);padding:9px 12px;font-size:.85rem}
+.chips button.on{background:var(--bleu);color:#fff}
+.lig{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--ligne)}
+.lig:first-child{border-top:0}
+.lig .g{flex:1;min-width:0}.lig .g b{display:block;font-size:.92rem}
+.lig .m{font-weight:800;white-space:nowrap}
+.lig.annule{opacity:.45;text-decoration:line-through}
+.tag{display:inline-block;background:#e8edf5;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-left:4px}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ligne);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:10px 2px;font-size:.7rem;display:flex;flex-direction:column;gap:2px;align-items:center}
+nav button span{font-size:1.25rem}nav button.on{color:var(--bleu)}
+#login{max-width:360px;margin:16vh auto 0;padding:0 18px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-size:.9rem;display:none;z-index:9;max-width:90%}
+table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{text-align:right;padding:8px 4px;border-top:1px solid var(--ligne)}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-size:.72rem}
+</style>
+</head>
+<body>
+<div id="faux404" style="font-family:Arial,sans-serif;text-align:center;padding:18vh 20px 0;color:#444"><h1 style="font-size:2.2rem;font-weight:600">404</h1><p style="margin-top:10px">Page introuvable.</p></div>
+
+<div id="login" style="display:none">
+  <h1>🔒 SafeRun Gestion</h1><p class="mut">Espace réservé.</p>
+  <label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password">
+  <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input id="rester" type="checkbox" style="width:auto"> Rester connecté sur cet appareil</label>
+  <p id="login-err" class="neg" style="min-height:20px;font-size:.85rem"></p>
+  <button id="btn-login" style="width:100%">Entrer</button>
+</div>
+
+<div id="app" class="wrap" style="display:none">
+  <div class="top"><div><h1>💼 Gestion SafeRun</h1><small id="date-auj"></small></div><div><button class="sec petit" id="btn-maj">↻</button> <button class="sec petit" id="btn-deco">Quitter</button></div></div>
+  <div id="vue"></div>
+</div>
+
+<nav id="menu" style="display:none">
+  <button data-o="auj"><span>📊</span>Aujourd'hui</button>
+  <button data-o="saisie"><span>➕</span>Saisir</button>
+  <button data-o="journal"><span>📒</span>Journal</button>
+  <button data-o="cmd"><span>🧾</span>Commandes</button>
+  <button data-o="plaf"><span>🎚️</span>Plafonds</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+const KA = "saferun_gestion_acces", KM = "saferun_gestion_mdp";
+const S = { d: null, onglet: "auj", jour: "", type: "ENTREE", cat: "VENTE", pre: null };
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ar = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
+const sans = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+const lsG = k => { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ""; } catch (e) { return ""; } };
+function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 3200); }
+function acces() { try { return localStorage.getItem(KA) || ""; } catch (e) { return ""; } }
+
+function fermer404() {
+  try { localStorage.removeItem(KA); localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {}
+  S.d = null; document.title = "404 Not Found";
+  ["app", "menu", "login"].forEach(i => $(i).style.display = "none"); $("faux404").style.display = "block";
+}
+async function api(p) {
+  const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ action: "gestion", acces: acces(), mdp: lsG(KM) }, p)) });
+  const j = await r.json();
+  if (j && j.acces === false) { fermer404(); throw new Error("acces"); }
+  return j;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const m = location.hash.match(/acces=([A-Za-z0-9]{12,64})/);
+  if (m) { try { localStorage.setItem(KA, m[1]); } catch (e) {} history.replaceState(null, "", location.pathname + location.search); }
+  if (!acces()) return;
+  $("faux404").style.display = "none"; document.title = "SafeRun - Gestion";
+  $("btn-login").onclick = connexion; $("mdp").addEventListener("keydown", e => { if (e.key === "Enter") connexion(); });
+  $("btn-deco").onclick = () => { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} S.d = null; $("app").style.display = $("menu").style.display = "none"; $("login").style.display = "block"; $("mdp").value = ""; };
+  $("btn-maj").onclick = () => charger(true);
+  $("menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) { S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); } });
+  $("vue").addEventListener("click", clic); $("vue").addEventListener("input", saisieLive);
+  if (lsG(KM)) charger(); else $("login").style.display = "block";
+});
+async function connexion() {
+  const v = $("mdp").value; if (!v) return;
+  try { (document.getElementById("rester").checked ? localStorage : sessionStorage).setItem(KM, v); } catch (e) {}
+  $("login-err").textContent = "Vérification...";
+  await charger();
+}
+async function charger(manuel) {
+  try {
+    const r = await api({ operation: "lire" });
+    if (!r.success) { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} $("app").style.display = $("menu").style.display = "none"; $("login").style.display = "block"; $("login-err").textContent = r.message || "Erreur."; return; }
+    S.d = r; if (!S.jour) S.jour = r.auj;
+    $("login").style.display = "none"; $("app").style.display = "block"; $("menu").style.display = "flex";
+    dessiner(); if (manuel) toast("Données actualisées");
+  } catch (e) { if (e.message !== "acces") { $("login-err").textContent = "Réseau indisponible."; if (manuel) toast("Réseau indisponible"); } }
+}
+
+/* ---------- Calculs ---------- */
+const actives = () => S.d.journal.filter(l => !l.annule);
+const somme = (ls, f) => ls.filter(f).reduce((a, l) => a + l.montant, 0);
+const COUT_DIRECT = ["ACHAT", "LIVREUR", "CADEAU"];
+function lundi(auj) { const d = new Date(auj + "T12:00:00Z"), j = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - j); return d.toISOString().slice(0, 10); }
+function bilanJour(j) {
+  const l = actives().filter(x => x.jour === j), ca = somme(l, x => x.type === "ENTREE" && x.cat === "VENTE");
+  const direct = somme(l, x => x.type === "SORTIE" && COUT_DIRECT.includes(x.cat)), autres = somme(l, x => x.type === "SORTIE" && !COUT_DIRECT.includes(x.cat));
+  return { ca, direct, autres, marge: ca - direct, resultat: ca - direct - autres, sorties: direct + autres };
+}
+function avanceEnCours() {
+  const vendus = new Set(actives().filter(l => l.type === "ENTREE" && l.cat === "VENTE" && l.idCmd).map(l => l.idCmd));
+  return somme(actives(), l => l.type === "SORTIE" && l.cat === "ACHAT" && l.idCmd && !vendus.has(l.idCmd));
+}
+function couleur(p) { return p >= 90 ? "var(--rouge)" : p >= 70 ? "var(--orange)" : "var(--vert)"; }
+function jauge(titre, val, max, aide) {
+  const p = max > 0 ? Math.min(100, Math.round(val * 100 / max)) : 0;
+  return `<div class="jauge" style="margin-top:12px"><div class="ligne"><span>${titre}</span><span style="color:${couleur(p)}">${ar(val)} / ${ar(max)}</span></div><div class="barre"><i style="width:${p}%;background:${couleur(p)}"></i></div><div class="mut">${aide}${p >= 90 ? " — <b style='color:var(--rouge)'>plafond presque atteint</b>" : ""}</div></div>`;
+}
+
+/* ---------- Vues ---------- */
+function dessiner() {
+  if (!S.d) return;
+  document.querySelectorAll("#menu button").forEach(b => b.classList.toggle("on", b.dataset.o === S.onglet));
+  $("date-auj").textContent = new Date(S.d.auj + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  $("vue").innerHTML = ({ auj: vueAuj, saisie: vueSaisie, journal: vueJournal, cmd: vueCmd, plaf: vuePlaf })[S.onglet]();
+}
+function vueAuj() {
+  const d = S.d, p = d.plafonds, b = bilanJour(d.auj), pct = p.OBJECTIF_CA_JOUR > 0 ? Math.min(100, Math.round(b.ca * 100 / p.OBJECTIF_CA_JOUR)) : 0;
+  const cad = somme(actives(), l => l.jour === d.auj && l.cat === "CADEAU"), pub = somme(actives(), l => l.type === "SORTIE" && l.cat === "PUBLICITE" && l.jour >= lundi(d.auj));
+  const aEnc = d.commandes.filter(c => !c.vendue && sans(c.statut).startsWith("LIVR")).slice(-8).reverse();
+  return `<div class="card"><div class="mut">Argent restant</div><div class="big ${d.solde < 0 ? "neg" : ""}">${ar(d.solde)}</div><div class="mut">Argent de départ + ventes − toutes les dépenses enregistrées</div></div>
+  <div class="card"><div class="grid">
+    <div class="kpi"><span class="mut">Chiffre d'affaires du jour</span><b>${ar(b.ca)}</b></div>
+    <div class="kpi"><span class="mut">Dépenses du jour</span><b>${ar(b.sorties)}</b></div>
+    <div class="kpi"><span class="mut">Marge (ventes − achats, livreur, cadeaux)</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div>
+    <div class="kpi"><span class="mut">Résultat du jour (après autres frais)</span><b class="${b.resultat < 0 ? "neg" : "pos"}">${ar(b.resultat)}</b></div></div>
+    <div class="barre" style="margin-top:12px"><i style="width:${pct}%;background:var(--bleu)"></i></div><div class="mut">${pct} % de l'objectif du jour (${ar(p.OBJECTIF_CA_JOUR)})</div></div>
+  <div class="card"><b>Plafonds</b>
+    ${jauge("Avance en cours", avanceEnCours(), p.AVANCE_MAX, "Achats déjà payés dont la vente n'est pas encore encaissée")}
+    ${jauge("Cadeaux du jour", cad, p.CADEAUX_JOUR, "Cadeaux enregistrés aujourd'hui")}
+    ${jauge("Publicité de la semaine", pub, p.PUB_SEMAINE, "Depuis lundi")}</div>
+  <div class="card"><b>À encaisser</b><div class="mut">Commandes livrées sans vente enregistrée</div>${aEnc.length ? aEnc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}</div>`;
+}
+function vueSaisie() {
+  const c = S.d.categories, cats = S.type === "ENTREE" ? c.entree : c.sortie, pre = S.pre || {};
+  if (!cats[S.cat]) S.cat = Object.keys(cats)[0];
+  return `<div class="card"><div class="seg"><button class="e ${S.type === "ENTREE" ? "on" : ""}" data-type="ENTREE">⬇️ Entrée d'argent</button><button class="s ${S.type === "SORTIE" ? "on" : ""}" data-type="SORTIE">⬆️ Dépense</button></div>
+  <label>Catégorie</label><div class="chips">${Object.keys(cats).map(k => `<button data-cat="${k}" class="${S.cat === k ? "on" : ""}">${esc(cats[k])}</button>`).join("")}</div>
+  <label for="f-montant">Montant (Ar)</label><input id="f-montant" inputmode="numeric" placeholder="ex : 5000" value="${esc(pre.montant || "")}">
+  <label for="f-id">ID de la commande (facultatif)</label><input id="f-id" list="liste-cmd" placeholder="ex : SR-123456" value="${esc(pre.id || "")}" autocomplete="off">
+  <datalist id="liste-cmd">${S.d.commandes.slice().reverse().map(x => `<option value="${esc(x.id)}">${esc(x.client)} · ${ar(x.montant)}</option>`).join("")}</datalist>
+  <label for="f-note">Note (facultatif)</label><input id="f-note" placeholder="ex : livreur Jean, plein d'essence…" maxlength="200">
+  <label for="f-jour">Jour</label><input id="f-jour" type="date" value="${S.d.auj}" max="${S.d.auj}">
+  <button id="f-ok" style="width:100%;margin-top:14px">Enregistrer</button></div>
+  <p class="mut">Astuce : pour une commande, saisissez la <b>vente</b>, puis l'<b>achat</b> des produits et le <b>livreur</b> avec le même ID. La marge s'affiche dans « Commandes ».</p>`;
+}
+const NOMS = Object.assign({}, { VENTE: "Vente", APPORT: "Apport" });
+function ligneHtml(l) {
+  const nom = (S.d.categories.entree[l.cat] || S.d.categories.sortie[l.cat] || l.cat);
+  return `<div class="lig ${l.annule ? "annule" : ""}"><div class="g"><b>${esc(nom)}${l.idCmd ? `<span class="tag">${esc(l.idCmd)}</span>` : ""}</b><span class="mut">${esc(l.heure)} ${esc(l.note)}</span></div><div class="m ${l.type === "ENTREE" ? "pos" : "neg"}">${l.type === "ENTREE" ? "+" : "−"}${ar(l.montant).replace("−", "")}</div>${l.annule ? "" : `<button class="danger petit" data-ann="${esc(l.id)}">✕</button>`}</div>`;
+}
+function vueJournal() {
+  const l = S.d.journal.filter(x => x.jour === S.jour).reverse(), b = bilanJour(S.jour);
+  return `<div class="card"><label for="j-jour" style="margin-top:0">Jour</label><input id="j-jour" type="date" value="${S.jour}" max="${S.d.auj}">
+  <div class="grid" style="margin-top:10px"><div class="kpi"><span class="mut">Ventes</span><b class="pos">${ar(b.ca)}</b></div><div class="kpi"><span class="mut">Dépenses</span><b class="neg">${ar(b.sorties)}</b></div></div></div>
+  <div class="card">${l.length ? l.map(ligneHtml).join("") : '<p class="mut">Aucune ligne ce jour-là.</p>'}</div>`;
+}
+function vueCmd() {
+  const g = {};
+  actives().forEach(l => { const k = l.idCmd || "—"; const o = g[k] = g[k] || { id: k, ca: 0, cout: 0, last: "" }; if (l.type === "ENTREE" && l.cat === "VENTE") o.ca += l.montant; else if (l.type === "SORTIE") o.cout += l.montant; if (l.jour > o.last) o.last = l.jour; });
+  const rows = Object.values(g).sort((a, b) => b.last.localeCompare(a.last) || a.id.localeCompare(b.id));
+  const totCa = rows.reduce((a, r) => a + r.ca, 0), totCout = rows.reduce((a, r) => a + r.cout, 0);
+  return `<div class="card"><b>Marge par commande (60 derniers jours)</b><div class="mut">Les lignes sans ID sont regroupées sous « — » (frais généraux).</div>
+  <table><tr><th>ID</th><th>Ventes</th><th>Coûts</th><th>Marge</th></tr>${rows.map(r => `<tr><td>${esc(r.id)}</td><td>${ar(r.ca)}</td><td>${ar(r.cout)}</td><td class="${r.ca - r.cout < 0 ? "neg" : "pos"}"><b>${ar(r.ca - r.cout)}</b></td></tr>`).join("") || '<tr><td colspan="4" class="mut">Aucune ligne.</td></tr>'}
+  <tr><td><b>Total</b></td><td><b>${ar(totCa)}</b></td><td><b>${ar(totCout)}</b></td><td><b>${ar(totCa - totCout)}</b></td></tr></table></div>`;
+}
+const PL = { SOLDE_DEPART: ["Argent de départ", "Ce que vous aviez au début du suivi"], OBJECTIF_CA_JOUR: ["Objectif de chiffre d'affaires / jour", "Pour la barre de progression"], AVANCE_MAX: ["Plafond d'avance", "Achats payés sans vente encaissée"], CADEAUX_JOUR: ["Plafond cadeaux / jour", ""], PUB_SEMAINE: ["Plafond publicité / semaine", "Depuis lundi"], SEUIL_LIVRAISON: ["Seuil paiement à la livraison", "Information (30 000 Ar : en dessous, paiement à la livraison autorisé)"] };
+function vuePlaf() {
+  return `<div class="card">${Object.keys(PL).map(k => `<label for="p-${k}">${PL[k][0]}</label><div style="display:flex;gap:8px"><input id="p-${k}" inputmode="numeric" value="${S.d.plafonds[k]}"><button class="petit" data-pl="${k}">OK</button></div>${PL[k][1] ? `<div class="mut">${PL[k][1]}</div>` : ""}`).join("")}</div>`;
+}
+
+/* ---------- Actions ---------- */
+function saisieLive(e) {
+  if (e.target.id === "j-jour") { S.jour = e.target.value || S.d.auj; dessiner(); }
+  if (e.target.id === "f-id" && S.type === "ENTREE" && S.cat === "VENTE" && !$("f-montant").value) { const c = S.d.commandes.find(x => x.id === e.target.value.trim()); if (c) $("f-montant").value = c.montant; }
+}
+async function clic(e) {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.type) { S.type = t.dataset.type; S.cat = S.type === "ENTREE" ? "VENTE" : "ACHAT"; S.pre = null; dessiner(); }
+  else if (t.dataset.cat) { const m = $("f-montant").value, i = $("f-id").value; S.cat = t.dataset.cat; S.pre = { montant: m, id: i }; dessiner(); }
+  else if (t.dataset.enc) { const c = S.d.commandes.find(x => x.id === t.dataset.enc); S.type = "ENTREE"; S.cat = "VENTE"; S.pre = { id: c.id, montant: c.montant }; S.onglet = "saisie"; dessiner(); window.scrollTo(0, 0); }
+  else if (t.id === "f-ok") enregistrer(t);
+  else if (t.dataset.ann) { const mo = prompt("Annuler cette ligne ? Motif (facultatif) :", ""); if (mo === null) return; const r = await api({ operation: "annuler", idLigne: t.dataset.ann, motif: mo }); toast(r.message || "Fait"); charger(); }
+  else if (t.dataset.pl) { const v = $("p-" + t.dataset.pl).value; const r = await api({ operation: "plafond", cle: t.dataset.pl, valeur: v }); toast(r.success ? "Plafond enregistré" : (r.message || "Erreur")); if (r.success) charger(); }
+}
+async function enregistrer(btn) {
+  const montant = $("f-montant").value.replace(/\s/g, ""), id = $("f-id").value.trim();
+  if (!/^\d+$/.test(montant) || +montant <= 0) return toast("Entrez un montant valide (chiffres seulement).");
+  if (id && !S.d.commandes.some(x => x.id === id) && !confirm("Cet ID n'est pas dans vos commandes récentes. Enregistrer quand même ?")) return;
+  btn.disabled = true; btn.textContent = "Enregistrement...";
+  try {
+    const r = await api({ operation: "ajouter", type: S.type, categorie: S.cat, montant, idCommande: id, note: $("f-note").value, jour: $("f-jour").value });
+    if (r.success) { S.pre = null; toast("✔ Enregistré"); await charger(); S.onglet = "saisie"; dessiner(); } else { toast(r.message || "Erreur"); btn.disabled = false; btn.textContent = "Enregistrer"; }
+  } catch (e) { if (e.message !== "acces") { toast("Réseau indisponible : rien n'a été enregistré."); btn.disabled = false; btn.textContent = "Enregistrer"; } }
+}
+</script>
+</body>
+</html>
