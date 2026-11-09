@@ -1285,29 +1285,8 @@ function ouvrirTicketAutomatique() {
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
-async function envoyerDonneesAuSheetInterne() {
-    // [PROFIL] retire l'écran « PRÉPARATION EN COURS » et arrête sa barre
-function nettoyerBouclierSafeRun() {
-    try { clearInterval(window.intervalBouclierSafeRun); clearTimeout(window._saferunBouclierTimeout); } catch (e) {}
-    const b = document.getElementById('saferun-bouclier-attente'); if (b) b.remove();
-    if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
-}
 async function envoyerDonneesAuSheet() {
-    window.chargementDonneesSheetPret = false;
-    clearTimeout(window._saferunBouclierTimeout);
-    window._saferunBouclierTimeout = setTimeout(() => {
-        if (document.getElementById('saferun-bouclier-attente') && !window.chargementDonneesSheetPret) {
-            nettoyerBouclierSafeRun();
-            alert("⚠️ Connexion lente. Vérifiez « Mes commandes » avant de recommencer : votre commande a peut-être été transmise.");
-        }
-    }, 30000);
-    try { return await envoyerDonneesAuSheetInterne(); }
-    catch (e) {
-        console.error("Erreur envoi commande :", e);
-        nettoyerBouclierSafeRun();
-        alert("⚠️ L'envoi n'a pas pu aboutir. Votre panier est conservé : réessayez dans un instant.");
-    }
-}
+    
     const montantTotal = window.dernierTotalCalcule || 0;
     const tel = localStorage.getItem('saferun_tel');
     const nom = localStorage.getItem('saferun_nom');
@@ -5522,3 +5501,29 @@ document.addEventListener('click', function(event) {
         }
     }
 });
+
+// [PROFIL] nettoyage de l'écran de chargement + filet de sécurité
+function nettoyerBouclierSafeRun() {
+    try { clearInterval(window.intervalBouclierSafeRun); clearTimeout(window._saferunBouclierTimeout); } catch (e) {}
+    const b = document.getElementById('saferun-bouclier-attente'); if (b) b.remove();
+    if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+}
+(function () {
+    const envoiOriginal = envoyerDonneesAuSheet;   // la fonction d'origine, non modifiée
+    window.envoyerDonneesAuSheet = async function () {
+        window.chargementDonneesSheetPret = false;
+        clearTimeout(window._saferunBouclierTimeout);
+        window._saferunBouclierTimeout = setTimeout(() => {
+            if (document.getElementById('saferun-bouclier-attente') && !window.chargementDonneesSheetPret) {
+                nettoyerBouclierSafeRun();
+                alert("⚠️ Connexion lente. Vérifiez « Mes commandes » avant de recommencer : votre commande a peut-être été transmise.");
+            }
+        }, 30000);
+        try { return await envoiOriginal.apply(this, arguments); }
+        catch (e) {
+            console.error("Erreur envoi commande :", e);
+            nettoyerBouclierSafeRun();
+            alert("⚠️ L'envoi n'a pas pu aboutir. Votre panier est conservé : réessayez dans un instant.");
+        }
+    };
+})();
