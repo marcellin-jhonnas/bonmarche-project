@@ -1176,6 +1176,13 @@ function ouvrirTicketAutomatique() {
                 btnEnvoi.onclick = function() {
             if (document.getElementById('saferun-loading-overlay').classList.contains('show')) return; // <-- AJOUT anti double-clic
             if (window.dernierContraintePoids && window.dernierContraintePoids.bloque) return; // <-- AJOUT sécurité poids
+            // [PROFIL] le profil est vérifié AVANT l'écran de chargement
+            if (!(localStorage.getItem('saferun_nom') && localStorage.getItem('saferun_tel'))) {
+                alert("Pour commander, merci de compléter votre profil !");
+                ouvrirInscription();
+                if (localStorage.getItem('saferun_nom') && localStorage.getItem('saferun_tel')) { btnEnvoi.onclick(); }
+                return;
+            }
             // On utilise directement la valeur fiable déjà calculée par afficherPanier()
             let montantSecurise = window.dernierTotalCalcule || 0;
 
@@ -1278,7 +1285,29 @@ function ouvrirTicketAutomatique() {
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
+async function envoyerDonneesAuSheetInterne() {
+    // [PROFIL] retire l'écran « PRÉPARATION EN COURS » et arrête sa barre
+function nettoyerBouclierSafeRun() {
+    try { clearInterval(window.intervalBouclierSafeRun); clearTimeout(window._saferunBouclierTimeout); } catch (e) {}
+    const b = document.getElementById('saferun-bouclier-attente'); if (b) b.remove();
+    if (typeof masquerChargementGlobal === "function") masquerChargementGlobal();
+}
 async function envoyerDonneesAuSheet() {
+    window.chargementDonneesSheetPret = false;
+    clearTimeout(window._saferunBouclierTimeout);
+    window._saferunBouclierTimeout = setTimeout(() => {
+        if (document.getElementById('saferun-bouclier-attente') && !window.chargementDonneesSheetPret) {
+            nettoyerBouclierSafeRun();
+            alert("⚠️ Connexion lente. Vérifiez « Mes commandes » avant de recommencer : votre commande a peut-être été transmise.");
+        }
+    }, 30000);
+    try { return await envoyerDonneesAuSheetInterne(); }
+    catch (e) {
+        console.error("Erreur envoi commande :", e);
+        nettoyerBouclierSafeRun();
+        alert("⚠️ L'envoi n'a pas pu aboutir. Votre panier est conservé : réessayez dans un instant.");
+    }
+}
     const montantTotal = window.dernierTotalCalcule || 0;
     const tel = localStorage.getItem('saferun_tel');
     const nom = localStorage.getItem('saferun_nom');
@@ -1359,11 +1388,18 @@ async function envoyerDonneesAuSheet() {
     console.log("Panier actuel :", panier);
 
     if (!tel || montantTotal <= 0) {
+        nettoyerBouclierSafeRun();   // [PROFIL]
         alert("Action impossible : Profil incomplet ou panier vide.");
         return;
     }
 
-    const idCommande = "SR-" + Date.now().toString().slice(-6);
+    // [ANTIDOUBLON] renvoi après coupure (< 3 min, même montant) : on réutilise l'ID, le GAS met la ligne à jour
+    let idCommande = "SR-" + Date.now().toString().slice(-6);
+    try {
+        const _pid = localStorage.getItem('saferun_commande_pendante_id');
+        const _snap = JSON.parse(localStorage.getItem('saferun_snapshot_commande') || 'null');
+        if (_pid && _snap && _snap.id === _pid && Number(_snap.montant) === Number(montantTotal) && (Date.now() - (_snap.dateCreation || 0)) < 180000) idCommande = _pid;
+    } catch (e) {}
    window.dernierIdCommandeEnvoyee = idCommande;
    const infoLivraison = calculerLivraison();
 
@@ -2244,7 +2280,7 @@ function ouvrirInscription() {
 
     let q = prompt("Quartier :", prevQuartier);
     if (q === null) return;
-
+    if (t.replace(/\D/g, "").length < 9) { alert("Numéro de téléphone invalide (ex : 034 12 345 67)."); return; }   // [PROFIL]
     if (n.trim() && t.trim() && q.trim()) {
         // 1. On enregistre les données
         localStorage.setItem('saferun_nom', n.trim());
