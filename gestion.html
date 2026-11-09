@@ -6,76 +6,150 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>404 Not Found</title>
 <style>
-:root{--bg:#f4f6fb;--card:#fff;--tx:#0f172a;--mut:#64748b;--ligne:#e2e8f0;--vert:#16a34a;--orange:#f59e0b;--rouge:#dc2626;--bleu:#1e3a8a;}
+:root{--bg:#f3f5fb;--card:#fff;--tx:#0f172a;--mut:#64748b;--ligne:#e2e8f0;--vert:#16a34a;--orange:#f59e0b;--rouge:#dc2626;--bleu:#1e3a8a;--violet:#7c3aed;--ombre:0 6px 22px rgba(15,23,42,.07);}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:84px}
-.wrap{max-width:720px;margin:0 auto;padding:14px 14px 0}
-h1{font-size:1.15rem;margin:0}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.top small{color:var(--mut)}
-.card{background:var(--card);border:1px solid var(--ligne);border-radius:16px;padding:14px;margin-bottom:12px}
-.big{font-size:2rem;font-weight:800;letter-spacing:-.5px}
-.mut{color:var(--mut);font-size:.82rem}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+h1,h2,h3{margin:0}
+/* ----- en-tête ----- */
+.hero{position:relative;overflow:hidden;color:#fff;background:linear-gradient(135deg,#0b1224 0%,#1e3a8a 55%,#7c3aed 100%);padding:18px 16px 26px;border-radius:0 0 28px 28px}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero:before{width:240px;height:240px;right:-70px;top:-90px}.hero:after{width:150px;height:150px;left:-40px;bottom:-70px}
+.hero>*{position:relative;z-index:1}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.marque{display:flex;align-items:center;gap:10px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:grid;place-items:center;font-size:1.3rem;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.marque h1{font-size:1.2rem;letter-spacing:-.3px}.marque small{opacity:.8;font-size:.78rem;display:block}
+.burger{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);width:44px;height:44px;border-radius:13px;font-size:1.3rem;padding:0;cursor:pointer}
+.slogan{margin:16px 0 4px;font-size:1.35rem;font-weight:800;letter-spacing:-.4px}
+.ticker{font-size:.92rem;opacity:.95;min-height:22px}
+.puces{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.puce{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:12px;backdrop-filter:blur(6px)}
+.puce span{font-size:.74rem;opacity:.85;display:block}.puce b{font-size:1.35rem;letter-spacing:-.4px}
+/* ----- mise en page ----- */
+.layout{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:0}
+main{padding:14px 14px 0;min-width:0}
+aside#side{position:fixed;top:0;right:0;bottom:0;width:290px;max-width:86vw;background:linear-gradient(180deg,#0f172a,#1e1b4b);color:#e2e8f0;transform:translateX(105%);transition:transform .28s ease;z-index:30;overflow-y:auto;padding:16px 14px 20px;box-shadow:-12px 0 40px rgba(0,0,0,.35)}
+aside#side.ouvert{transform:none}
+#voile{position:fixed;inset:0;background:rgba(2,6,23,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:25}
+#voile.on{opacity:1;pointer-events:auto}
+.side-tete{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:12px}
+.side-tete b{display:block}.side-tete small{opacity:.7}
+.side-titre{font-size:.68rem;letter-spacing:1.2px;text-transform:uppercase;opacity:.55;margin:16px 6px 6px}
+.side-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;color:#e2e8f0;border:0;border-radius:12px;padding:11px 10px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.side-btn .ic{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.09);display:grid;place-items:center;font-size:1.05rem;flex:none}
+.side-btn:hover{background:rgba(255,255,255,.08)}
+.side-btn.on{background:linear-gradient(90deg,rgba(124,58,237,.55),rgba(30,58,138,.45))}
+.side-btn.on .ic{background:rgba(255,255,255,.2)}
+.side-btn .nb{margin-left:auto;background:#f59e0b;color:#111;border-radius:99px;font-size:.72rem;padding:2px 8px;font-weight:800}
+.side-btn.act .ic{background:linear-gradient(135deg,#16a34a,#15803d)}.side-btn.act.dep .ic{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+@media(min-width:900px){
+  .layout{grid-template-columns:1fr 290px;align-items:start}
+  aside#side{position:sticky;top:0;height:100vh;transform:none;box-shadow:none;border-radius:0 0 0 22px;grid-column:2;grid-row:1}
+  main{grid-column:1;grid-row:1}.burger,#voile,.fab{display:none!important}
+  .hero{border-radius:0 0 28px 28px}
+}
+/* ----- cartes et composants ----- */
+.card{background:var(--card);border:1px solid var(--ligne);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--ombre)}
+.card h3{font-size:1rem;margin-bottom:4px}
+.big{font-size:2.1rem;font-weight:800;letter-spacing:-.7px}
+.mut{color:var(--mut);font-size:.82rem}.pos{color:var(--vert)}.neg{color:var(--rouge)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi b{display:block;font-size:1.15rem}
-.pos{color:var(--vert)}.neg{color:var(--rouge)}
-.barre{height:9px;background:#e8edf5;border-radius:9px;overflow:hidden;margin:6px 0 4px}
-.barre i{display:block;height:100%;border-radius:9px}
-.jauge .ligne{display:flex;justify-content:space-between;font-size:.9rem;font-weight:600}
+.kpi{background:#f8fafc;border:1px solid var(--ligne);border-radius:14px;padding:11px}.kpi b{display:block;font-size:1.12rem;margin-top:2px}
+.barre{height:10px;background:#e8edf5;border-radius:9px;overflow:hidden;margin:6px 0 4px}.barre i{display:block;height:100%;border-radius:9px;transition:width .6s}
+.jauge .ligne{display:flex;justify-content:space-between;gap:8px;font-size:.9rem;font-weight:700}
 button,.btn{font:inherit;border:0;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer;background:var(--bleu);color:#fff}
-button.sec{background:#e8edf5;color:var(--tx)}
-button.petit{padding:7px 10px;font-size:.8rem;border-radius:9px}
-button.danger{background:#fee2e2;color:#991b1b}
+button.sec{background:#e8edf5;color:var(--tx)}button.petit{padding:7px 10px;font-size:.8rem;border-radius:9px}button.danger{background:#fee2e2;color:#991b1b}
+button.vert{background:var(--vert)}
 input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--ligne);border-radius:12px;background:#fff;color:var(--tx)}
 label{display:block;font-size:.8rem;font-weight:700;color:var(--mut);margin:10px 0 4px}
-.seg{display:flex;gap:8px}.seg button{flex:1;background:#e8edf5;color:var(--tx)}
-.seg button.on.e{background:var(--vert);color:#fff}.seg button.on.s{background:var(--rouge);color:#fff}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips button{background:#e8edf5;color:var(--tx);padding:9px 12px;font-size:.85rem}
-.chips button.on{background:var(--bleu);color:#fff}
-.lig{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--ligne)}
-.lig:first-child{border-top:0}
-.lig .g{flex:1;min-width:0}.lig .g b{display:block;font-size:.92rem}
-.lig .m{font-weight:800;white-space:nowrap}
-.lig.annule{opacity:.45;text-decoration:line-through}
+.seg{display:flex;gap:8px}.seg button{flex:1;background:#e8edf5;color:var(--tx)}.seg button.on.e{background:var(--vert);color:#fff}.seg button.on.s{background:var(--rouge);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips button{background:#e8edf5;color:var(--tx);padding:9px 12px;font-size:.85rem}.chips button.on{background:var(--bleu);color:#fff}
+.lig{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--ligne)}.lig:first-child{border-top:0}
+.lig .g{flex:1;min-width:0}.lig .g b{display:block;font-size:.92rem}.lig .m{font-weight:800;white-space:nowrap}.lig.annule{opacity:.45;text-decoration:line-through}
 .tag{display:inline-block;background:#e8edf5;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-left:4px}
-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ligne);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
-nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:10px 2px;font-size:.7rem;display:flex;flex-direction:column;gap:2px;align-items:center}
-nav button span{font-size:1.25rem}nav button.on{color:var(--bleu)}
-#login{max-width:360px;margin:16vh auto 0;padding:0 18px}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-size:.9rem;display:none;z-index:9;max-width:90%}
 table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{text-align:right;padding:8px 4px;border-top:1px solid var(--ligne)}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-size:.72rem}
+.graph{display:flex;align-items:flex-end;gap:8px;height:140px;margin-top:10px}
+.graph .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.graph .bars{display:flex;align-items:flex-end;gap:3px;height:112px;width:100%;justify-content:center}
+.graph .bars i{display:block;width:42%;max-width:20px;border-radius:6px 6px 2px 2px;min-height:2px}
+.graph small{font-size:.7rem;color:var(--mut)}.leg{display:flex;gap:14px;font-size:.76rem;color:var(--mut);margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.badge{display:inline-block;border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:800;background:#fef3c7;color:#92400e}
+.fab{position:fixed;right:16px;bottom:18px;width:58px;height:58px;border-radius:50%;font-size:1.7rem;padding:0;background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 10px 24px rgba(22,163,74,.45);z-index:20}
+#login{max-width:380px;margin:12vh auto 0;padding:0 18px}
+#login .carte{background:#fff;border-radius:22px;padding:22px;box-shadow:var(--ombre);border:1px solid var(--ligne)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#0f172a;color:#fff;padding:11px 18px;border-radius:13px;font-size:.9rem;display:none;z-index:60;max-width:90%}
+/* ----- pied de page ----- */
+footer{margin:14px -14px 0;color:#cbd5e1;background:linear-gradient(135deg,#0b1224,#1e1b4b 60%,#3b1d6e);border-radius:26px 26px 0 0;padding:24px 18px 96px}
+.f-grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:1100px;margin:0 auto}
+@media(min-width:700px){.f-grid{grid-template-columns:1.3fr 1fr 1fr}}
+footer h4{margin:0 0 8px;color:#fff;font-size:.95rem}footer p{margin:4px 0;font-size:.85rem;line-height:1.5}
+footer a{color:#fbbf24;text-decoration:none}footer .bas{text-align:center;border-top:1px solid rgba(255,255,255,.12);margin-top:18px;padding-top:14px;font-size:.78rem;opacity:.85}
+.f-chiffres{display:grid;grid-template-columns:1fr 1fr;gap:8px}.f-chiffres div{background:rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;font-size:.75rem}.f-chiffres b{display:block;font-size:1rem;color:#fff}
+@media print{aside#side,#voile,.fab,footer,.burger,#toast{display:none!important}.hero{background:#fff!important;color:#000;border-radius:0}.hero:before,.hero:after{display:none}.layout{display:block}}
 </style>
 </head>
 <body>
 <div id="faux404" style="font-family:Arial,sans-serif;text-align:center;padding:18vh 20px 0;color:#444"><h1 style="font-size:2.2rem;font-weight:600">404</h1><p style="margin-top:10px">Page introuvable.</p></div>
 
-<div id="login" style="display:none">
-  <h1>🔒 SafeRun Gestion</h1><p class="mut">Espace réservé.</p>
+<div id="login" style="display:none"><div class="carte">
+  <div class="logo" style="margin-bottom:10px">💼</div>
+  <h1 style="font-size:1.3rem">SafeRun Gestion</h1><p class="mut">Espace réservé. Entrez votre mot de passe.</p>
   <label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password">
   <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input id="rester" type="checkbox" style="width:auto"> Rester connecté sur cet appareil</label>
   <p id="login-err" class="neg" style="min-height:20px;font-size:.85rem"></p>
-  <button id="btn-login" style="width:100%">Entrer</button>
-</div>
+  <button id="btn-login" style="width:100%">Entrer</button></div></div>
 
-<div id="app" class="wrap" style="display:none">
-  <div class="top"><div><h1>💼 Gestion SafeRun</h1><small id="date-auj"></small></div><div><button class="sec petit" id="btn-maj">↻</button> <button class="sec petit" id="btn-deco">Quitter</button></div></div>
-  <div id="vue"></div>
+<div id="app" style="display:none">
+  <header class="hero">
+    <div class="hero-top">
+      <div class="marque"><div class="logo">💼</div><div><h1>SafeRun Gestion</h1><small id="date-auj"></small></div></div>
+      <button class="burger" id="btn-burger" aria-label="Ouvrir le menu">☰</button>
+    </div>
+    <div class="slogan">Pilotez l'argent, jour après jour 🚀</div>
+    <div class="ticker" id="ticker"></div>
+    <div class="puces"><div class="puce"><span>💰 Argent restant</span><b id="h-solde">—</b></div><div class="puce"><span>📈 Ventes du jour</span><b id="h-ca">—</b></div></div>
+  </header>
+  <div class="layout">
+    <main><div id="vue"></div>
+      <footer>
+        <div class="f-grid">
+          <div><h4>💼 SafeRun Market</h4><p>Livraison de courses à Antananarivo.<br>« Chaque ariary compté est un ariary gagné. »</p><p class="mut" style="color:#94a3b8">Gestion V2 · données du Google Sheet</p></div>
+          <div><h4>📊 En chiffres</h4><div class="f-chiffres" id="f-chiffres"></div></div>
+          <div><h4>🔗 Raccourcis</h4><p><a href="admin.html">🛠️ Admin SafeRun</a></p><p><a href="index.html">🏠 Le site</a></p><p><a href="#" id="f-haut">⬆️ Haut de page</a></p></div>
+        </div>
+        <div class="bas">© <span id="f-an"></span> SafeRun Market · Antananarivo, Madagascar · Accès privé 🔒 · Dernière synchronisation : <b id="f-sync">—</b></div>
+      </footer>
+    </main>
+    <aside id="side">
+      <div class="side-tete"><div class="logo">💼</div><div><b>Menu</b><small>Gestion SafeRun</small></div></div>
+      <div class="side-titre">Navigation</div>
+      <button class="side-btn" data-o="auj"><span class="ic">📊</span>Aujourd'hui<span class="nb" id="nb-enc" style="display:none"></span></button>
+      <button class="side-btn" data-o="saisie"><span class="ic">➕</span>Saisir</button>
+      <button class="side-btn" data-o="journal"><span class="ic">📒</span>Journal</button>
+      <button class="side-btn" data-o="cmd"><span class="ic">🧾</span>Commandes</button>
+      <button class="side-btn" data-o="budget"><span class="ic">🧮</span>Budget</button>
+      <button class="side-btn" data-o="plaf"><span class="ic">🎚️</span>Plafonds</button>
+      <div class="side-titre">Actions rapides</div>
+      <button class="side-btn act" data-rapide="ENTREE"><span class="ic">⬇️</span>Nouvelle vente</button>
+      <button class="side-btn act dep" data-rapide="SORTIE"><span class="ic">⬆️</span>Nouvelle dépense</button>
+      <button class="side-btn" id="sb-maj"><span class="ic">🔄</span>Actualiser</button>
+      <button class="side-btn" id="sb-csv"><span class="ic">⬇️</span>Exporter le journal (CSV)</button>
+      <button class="side-btn" id="sb-print"><span class="ic">🖨️</span>Imprimer le bilan</button>
+      <div class="side-titre">Liens</div>
+      <a class="side-btn" href="admin.html"><span class="ic">🛠️</span>Admin SafeRun</a>
+      <a class="side-btn" href="index.html"><span class="ic">🏠</span>Voir le site</a>
+      <button class="side-btn" id="btn-deco"><span class="ic">🚪</span>Quitter</button>
+    </aside>
+  </div>
+  <button class="fab" id="fab" aria-label="Nouvelle saisie">＋</button>
+  <div id="voile"></div>
 </div>
-
-<nav id="menu" style="display:none">
-  <button data-o="auj"><span>📊</span>Aujourd'hui</button>
-  <button data-o="saisie"><span>➕</span>Saisir</button>
-  <button data-o="journal"><span>📒</span>Journal</button>
-  <button data-o="cmd"><span>🧾</span>Commandes</button>
-  <button data-o="plaf"><span>🎚️</span>Plafonds</button>
-</nav>
 <div id="toast"></div>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 const KA = "saferun_gestion_acces", KM = "saferun_gestion_mdp";
-const S = { d: null, onglet: "auj", jour: "", type: "ENTREE", cat: "VENTE", pre: null };
+const S = { d: null, onglet: "auj", jour: "", type: "ENTREE", cat: "VENTE", pre: null, sync: "" };
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ar = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
@@ -83,11 +157,10 @@ const sans = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpp
 const lsG = k => { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ""; } catch (e) { return ""; } };
 function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 3200); }
 function acces() { try { return localStorage.getItem(KA) || ""; } catch (e) { return ""; } }
-
 function fermer404() {
   try { localStorage.removeItem(KA); localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {}
   S.d = null; document.title = "404 Not Found";
-  ["app", "menu", "login"].forEach(i => $(i).style.display = "none"); $("faux404").style.display = "block";
+  ["app", "login"].forEach(i => $(i).style.display = "none"); $("faux404").style.display = "block";
 }
 async function api(p) {
   const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ action: "gestion", acces: acces(), mdp: lsG(KM) }, p)) });
@@ -95,32 +168,37 @@ async function api(p) {
   if (j && j.acces === false) { fermer404(); throw new Error("acces"); }
   return j;
 }
+function menu(o) { $("side").classList.toggle("ouvert", o); $("voile").classList.toggle("on", o); }
+function deconnecter() { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} S.d = null; menu(false); $("app").style.display = "none"; $("login").style.display = "block"; $("mdp").value = ""; }
+function aller(o) { S.onglet = o; dessiner(); menu(false); window.scrollTo(0, 0); }
 
 document.addEventListener("DOMContentLoaded", () => {
+  $("f-an").textContent = new Date().getFullYear();
   const m = location.hash.match(/acces=([A-Za-z0-9]{12,64})/);
   if (m) { try { localStorage.setItem(KA, m[1]); } catch (e) {} history.replaceState(null, "", location.pathname + location.search); }
   if (!acces()) return;
   $("faux404").style.display = "none"; document.title = "SafeRun - Gestion";
   $("btn-login").onclick = connexion; $("mdp").addEventListener("keydown", e => { if (e.key === "Enter") connexion(); });
-  $("btn-deco").onclick = () => { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} S.d = null; $("app").style.display = $("menu").style.display = "none"; $("login").style.display = "block"; $("mdp").value = ""; };
-  $("btn-maj").onclick = () => charger(true);
-  $("menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) { S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); } });
+  $("btn-deco").onclick = deconnecter; $("sb-maj").onclick = () => { charger(true); menu(false); };
+  $("btn-burger").onclick = () => menu(true); $("voile").onclick = () => menu(false);
+  $("fab").onclick = () => rapide("ENTREE"); $("f-haut").onclick = e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  $("sb-csv").onclick = exporterCsv; $("sb-print").onclick = () => { menu(false); S.onglet = "auj"; dessiner(); setTimeout(() => window.print(), 150); };
+  $("side").addEventListener("click", e => { const b = e.target.closest("[data-o],[data-rapide]"); if (!b) return; if (b.dataset.o) aller(b.dataset.o); else rapide(b.dataset.rapide); });
   $("vue").addEventListener("click", clic); $("vue").addEventListener("input", saisieLive);
   if (lsG(KM)) charger(); else $("login").style.display = "block";
 });
+function rapide(type) { S.type = type; S.cat = type === "ENTREE" ? "VENTE" : "ACHAT"; S.pre = null; aller("saisie"); }
 async function connexion() {
   const v = $("mdp").value; if (!v) return;
-  try { (document.getElementById("rester").checked ? localStorage : sessionStorage).setItem(KM, v); } catch (e) {}
-  $("login-err").textContent = "Vérification...";
-  await charger();
+  try { ($("rester").checked ? localStorage : sessionStorage).setItem(KM, v); } catch (e) {}
+  $("login-err").textContent = "Vérification..."; await charger();
 }
 async function charger(manuel) {
   try {
     const r = await api({ operation: "lire" });
-    if (!r.success) { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} $("app").style.display = $("menu").style.display = "none"; $("login").style.display = "block"; $("login-err").textContent = r.message || "Erreur."; return; }
-    S.d = r; if (!S.jour) S.jour = r.auj;
-    $("login").style.display = "none"; $("app").style.display = "block"; $("menu").style.display = "flex";
-    dessiner(); if (manuel) toast("Données actualisées");
+    if (!r.success) { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} $("app").style.display = "none"; $("login").style.display = "block"; $("login-err").textContent = r.message || "Erreur."; return; }
+    S.d = r; if (!S.jour) S.jour = r.auj; S.sync = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    $("login").style.display = "none"; $("app").style.display = "block"; dessiner(); if (manuel) toast("Données actualisées");
   } catch (e) { if (e.message !== "acces") { $("login-err").textContent = "Réseau indisponible."; if (manuel) toast("Réseau indisponible"); } }
 }
 
@@ -128,6 +206,7 @@ async function charger(manuel) {
 const actives = () => S.d.journal.filter(l => !l.annule);
 const somme = (ls, f) => ls.filter(f).reduce((a, l) => a + l.montant, 0);
 const COUT_DIRECT = ["ACHAT", "LIVREUR", "CADEAU"];
+function plus(j, n) { const d = new Date(j + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function lundi(auj) { const d = new Date(auj + "T12:00:00Z"), j = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - j); return d.toISOString().slice(0, 10); }
 function bilanJour(j) {
   const l = actives().filter(x => x.jour === j), ca = somme(l, x => x.type === "ENTREE" && x.cat === "VENTE");
@@ -138,35 +217,63 @@ function avanceEnCours() {
   const vendus = new Set(actives().filter(l => l.type === "ENTREE" && l.cat === "VENTE" && l.idCmd).map(l => l.idCmd));
   return somme(actives(), l => l.type === "SORTIE" && l.cat === "ACHAT" && l.idCmd && !vendus.has(l.idCmd));
 }
+function aEncaisser() { return S.d.commandes.filter(c => !c.vendue && sans(c.statut).startsWith("LIVR")); }
 function couleur(p) { return p >= 90 ? "var(--rouge)" : p >= 70 ? "var(--orange)" : "var(--vert)"; }
 function jauge(titre, val, max, aide) {
   const p = max > 0 ? Math.min(100, Math.round(val * 100 / max)) : 0;
-  return `<div class="jauge" style="margin-top:12px"><div class="ligne"><span>${titre}</span><span style="color:${couleur(p)}">${ar(val)} / ${ar(max)}</span></div><div class="barre"><i style="width:${p}%;background:${couleur(p)}"></i></div><div class="mut">${aide}${p >= 90 ? " — <b style='color:var(--rouge)'>plafond presque atteint</b>" : ""}</div></div>`;
+  return `<div class="jauge" style="margin-top:12px"><div class="ligne"><span>${titre}</span><span style="color:${couleur(p)}">${ar(val)} / ${ar(max)}</span></div><div class="barre"><i style="width:${p}%;background:${couleur(p)}"></i></div><div class="mut">${aide}${p >= 90 ? " — <b style='color:var(--rouge)'>presque atteint</b>" : ""}</div></div>`;
+}
+
+/* ---------- Budget de fonctionnement : calculé sur les 30 derniers jours réels ---------- */
+const CAT_FONCT = [["LIVREUR", "Livreur", 0.05], ["CARBURANT", "Carburant", 0.03], ["CREDIT_APPEL", "Crédit d'appel", 0.015], ["PUBLICITE", "Publicité", 0.08], ["CADEAU", "Cadeaux", 0.06], ["AUTRE", "Autres dépenses", 0.015]];
+function budget() {
+  const d = S.d, deb = plus(d.auj, -29), L = actives().filter(l => l.jour >= deb);
+  const jours = new Set(L.map(l => l.jour)).size, ca = somme(L, l => l.type === "ENTREE" && l.cat === "VENTE"), achats = somme(L, l => l.type === "SORTIE" && l.cat === "ACHAT");
+  const n = Math.max(1, jours), fiable = jours >= 3 && ca > 0, base = fiable ? ca / n : d.plafonds.OBJECTIF_CA_JOUR;
+  const cats = CAT_FONCT.map(([k, nom, pc]) => {
+    const tot = somme(L, l => l.type === "SORTIE" && l.cat === k), reel = fiable && tot > 0, moy = reel ? tot / n : base * pc;   // poste sans historique : estimation de départ (% des ventes)
+    return { k, nom: nom + (reel ? "" : " *"), moy, conseil: Math.ceil(moy * (reel ? 1.1 : 1) / 100) * 100, auj: somme(actives(), l => l.jour === d.auj && l.type === "SORTIE" && l.cat === k) };
+  });
+  const fonctMoy = cats.reduce((a, c) => a + c.moy, 0), margeProd = fiable ? (ca - achats) / ca : 0.2;
+  const seuil = margeProd > 0 ? fonctMoy / margeProd : 0, achatsMoy = fiable ? achats / n : base * (1 - margeProd);
+  return { jours, fiable, caMoy: base, achatsMoy, fonctMoy, margeProd, seuil, runway: fonctMoy > 0 ? d.solde / fonctMoy : 0, cats, mois: base * 26, conseilBudgetJour: cats.reduce((a, c) => a + c.conseil, 0) };
 }
 
 /* ---------- Vues ---------- */
+function majEntete() {
+  const d = S.d, b = bilanJour(d.auj), p = d.plafonds, pct = p.OBJECTIF_CA_JOUR > 0 ? Math.round(b.ca * 100 / p.OBJECTIF_CA_JOUR) : 0, enc = aEncaisser().length;
+  $("date-auj").textContent = new Date(d.auj + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  $("h-solde").textContent = ar(d.solde); $("h-ca").textContent = ar(b.ca);
+  $("ticker").textContent = pct >= 100 ? "🎉 Objectif du jour atteint : bravo !" : enc > 0 ? `💡 ${enc} commande(s) livrée(s) à encaisser` : pct >= 50 ? `🔥 ${pct} % de l'objectif du jour, continuez !` : "☀️ Bonne journée : saisissez vos ventes au fil de l'eau.";
+  const nb = $("nb-enc"); nb.style.display = enc ? "inline" : "none"; nb.textContent = enc;
+  $("f-chiffres").innerHTML = `<div><b>${d.journal.filter(l => !l.annule).length}</b>lignes (60 j)</div><div><b>${d.commandes.length}</b>commandes (21 j)</div><div><b>${ar(b.ca)}</b>ventes du jour</div><div><b>${ar(b.sorties)}</b>dépenses du jour</div>`;
+  $("f-sync").textContent = S.sync;
+}
 function dessiner() {
   if (!S.d) return;
-  document.querySelectorAll("#menu button").forEach(b => b.classList.toggle("on", b.dataset.o === S.onglet));
-  $("date-auj").textContent = new Date(S.d.auj + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-  $("vue").innerHTML = ({ auj: vueAuj, saisie: vueSaisie, journal: vueJournal, cmd: vueCmd, plaf: vuePlaf })[S.onglet]();
+  document.querySelectorAll("#side [data-o]").forEach(b => b.classList.toggle("on", b.dataset.o === S.onglet));
+  majEntete();
+  $("vue").innerHTML = ({ auj: vueAuj, saisie: vueSaisie, journal: vueJournal, cmd: vueCmd, budget: vueBudget, plaf: vuePlaf })[S.onglet]();
+}
+function graphe7() {
+  const j = []; for (let i = 6; i >= 0; i--) j.push(plus(S.d.auj, -i));
+  const v = j.map(x => bilanJour(x)), max = Math.max(1, ...v.map(x => Math.max(x.ca, x.sorties))), L = ["D", "L", "M", "M", "J", "V", "S"];
+  return `<div class="graph">${j.map((x, i) => `<div class="col"><div class="bars"><i style="height:${Math.max(2, Math.round(v[i].ca * 100 / max))}%;background:var(--bleu)" title="Ventes ${ar(v[i].ca)}"></i><i style="height:${Math.max(2, Math.round(v[i].sorties * 100 / max))}%;background:#f87171" title="Dépenses ${ar(v[i].sorties)}"></i></div><small>${L[new Date(x + "T12:00:00Z").getUTCDay()]}</small></div>`).join("")}</div><div class="leg"><span><i style="background:var(--bleu)"></i>Ventes</span><span><i style="background:#f87171"></i>Dépenses</span></div>`;
 }
 function vueAuj() {
   const d = S.d, p = d.plafonds, b = bilanJour(d.auj), pct = p.OBJECTIF_CA_JOUR > 0 ? Math.min(100, Math.round(b.ca * 100 / p.OBJECTIF_CA_JOUR)) : 0;
   const cad = somme(actives(), l => l.jour === d.auj && l.cat === "CADEAU"), pub = somme(actives(), l => l.type === "SORTIE" && l.cat === "PUBLICITE" && l.jour >= lundi(d.auj));
-  const aEnc = d.commandes.filter(c => !c.vendue && sans(c.statut).startsWith("LIVR")).slice(-8).reverse();
-  return `<div class="card"><div class="mut">Argent restant</div><div class="big ${d.solde < 0 ? "neg" : ""}">${ar(d.solde)}</div><div class="mut">Argent de départ + ventes − toutes les dépenses enregistrées</div></div>
-  <div class="card"><div class="grid">
-    <div class="kpi"><span class="mut">Chiffre d'affaires du jour</span><b>${ar(b.ca)}</b></div>
-    <div class="kpi"><span class="mut">Dépenses du jour</span><b>${ar(b.sorties)}</b></div>
-    <div class="kpi"><span class="mut">Marge (ventes − achats, livreur, cadeaux)</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div>
-    <div class="kpi"><span class="mut">Résultat du jour (après autres frais)</span><b class="${b.resultat < 0 ? "neg" : "pos"}">${ar(b.resultat)}</b></div></div>
-    <div class="barre" style="margin-top:12px"><i style="width:${pct}%;background:var(--bleu)"></i></div><div class="mut">${pct} % de l'objectif du jour (${ar(p.OBJECTIF_CA_JOUR)})</div></div>
-  <div class="card"><b>Plafonds</b>
+  const enc = aEncaisser().slice(-8).reverse();
+  return `<div class="card"><div class="grid">
+    <div class="kpi"><span class="mut">Chiffre d'affaires du jour</span><b>${ar(b.ca)}</b></div><div class="kpi"><span class="mut">Dépenses du jour</span><b>${ar(b.sorties)}</b></div>
+    <div class="kpi"><span class="mut">Marge (ventes − achats, livreur, cadeaux)</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div><div class="kpi"><span class="mut">Résultat (après autres frais)</span><b class="${b.resultat < 0 ? "neg" : "pos"}">${ar(b.resultat)}</b></div></div>
+    <div class="barre" style="margin-top:12px"><i style="width:${pct}%;background:linear-gradient(90deg,var(--bleu),var(--violet))"></i></div><div class="mut">${pct} % de l'objectif du jour (${ar(p.OBJECTIF_CA_JOUR)})</div></div>
+  <div class="card"><h3>📅 Les 7 derniers jours</h3>${graphe7()}</div>
+  <div class="card"><h3>🎚️ Plafonds</h3>
     ${jauge("Avance en cours", avanceEnCours(), p.AVANCE_MAX, "Achats déjà payés dont la vente n'est pas encore encaissée")}
     ${jauge("Cadeaux du jour", cad, p.CADEAUX_JOUR, "Cadeaux enregistrés aujourd'hui")}
     ${jauge("Publicité de la semaine", pub, p.PUB_SEMAINE, "Depuis lundi")}</div>
-  <div class="card"><b>À encaisser</b><div class="mut">Commandes livrées sans vente enregistrée</div>${aEnc.length ? aEnc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}</div>`;
+  <div class="card"><h3>💵 À encaisser</h3><div class="mut">Commandes livrées sans vente enregistrée</div>${enc.length ? enc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit vert" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}</div>`;
 }
 function vueSaisie() {
   const c = S.d.categories, cats = S.type === "ENTREE" ? c.entree : c.sortie, pre = S.pre || {};
@@ -181,7 +288,6 @@ function vueSaisie() {
   <button id="f-ok" style="width:100%;margin-top:14px">Enregistrer</button></div>
   <p class="mut">Astuce : pour une commande, saisissez la <b>vente</b>, puis l'<b>achat</b> des produits et le <b>livreur</b> avec le même ID. La marge s'affiche dans « Commandes ».</p>`;
 }
-const NOMS = Object.assign({}, { VENTE: "Vente", APPORT: "Apport" });
 function ligneHtml(l) {
   const nom = (S.d.categories.entree[l.cat] || S.d.categories.sortie[l.cat] || l.cat);
   return `<div class="lig ${l.annule ? "annule" : ""}"><div class="g"><b>${esc(nom)}${l.idCmd ? `<span class="tag">${esc(l.idCmd)}</span>` : ""}</b><span class="mut">${esc(l.heure)} ${esc(l.note)}</span></div><div class="m ${l.type === "ENTREE" ? "pos" : "neg"}">${l.type === "ENTREE" ? "+" : "−"}${ar(l.montant).replace("−", "")}</div>${l.annule ? "" : `<button class="danger petit" data-ann="${esc(l.id)}">✕</button>`}</div>`;
@@ -197,13 +303,35 @@ function vueCmd() {
   actives().forEach(l => { const k = l.idCmd || "—"; const o = g[k] = g[k] || { id: k, ca: 0, cout: 0, last: "" }; if (l.type === "ENTREE" && l.cat === "VENTE") o.ca += l.montant; else if (l.type === "SORTIE") o.cout += l.montant; if (l.jour > o.last) o.last = l.jour; });
   const rows = Object.values(g).sort((a, b) => b.last.localeCompare(a.last) || a.id.localeCompare(b.id));
   const totCa = rows.reduce((a, r) => a + r.ca, 0), totCout = rows.reduce((a, r) => a + r.cout, 0);
-  return `<div class="card"><b>Marge par commande (60 derniers jours)</b><div class="mut">Les lignes sans ID sont regroupées sous « — » (frais généraux).</div>
+  return `<div class="card"><h3>🧾 Marge par commande</h3><div class="mut">60 derniers jours. Les lignes sans ID sont regroupées sous « — » (frais généraux).</div>
   <table><tr><th>ID</th><th>Ventes</th><th>Coûts</th><th>Marge</th></tr>${rows.map(r => `<tr><td>${esc(r.id)}</td><td>${ar(r.ca)}</td><td>${ar(r.cout)}</td><td class="${r.ca - r.cout < 0 ? "neg" : "pos"}"><b>${ar(r.ca - r.cout)}</b></td></tr>`).join("") || '<tr><td colspan="4" class="mut">Aucune ligne.</td></tr>'}
   <tr><td><b>Total</b></td><td><b>${ar(totCa)}</b></td><td><b>${ar(totCout)}</b></td><td><b>${ar(totCa - totCout)}</b></td></tr></table></div>`;
 }
-const PL = { SOLDE_DEPART: ["Argent de départ", "Ce que vous aviez au début du suivi"], OBJECTIF_CA_JOUR: ["Objectif de chiffre d'affaires / jour", "Pour la barre de progression"], AVANCE_MAX: ["Plafond d'avance", "Achats payés sans vente encaissée"], CADEAUX_JOUR: ["Plafond cadeaux / jour", ""], PUB_SEMAINE: ["Plafond publicité / semaine", "Depuis lundi"], SEUIL_LIVRAISON: ["Seuil paiement à la livraison", "Information (30 000 Ar : en dessous, paiement à la livraison autorisé)"] };
+function vueBudget() {
+  const B = budget(), p = S.d.plafonds;
+  const tete = B.fiable ? `<span class="badge" style="background:#dcfce7;color:#166534">Calculé sur ${B.jours} jour(s) réels</span>` : `<span class="badge">Estimation de départ : pas assez de données (${B.jours} jour(s) avec ventes)</span>`;
+  const lignes = B.cats.map(c => { const pc = c.conseil > 0 ? Math.min(100, Math.round(c.auj * 100 / c.conseil)) : 0; return `<tr><td>${c.nom}</td><td>${ar(c.moy)}</td><td><b>${ar(c.conseil)}</b></td><td style="color:${couleur(pc)}">${ar(c.auj)}</td></tr>`; }).join("");
+  return `<div class="card"><h3>🧮 Budget de fonctionnement</h3>${tete}<div class="mut" style="margin-top:6px">Déduit de vos ventes et dépenses des 30 derniers jours. Il se met à jour tout seul à chaque saisie.</div>
+  <div class="grid" style="margin-top:12px">
+    <div class="kpi"><span class="mut">Ventes moyennes / jour</span><b>${ar(B.caMoy)}</b></div>
+    <div class="kpi"><span class="mut">Frais de fonctionnement / jour</span><b>${ar(B.fonctMoy)}</b></div>
+    <div class="kpi"><span class="mut">Marge sur produits</span><b>${Math.round(B.margeProd * 100)} %</b></div>
+    <div class="kpi"><span class="mut">Seuil de rentabilité / jour</span><b>${ar(B.seuil)}</b></div>
+    <div class="kpi"><span class="mut">Autonomie de l'argent restant</span><b>${B.runway > 0 ? Math.floor(B.runway) + " jour(s)" : "—"}</b></div>
+    <div class="kpi"><span class="mut">Projection du mois (26 j)</span><b>${ar(B.mois)}</b></div></div>
+  <div class="mut" style="margin-top:8px"><b>Seuil de rentabilité</b> : ventes minimales par jour pour couvrir les frais de fonctionnement. <b>Autonomie</b> : combien de jours l'argent restant couvre ces frais.</div></div>
+  <div class="card"><h3>📋 Budget conseillé par poste (par jour)</h3><div class="mut">Moyenne réelle + 10 % de marge de sécurité. <b>*</b> = pas encore d'historique : estimation de départ en % des ventes (livreur 5 %, carburant 3 %, crédit d'appel 1,5 %, publicité 8 %, cadeaux 6 %, autres 1,5 %), à ajuster.</div>
+  <table><tr><th>Poste</th><th>Moyenne</th><th>Conseillé</th><th>Aujourd'hui</th></tr>${lignes}<tr><td><b>Total</b></td><td><b>${ar(B.fonctMoy)}</b></td><td><b>${ar(B.conseilBudgetJour)}</b></td><td><b>${ar(B.cats.reduce((a, c) => a + c.auj, 0))}</b></td></tr></table></div>
+  <div class="card"><h3>🎯 Plafonds conseillés</h3>
+  <div class="lig"><div class="g"><b>Avance d'achats</b><span class="mut">Achats d'une journée moyenne</span></div><div class="m">${ar(Math.ceil(B.achatsMoy / 1000) * 1000)}</div></div>
+  <div class="lig"><div class="g"><b>Cadeaux / jour</b><span class="mut">Budget conseillé du poste</span></div><div class="m">${ar(B.cats.find(c => c.k === "CADEAU").conseil)}</div></div>
+  <div class="lig"><div class="g"><b>Publicité / semaine</b><span class="mut">Budget conseillé × 7</span></div><div class="m">${ar(B.cats.find(c => c.k === "PUBLICITE").conseil * 7)}</div></div>
+  <div class="mut" style="margin-top:8px">Actuels : avance ${ar(p.AVANCE_MAX)}, cadeaux ${ar(p.CADEAUX_JOUR)}, publicité ${ar(p.PUB_SEMAINE)}.</div>
+  <button id="b-appliquer" style="width:100%;margin-top:12px">✅ Appliquer ces plafonds</button></div>`;
+}
+const PL = { SOLDE_DEPART: ["Argent de départ", "Ce que vous aviez au début du suivi"], OBJECTIF_CA_JOUR: ["Objectif de chiffre d'affaires / jour", "Pour la barre de progression"], AVANCE_MAX: ["Plafond d'avance", "Achats payés sans vente encaissée"], CADEAUX_JOUR: ["Plafond cadeaux / jour", ""], PUB_SEMAINE: ["Plafond publicité / semaine", "Depuis lundi"], SEUIL_LIVRAISON: ["Seuil paiement à la livraison", "Information (en dessous, paiement à la livraison autorisé)"] };
 function vuePlaf() {
-  return `<div class="card">${Object.keys(PL).map(k => `<label for="p-${k}">${PL[k][0]}</label><div style="display:flex;gap:8px"><input id="p-${k}" inputmode="numeric" value="${S.d.plafonds[k]}"><button class="petit" data-pl="${k}">OK</button></div>${PL[k][1] ? `<div class="mut">${PL[k][1]}</div>` : ""}`).join("")}</div>`;
+  return `<div class="card"><h3>🎚️ Plafonds et objectifs</h3>${Object.keys(PL).map(k => `<label for="p-${k}">${PL[k][0]}</label><div style="display:flex;gap:8px"><input id="p-${k}" inputmode="numeric" value="${S.d.plafonds[k]}"><button class="petit" data-pl="${k}">OK</button></div>${PL[k][1] ? `<div class="mut">${PL[k][1]}</div>` : ""}`).join("")}</div>`;
 }
 
 /* ---------- Actions ---------- */
@@ -215,10 +343,18 @@ async function clic(e) {
   const t = e.target.closest("button"); if (!t) return;
   if (t.dataset.type) { S.type = t.dataset.type; S.cat = S.type === "ENTREE" ? "VENTE" : "ACHAT"; S.pre = null; dessiner(); }
   else if (t.dataset.cat) { const m = $("f-montant").value, i = $("f-id").value; S.cat = t.dataset.cat; S.pre = { montant: m, id: i }; dessiner(); }
-  else if (t.dataset.enc) { const c = S.d.commandes.find(x => x.id === t.dataset.enc); S.type = "ENTREE"; S.cat = "VENTE"; S.pre = { id: c.id, montant: c.montant }; S.onglet = "saisie"; dessiner(); window.scrollTo(0, 0); }
+  else if (t.dataset.enc) { const c = S.d.commandes.find(x => x.id === t.dataset.enc); S.type = "ENTREE"; S.cat = "VENTE"; S.pre = { id: c.id, montant: c.montant }; aller("saisie"); }
   else if (t.id === "f-ok") enregistrer(t);
+  else if (t.id === "b-appliquer") appliquerBudget(t);
   else if (t.dataset.ann) { const mo = prompt("Annuler cette ligne ? Motif (facultatif) :", ""); if (mo === null) return; const r = await api({ operation: "annuler", idLigne: t.dataset.ann, motif: mo }); toast(r.message || "Fait"); charger(); }
   else if (t.dataset.pl) { const v = $("p-" + t.dataset.pl).value; const r = await api({ operation: "plafond", cle: t.dataset.pl, valeur: v }); toast(r.success ? "Plafond enregistré" : (r.message || "Erreur")); if (r.success) charger(); }
+}
+async function appliquerBudget(btn) {
+  const B = budget(), v = { AVANCE_MAX: Math.ceil(B.achatsMoy / 1000) * 1000, CADEAUX_JOUR: B.cats.find(c => c.k === "CADEAU").conseil, PUB_SEMAINE: B.cats.find(c => c.k === "PUBLICITE").conseil * 7 };
+  if (!confirm(`Appliquer ces plafonds ?\n\nAvance : ${ar(v.AVANCE_MAX)}\nCadeaux / jour : ${ar(v.CADEAUX_JOUR)}\nPublicité / semaine : ${ar(v.PUB_SEMAINE)}`)) return;
+  btn.disabled = true;
+  try { for (const k in v) { const r = await api({ operation: "plafond", cle: k, valeur: v[k] }); if (!r.success) throw new Error(r.message || "Erreur"); } toast("✔ Plafonds appliqués"); await charger(); }
+  catch (e) { if (e.message !== "acces") toast("Impossible : " + e.message); btn.disabled = false; }
 }
 async function enregistrer(btn) {
   const montant = $("f-montant").value.replace(/\s/g, ""), id = $("f-id").value.trim();
@@ -229,6 +365,12 @@ async function enregistrer(btn) {
     const r = await api({ operation: "ajouter", type: S.type, categorie: S.cat, montant, idCommande: id, note: $("f-note").value, jour: $("f-jour").value });
     if (r.success) { S.pre = null; toast("✔ Enregistré"); await charger(); S.onglet = "saisie"; dessiner(); } else { toast(r.message || "Erreur"); btn.disabled = false; btn.textContent = "Enregistrer"; }
   } catch (e) { if (e.message !== "acces") { toast("Réseau indisponible : rien n'a été enregistré."); btn.disabled = false; btn.textContent = "Enregistrer"; } }
+}
+function exporterCsv() {
+  if (!S.d) return; menu(false);
+  const q = t => '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"', n = c => S.d.categories.entree[c] || S.d.categories.sortie[c] || c;
+  const rows = [["Jour", "Heure", "Type", "Catégorie", "Montant", "ID commande", "Note", "Statut"].map(q).join(";")].concat(S.d.journal.map(l => [l.jour, l.heure, l.type === "ENTREE" ? "Entrée" : "Dépense", n(l.cat), l.montant, l.idCmd, l.note, l.annule ? "Annulée" : "Actif"].map(q).join(";")));
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })); a.download = "gestion-journal-" + S.d.auj + ".csv"; document.body.appendChild(a); a.click(); a.remove(); toast("Journal exporté");
 }
 </script>
 </body>
