@@ -3901,8 +3901,8 @@ async function piloterBanniereDynamique() {
             const dateR = new Date(dateF);
             dateR.setDate(dateF.getDate() + 1);
             
-            const dR = dateR.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const dF = signal.dateFerme;
+            const dR = signal.reprise || dateR.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const dF = (signal.dateFin && signal.dateFin !== signal.dateFerme) ? (signal.dateFerme + " → " + signal.dateFin) : signal.dateFerme;
 
             // Design Compact & Professionnel Malgache
             if (dateMg) {
