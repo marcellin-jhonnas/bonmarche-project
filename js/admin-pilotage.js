@@ -449,6 +449,16 @@ async function charger(force) {
   } catch (e) { cache.ok = false; }
   try { var pa = await postAPI({ action: "gestionCadeaux", operation: "clientsParrainage" }); cache.parrains = pa.clients || []; } catch (e) {}
   await chargerLivreurs();
+  try {   // [PRIX ACHAT PARTAGÉS] fusionne les prix d'achat de cet appareil avec ceux du script (zone « prix_achat » existante), le script l'emporte
+    var pc = await postAPI({ action: "getConfig", cle: "prix_achat" });
+    if (pc && pc.status === "success") {
+      var loc = prixAchat(), sh = pc.valeur || {}, fus = {}, kk, manque = false;
+      for (kk in loc) fus[kk] = loc[kk]; for (kk in sh) fus[kk] = sh[kk];
+      lsSet("sr_cfg_prix_achat", fus);
+      for (kk in loc) if (sh[kk] == null) manque = true;
+      if (manque) await postAPI({ action: "saveConfig", cle: "prix_achat", valeur: fus });
+    }
+  } catch (e) {}
   if (force || Date.now() - cache.tProd > 600000) {
     try { var r = await fetch(apiUrl() + "?t=" + Date.now()); var j = await r.json(); if (Array.isArray(j)) { cache.produits = j; cache.tProd = Date.now(); } } catch (e) {}
   }
@@ -563,6 +573,7 @@ function saisirAchat(nom) {
   var a = prixAchat(), k = cleProd(nom), v = prompt("Prix d'achat unitaire (Ar) pour « " + nom + " » :", a[k] != null ? a[k] : ""); if (v === null) return;
   var n = num(v); if (n > 0) a[k] = n; else delete a[k];
   lsSet("sr_cfg_prix_achat", a); toast("✔ Prix d'achat enregistré"); rendre();
+  postAPI({ action: "saveConfig", cle: "prix_achat", valeur: a }).catch(function () { toast("⚠️ Enregistré sur cet appareil seulement"); });   // [PRIX ACHAT PARTAGÉS]
 }
 
 /* ---------------- Mise en place ---------------- */

@@ -113,7 +113,7 @@ footer a{color:#fbbf24;text-decoration:none}footer .bas{text-align:center;border
     <main><div id="vue"></div>
       <footer>
         <div class="f-grid">
-          <div><h4>💼 SafeRun Market</h4><p>Livraison de courses à Antananarivo.<br>« Chaque ariary compté est un ariary gagné. »</p><p class="mut" style="color:#94a3b8">Gestion V2 · données du Google Sheet</p></div>
+          <div><h4>💼 SafeRun Market</h4><p>Livraison de courses à Antananarivo.<br>« Chaque ariary compté est un ariary gagné. »</p><p class="mut" style="color:#94a3b8">Gestion V2.1 · données du Google Sheet</p></div>
           <div><h4>📊 En chiffres</h4><div class="f-chiffres" id="f-chiffres"></div></div>
           <div><h4>🔗 Raccourcis</h4><p><a href="admin.html">🛠️ Admin SafeRun</a></p><p><a href="index.html">🏠 Le site</a></p><p><a href="#" id="f-haut">⬆️ Haut de page</a></p></div>
         </div>
@@ -225,18 +225,42 @@ function jauge(titre, val, max, aide) {
 }
 
 /* ---------- Budget de fonctionnement : calculé sur les 30 derniers jours réels ---------- */
-const CAT_FONCT = [["LIVREUR", "Livreur", 0.05], ["CARBURANT", "Carburant", 0.03], ["CREDIT_APPEL", "Crédit d'appel", 0.015], ["PUBLICITE", "Publicité", 0.08], ["CADEAU", "Cadeaux", 0.06], ["AUTRE", "Autres dépenses", 0.015]];
+const CAT_FONCT = [["LIVREUR", "Livreur (fixe)", 0], ["CARBURANT", "Carburant", 0.03], ["CREDIT_APPEL", "Crédit d'appel", 0.015], ["PUBLICITE", "Publicité", 0.08], ["CADEAU", "Cadeaux", 0.06], ["AUTRE", "Autres dépenses", 0.015]];
+const nbLivreurs = () => Math.max(1, Math.round(S.d.plafonds.NB_LIVREURS || 1));
+const coutUnLivreurJour = () => { const p = S.d.plafonds; return p.PAIE_LIVREUR_MOIS / Math.max(1, p.JOURS_TRAVAILLES) + p.REPAS_LIVREUR_JOUR; };   // salaire du jour + déjeuner/crédit
+const coutLivreursJour = () => nbLivreurs() * coutUnLivreurJour();
+function joursOuvres(du, au) { let n = 0; for (let j = du; j <= au; j = plus(j, 1)) if (new Date(j + "T12:00:00Z").getUTCDay() !== 0) n++; return n; }   // dimanches exclus
 function budget() {
   const d = S.d, deb = plus(d.auj, -29), L = actives().filter(l => l.jour >= deb);
   const jours = new Set(L.map(l => l.jour)).size, ca = somme(L, l => l.type === "ENTREE" && l.cat === "VENTE"), achats = somme(L, l => l.type === "SORTIE" && l.cat === "ACHAT");
   const n = Math.max(1, jours), fiable = jours >= 3 && ca > 0, base = fiable ? ca / n : d.plafonds.OBJECTIF_CA_JOUR;
   const cats = CAT_FONCT.map(([k, nom, pc]) => {
+    if (k === "LIVREUR") { const f = coutLivreursJour(); return { k, reel: true, nom: nom + " ×" + nbLivreurs(), moy: f, conseil: Math.ceil(f / 100) * 100, auj: somme(actives(), l => l.jour === d.auj && l.type === "SORTIE" && l.cat === k) }; }
     const tot = somme(L, l => l.type === "SORTIE" && l.cat === k), reel = fiable && tot > 0, moy = reel ? tot / n : base * pc;   // poste sans historique : estimation de départ (% des ventes)
-    return { k, nom: nom + (reel ? "" : " *"), moy, conseil: Math.ceil(moy * (reel ? 1.1 : 1) / 100) * 100, auj: somme(actives(), l => l.jour === d.auj && l.type === "SORTIE" && l.cat === k) };
+    return { k, reel, nom: nom + (reel ? "" : " *"), moy, conseil: Math.ceil(moy * (reel ? 1.1 : 1) / 100) * 100, auj: somme(actives(), l => l.jour === d.auj && l.type === "SORTIE" && l.cat === k) };
   });
   const fonctMoy = cats.reduce((a, c) => a + c.moy, 0), margeProd = fiable ? (ca - achats) / ca : 0.2;
   const seuil = margeProd > 0 ? fonctMoy / margeProd : 0, achatsMoy = fiable ? achats / n : base * (1 - margeProd);
-  return { jours, fiable, caMoy: base, achatsMoy, fonctMoy, margeProd, seuil, runway: fonctMoy > 0 ? d.solde / fonctMoy : 0, cats, mois: base * 26, conseilBudgetJour: cats.reduce((a, c) => a + c.conseil, 0) };
+  const fonctReel = cats.filter(c => c.reel).reduce((x, c) => x + c.moy, 0);   // frais réellement constatés (hors estimations) : base du test de recrutement
+  const seuilPlusUn = margeProd > 0 ? (fonctReel + coutUnLivreurJour()) / margeProd : 0;
+  return { jours, fiable, caMoy: base, achatsMoy, fonctMoy, margeProd, seuil, seuilPlusUn, runway: fonctMoy > 0 ? d.solde / fonctMoy : 0, cats, mois: base * d.plafonds.JOURS_TRAVAILLES, conseilBudgetJour: cats.reduce((a, c) => a + c.conseil, 0) };
+}
+/* ---------- Faut-il recruter un livreur ? (commandes des 14 derniers jours, archivées incluses) ---------- */
+function recrutement(B) {
+  const d = S.d, p = d.plafonds, deb = plus(d.auj, -13), cmd = d.commandes.filter(c => c.jour >= deb && !sans(c.statut).includes("ANNUL"));
+  const par = {}; cmd.forEach(c => par[c.jour] = (par[c.jour] || 0) + 1);
+  const js = Object.keys(par), total = cmd.length, moy = js.length ? total / js.length : 0, pic = js.length ? Math.max(...js.map(j => par[j])) : 0;
+  const cap = nbLivreurs() * Math.max(1, p.CAPACITE_LIVREUR_JOUR), util = Math.round(moy * 100 / cap), depasse = js.filter(j => par[j] > cap).length;
+  const panier = total ? cmd.reduce((a, c) => a + c.montant, 0) / total : 0, rentable = B.fiable && B.caMoy >= B.seuilPlusUn;
+  const venteSup = B.margeProd > 0 ? coutUnLivreurJour() / B.margeProd : 0, cmdSup = panier > 0 ? Math.ceil(venteSup / panier) : 0;
+  let niveau, titre, texte;
+  if (js.length < 3) { niveau = "gris"; titre = "Pas assez de données"; texte = "Il faut au moins 3 jours avec commandes pour juger la charge."; }
+  else if (util >= p.SEUIL_RECRUTEMENT_PCT && (depasse >= 2 || util >= 100)) {
+    if (rentable) { niveau = "rouge"; titre = "Recrutez maintenant"; texte = "La charge dépasse le seuil et vos ventes couvrent le coût d'un livreur de plus."; }
+    else { niveau = "orange"; titre = "Charge forte, mais vente insuffisante pour payer un livreur de plus"; texte = "Augmentez d'abord les ventes (ou regroupez mieux les tournées) avant d'embaucher."; }
+  } else if (util >= 60) { niveau = "orange"; titre = "Préparez un recrutement"; texte = "La charge approche le seuil : cherchez un candidat, sans embaucher encore."; }
+  else { niveau = "vert"; titre = "Pas de recrutement nécessaire"; texte = "La capacité actuelle suffit."; }
+  return { moy, pic, cap, util, depasse, jours: js.length, panier, rentable, venteSup, cmdSup, niveau, titre, texte };
 }
 
 /* ---------- Vues ---------- */
@@ -263,17 +287,18 @@ function graphe7() {
 function vueAuj() {
   const d = S.d, p = d.plafonds, b = bilanJour(d.auj), pct = p.OBJECTIF_CA_JOUR > 0 ? Math.min(100, Math.round(b.ca * 100 / p.OBJECTIF_CA_JOUR)) : 0;
   const cad = somme(actives(), l => l.jour === d.auj && l.cat === "CADEAU"), pub = somme(actives(), l => l.type === "SORTIE" && l.cat === "PUBLICITE" && l.jour >= lundi(d.auj));
-  const enc = aEncaisser().slice(-8).reverse();
+  const toutEnc = aEncaisser().slice().reverse(), enc = S.encTout ? toutEnc : toutEnc.slice(0, 8);
   return `<div class="card"><div class="grid">
     <div class="kpi"><span class="mut">Chiffre d'affaires du jour</span><b>${ar(b.ca)}</b></div><div class="kpi"><span class="mut">Dépenses du jour</span><b>${ar(b.sorties)}</b></div>
     <div class="kpi"><span class="mut">Marge (ventes − achats, livreur, cadeaux)</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div><div class="kpi"><span class="mut">Résultat (après autres frais)</span><b class="${b.resultat < 0 ? "neg" : "pos"}">${ar(b.resultat)}</b></div></div>
     <div class="barre" style="margin-top:12px"><i style="width:${pct}%;background:linear-gradient(90deg,var(--bleu),var(--violet))"></i></div><div class="mut">${pct} % de l'objectif du jour (${ar(p.OBJECTIF_CA_JOUR)})</div></div>
+  ${(() => { const B = budget(), fix = coutLivreursJour(), seuilJ = B.margeProd > 0 ? fix / B.margeProd : 0, pc = seuilJ > 0 ? Math.min(100, Math.round(b.ca * 100 / seuilJ)) : 0; return `<div class="card"><h3>👷 Livreur du jour</h3><div class="mut">${nbLivreurs()} livreur(s) : ${ar(fix)} / jour (salaire + déjeuner + crédit)</div><div class="barre"><i style="width:${pc}%;background:${pc >= 100 ? "var(--vert)" : "var(--orange)"}"></i></div><div class="mut">${pc >= 100 ? "✅ Les ventes du jour couvrent le coût des livreurs." : "Ventes à atteindre pour couvrir les livreurs : <b>" + ar(seuilJ) + "</b> (encore " + ar(Math.max(0, seuilJ - b.ca)) + ")."}</div></div>`; })()}
   <div class="card"><h3>📅 Les 7 derniers jours</h3>${graphe7()}</div>
   <div class="card"><h3>🎚️ Plafonds</h3>
     ${jauge("Avance en cours", avanceEnCours(), p.AVANCE_MAX, "Achats déjà payés dont la vente n'est pas encore encaissée")}
     ${jauge("Cadeaux du jour", cad, p.CADEAUX_JOUR, "Cadeaux enregistrés aujourd'hui")}
     ${jauge("Publicité de la semaine", pub, p.PUB_SEMAINE, "Depuis lundi")}</div>
-  <div class="card"><h3>💵 À encaisser</h3><div class="mut">Commandes livrées sans vente enregistrée</div>${enc.length ? enc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit vert" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}</div>`;
+  <div class="card"><h3>💵 À encaisser (${toutEnc.length})</h3><div class="mut">Commandes livrées sans vente enregistrée (21 derniers jours, archivées incluses)</div>${enc.length ? enc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit vert" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}${toutEnc.length > 8 ? `<button class="sec petit" data-enctout="1" style="width:100%;margin-top:8px">${S.encTout ? "Réduire la liste" : "Voir les " + (toutEnc.length - 8) + " autres"}</button>` : ""}</div>`;
 }
 function vueSaisie() {
   const c = S.d.categories, cats = S.type === "ENTREE" ? c.entree : c.sortie, pre = S.pre || {};
@@ -308,19 +333,45 @@ function vueCmd() {
   <tr><td><b>Total</b></td><td><b>${ar(totCa)}</b></td><td><b>${ar(totCout)}</b></td><td><b>${ar(totCa - totCout)}</b></td></tr></table></div>`;
 }
 function vueBudget() {
-  const B = budget(), p = S.d.plafonds;
+  const B = budget(), p = S.d.plafonds, R = recrutement(B), d = S.d;
   const tete = B.fiable ? `<span class="badge" style="background:#dcfce7;color:#166534">Calculé sur ${B.jours} jour(s) réels</span>` : `<span class="badge">Estimation de départ : pas assez de données (${B.jours} jour(s) avec ventes)</span>`;
   const lignes = B.cats.map(c => { const pc = c.conseil > 0 ? Math.min(100, Math.round(c.auj * 100 / c.conseil)) : 0; return `<tr><td>${c.nom}</td><td>${ar(c.moy)}</td><td><b>${ar(c.conseil)}</b></td><td style="color:${couleur(pc)}">${ar(c.auj)}</td></tr>`; }).join("");
-  return `<div class="card"><h3>🧮 Budget de fonctionnement</h3>${tete}<div class="mut" style="margin-top:6px">Déduit de vos ventes et dépenses des 30 derniers jours. Il se met à jour tout seul à chaque saisie.</div>
+  const debMois = d.auj.slice(0, 8) + "01", prov = joursOuvres(debMois, d.auj) * coutLivreursJour(), verse = somme(actives(), l => l.jour >= debMois && l.type === "SORTIE" && l.cat === "LIVREUR"), reste = Math.max(0, prov - verse);
+  const coul = { rouge: "#fee2e2;color:#991b1b", orange: "#fef3c7;color:#92400e", vert: "#dcfce7;color:#166534", gris: "#e8edf5;color:#334155" }[R.niveau];
+  return `<div class="card"><h3>👷 Livreurs et charges fixes</h3>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px"><div><b>Nombre de livreurs</b><div class="mut">Commencez avec 1, augmentez selon le besoin</div></div>
+  <div style="display:flex;align-items:center;gap:10px"><button class="sec petit" data-nbl="-1" style="font-size:1.1rem">−</button><b style="font-size:1.4rem">${nbLivreurs()}</b><button class="petit" data-nbl="1" style="font-size:1.1rem">＋</button></div></div>
+  ${d.livreursActifs && d.livreursActifs !== nbLivreurs() ? `<div class="mut" style="margin-top:6px">ℹ️ La feuille « Livreurs » compte ${d.livreursActifs} livreur(s) actif(s).</div>` : ""}
+  <div class="grid" style="margin-top:12px">
+    <div class="kpi"><span class="mut">Coût d'un livreur / jour</span><b>${ar(coutUnLivreurJour())}</b><span class="mut">${ar(p.PAIE_LIVREUR_MOIS)} ÷ ${p.JOURS_TRAVAILLES} j + ${ar(p.REPAS_LIVREUR_JOUR)} (déjeuner + crédit)</span></div>
+    <div class="kpi"><span class="mut">Coût des livreurs / mois</span><b>${ar(nbLivreurs() * (p.PAIE_LIVREUR_MOIS + p.REPAS_LIVREUR_JOUR * p.JOURS_TRAVAILLES))}</b></div>
+    <div class="kpi"><span class="mut">À mettre de côté ce mois</span><b>${ar(reste)}</b><span class="mut">${ar(prov)} dus à ce jour − ${ar(verse)} déjà versés</span></div>
+    <div class="kpi"><span class="mut">Ventes/jour pour couvrir les livreurs</span><b>${ar(B.margeProd > 0 ? coutLivreursJour() / B.margeProd : 0)}</b><span class="mut">avec ${Math.round(B.margeProd * 100)} % de marge produit</span></div></div>
+  <div class="mut" style="margin-top:8px">Le salaire est un coût <b>fixe</b> : il est dû même un jour sans commande. Les lignes « Livreur » que vous saisissez comptent comme des versements (elles réduisent « à mettre de côté »).</div></div>
+
+  <div class="card"><h3>🧭 Faut-il recruter un livreur de plus ?</h3>
+  <div style="background:${coul};border-radius:14px;padding:12px;margin-top:8px"><b>${R.titre}</b><div style="font-size:.88rem;margin-top:2px">${R.texte}</div></div>
+  <div class="grid" style="margin-top:12px">
+    <div class="kpi"><span class="mut">Commandes / jour (14 j)</span><b>${R.moy.toFixed(1)}</b><span class="mut">pic : ${R.pic}</span></div>
+    <div class="kpi"><span class="mut">Capacité (${nbLivreurs()} × ${p.CAPACITE_LIVREUR_JOUR})</span><b>${R.cap} / jour</b><span class="mut">utilisée à ${R.util} %</span></div>
+    <div class="kpi"><span class="mut">Jours au-dessus de la capacité</span><b>${R.depasse}</b><span class="mut">sur ${R.jours} jour(s) avec commandes</span></div>
+    <div class="kpi"><span class="mut">Livreur de plus : ventes/jour nécessaires</span><b>${ar(B.seuilPlusUn)}</b><span class="mut">actuellement ${ar(B.caMoy)} ${R.rentable ? "✅" : "⚠️"} (frais réels connus)</span></div></div>
+  <div class="mut" style="margin-top:10px"><b>Quand recruter ?</b> Lorsque ces trois conditions sont réunies :<br>
+  1. la charge moyenne atteint <b>${p.SEUIL_RECRUTEMENT_PCT} %</b> de la capacité ;<br>
+  2. la capacité est dépassée au moins <b>2 jours</b> sur 14 (ou la charge est ≥ 100 %) ;<br>
+  3. vos ventes couvrent le <b>coût du livreur de plus</b> (il faudrait environ ${ar(R.venteSup)} de ventes en plus par jour, soit ${R.cmdSup} commande(s) de plus).<br>
+  À surveiller aussi, non mesuré ici : reports de livraison fréquents, clients qui refusent faute de créneau (voir Pilotage). La capacité par livreur (${p.CAPACITE_LIVREUR_JOUR}/jour) est une estimation de départ : corrigez-la dans Plafonds avec la réalité.</div></div>
+
+  <div class="card"><h3>🧮 Budget de fonctionnement</h3>${tete}<div class="mut" style="margin-top:6px">Déduit de vos ventes et dépenses des 30 derniers jours, avec les livreurs en coût fixe. Il se met à jour à chaque saisie.</div>
   <div class="grid" style="margin-top:12px">
     <div class="kpi"><span class="mut">Ventes moyennes / jour</span><b>${ar(B.caMoy)}</b></div>
     <div class="kpi"><span class="mut">Frais de fonctionnement / jour</span><b>${ar(B.fonctMoy)}</b></div>
     <div class="kpi"><span class="mut">Marge sur produits</span><b>${Math.round(B.margeProd * 100)} %</b></div>
     <div class="kpi"><span class="mut">Seuil de rentabilité / jour</span><b>${ar(B.seuil)}</b></div>
     <div class="kpi"><span class="mut">Autonomie de l'argent restant</span><b>${B.runway > 0 ? Math.floor(B.runway) + " jour(s)" : "—"}</b></div>
-    <div class="kpi"><span class="mut">Projection du mois (26 j)</span><b>${ar(B.mois)}</b></div></div>
+    <div class="kpi"><span class="mut">Projection du mois (${p.JOURS_TRAVAILLES} j)</span><b>${ar(B.mois)}</b></div></div>
   <div class="mut" style="margin-top:8px"><b>Seuil de rentabilité</b> : ventes minimales par jour pour couvrir les frais de fonctionnement. <b>Autonomie</b> : combien de jours l'argent restant couvre ces frais.</div></div>
-  <div class="card"><h3>📋 Budget conseillé par poste (par jour)</h3><div class="mut">Moyenne réelle + 10 % de marge de sécurité. <b>*</b> = pas encore d'historique : estimation de départ en % des ventes (livreur 5 %, carburant 3 %, crédit d'appel 1,5 %, publicité 8 %, cadeaux 6 %, autres 1,5 %), à ajuster.</div>
+  <div class="card"><h3>📋 Budget conseillé par poste (par jour)</h3><div class="mut">Moyenne réelle + 10 % de marge de sécurité. <b>*</b> = pas encore d'historique : estimation de départ en % des ventes (carburant 3 %, crédit d'appel 1,5 %, publicité 8 %, cadeaux 6 %, autres 1,5 %), à ajuster.</div>
   <table><tr><th>Poste</th><th>Moyenne</th><th>Conseillé</th><th>Aujourd'hui</th></tr>${lignes}<tr><td><b>Total</b></td><td><b>${ar(B.fonctMoy)}</b></td><td><b>${ar(B.conseilBudgetJour)}</b></td><td><b>${ar(B.cats.reduce((a, c) => a + c.auj, 0))}</b></td></tr></table></div>
   <div class="card"><h3>🎯 Plafonds conseillés</h3>
   <div class="lig"><div class="g"><b>Avance d'achats</b><span class="mut">Achats d'une journée moyenne</span></div><div class="m">${ar(Math.ceil(B.achatsMoy / 1000) * 1000)}</div></div>
@@ -329,7 +380,8 @@ function vueBudget() {
   <div class="mut" style="margin-top:8px">Actuels : avance ${ar(p.AVANCE_MAX)}, cadeaux ${ar(p.CADEAUX_JOUR)}, publicité ${ar(p.PUB_SEMAINE)}.</div>
   <button id="b-appliquer" style="width:100%;margin-top:12px">✅ Appliquer ces plafonds</button></div>`;
 }
-const PL = { SOLDE_DEPART: ["Argent de départ", "Ce que vous aviez au début du suivi"], OBJECTIF_CA_JOUR: ["Objectif de chiffre d'affaires / jour", "Pour la barre de progression"], AVANCE_MAX: ["Plafond d'avance", "Achats payés sans vente encaissée"], CADEAUX_JOUR: ["Plafond cadeaux / jour", ""], PUB_SEMAINE: ["Plafond publicité / semaine", "Depuis lundi"], SEUIL_LIVRAISON: ["Seuil paiement à la livraison", "Information (en dessous, paiement à la livraison autorisé)"] };
+const PL = { SOLDE_DEPART: ["Argent de départ", "Ce que vous aviez au début du suivi"], OBJECTIF_CA_JOUR: ["Objectif de chiffre d'affaires / jour", "Pour la barre de progression"], AVANCE_MAX: ["Plafond d'avance", "Achats payés sans vente encaissée"], CADEAUX_JOUR: ["Plafond cadeaux / jour", ""], PUB_SEMAINE: ["Plafond publicité / semaine", "Depuis lundi"], SEUIL_LIVRAISON: ["Seuil paiement à la livraison", "Information (en dessous, paiement à la livraison autorisé)"],
+  NB_LIVREURS: ["Nombre de livreurs", "Commencez avec 1 (réglable aussi depuis l'onglet Budget)"], PAIE_LIVREUR_MOIS: ["Salaire d'un livreur / mois", "300 000 Ar au départ"], REPAS_LIVREUR_JOUR: ["Déjeuner + crédit d'un livreur / jour", "Repas du midi et crédit d'appel : 5 000 Ar au départ"], JOURS_TRAVAILLES: ["Jours travaillés / mois", "26 = dimanches exclus"], CAPACITE_LIVREUR_JOUR: ["Capacité d'un livreur (livraisons / jour)", "Estimation de départ, à corriger avec la réalité (vagues, trajets)"], SEUIL_RECRUTEMENT_PCT: ["Seuil d'alerte recrutement (%)", "Part de la capacité utilisée à partir de laquelle on prépare un recrutement"] };
 function vuePlaf() {
   return `<div class="card"><h3>🎚️ Plafonds et objectifs</h3>${Object.keys(PL).map(k => `<label for="p-${k}">${PL[k][0]}</label><div style="display:flex;gap:8px"><input id="p-${k}" inputmode="numeric" value="${S.d.plafonds[k]}"><button class="petit" data-pl="${k}">OK</button></div>${PL[k][1] ? `<div class="mut">${PL[k][1]}</div>` : ""}`).join("")}</div>`;
 }
@@ -345,7 +397,9 @@ async function clic(e) {
   else if (t.dataset.cat) { const m = $("f-montant").value, i = $("f-id").value; S.cat = t.dataset.cat; S.pre = { montant: m, id: i }; dessiner(); }
   else if (t.dataset.enc) { const c = S.d.commandes.find(x => x.id === t.dataset.enc); S.type = "ENTREE"; S.cat = "VENTE"; S.pre = { id: c.id, montant: c.montant }; aller("saisie"); }
   else if (t.id === "f-ok") enregistrer(t);
+  else if (t.dataset.enctout) { S.encTout = !S.encTout; dessiner(); }
   else if (t.id === "b-appliquer") appliquerBudget(t);
+  else if (t.dataset.nbl) { const v = Math.min(20, Math.max(1, nbLivreurs() + Number(t.dataset.nbl))); if (v === nbLivreurs()) return; const r = await api({ operation: "plafond", cle: "NB_LIVREURS", valeur: v }); toast(r.success ? "Nombre de livreurs : " + v : (r.message || "Erreur")); if (r.success) charger(); }
   else if (t.dataset.ann) { const mo = prompt("Annuler cette ligne ? Motif (facultatif) :", ""); if (mo === null) return; const r = await api({ operation: "annuler", idLigne: t.dataset.ann, motif: mo }); toast(r.message || "Fait"); charger(); }
   else if (t.dataset.pl) { const v = $("p-" + t.dataset.pl).value; const r = await api({ operation: "plafond", cle: t.dataset.pl, valeur: v }); toast(r.success ? "Plafond enregistré" : (r.message || "Erreur")); if (r.success) charger(); }
 }
