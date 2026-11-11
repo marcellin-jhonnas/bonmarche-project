@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1e3a8a">
+<title>Espace Partenaire · SafeRun</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<style>
+:root { --c: #1e3a8a; --tx: #0f172a; --mu: #64748b; --bd: #e2e8f0; --bg: #f1f5f9; --ok: #15803d; --no: #b91c1c; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--tx); padding-bottom: 84px; }
+button { font: inherit; border: 0; border-radius: 12px; padding: 13px 16px; font-weight: 700; cursor: pointer; background: var(--c); color: #fff; }
+button.sec { background: #e8edf5; color: var(--tx); } button:disabled { opacity: .55; cursor: default; }
+input { font: inherit; width: 100%; padding: 13px; border: 1px solid #cbd5e1; border-radius: 12px; margin-bottom: 10px; background: #fff; }
+.mut { color: var(--mu); font-size: .82rem; } .ok { color: var(--ok); } .no { color: var(--no); }
+#connexion { max-width: 380px; margin: 9vh auto 0; padding: 0 16px; }
+.boite { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 6px 24px rgba(15,23,42,.08); }
+.boite h1 { font-size: 1.25rem; margin-bottom: 4px; } .boite p { margin-bottom: 14px; }
+#err { color: var(--no); font-size: .85rem; min-height: 1.1em; margin: 2px 0 8px; }
+.haut { background: var(--c); color: #fff; padding: 16px 16px 22px; border-radius: 0 0 22px 22px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.haut b { font-size: 1.15rem; } .haut small { opacity: .8; display: block; }
+.haut button { background: rgba(255,255,255,.18); padding: 9px 12px; }
+main { max-width: 640px; margin: -10px auto 0; padding: 0 14px; }
+.carte { background: #fff; border-radius: 16px; padding: 14px; margin-top: 12px; box-shadow: 0 2px 10px rgba(15,23,42,.05); }
+.carte h2 { font-size: 1rem; margin-bottom: 8px; }
+.grille { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .kpi { background: #f8fafc; border: 1px solid var(--bd); border-radius: 12px; padding: 10px; } .kpi b { display: block; font-size: 1.1rem; margin-top: 2px; }
+.kpi.gros { grid-column: 1 / -1; background: var(--c); color: #fff; border: 0; } .kpi.gros .mut { color: rgba(255,255,255,.8); } .kpi.gros b { font-size: 1.6rem; }
+.lig { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: .9rem; } .lig:last-child { border-bottom: 0; }
+.tag { display: inline-block; background: #e8edf5; border-radius: 6px; padding: 1px 7px; font-size: .72rem; font-weight: 700; }
+.tag.v { background: #dcfce7; color: #166534; } .tag.o { background: #ffedd5; color: #9a3412; }
+nav { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--bd); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
+nav button { flex: 1; background: transparent; color: var(--mu); border-radius: 0; padding: 10px 2px; font-size: .68rem; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+nav button .i { font-size: 1.25rem; } nav button.on { color: var(--c); box-shadow: inset 0 3px 0 var(--c); }
+.qr-zone { text-align: center; } #qr { display: inline-block; padding: 12px; background: #fff; border: 1px solid var(--bd); border-radius: 14px; margin: 10px 0; }
+.code4 { font-size: 3rem; font-weight: 900; letter-spacing: .35em; padding-left: .35em; color: var(--c); }
+.barre { height: 6px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 8px 0; } .barre i { display: block; height: 100%; background: var(--c); transition: width 1s linear; }
+.succes { background: #f0fdf4; border: 1px solid #86efac; border-radius: 14px; padding: 16px; text-align: center; }
+.contrat li { margin: 0 0 9px 18px; font-size: .9rem; line-height: 1.4; }
+#toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .85rem; display: none; z-index: 50; max-width: 90%; }
+</style>
+</head>
+<body>
+
+<div id="faux404" style="display:none;font-family:Arial,sans-serif;text-align:center;padding:18vh 20px 0;color:#444"><h1 style="font-size:2.2rem;font-weight:600">404</h1><p style="margin-top:10px">Page introuvable</p></div>
+
+<div id="connexion" style="display:none"><div class="boite">
+  <h1>🤝 Espace Partenaire</h1><p class="mut">SafeRun Market · accès privé</p>
+  <input id="in-id" placeholder="Votre identifiant (ex : P1AB)" autocomplete="username" autocapitalize="characters">
+  <input id="in-pin" type="password" placeholder="Code PIN (6 chiffres)" inputmode="numeric" maxlength="6" autocomplete="current-password">
+  <div id="err"></div><button id="btn-co" style="width:100%">Se connecter</button>
+</div></div>
+
+<div id="app" style="display:none">
+  <div class="haut"><div><b id="h-nom"></b><small id="h-sub"></small></div><div style="display:flex;gap:6px"><button id="btn-maj" title="Actualiser">⟳</button><button id="btn-deco" title="Quitter">⎋</button></div></div>
+  <main id="vue"></main>
+  <nav id="nav">
+    <button data-o="prep"><span class="i">📦</span>À préparer</button>
+    <button data-o="remise"><span class="i">🔳</span>Remise</button>
+    <button data-o="releve"><span class="i">💰</span>Relevé</button>
+    <button data-o="prod"><span class="i">🏷️</span>Produits</button>
+    <button data-o="contrat"><span class="i">📜</span>Conditions</button>
+  </nav>
+</div>
+<div id="toast"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+const KA = "saferun_partenaire_acces", KI = "saferun_partenaire_id", KP = "saferun_partenaire_pin";
+const S = { id: "", pin: "", d: null, onglet: "prep", jeton: null, fin: 0, nbAvant: -1, confirme: null };
+let minuteur = null, sondage = null, compte = null;
+const $ = i => document.getElementById(i);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ar = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
+const st = { g(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, s(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, d(k) { try { localStorage.removeItem(k); } catch (e) {} },
+  sg(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }, ss(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }, sd(k) { try { sessionStorage.removeItem(k); } catch (e) {} } };
+function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 3200); }
+
+/* ---------- Accès : le lien contient un code ; sans lui la page est « introuvable » ---------- */
+(function () { const m = location.hash.match(/acces=([A-Za-z0-9]+)/); if (m) { st.s(KA, m[1]); history.replaceState(null, "", location.pathname); } })();
+function fermer404() { st.d(KA); st.sd(KP); S.d = null; clearInterval(minuteur); document.title = "404 Not Found"; ["connexion", "app"].forEach(i => $(i).style.display = "none"); $("faux404").style.display = "block"; }
+async function api(p) {
+  const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ action: "partenaire", acces: st.g(KA), id: S.id, pin: S.pin }, p)) });
+  const j = await r.json(); if (j && j.acces === false) { fermer404(); throw new Error("acces"); } return j;
+}
+
+/* ---------- Connexion ---------- */
+async function connecter() {
+  const id = $("in-id").value.trim(), pin = $("in-pin").value.trim(); $("err").textContent = "";
+  if (!id || !/^\d{6}$/.test(pin)) { $("err").textContent = "Identifiant et code PIN à 6 chiffres requis."; return; }
+  S.id = id; S.pin = pin; $("btn-co").disabled = true; $("btn-co").textContent = "Vérification…";
+  try { const r = await api({ operation: "lire" }); if (!r.success) { $("err").textContent = r.message || "Connexion impossible."; S.pin = ""; } else { st.s(KI, id); st.ss(KP, pin); S.id = r.id; entrer(r); } }
+  catch (e) { if (e.message !== "acces") $("err").textContent = "Réseau indisponible. Réessayez."; }
+  $("btn-co").disabled = false; $("btn-co").textContent = "Se connecter";
+}
+function entrer(r) {
+  S.d = r; document.documentElement.style.setProperty("--c", r.couleur); document.querySelector('meta[name=theme-color]').content = r.couleur;
+  $("connexion").style.display = "none"; $("app").style.display = "block"; $("h-nom").textContent = r.nom; document.title = r.nom + " · SafeRun";
+  if (!r.contratAccepte) S.onglet = "contrat"; dessiner();
+  clearInterval(minuteur); minuteur = setInterval(() => { if (!document.hidden && !S.jeton) charger(); }, 60000);
+}
+function deco() { st.sd(KP); S.pin = ""; S.d = null; arreterRemise(); clearInterval(minuteur); $("app").style.display = "none"; $("connexion").style.display = "block"; $("in-pin").value = ""; }
+async function charger(manuel) {
+  try { const r = await api({ operation: "lire" }); if (!r.success) { if (manuel) toast(r.message || "Erreur"); if (/PIN|identifiant/i.test(r.message || "")) deco(); return null; } S.d = r; dessiner(); if (manuel) toast("Actualisé"); return r; }
+  catch (e) { if (e.message !== "acces" && manuel) toast("Réseau indisponible"); return null; }
+}
+
+/* ---------- Écrans ---------- */
+const slot = t => String(t || "").replace(/^LIVRAISON\s*:\s*/i, "").trim() || "date à confirmer";
+function dessiner() {
+  if (!S.d) return;
+  document.querySelectorAll("#nav [data-o]").forEach(b => { b.classList.toggle("on", b.dataset.o === S.onglet); b.disabled = !S.d.contratAccepte && b.dataset.o !== "contrat"; });
+  if (S.onglet === "remise" && S.jeton && $("qr")) return;            // ne pas effacer le QR affiché pendant l'actualisation
+  const d = S.d; $("h-sub").textContent = d.contratAccepte ? "Commission SafeRun : " + d.commission + " %" : "Première connexion";
+  $("vue").innerHTML = ({ prep: vuePrep, remise: vueRemise, releve: vueReleve, prod: vueProd, contrat: vueContrat })[S.onglet]();
+}
+function vuePrep() {
+  const L = S.d.aPreparer || [], aFaire = L.filter(c => c.lignes.some(l => !l.ramasse)), faits = L.filter(c => !c.lignes.some(l => !l.ramasse));
+  const tot = {}; aFaire.forEach(c => c.lignes.forEach(l => { if (!l.ramasse) tot[l.produit] = (tot[l.produit] || 0) + l.qte; }));
+  const carte = c => `<div class="carte"><div class="lig" style="padding-top:0"><b>Commande ${esc(c.commande)}</b><span class="tag ${c.lignes.some(l => !l.ramasse) ? "o" : "v"}">${c.lignes.some(l => !l.ramasse) ? "à remettre" : "remise"}</span></div>
+    <div class="mut">🗓️ ${esc(slot(c.livraison))}${c.livreur ? " · 🛵 " + esc(c.livreur) : ""}</div>
+    ${c.lignes.map(l => `<div class="lig"><span>${l.ramasse ? "✅" : "▫️"} ${esc(l.produit)}</span><b>× ${l.qte}</b></div>`).join("")}</div>`;
+  return `<div class="carte"><h2>📦 À préparer maintenant</h2>${Object.keys(tot).length ? Object.keys(tot).map(k => `<div class="lig"><span>${esc(k)}</span><b>× ${tot[k]}</b></div>`).join("") : '<div class="mut">Rien à préparer pour le moment. 🎉</div>'}
+    <div class="mut" style="margin-top:6px">Total cumulé de toutes les commandes en cours, pour tout préparer d'un coup.</div></div>
+    ${aFaire.map(carte).join("")}${faits.length ? `<div class="carte"><h2>✅ Déjà remises au livreur (${faits.length})</h2><div class="mut">En cours de livraison chez le client.</div></div>${faits.map(carte).join("")}` : ""}`;
+}
+function vueRemise() {
+  if (S.confirme) return `<div class="carte succes"><div style="font-size:2.4rem">✅</div><h2>Remise confirmée</h2><div class="mut">${esc(S.confirme.texte)}</div><button style="margin-top:12px" id="btn-ok-remise">Terminé</button></div>`;
+  if (!S.jeton) return `<div class="carte"><h2>🔳 Remettre au livreur</h2><div class="mut">Quand le livreur arrive : touchez le bouton, il scanne le QR (ou tape le code à 4 chiffres). Les produits de ses commandes sont alors enregistrés comme remis, et vous le voyez dans votre relevé. Valable 3 minutes, un seul usage.</div><button id="btn-jeton" style="width:100%;margin-top:12px">Générer le QR de remise</button></div>`;
+  return `<div class="carte qr-zone"><h2>🔳 Faites scanner ce QR au livreur</h2><div id="qr"></div><div class="mut">ou dictez-lui ce code :</div><div class="code4">${esc(S.jeton.code)}</div>
+    <div class="barre"><i id="barre" style="width:100%"></i></div><div class="mut" id="reste"></div><button class="sec" id="btn-annule-jeton" style="margin-top:10px">Annuler</button></div>`;
+}
+function vueReleve() {
+  const r = S.d.releve;
+  return `<div class="carte"><div class="grille"><div class="kpi gros"><span class="mut">Solde à recevoir</span><b>${ar(r.solde)}</b></div>
+    <div class="kpi"><span class="mut">Total remis (votre part)</span><b>${ar(r.totalDu)}</b></div><div class="kpi"><span class="mut">Déjà payé</span><b class="ok">${ar(r.paye)}</b></div>
+    ${r.enAttente > 0 ? `<div class="kpi" style="grid-column:1/-1"><span class="mut">En attente de livraison au client</span><b>${ar(r.enAttente)}</b></div>` : ""}</div>
+    <div class="mut" style="margin-top:8px">💳 ${esc(r.modeLibelle)} · ${esc(r.echeance)}</div></div>
+  <div class="carte"><h2>🧾 Mes factures</h2>${(S.d.factures || []).length ? S.d.factures.map(f => `<div class="lig"><span><b>${esc(f.id)}</b> <span class="tag ${f.statut === "PAYEE" ? "v" : "o"}">${f.statut === "PAYEE" ? "payée" : f.statut === "PARTIELLE" ? "partielle" : "à payer"}</span><div class="mut">${esc(f.du)} → ${esc(f.au)}${f.net ? " · reste " + ar(f.net) : ""}</div></span><span style="text-align:right"><b>${ar(f.total)}</b><br><button class="sec" data-fact="${esc(f.id)}" style="padding:5px 9px;font-size:.75rem;margin-top:3px">Voir</button></span></div>`).join("") : '<div class="mut">Aucune facture pour le moment. Elle est établie par SafeRun pour chaque période de paiement.</div>'}</div>
+  <div class="carte"><h2>Paiements reçus</h2>${r.reglements.length ? r.reglements.map(g => `<div class="lig" style="${g.annule ? "opacity:.5;text-decoration:line-through" : ""}"><span>${esc(g.date)} <span class="mut">${esc(g.reference)}</span></span><b>${ar(g.montant)}</b></div>`).join("") : '<div class="mut">Aucun paiement pour le moment.</div>'}</div>
+  <div class="carte"><h2>Produits remis</h2>${r.ramassages.length ? r.ramassages.map(x => `<div class="lig"><span>${esc(x.date)} ${esc(x.heure)} · ${esc(x.produit)} × ${x.qte}<div class="mut">Commande ${esc(x.commande)} · ${esc(x.livreur)} · ${x.methode === "QR" ? "QR" : "code"} ${x.livree ? '· <span class="ok">livrée</span>' : ""}</div></span><b>${ar(x.du)}</b></div>`).join("") : '<div class="mut">Aucune remise enregistrée.</div>'}</div>`;
+}
+function vueProd() {
+  const P = S.d.produits || [];
+  return `<div class="carte"><h2>🏷️ Vos produits sur SafeRun</h2><div class="mut">Prix de vente affiché sur le site. Pour changer un prix ou ajouter un produit, contactez SafeRun : le changement est validé avant d'apparaître.</div>${P.length ? P.map(p => `<div class="lig"><span style="text-transform:capitalize">${esc(p.produit)}</span><b>${p.prix ? ar(p.prix) : "—"}</b></div>`).join("") : '<div class="mut" style="margin-top:8px">Aucun produit lié pour le moment.</div>'}</div>`;
+}
+function vueContrat() {
+  const d = S.d;
+  return `<div class="carte"><h2>📜 Conditions de partenariat</h2><ul class="contrat">${d.contrat.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+    ${d.contratAccepte ? '<div class="tag v">✅ Conditions acceptées</div>' : `<label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0;font-size:.9rem"><input type="checkbox" id="ck-contrat" style="width:auto;margin:3px 0 0"> J'ai lu et j'accepte ces conditions.</label><button id="btn-accepte" style="width:100%" disabled>Accepter et continuer</button>`}</div>`;
+}
+
+/* ---------- Remise : QR + code ---------- */
+async function demanderJeton(btn) {
+  btn.disabled = true;
+  try {
+    const r = await api({ operation: "jeton" }); if (!r.success) { toast(r.message || "Erreur"); btn.disabled = false; return; }
+    S.jeton = r; S.fin = Date.now() + r.secondes * 1000; S.nbAvant = (S.d.releve.ramassages || []).length ? S.d.releve.ramassages[0].id : ""; S.confirme = null; dessiner();
+    const z = $("qr"); if (z && window.QRCode) { try { new QRCode(z, { text: r.qr, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { z.style.display = "none"; } } else if (z) z.style.display = "none";
+    clearInterval(compte); compte = setInterval(tictac, 1000); clearInterval(sondage); sondage = setInterval(verifierRemise, 5000);
+  } catch (e) { if (e.message !== "acces") toast("Réseau indisponible"); btn.disabled = false; }
+}
+function tictac() {
+  const s = Math.max(0, Math.round((S.fin - Date.now()) / 1000)); const b = $("barre"), r = $("reste");
+  if (b) b.style.width = Math.round(s * 100 / (S.jeton ? S.jeton.secondes : 180)) + "%"; if (r) r.textContent = "Valable encore " + Math.floor(s / 60) + " min " + ("0" + (s % 60)).slice(-2) + " s";
+  if (s <= 0) { toast("Code expiré : générez-en un nouveau"); arreterRemise(); dessiner(); }
+}
+async function verifierRemise() {
+  if (!S.jeton) return; const r = await charger(false); if (!r || !S.jeton) return;
+  const premier = r.releve.ramassages.length ? r.releve.ramassages[0].id : "";
+  if (premier !== S.nbAvant) {                                         // une nouvelle ligne de remise est apparue : le livreur a validé
+    const nouvelles = []; for (const x of r.releve.ramassages) { if (x.id === S.nbAvant) break; nouvelles.push(x); }
+    S.confirme = { texte: nouvelles.map(x => x.produit + " × " + x.qte).join(", ") + (nouvelles[0] ? " · livreur " + nouvelles[0].livreur : "") };
+    arreterRemise(); dessiner();
+  }
+}
+function arreterRemise() { clearInterval(compte); clearInterval(sondage); S.jeton = null; }
+
+
+function htmlFacture(d, partenaire) {
+  const F = d.facture, e = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])), a = n => (n < 0 ? "-" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
+  const mode = { RAMASSAGE: "Payé au ramassage", HEBDO: "Chaque semaine", MENSUEL: "Chaque mois", LIVRAISON: "Après livraison au client" }[F.mode] || F.mode;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Facture ${e(F.id)}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:28px;font-size:13px}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}th{background:#f3f4f6;font-size:12px}td.n,th.n{text-align:right}.tete{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #1e3a8a;padding-bottom:10px}.stamp{display:inline-block;border:2px solid #15803d;color:#15803d;padding:2px 10px;border-radius:6px;font-weight:700}.tot td{font-weight:700;border-top:2px solid #111}.pied{margin-top:24px;color:#666;font-size:11px}@media print{button{display:none}}</style></head><body>
+  <div class="tete"><div><h1>SafeRun Market</h1><div>Antananarivo, Madagascar</div></div><div style="text-align:right"><h1>Facture partenaire</h1><div><b>N° ${e(F.id)}</b></div><div>Émise le ${e(F.date)}</div>${F.statut === "PAYEE" ? '<div class="stamp">PAYÉE</div>' : ""}</div></div>
+  <p style="margin-top:12px"><b>Partenaire :</b> ${e(partenaire.nom)}${partenaire.tel ? " · " + e(partenaire.tel) : ""}<br><b>Période :</b> du ${e(F.du)} au ${e(F.au)}<br><b>Paiement :</b> ${e(mode)} · commission SafeRun ${F.commission} %</p>
+  <table><thead><tr><th>Date</th><th>Commande</th><th>Produit</th><th class="n">Qté</th><th class="n">Prix unit.</th><th class="n">Vente</th><th class="n">Part due</th></tr></thead><tbody>
+  ${d.lignes.map(l => `<tr><td>${e(l.date)}</td><td>${e(l.commande)}</td><td>${e(l.produit)}</td><td class="n">${l.qte}</td><td class="n">${a(l.pu)}</td><td class="n">${a(l.brut)}</td><td class="n">${a(l.du)}</td></tr>`).join("")}
+  <tr class="tot"><td colspan="6">Total dû au partenaire</td><td class="n">${a(F.total)}</td></tr></tbody></table>
+  ${d.reglements.length ? `<table><thead><tr><th>Paiement</th><th>Référence</th><th class="n">Montant</th></tr></thead><tbody>${d.reglements.map(g => `<tr><td>${e(g.date)}</td><td>${e(g.reference)}</td><td class="n">${a(g.montant)}</td></tr>`).join("")}</tbody></table>` : ""}
+  <p style="font-size:15px"><b>Net à payer : ${a(F.net)}</b></p><div class="pied">Document généré automatiquement par SafeRun Market. Chaque remise a été confirmée par le livreur et le partenaire (QR ou code).</div>
+  <p><button onclick="window.print()" style="padding:10px 16px;margin-top:10px">🖨️ Imprimer / Enregistrer en PDF</button></p></body></html>`;
+}
+function ouvrirFacture(w, d, partenaire) { w.document.open(); w.document.write(htmlFacture(d, partenaire)); w.document.close(); }
+async function voirFacture(id) {
+  const w = window.open("", "_blank"); try { const r = await api({ operation: "facture", idFacture: id }); if (!r.success) { if (w) w.close(); toast(r.message || "Erreur"); return; } if (!w) { toast("Autorisez les fenêtres pop-up pour voir la facture"); return; } ouvrirFacture(w, r.detail, { nom: r.partenaire, tel: "" }); } catch (e) { if (w) w.close(); }
+}
+/* ---------- Événements ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!st.g(KA)) { $("faux404").style.display = "block"; document.title = "404 Not Found"; return; }
+  $("in-id").value = st.g(KI); $("connexion").style.display = "block";
+  $("btn-co").onclick = connecter; $("in-pin").addEventListener("keydown", e => { if (e.key === "Enter") connecter(); });
+  $("btn-maj").onclick = () => charger(true); $("btn-deco").onclick = deco;
+  $("nav").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (!b || b.disabled) return; if (S.onglet === "remise" && b.dataset.o !== "remise") arreterRemise(); S.confirme = null; S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); });
+  $("vue").addEventListener("click", async e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.fact) voirFacture(t.dataset.fact);
+    else if (t.id === "btn-jeton") demanderJeton(t);
+    else if (t.id === "btn-annule-jeton") { arreterRemise(); dessiner(); }
+    else if (t.id === "btn-ok-remise") { S.confirme = null; dessiner(); }
+    else if (t.id === "btn-accepte") { t.disabled = true; try { const r = await api({ operation: "contratAccepter" }); if (r.success) { toast("Merci, bienvenue !"); S.onglet = "prep"; await charger(); } else { toast(r.message || "Erreur"); t.disabled = false; } } catch (er) { toast("Réseau indisponible"); t.disabled = false; } }
+  });
+  $("vue").addEventListener("change", e => { if (e.target.id === "ck-contrat") $("btn-accepte").disabled = !e.target.checked; });
+  const pin = st.sg(KP), id = st.g(KI); if (pin && id) { S.id = id; S.pin = pin; connecter2(id, pin); }
+});
+async function connecter2(id, pin) { $("in-id").value = id; $("in-pin").value = pin; await connecter(); }
+</script>
+</body>
+</html>

@@ -58,7 +58,7 @@ aside#side.ouvert{transform:none}
 .barre{height:10px;background:#e8edf5;border-radius:9px;overflow:hidden;margin:6px 0 4px}.barre i{display:block;height:100%;border-radius:9px;transition:width .6s}
 .jauge .ligne{display:flex;justify-content:space-between;gap:8px;font-size:.9rem;font-weight:700}
 button,.btn{font:inherit;border:0;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer;background:var(--bleu);color:#fff}
-button.sec{background:#e8edf5;color:var(--tx)}button.petit{padding:7px 10px;font-size:.8rem;border-radius:9px}button.danger{background:#fee2e2;color:#991b1b}
+button.sec,a.btn.sec{background:#e8edf5;color:var(--tx)}a.btn{display:inline-block}button.petit{padding:7px 10px;font-size:.8rem;border-radius:9px}button.danger{background:#fee2e2;color:#991b1b}
 button.vert{background:var(--vert)}
 input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--ligne);border-radius:12px;background:#fff;color:var(--tx)}
 label{display:block;font-size:.8rem;font-weight:700;color:var(--mut);margin:10px 0 4px}
@@ -113,7 +113,7 @@ footer a{color:#fbbf24;text-decoration:none}footer .bas{text-align:center;border
     <main><div id="vue"></div>
       <footer>
         <div class="f-grid">
-          <div><h4>💼 SafeRun Market</h4><p>Livraison de courses à Antananarivo.<br>« Chaque ariary compté est un ariary gagné. »</p><p class="mut" style="color:#94a3b8">Gestion V2.1 · données du Google Sheet</p></div>
+          <div><h4>💼 SafeRun Market</h4><p>Livraison de courses à Antananarivo.<br>« Chaque ariary compté est un ariary gagné. »</p><p class="mut" style="color:#94a3b8">Gestion V2.2 · données du Google Sheet</p></div>
           <div><h4>📊 En chiffres</h4><div class="f-chiffres" id="f-chiffres"></div></div>
           <div><h4>🔗 Raccourcis</h4><p><a href="admin.html">🛠️ Admin SafeRun</a></p><p><a href="index.html">🏠 Le site</a></p><p><a href="#" id="f-haut">⬆️ Haut de page</a></p></div>
         </div>
@@ -124,10 +124,13 @@ footer a{color:#fbbf24;text-decoration:none}footer .bas{text-align:center;border
       <div class="side-tete"><div class="logo">💼</div><div><b>Menu</b><small>Gestion SafeRun</small></div></div>
       <div class="side-titre">Navigation</div>
       <button class="side-btn" data-o="auj"><span class="ic">📊</span>Aujourd'hui<span class="nb" id="nb-enc" style="display:none"></span></button>
+      <button class="side-btn" data-o="appels"><span class="ic">📞</span>Appels<span class="nb" id="nb-app" style="display:none"></span></button>
+      <button class="side-btn" data-o="cloture"><span class="ic">🌙</span>Clôture du soir</button>
       <button class="side-btn" data-o="saisie"><span class="ic">➕</span>Saisir</button>
       <button class="side-btn" data-o="journal"><span class="ic">📒</span>Journal</button>
       <button class="side-btn" data-o="cmd"><span class="ic">🧾</span>Commandes</button>
       <button class="side-btn" data-o="budget"><span class="ic">🧮</span>Budget</button>
+      <button class="side-btn" data-o="parte"><span class="ic">🤝</span>Partenaires</button>
       <button class="side-btn" data-o="plaf"><span class="ic">🎚️</span>Plafonds</button>
       <div class="side-titre">Actions rapides</div>
       <button class="side-btn act" data-rapide="ENTREE"><span class="ic">⬇️</span>Nouvelle vente</button>
@@ -149,7 +152,7 @@ footer a{color:#fbbf24;text-decoration:none}footer .bas{text-align:center;border
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 const KA = "saferun_gestion_acces", KM = "saferun_gestion_mdp";
-const S = { d: null, onglet: "auj", jour: "", type: "ENTREE", cat: "VENTE", pre: null, sync: "" };
+const S = { d: null, onglet: "auj", jour: "", type: "ENTREE", cat: "VENTE", pre: null, sync: "", clo: { excl: {}, dep: { CARBURANT: "", CREDIT_APPEL: "", AUTRE: "", note: "" }, res: null } };
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ar = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
@@ -170,7 +173,7 @@ async function api(p) {
 }
 function menu(o) { $("side").classList.toggle("ouvert", o); $("voile").classList.toggle("on", o); }
 function deconnecter() { try { localStorage.removeItem(KM); sessionStorage.removeItem(KM); } catch (e) {} S.d = null; menu(false); $("app").style.display = "none"; $("login").style.display = "block"; $("mdp").value = ""; }
-function aller(o) { S.onglet = o; dessiner(); menu(false); window.scrollTo(0, 0); }
+function aller(o) { if (o !== "cloture") S.clo.res = null; if (o === "parte") chargerParte(); S.onglet = o; dessiner(); menu(false); window.scrollTo(0, 0); }
 
 document.addEventListener("DOMContentLoaded", () => {
   $("f-an").textContent = new Date().getFullYear();
@@ -184,7 +187,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("fab").onclick = () => rapide("ENTREE"); $("f-haut").onclick = e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); };
   $("sb-csv").onclick = exporterCsv; $("sb-print").onclick = () => { menu(false); S.onglet = "auj"; dessiner(); setTimeout(() => window.print(), 150); };
   $("side").addEventListener("click", e => { const b = e.target.closest("[data-o],[data-rapide]"); if (!b) return; if (b.dataset.o) aller(b.dataset.o); else rapide(b.dataset.rapide); });
-  $("vue").addEventListener("click", clic); $("vue").addEventListener("input", saisieLive);
+  $("vue").addEventListener("click", clic); $("vue").addEventListener("change", e => { if (e.target.dataset && e.target.dataset.ptlie) lierParte(e.target); }); $("vue").addEventListener("input", saisieLive);
+  $("vue").addEventListener("change", e => { const ck = e.target.dataset && e.target.dataset.ck; if (ck) { if (e.target.checked) delete S.clo.excl[ck]; else S.clo.excl[ck] = true; dessiner(); } });
   if (lsG(KM)) charger(); else $("login").style.display = "block";
 });
 function rapide(type) { S.type = type; S.cat = type === "ENTREE" ? "VENTE" : "ACHAT"; S.pre = null; aller("saisie"); }
@@ -223,6 +227,23 @@ function jauge(titre, val, max, aide) {
   const p = max > 0 ? Math.min(100, Math.round(val * 100 / max)) : 0;
   return `<div class="jauge" style="margin-top:12px"><div class="ligne"><span>${titre}</span><span style="color:${couleur(p)}">${ar(val)} / ${ar(max)}</span></div><div class="barre"><i style="width:${p}%;background:${couleur(p)}"></i></div><div class="mut">${aide}${p >= 90 ? " — <b style='color:var(--rouge)'>presque atteint</b>" : ""}</div></div>`;
 }
+
+/* ---------- Encaissement : même lecture des produits que le script (prix d'achat × quantités) ---------- */
+const cleP = n => String(n == null ? "" : n).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+function lignesProduits(texte) {
+  const out = [];
+  String(texte || "").split(/,(?![^(]*\))/).forEach(it => {
+    const t = it.trim(); if (!t) return;
+    const m = t.match(/^(.+?)\s*\(x(\d+)\)\s*$/i) || t.match(/^(\d+)\s*x\s*(.+)$/i); let nom, q;
+    if (m) { if (/^\d+$/.test(m[1])) { q = +m[1]; nom = m[2]; } else { nom = m[1]; q = +m[2]; } } else { nom = t; q = 1; }
+    out.push({ nom: nom.replace(/\s*\[[^\]]*\]\s*$/, "").trim(), qte: q || 1 });
+  });
+  return out;
+}
+function apercu(c) { const prix = S.d.prixAchat || {}; let achat = 0; const inc = []; lignesProduits(c.produits).forEach(l => { const p = Number(prix[cleP(l.nom)]); if (p > 0) achat += p * l.qte; else inc.push(l.nom); }); return { achat: Math.round(achat), inc }; }
+const heureNow = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const clefCloture = () => "saferun_gestion_cloture_" + S.d.auj;
+function dejaCloture() { try { return localStorage.getItem(clefCloture()) || ""; } catch (e) { return ""; } }
 
 /* ---------- Budget de fonctionnement : calculé sur les 30 derniers jours réels ---------- */
 const CAT_FONCT = [["LIVREUR", "Livreur (fixe)", 0], ["CARBURANT", "Carburant", 0.03], ["CREDIT_APPEL", "Crédit d'appel", 0.015], ["PUBLICITE", "Publicité", 0.08], ["CADEAU", "Cadeaux", 0.06], ["AUTRE", "Autres dépenses", 0.015]];
@@ -269,6 +290,7 @@ function majEntete() {
   $("date-auj").textContent = new Date(d.auj + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   $("h-solde").textContent = ar(d.solde); $("h-ca").textContent = ar(b.ca);
   $("ticker").textContent = pct >= 100 ? "🎉 Objectif du jour atteint : bravo !" : enc > 0 ? `💡 ${enc} commande(s) livrée(s) à encaisser` : pct >= 50 ? `🔥 ${pct} % de l'objectif du jour, continuez !` : "☀️ Bonne journée : saisissez vos ventes au fil de l'eau.";
+  const na = (d.appels && d.appels.aAppeler || []).length, nbA = $("nb-app"); nbA.style.display = na ? "inline" : "none"; nbA.textContent = na;
   const nb = $("nb-enc"); nb.style.display = enc ? "inline" : "none"; nb.textContent = enc;
   $("f-chiffres").innerHTML = `<div><b>${d.journal.filter(l => !l.annule).length}</b>lignes (60 j)</div><div><b>${d.commandes.length}</b>commandes (21 j)</div><div><b>${ar(b.ca)}</b>ventes du jour</div><div><b>${ar(b.sorties)}</b>dépenses du jour</div>`;
   $("f-sync").textContent = S.sync;
@@ -277,18 +299,150 @@ function dessiner() {
   if (!S.d) return;
   document.querySelectorAll("#side [data-o]").forEach(b => b.classList.toggle("on", b.dataset.o === S.onglet));
   majEntete();
-  $("vue").innerHTML = ({ auj: vueAuj, saisie: vueSaisie, journal: vueJournal, cmd: vueCmd, budget: vueBudget, plaf: vuePlaf })[S.onglet]();
+  $("vue").innerHTML = ({ auj: vueAuj, appels: vueAppels, cloture: vueCloture, saisie: vueSaisie, journal: vueJournal, cmd: vueCmd, budget: vueBudget, plaf: vuePlaf, parte: vueParte })[S.onglet]();
 }
 function graphe7() {
   const j = []; for (let i = 6; i >= 0; i--) j.push(plus(S.d.auj, -i));
   const v = j.map(x => bilanJour(x)), max = Math.max(1, ...v.map(x => Math.max(x.ca, x.sorties))), L = ["D", "L", "M", "M", "J", "V", "S"];
   return `<div class="graph">${j.map((x, i) => `<div class="col"><div class="bars"><i style="height:${Math.max(2, Math.round(v[i].ca * 100 / max))}%;background:var(--bleu)" title="Ventes ${ar(v[i].ca)}"></i><i style="height:${Math.max(2, Math.round(v[i].sorties * 100 / max))}%;background:#f87171" title="Dépenses ${ar(v[i].sorties)}"></i></div><small>${L[new Date(x + "T12:00:00Z").getUTCDay()]}</small></div>`).join("")}</div><div class="leg"><span><i style="background:var(--bleu)"></i>Ventes</span><span><i style="background:#f87171"></i>Dépenses</span></div>`;
 }
+S.pt = { d: null, edit: "", fac: null };
+async function chargerParte() { try { const r = await api({ operation: "partenairesLire" }); if (r.success) { S.pt.d = r; if (S.onglet === "parte") dessiner(); } else toast(r.message || "Erreur"); } catch (e) { if (e.message !== "acces") toast("Connexion impossible"); } }
+function vueParte() {
+  const D = S.pt.d; if (!D) return `<div class="card">Chargement…</div>`;
+  const ed = D.partenaires.find(x => x.id === S.pt.edit) || { id: "", nom: "", tel: "", commission: 10, statut: "ACTIF", note: "", mode: "HEBDO", couleur: "#1e3a8a" };
+  const lien = {}; D.liens.forEach(l => { if (l.partenaire) lien[l.cle] = l.partenaire; });
+  const opts = sel => `<option value="">— Aucun (produits SafeRun) —</option>` + D.partenaires.map(x => `<option value="${esc(x.id)}" ${x.id === sel ? "selected" : ""}>${esc(x.nom)}</option>`).join("");
+  const facsDe = pid => (D.factures || []).filter(f => f.pid === pid && f.statut !== "ANNULEE");
+  const F = S.pt.fac, pF = F && D.partenaires.find(x => x.id === F.pid);
+  const panneauFac = F && pF ? `<div class="card" style="border:2px solid ${esc(pF.couleur)}"><h3>🧾 Facture : ${esc(pF.nom)}</h3><div class="mut">Remises récupérées par les livreurs sur la période, pas encore facturées. Mode : ${esc(D.modes[pF.mode] || pF.mode)}.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end;margin-top:8px"><div><label for="fa-du">Du</label><input id="fa-du" type="date" value="${esc(F.du || "")}" style="margin:0"></div><div><label for="fa-au">Au</label><input id="fa-au" type="date" value="${esc(F.au || "")}" style="margin:0"></div><button class="sec petit" data-facap="1">Actualiser</button></div>
+    ${F.ap ? (F.ap.lignes.length ? `<div style="margin-top:8px">${F.ap.lignes.map(l => `<div class="lig"><div>${esc(l.date)} · ${esc(l.produit)} × ${l.qte}<div class="mut">Commande ${esc(l.commande)}${l.livree ? " · livrée" : ""}</div></div><b>${ar(l.du)}</b></div>`).join("")}<div class="lig"><b>Total dû au partenaire</b><b>${ar(F.ap.total)}</b></div></div>` : `<div class="mut" style="margin-top:8px">Aucune remise à facturer sur cette période.</div>`) + (F.ap.exclues ? `<div class="mut">${F.ap.exclues} remise(s) pas encore livrée(s) au client : facturées plus tard (paiement après livraison).</div>` : "") : ""}
+    <div style="margin-top:10px;display:flex;gap:8px"><button data-facem="1" ${F.ap && F.ap.lignes.length ? "" : "disabled"}>✅ Émettre la facture</button><button class="sec" data-facx="1">Fermer</button></div></div>` : "";
+  const carteP = x => { const r = x.releve; return `<div class="card" style="border-left:6px solid ${esc(x.couleur)}">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(x.nom)}</b><span class="mut">ID : <b>${esc(x.id)}</b></span></div>
+    <div style="margin:6px 0"><span class="tag">${x.commission} % SafeRun</span> <span class="tag">${esc(D.modes[x.mode] || x.mode)}</span> ${x.statut === "PAUSE" ? '<span class="tag">pause</span>' : ""} ${x.contrat ? `<span class="tag" style="background:#dcfce7;color:#166534">✅ conditions acceptées ${esc(x.contratLe)}</span>` : '<span class="tag" style="background:#ffedd5;color:#9a3412">conditions à accepter</span>'} ${x.aPin ? "" : '<span class="tag" style="background:#fee2e2;color:#991b1b">pas de PIN</span>'}</div>
+    <div class="grid"><div class="kpi"><span class="mut">Total dû (sa part)</span><b>${ar(r.totalDu)}</b></div><div class="kpi"><span class="mut">Déjà payé</span><b>${ar(r.paye)}</b></div>
+    <div class="kpi"><span class="mut">Solde à lui payer</span><b class="${r.solde > 0 ? "neg" : "pos"}">${ar(r.solde)}</b></div><div class="kpi"><span class="mut">En attente de livraison</span><b>${ar(r.enAttente)}</b></div></div>
+    <div class="mut" style="margin-top:6px">💳 ${esc(r.echeance)}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"><button class="petit" data-ptfac="${esc(x.id)}">🧾 Établir la facture</button><button class="sec petit" data-ptedit="${esc(x.id)}">✎ Modifier</button><button class="sec petit" data-ptpin="${esc(x.id)}">🔑 Nouveau PIN</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:6px;align-items:end"><div><label for="rg-m-${esc(x.id)}">Je viens de payer (Ar)</label><input id="rg-m-${esc(x.id)}" inputmode="numeric" placeholder="${Math.max(0, r.solde)}" style="margin:0"></div><div><label for="rg-r-${esc(x.id)}">Référence (MVola…)</label><input id="rg-r-${esc(x.id)}" maxlength="60" style="margin:0"></div><button class="petit" data-ptpay="${esc(x.id)}">Enregistrer</button></div>
+    ${facsDe(x.id).length ? `<div class="mut" style="margin-top:10px"><b>Factures</b></div>` + facsDe(x.id).slice(0, 6).map(f => `<div class="lig"><div><b>${esc(f.id)}</b> <span class="tag" style="${f.statut === "PAYEE" ? "background:#dcfce7;color:#166534" : f.statut === "PARTIELLE" ? "background:#fef3c7;color:#92400e" : ""}">${f.statut === "PAYEE" ? "payée" : f.statut === "PARTIELLE" ? "partielle" : "à payer"}</span><div class="mut">${esc(f.du)} → ${esc(f.au)} · ${ar(f.total)}${f.net ? " · reste " + ar(f.net) : ""}</div></div><div style="display:flex;gap:4px"><button class="sec petit" data-fimp="${esc(f.id)}" title="Imprimer / PDF">🖨</button>${f.net > 0 ? `<button class="sec petit" data-fpay="${esc(f.id)}" data-net="${f.net}" data-pid="${esc(f.pid)}" title="Enregistrer un paiement">💳</button>` : ""}${f.paye === 0 ? `<button class="sec petit" data-fann="${esc(f.id)}" title="Annuler la facture">✖</button>` : ""}</div></div>`).join("") : ""}
+    ${r.reglements.length ? `<div class="mut" style="margin-top:10px"><b>Paiements</b></div>` + r.reglements.slice(0, 5).map(g => `<div class="lig" style="${g.annule ? "opacity:.5;text-decoration:line-through" : ""}"><div>${esc(g.date)} · ${ar(g.montant)}<div class="mut">${esc(g.reference)}</div></div>${g.annule ? "" : `<button class="sec petit" data-rgann="${esc(g.id)}">↩</button>`}</div>`).join("") : ""}
+    ${r.ramassages.length ? `<div class="mut" style="margin-top:10px"><b>Dernières remises au livreur</b></div>` + r.ramassages.slice(0, 6).map(m => `<div class="lig"><div>${esc(m.date)} ${esc(m.heure)} · ${esc(m.produit)} × ${m.qte}<div class="mut">Commande ${esc(m.commande)} · ${esc(m.livreur)} · ${esc(m.methode)}${m.livree ? " · livrée" : ""} · ${ar(m.du)}</div></div><button class="sec petit" data-rmann="${esc(m.id)}" title="Annuler cette remise">↩</button></div>`).join("") : ""}</div>`; };
+  return `<div class="card"><h3>🤝 Partenaires</h3><div class="mut">Chaque partenaire a sa page (<b>partenaire.html</b>), son identifiant et son PIN à 6 chiffres. Le livreur confirme chaque remise par QR : la ligne apparaît ici toute seule. La part due = prix de vente × (100 − commission). ${D.detteTotale > 0 ? `<br>💸 <b>À payer aux partenaires : ${ar(D.detteTotale)}</b>` : ""}</div></div>
+  ${panneauFac}${D.partenaires.map(carteP).join("")}
+  <div class="card"><h3>${ed.id ? "✏️ Modifier " + esc(ed.nom) : "➕ Nouveau partenaire"}</h3>
+  <label for="pt-nom">Nom</label><input id="pt-nom" maxlength="60" value="${esc(ed.nom)}"><label for="pt-tel">Téléphone</label><input id="pt-tel" inputmode="tel" maxlength="20" value="${esc(ed.tel)}">
+  <label for="pt-com">Commission SafeRun (% du prix de vente, 0 à 60)</label><input id="pt-com" inputmode="decimal" value="${esc(ed.commission)}">
+  <label for="pt-mode">Paiement du partenaire (selon le contrat)</label><select id="pt-mode">${Object.keys(D.modes).map(k => `<option value="${k}" ${ed.mode === k ? "selected" : ""}>${esc(D.modes[k])}</option>`).join("")}</select>
+  <label for="pt-coul">Couleur de sa boutique (pages livreur et partenaire)</label><input id="pt-coul" type="color" value="${esc(ed.couleur)}" style="height:46px;padding:4px">
+  <label for="pt-st">Statut</label><select id="pt-st"><option value="ACTIF" ${ed.statut !== "PAUSE" ? "selected" : ""}>Actif</option><option value="PAUSE" ${ed.statut === "PAUSE" ? "selected" : ""}>En pause (accès bloqué)</option></select>
+  <label for="pt-note">Note</label><input id="pt-note" maxlength="200" value="${esc(ed.note)}">
+  ${ed.id ? '<div class="mut">Si vous changez la commission ou le mode de paiement, le partenaire devra accepter de nouveau les conditions.</div>' : ""}
+  <div style="margin-top:10px"><button id="pt-ok" data-id="${esc(ed.id)}">Enregistrer</button> ${ed.id ? `<button class="sec" data-ptedit="">Annuler</button>` : ""}</div></div>
+  <div class="card"><h3>🏷️ Produits vendus (30 jours) → à quel partenaire ?</h3><div class="mut">Choisissez le partenaire propriétaire de chaque produit. « Aucun » = vos propres produits. Le nom doit être celui de la feuille Produits.</div>
+  ${D.produitsVus.length ? D.produitsVus.map(p => `<div class="lig"><div style="flex:1"><b>${esc(p.produit)}</b> <span class="mut">${p.n} vendus</span></div><select data-ptlie="${esc(p.produit)}" style="max-width:55%">${opts(lien[p.cle] || "")}</select></div>`).join("") : `<div class="mut">Aucune vente récente.</div>`}</div>`;
+}
+async function sauverParte(btn) {
+  btn.disabled = true;
+  try { const r = await api({ operation: "partenaireSauver", id: btn.dataset.id, nom: $("pt-nom").value, tel: $("pt-tel").value, commission: $("pt-com").value, mode: $("pt-mode").value, couleur: $("pt-coul").value, statut: $("pt-st").value, note: $("pt-note").value }); toast(r.success ? "Partenaire enregistré" : (r.message || "Erreur")); if (r.success) { S.pt.edit = ""; await chargerParte(); } }
+  catch (e) { if (e.message !== "acces") toast("Connexion impossible"); }
+  btn.disabled = false;
+}
+
+function htmlFacture(d, partenaire) {
+  const F = d.facture, e = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])), a = n => (n < 0 ? "-" : "") + Math.abs(Math.round(n || 0)).toLocaleString("fr-FR") + " Ar";
+  const mode = { RAMASSAGE: "Payé au ramassage", HEBDO: "Chaque semaine", MENSUEL: "Chaque mois", LIVRAISON: "Après livraison au client" }[F.mode] || F.mode;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Facture ${e(F.id)}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:28px;font-size:13px}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}th{background:#f3f4f6;font-size:12px}td.n,th.n{text-align:right}.tete{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #1e3a8a;padding-bottom:10px}.stamp{display:inline-block;border:2px solid #15803d;color:#15803d;padding:2px 10px;border-radius:6px;font-weight:700}.tot td{font-weight:700;border-top:2px solid #111}.pied{margin-top:24px;color:#666;font-size:11px}@media print{button{display:none}}</style></head><body>
+  <div class="tete"><div><h1>SafeRun Market</h1><div>Antananarivo, Madagascar</div></div><div style="text-align:right"><h1>Facture partenaire</h1><div><b>N° ${e(F.id)}</b></div><div>Émise le ${e(F.date)}</div>${F.statut === "PAYEE" ? '<div class="stamp">PAYÉE</div>' : ""}</div></div>
+  <p style="margin-top:12px"><b>Partenaire :</b> ${e(partenaire.nom)}${partenaire.tel ? " · " + e(partenaire.tel) : ""}<br><b>Période :</b> du ${e(F.du)} au ${e(F.au)}<br><b>Paiement :</b> ${e(mode)} · commission SafeRun ${F.commission} %</p>
+  <table><thead><tr><th>Date</th><th>Commande</th><th>Produit</th><th class="n">Qté</th><th class="n">Prix unit.</th><th class="n">Vente</th><th class="n">Part due</th></tr></thead><tbody>
+  ${d.lignes.map(l => `<tr><td>${e(l.date)}</td><td>${e(l.commande)}</td><td>${e(l.produit)}</td><td class="n">${l.qte}</td><td class="n">${a(l.pu)}</td><td class="n">${a(l.brut)}</td><td class="n">${a(l.du)}</td></tr>`).join("")}
+  <tr class="tot"><td colspan="6">Total dû au partenaire</td><td class="n">${a(F.total)}</td></tr></tbody></table>
+  ${d.reglements.length ? `<table><thead><tr><th>Paiement</th><th>Référence</th><th class="n">Montant</th></tr></thead><tbody>${d.reglements.map(g => `<tr><td>${e(g.date)}</td><td>${e(g.reference)}</td><td class="n">${a(g.montant)}</td></tr>`).join("")}</tbody></table>` : ""}
+  <p style="font-size:15px"><b>Net à payer : ${a(F.net)}</b></p><div class="pied">Document généré automatiquement par SafeRun Market. Chaque remise a été confirmée par le livreur et le partenaire (QR ou code).</div>
+  <p><button onclick="window.print()" style="padding:10px 16px;margin-top:10px">🖨️ Imprimer / Enregistrer en PDF</button></p></body></html>`;
+}
+function ouvrirFacture(w, d, partenaire) { w.document.open(); w.document.write(htmlFacture(d, partenaire)); w.document.close(); }
+async function apercuFacture() {
+  const F = S.pt.fac; if (!F) return; if ($("fa-du")) { F.du = $("fa-du").value; F.au = $("fa-au").value; }
+  const r = await api({ operation: "factureApercu", idPartenaire: F.pid, du: F.du, au: F.au }); if (!r.success) { toast(r.message || "Erreur"); return; }
+  F.du = r.du; F.au = r.au; F.ap = r; dessiner();
+}
+async function actionFacture(t) {
+  try {
+    const d = t.dataset;
+    if (d.ptfac) { S.pt.fac = { pid: d.ptfac, du: "", au: "", ap: null }; await apercuFacture(); window.scrollTo(0, 0); return; }
+    if (d.facap) { await apercuFacture(); return; }
+    if (d.facx) { S.pt.fac = null; dessiner(); return; }
+    if (d.facem) {
+      const F = S.pt.fac; if (!F || !F.ap || !F.ap.lignes.length) return;
+      if (!confirm("Émettre la facture de " + ar(F.ap.total) + " pour la période du " + F.du + " au " + F.au + " ? Les remises seront verrouillées sur cette facture.")) return;
+      t.disabled = true; const r = await api({ operation: "factureEmettre", idPartenaire: F.pid, du: F.du, au: F.au });
+      toast(r.success ? "Facture " + r.id + " émise" : (r.message || "Erreur")); if (r.success) { S.pt.fac = null; await chargerParte(); } else t.disabled = false; return;
+    }
+    if (d.fimp) { const w = window.open("", "_blank"); const r = await api({ operation: "factureLire", idFacture: d.fimp }); if (!r.success) { if (w) w.close(); toast(r.message || "Erreur"); return; } if (!w) { toast("Autorisez les fenêtres pop-up pour imprimer"); return; } ouvrirFacture(w, r.detail, r.detail.partenaire); return; }
+    if (d.fpay) {
+      const m = prompt("Montant payé pour la facture " + d.fpay + " (Ar) :", d.net); if (m === null) return;
+      const ref = prompt("Référence du paiement (MVola, virement…) :", ""); if (ref === null) return;
+      const r = await api({ operation: "reglementAjouter", idPartenaire: d.pid, montant: m, reference: ref, idFacture: d.fpay }); toast(r.success ? "Paiement enregistré" : (r.message || "Erreur")); if (r.success) chargerParte(); return;
+    }
+    if (d.fann) { if (!confirm("Annuler la facture " + d.fann + " ? Les remises redeviennent à facturer.")) return; const r = await api({ operation: "factureAnnuler", idFacture: d.fann }); toast(r.message || "Fait"); chargerParte(); return; }
+  } catch (e) { if (e.message !== "acces") toast("Connexion impossible"); }
+}
+async function actionParte(t) {
+  try {
+    if (t.dataset.ptpin) {
+      if (!confirm("Créer un nouveau PIN pour ce partenaire ? L'ancien ne fonctionnera plus.")) return;
+      const r = await api({ operation: "partenairePin", id: t.dataset.ptpin }); if (!r.success) { toast(r.message || "Erreur"); return; }
+      prompt("Identifiant : " + r.id + "\nNouveau PIN (6 chiffres) à transmettre au partenaire. Il ne sera plus affiché :", r.pin); toast("PIN créé"); return;
+    }
+    if (t.dataset.ptpay) {
+      const id = t.dataset.ptpay, m = $("rg-m-" + id).value, ref = $("rg-r-" + id).value; t.disabled = true;
+      const r = await api({ operation: "reglementAjouter", idPartenaire: id, montant: m, reference: ref }); toast(r.success ? "Paiement enregistré" : (r.message || "Erreur")); if (r.success) await chargerParte(); t.disabled = false; return;
+    }
+    if (t.dataset.rgann) { if (!confirm("Annuler ce paiement ?")) return; const r = await api({ operation: "reglementAnnuler", idReglement: t.dataset.rgann }); toast(r.message || "Fait"); chargerParte(); return; }
+    if (t.dataset.rmann) { if (!confirm("Annuler cette remise ? Le produit redeviendra « à ramasser » et ne sera plus dû.")) return; const r = await api({ operation: "ramassageAnnuler", idRamassage: t.dataset.rmann }); toast(r.message || "Fait"); chargerParte(); return; }
+  } catch (e) { if (e.message !== "acces") toast("Connexion impossible"); }
+}
+async function lierParte(sel) {
+  try { const r = await api({ operation: "partenaireLier", produit: sel.dataset.ptlie, idPartenaire: sel.value }); toast(r.success ? "Lien enregistré" : (r.message || "Erreur")); if (r.success) chargerParte(); } catch (e) { if (e.message !== "acces") toast("Connexion impossible"); }
+}
+const RAISONS = { NOUVEAU: ["🆕 Nouveau client", "Première commande : confirmez l'adresse et la commande."], PAIEMENT_LIVRAISON: ["💰 Paiement à la livraison", "Montant élevé payé à la livraison : confirmez que le client sera là avec l'argent."], ADRESSE_FLOUE: ["📍 Adresse floue", "Demandez un repère précis (rue, maison, couleur du portail)."], ANTECEDENT: ["⚠️ Antécédent", "Livraison ratée ou client injoignable auparavant : soyez ferme et clair."] };
+const telWa = t => { const n = String(t || "").replace(/\D/g, ""); return n.startsWith("261") ? n : "261" + n.replace(/^0/, ""); };
+const RES_AP = { CONFIRME: "Confirmé", ADRESSE_CORRIGEE: "Adresse corrigée", INJOIGNABLE: "Injoignable", A_RAPPELER: "À rappeler", REFUSE: "Refusé / annulé" };
+function vueAppels() {
+  const A = S.d.appels || { aAppeler: [], faitsAuj: 0, confirmesAuj: 0 }, L = A.aAppeler;
+  const carte = c => {
+    const msg = encodeURIComponent("Bonjour " + (c.client || "") + ", c'est SafeRun Market. Nous confirmons votre commande de " + ar(c.montant) + " (" + c.produits + "). Pouvez-vous confirmer l'adresse de livraison : " + (c.lieu || "—") + " ? Merci !");
+    return `<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(c.client || "Client")}</b><span class="mut">${esc(c.id)} · ${ar(c.montant)}</span></div>
+    <div style="margin:6px 0">${c.raisons.map(r => `<span class="tag" title="${esc(RAISONS[r][1])}">${RAISONS[r][0]}</span> `).join("")}</div>
+    <div class="mut">🛒 ${esc(c.produits)}</div><div class="mut">🚚 ${esc(c.livraison || "—")} · 📍 ${esc(c.lieu || "adresse non précisée")}</div>
+    ${c.tentatives ? `<div class="mut" style="color:#92400e">${c.tentatives} appel(s) déjà : ${esc(RES_AP[c.dernier] || c.dernier)}${c.dernierJour ? " (" + esc(c.dernierJour) + ")" : ""}</div>` : ""}
+    <div class="mut" style="margin-top:6px">${c.raisons.map(r => esc(RAISONS[r][1])).join(" ")}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><a class="btn" href="tel:${esc(c.tel)}" style="text-decoration:none">📞 ${esc(c.tel || "—")}</a><a class="btn sec" target="_blank" rel="noopener" href="https://wa.me/${telWa(c.tel)}?text=${msg}" style="text-decoration:none">💬 WhatsApp</a></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${["CONFIRME", "ADRESSE_CORRIGEE", "INJOIGNABLE", "A_RAPPELER", "REFUSE"].map(k => `<button class="sec petit" data-ap="${k}" data-id="${esc(c.id)}">${({ CONFIRME: "✅ ", ADRESSE_CORRIGEE: "📍 ", INJOIGNABLE: "📵 ", A_RAPPELER: "⏰ ", REFUSE: "❌ " })[k]}${RES_AP[k]}</button>`).join("")}</div></div>`;
+  };
+  return `<div class="card"><h3>📞 Appels de confirmation</h3><div class="grid" style="margin-top:8px"><div class="kpi"><span class="mut">À appeler</span><b>${L.length}</b></div><div class="kpi"><span class="mut">Appels faits aujourd'hui</span><b>${A.faitsAuj}</b></div><div class="kpi"><span class="mut">Confirmés aujourd'hui</span><b class="pos">${A.confirmesAuj}</b></div></div>
+  <div class="mut" style="margin-top:8px"><b>Script :</b> « Bonjour, SafeRun Market. Vous avez commandé … pour … Ar. On vous livre à … : c'est bien l'adresse ? Un repère ? Vous serez joignable ? » Si l'adresse change, corrigez-la aussi dans l'admin : cette page n'y touche pas.</div></div>
+  ${A.erreur ? `<div class="card" style="border-color:#fca5a5">⚠️ Calcul des appels impossible : ${esc(A.erreur)}</div>` : ""}
+  ${L.length ? L.map(carte).join("") : `<div class="card">🎉 Aucun appel en attente. Seules les commandes à risque (nouveau client, paiement à la livraison élevé, adresse floue, antécédent) apparaissent ici.</div>`}`;
+}
+async function appelResultat(btn) {
+  const id = btn.dataset.id, res = btn.dataset.ap; let note = "";
+  if (res === "REFUSE" && !confirm("Le client refuse / annule ? Pensez à annuler la commande dans l'admin.")) return;
+  if (res === "ADRESSE_CORRIGEE" || res === "REFUSE") { const n = prompt("Note (nouvelle adresse, motif…) :", ""); if (n === null) return; note = n; }
+  btn.disabled = true;
+  try { const r = await api({ operation: "appelEnregistrer", idCommande: id, resultat: res, note }); toast(r.success ? "Appel enregistré : " + RES_AP[res] : (r.message || "Erreur")); if (r.success) charger(); else btn.disabled = false; }
+  catch (e) { if (e.message !== "acces") { toast("Connexion impossible"); btn.disabled = false; } }
+}
 function vueAuj() {
   const d = S.d, p = d.plafonds, b = bilanJour(d.auj), pct = p.OBJECTIF_CA_JOUR > 0 ? Math.min(100, Math.round(b.ca * 100 / p.OBJECTIF_CA_JOUR)) : 0;
   const cad = somme(actives(), l => l.jour === d.auj && l.cat === "CADEAU"), pub = somme(actives(), l => l.type === "SORTIE" && l.cat === "PUBLICITE" && l.jour >= lundi(d.auj));
   const toutEnc = aEncaisser().slice().reverse(), enc = S.encTout ? toutEnc : toutEnc.slice(0, 8);
-  return `<div class="card"><div class="grid">
+  const nAp = (d.appels && d.appels.aAppeler || []).length;
+  return `${nAp ? `<div class="card" style="border-color:#fcd34d;background:#fffbeb"><b>📞 ${nAp} commande(s) à confirmer par téléphone</b><div class="mut">Nouveaux clients, paiements à la livraison élevés, adresses floues.</div><button class="petit" data-goto="appels" style="margin-top:8px">Ouvrir les appels</button></div>` : ""}<div class="card"><div class="grid">
     <div class="kpi"><span class="mut">Chiffre d'affaires du jour</span><b>${ar(b.ca)}</b></div><div class="kpi"><span class="mut">Dépenses du jour</span><b>${ar(b.sorties)}</b></div>
     <div class="kpi"><span class="mut">Marge (ventes − achats, livreur, cadeaux)</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div><div class="kpi"><span class="mut">Résultat (après autres frais)</span><b class="${b.resultat < 0 ? "neg" : "pos"}">${ar(b.resultat)}</b></div></div>
     <div class="barre" style="margin-top:12px"><i style="width:${pct}%;background:linear-gradient(90deg,var(--bleu),var(--violet))"></i></div><div class="mut">${pct} % de l'objectif du jour (${ar(p.OBJECTIF_CA_JOUR)})</div></div>
@@ -298,7 +452,34 @@ function vueAuj() {
     ${jauge("Avance en cours", avanceEnCours(), p.AVANCE_MAX, "Achats déjà payés dont la vente n'est pas encore encaissée")}
     ${jauge("Cadeaux du jour", cad, p.CADEAUX_JOUR, "Cadeaux enregistrés aujourd'hui")}
     ${jauge("Publicité de la semaine", pub, p.PUB_SEMAINE, "Depuis lundi")}</div>
-  <div class="card"><h3>💵 À encaisser (${toutEnc.length})</h3><div class="mut">Commandes livrées sans vente enregistrée (21 derniers jours, archivées incluses)</div>${enc.length ? enc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="petit vert" data-enc="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}${toutEnc.length > 8 ? `<button class="sec petit" data-enctout="1" style="width:100%;margin-top:8px">${S.encTout ? "Réduire la liste" : "Voir les " + (toutEnc.length - 8) + " autres"}</button>` : ""}</div>`;
+  <div class="card"><h3>💵 À encaisser (${toutEnc.length})</h3><div class="mut">Commandes livrées sans vente enregistrée (21 derniers jours, archivées incluses)</div>${enc.length ? enc.map(c => `<div class="lig"><div class="g"><b>${esc(c.id)} · ${esc(c.client)}</b><span class="mut">${ar(c.montant)}</span></div><button class="sec petit" data-enc="${esc(c.id)}" title="Modifier avant d'enregistrer">✎</button><button class="petit vert" data-enc1="${esc(c.id)}">Encaisser</button></div>`).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}${toutEnc.length ? `<button class="petit" data-goto="cloture" style="width:100%;margin-top:8px">🌙 Ouvrir la clôture du soir</button>` : ""}${toutEnc.length > 8 ? `<button class="sec petit" data-enctout="1" style="width:100%;margin-top:8px">${S.encTout ? "Réduire la liste" : "Voir les " + (toutEnc.length - 8) + " autres"}</button>` : ""}</div>`;
+}
+function vueCloture() {
+  const d = S.d, c = S.clo, b = bilanJour(d.auj), liste = aEncaisser().slice().reverse(), fait = dejaCloture();
+  const sel = liste.filter(x => !c.excl[x.id]);
+  let tv = 0, ta = 0, manque = 0; sel.forEach(x => { const a = apercu(x); tv += x.montant; ta += a.achat; if (a.inc.length) manque++; });
+  const dep = k => somme(actives(), l => l.jour === d.auj && l.type === "SORTIE" && l.cat === k);
+  const res = c.res ? `<div class="card" style="border-color:#86efac;background:#f0fdf4"><h3>✅ Clôture enregistrée</h3>
+    ${c.res.encaisses.length ? `<div class="mut">${c.res.encaisses.length} commande(s) encaissée(s) : ${ar(c.res.encaisses.reduce((a, x) => a + x.vente, 0))} de ventes, ${ar(c.res.encaisses.reduce((a, x) => a + x.achat, 0))} d'achats.</div>` : ""}
+    ${c.res.depenses ? `<div class="mut">${c.res.depenses} dépense(s) enregistrée(s).</div>` : ""}
+    ${c.res.ignores.length ? `<div class="mut">Ignoré : ${c.res.ignores.map(x => esc(x.id) + " (" + esc(x.raison) + ")").join(", ")}.</div>` : ""}
+    ${c.res.encaisses.some(x => x.inconnus.length) ? `<div style="margin-top:6px;color:#92400e;font-size:.85rem">⚠️ Prix d'achat manquant pour : ${esc([...new Set(c.res.encaisses.flatMap(x => x.inconnus))].join(", "))}. Renseignez-les dans Pilotage > Rentabilité pour une marge exacte.</div>` : ""}</div>` : "";
+  return `${fait ? `<div class="card" style="background:#f0fdf4;border-color:#86efac"><b>✅ Journée clôturée à ${esc(fait)}</b><div class="mut">Vous pouvez encore ajouter une commande ou une dépense : la clôture du soir peut être refaite.</div></div>` : ""}${res}
+  <div class="card"><h3>🌙 Résumé du jour</h3><div class="grid" style="margin-top:8px">
+    <div class="kpi"><span class="mut">Ventes</span><b>${ar(b.ca)}</b></div><div class="kpi"><span class="mut">Dépenses</span><b>${ar(b.sorties)}</b></div>
+    <div class="kpi"><span class="mut">Marge</span><b class="${b.marge < 0 ? "neg" : "pos"}">${ar(b.marge)}</b></div><div class="kpi"><span class="mut">Argent restant</span><b>${ar(d.solde)}</b></div></div></div>
+  <div class="card"><h3>💵 Commandes livrées à encaisser (${liste.length})</h3><div class="mut">Décochez celles qui ne sont pas encore payées. La vente et l'achat sont enregistrés tout seuls.</div>
+  ${liste.length ? `<button class="sec petit" data-ckall="${sel.length === liste.length ? "0" : "1"}" style="margin:8px 0">${sel.length === liste.length ? "Tout décocher" : "Tout cocher"}</button>` : ""}
+  ${liste.length ? liste.slice(0, 40).map(x => { const a = apercu(x); return `<label class="lig" style="margin:0;cursor:pointer;color:inherit;font-size:inherit;font-weight:inherit"><input type="checkbox" data-ck="${esc(x.id)}" ${c.excl[x.id] ? "" : "checked"} style="width:22px;height:22px;flex:none"><div class="g"><b>${esc(x.id)} · ${esc(x.client)}</b><span class="mut">${a.inc.length ? "⚠️ prix d'achat manquant : " + esc(a.inc.slice(0, 2).join(", ")) : "achat ≈ " + ar(a.achat) + " · marge ≈ " + ar(x.montant - a.achat)}</span></div><div class="m">${ar(x.montant)}</div></label>`; }).join("") : '<p class="mut">Rien à encaisser. 👍</p>'}
+  ${liste.length > 40 ? `<div class="mut">Les 40 plus récentes sont affichées.</div>` : ""}
+  ${sel.length ? `<div class="mut" style="margin-top:8px">Sélection : <b>${sel.length}</b> commande(s) · ventes ${ar(tv)} · achats ≈ ${ar(ta)} · marge ≈ ${ar(tv - ta)}${manque ? ` · <span style="color:#92400e">${manque} avec prix d'achat manquant</span>` : ""}</div>` : ""}</div>
+  <div class="card"><h3>⛽ Dépenses du jour</h3><div class="mut">Remplissez seulement ce que vous avez dépensé. Le coût du livreur est déjà compté tout seul.</div>
+  <label for="d-CARBURANT">Carburant (Ar)${dep("CARBURANT") ? ` <span class="tag">déjà saisi : ${ar(dep("CARBURANT"))}</span>` : ""}</label><input id="d-CARBURANT" inputmode="numeric" placeholder="0" value="${esc(c.dep.CARBURANT)}">
+  <label for="d-CREDIT_APPEL">Crédit d'appel (Ar)${dep("CREDIT_APPEL") ? ` <span class="tag">déjà saisi : ${ar(dep("CREDIT_APPEL"))}</span>` : ""}</label><input id="d-CREDIT_APPEL" inputmode="numeric" placeholder="0" value="${esc(c.dep.CREDIT_APPEL)}">
+  <label for="d-AUTRE">Autre dépense (Ar)</label><input id="d-AUTRE" inputmode="numeric" placeholder="0" value="${esc(c.dep.AUTRE)}">
+  <label for="d-note">Note pour l'autre dépense</label><input id="d-note" maxlength="200" placeholder="ex : emballages" value="${esc(c.dep.note)}"></div>
+  <button id="clo-ok" style="width:100%;padding:16px;font-size:1.05rem">✅ Valider la clôture du soir</button>
+  <p class="mut" style="text-align:center">Rien ne s'enregistre avant ce bouton.</p>`;
 }
 function vueSaisie() {
   const c = S.d.categories, cats = S.type === "ENTREE" ? c.entree : c.sortie, pre = S.pre || {};
@@ -315,7 +496,7 @@ function vueSaisie() {
 }
 function ligneHtml(l) {
   const nom = (S.d.categories.entree[l.cat] || S.d.categories.sortie[l.cat] || l.cat);
-  return `<div class="lig ${l.annule ? "annule" : ""}"><div class="g"><b>${esc(nom)}${l.idCmd ? `<span class="tag">${esc(l.idCmd)}</span>` : ""}</b><span class="mut">${esc(l.heure)} ${esc(l.note)}</span></div><div class="m ${l.type === "ENTREE" ? "pos" : "neg"}">${l.type === "ENTREE" ? "+" : "−"}${ar(l.montant).replace("−", "")}</div>${l.annule ? "" : `<button class="danger petit" data-ann="${esc(l.id)}">✕</button>`}</div>`;
+  return `<div class="lig ${l.annule ? "annule" : ""}"><div class="g"><b>${esc(nom)}${l.idCmd ? `<span class="tag">${esc(l.idCmd)}</span>` : ""}</b><span class="mut">${esc(l.heure)} ${l.auto ? "⚙️ auto · " : ""}${esc(l.note)}</span></div><div class="m ${l.type === "ENTREE" ? "pos" : "neg"}">${l.type === "ENTREE" ? "+" : "−"}${ar(l.montant).replace("−", "")}</div>${l.annule ? "" : (l.auto && l.idCmd ? `<button class="danger petit" data-annc="${esc(l.idCmd)}" title="Annule la vente et l'achat automatiques de cette commande">↩</button>` : `<button class="danger petit" data-ann="${esc(l.id)}">✕</button>`)}</div>`;
 }
 function vueJournal() {
   const l = S.d.journal.filter(x => x.jour === S.jour).reverse(), b = bilanJour(S.jour);
@@ -388,6 +569,7 @@ function vuePlaf() {
 
 /* ---------- Actions ---------- */
 function saisieLive(e) {
+  const id0 = e.target.id || ""; if (id0.indexOf("d-") === 0) { const k = id0.slice(2); S.clo.dep[k] = e.target.value; return; }
   if (e.target.id === "j-jour") { S.jour = e.target.value || S.d.auj; dessiner(); }
   if (e.target.id === "f-id" && S.type === "ENTREE" && S.cat === "VENTE" && !$("f-montant").value) { const c = S.d.commandes.find(x => x.id === e.target.value.trim()); if (c) $("f-montant").value = c.montant; }
 }
@@ -397,11 +579,46 @@ async function clic(e) {
   else if (t.dataset.cat) { const m = $("f-montant").value, i = $("f-id").value; S.cat = t.dataset.cat; S.pre = { montant: m, id: i }; dessiner(); }
   else if (t.dataset.enc) { const c = S.d.commandes.find(x => x.id === t.dataset.enc); S.type = "ENTREE"; S.cat = "VENTE"; S.pre = { id: c.id, montant: c.montant }; aller("saisie"); }
   else if (t.id === "f-ok") enregistrer(t);
+  else if (t.dataset.goto) aller(t.dataset.goto);
+  else if (t.dataset.enc1) encaisserUn(t);
+  else if (t.dataset.ap) appelResultat(t);
+  else if (t.id === "pt-ok") sauverParte(t);
+  else if (t.dataset.ptedit) { S.pt.edit = t.dataset.ptedit; dessiner(); }
+  else if (t.dataset.ptlie) lierParte(t);
+  else if (t.dataset.ptpin || t.dataset.ptpay || t.dataset.rgann || t.dataset.rmann) actionParte(t);
+  else if (t.dataset.ptfac || t.dataset.facap || t.dataset.facem || t.dataset.facx || t.dataset.fimp || t.dataset.fpay || t.dataset.fann) actionFacture(t);
+  else if (t.dataset.ckall) { const tout = t.dataset.ckall === "1"; S.clo.excl = {}; if (!tout) aEncaisser().forEach(x => S.clo.excl[x.id] = true); dessiner(); }
+  else if (t.id === "clo-ok") validerCloture(t);
+  else if (t.dataset.annc) { if (!confirm("Annuler la vente et l'achat automatiques de la commande " + t.dataset.annc + " ?")) return; const r = await api({ operation: "annulerEncaissement", idCommande: t.dataset.annc }); toast(r.message || "Fait"); charger(); }
   else if (t.dataset.enctout) { S.encTout = !S.encTout; dessiner(); }
   else if (t.id === "b-appliquer") appliquerBudget(t);
   else if (t.dataset.nbl) { const v = Math.min(20, Math.max(1, nbLivreurs() + Number(t.dataset.nbl))); if (v === nbLivreurs()) return; const r = await api({ operation: "plafond", cle: "NB_LIVREURS", valeur: v }); toast(r.success ? "Nombre de livreurs : " + v : (r.message || "Erreur")); if (r.success) charger(); }
   else if (t.dataset.ann) { const mo = prompt("Annuler cette ligne ? Motif (facultatif) :", ""); if (mo === null) return; const r = await api({ operation: "annuler", idLigne: t.dataset.ann, motif: mo }); toast(r.message || "Fait"); charger(); }
   else if (t.dataset.pl) { const v = $("p-" + t.dataset.pl).value; const r = await api({ operation: "plafond", cle: t.dataset.pl, valeur: v }); toast(r.success ? "Plafond enregistré" : (r.message || "Erreur")); if (r.success) charger(); }
+}
+async function encaisserUn(btn) {
+  const id = btn.dataset.enc1; btn.disabled = true;
+  try {
+    const r = await api({ operation: "cloture", ids: [id] });
+    if (!r.success) { toast(r.message || "Erreur"); btn.disabled = false; return; }
+    const e = r.encaisses[0];
+    toast(e ? `✔ ${id} encaissée : vente ${ar(e.vente)}, achat ${ar(e.achat)}${e.inconnus.length ? " ⚠️ prix d'achat manquant : " + e.inconnus.slice(0, 2).join(", ") : ""}` : (r.ignores[0] ? id + " : " + r.ignores[0].raison : "Rien à faire"));
+    await charger();
+  } catch (e) { if (e.message !== "acces") { toast("Réseau indisponible. Actualisez avant de recommencer."); btn.disabled = false; } }
+}
+async function validerCloture(btn) {
+  const c = S.clo, ids = aEncaisser().filter(x => !c.excl[x.id]).map(x => x.id).slice(0, 40), dep = [];
+  [["CARBURANT", ""], ["CREDIT_APPEL", ""], ["AUTRE", c.dep.note]].forEach(([k, note]) => { const v = String(c.dep[k] || "").replace(/\s/g, ""); if (v) dep.push({ categorie: k, montant: v, note }); });
+  if (dep.some(x => !/^\d+$/.test(x.montant) || +x.montant <= 0)) return toast("Dépenses : chiffres seulement (ex : 5000).");
+  if (!ids.length && !dep.length && !confirm("Rien à enregistrer. Marquer quand même la journée comme clôturée ?")) return;
+  btn.disabled = true; btn.textContent = "Enregistrement...";
+  try {
+    const r = await api({ operation: "cloture", ids, depenses: dep });
+    if (!r.success) { toast(r.message || "Erreur"); btn.disabled = false; btn.textContent = "✅ Valider la clôture du soir"; return; }
+    try { localStorage.setItem(clefCloture(), heureNow()); } catch (e) {}
+    S.clo = { excl: {}, dep: { CARBURANT: "", CREDIT_APPEL: "", AUTRE: "", note: "" }, res: r };
+    toast("✔ Clôture du soir enregistrée"); await charger(); window.scrollTo(0, 0);
+  } catch (e) { if (e.message !== "acces") { toast("Réseau indisponible : vérifiez le journal avant de recommencer."); btn.disabled = false; btn.textContent = "✅ Valider la clôture du soir"; charger(); } }
 }
 async function appliquerBudget(btn) {
   const B = budget(), v = { AVANCE_MAX: Math.ceil(B.achatsMoy / 1000) * 1000, CADEAUX_JOUR: B.cats.find(c => c.k === "CADEAU").conseil, PUB_SEMAINE: B.cats.find(c => c.k === "PUBLICITE").conseil * 7 };

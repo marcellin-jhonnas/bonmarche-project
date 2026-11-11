@@ -66,6 +66,9 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 .motif { display: block; width: 100%; text-align: left; border: 1px solid #e2e8f0; background: #f8fafc; padding: 13px; border-radius: 10px; margin-bottom: 8px; font-weight: 700; font-size: .9rem; cursor: pointer; } .motif.on { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
 .modal textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: .9rem; margin-bottom: 10px; }
 .jour-l { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: .85rem; }
+.part-tete { color: #fff; padding: 11px 14px; margin: -15px -15px 10px; border-radius: 14px 14px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; } .part-tete b { font-size: 1.02rem; }
+.ligne-ram { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: .9rem; } .ligne-ram.fait { color: #16a34a; }
+#scan-video { width: 100%; border-radius: 12px; background: #000; max-height: 46vh; object-fit: cover; }
 #zone-impression { display: none; }
 @media print {
   body { background: #fff; padding: 0; }
@@ -102,8 +105,12 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 </div>
 
 <div class="modal" id="modal-pb"><div class="box"><h3>⚠️ Quel est le problème ?</h3><div id="motifs"></div><textarea id="pb-texte" rows="2" placeholder="Précision (facultatif)"></textarea><div class="actions"><button class="btn btn-sec" id="pb-annuler" type="button">Annuler</button><button class="btn btn-livre" id="pb-envoyer" type="button" style="background:#dc2626">Envoyer à SafeRun</button></div></div></div>
+<div class="modal" id="modal-scan"><div class="box"><h3 id="scan-titre">📷 Scanner le QR du partenaire</h3><video id="scan-video" playsinline muted></video><div id="scan-msg" style="font-size:.82rem;color:#64748b;margin:8px 0"></div>
+  <input id="scan-code" inputmode="numeric" maxlength="4" placeholder="ou tapez le code à 4 chiffres" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-size:1.1rem;text-align:center;margin-bottom:10px">
+  <div style="display:flex;gap:8px"><button class="btn btn-prim" id="scan-ok" type="button" style="flex:1">Valider le code</button><button class="btn btn-sec" id="scan-fermer" type="button" style="flex:1">Fermer</button></div></div></div>
 <nav id="menu" style="display:none">
   <button data-o="liv" type="button"><i class="fas fa-box"></i>Livraisons<span class="n" id="n-liv"></span></button>
+  <button data-o="ram" type="button"><i class="fas fa-store"></i>Ramassage<span class="n" id="n-ram" style="display:none"></span></button>
   <button data-o="stock" type="button"><i class="fas fa-boxes"></i>Déstockage</button>
   <button data-o="etiq" type="button"><i class="fas fa-tags"></i>Étiquettes</button>
   <button data-o="fiche" type="button"><i class="fas fa-id-card"></i>Ma fiche</button>
@@ -114,7 +121,7 @@ nav#menu button i { display: block; font-size: 1.25rem; margin-bottom: 3px; } na
 const API = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
 const WA_SUPPORT = "261382453610";
 const K = { acces: "saferun_livreur_acces", nom: "saferun_livreur_nom", pin: "saferun_livreur_pin", file: "saferun_livreur_file_v2", vieux: "saferun_livreur_file_attente", cache: "saferun_livreur_cache" };
-const S = { nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false, tri: "horaire", pos: null, carte: false, pbId: "", pbMotif: "" };
+const S = { ram: null, scanPid: "", nom: "", pin: "", data: null, onglet: "liv", jour: "AUJ", vague: "TOUS", hors: false, tri: "horaire", pos: null, carte: false, pbId: "", pbMotif: "" };
 const MOTIFS = { INJOIGNABLE: "📵 Client injoignable", ADRESSE: "📍 Adresse introuvable", ABSENT: "🚪 Client absent", REFUSE: "✋ Client refuse la commande", PAIEMENT: "💵 Paiement incomplet ou refusé", AUTRE: "❓ Autre problème" };
 let gpsId = null, dernierEnvoi = { t: 0, lat: 0, lng: 0 }, carteObj = null, couche = null;
 let minuteur = null;
@@ -131,7 +138,7 @@ function fermer404() {                                    // appareil non autori
   localStorage.removeItem(K.acces); localStorage.removeItem(K.nom); localStorage.removeItem(K.pin); localStorage.removeItem(K.cache);
   clearInterval(minuteur); if (gpsId !== null) { navigator.geolocation.clearWatch(gpsId); gpsId = null; }
   S.nom = S.pin = ""; S.data = null; document.title = "404 Not Found";
-  ["ecran-livreur", "ecran-connexion", "menu", "modal-pb"].forEach(i => { const e = $(i); if (e) e.style.display = "none"; });
+  ["ecran-livreur", "ecran-connexion", "menu", "modal-pb", "modal-scan"].forEach(i => { const e = $(i); if (e) e.style.display = "none"; });
   $("faux404").style.display = "block";
 }
 async function api(payload) {
@@ -149,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-maj").onclick = () => charger(true);
   $("menu").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) { S.onglet = b.dataset.o; dessiner(); window.scrollTo(0, 0); } });
   $("contenu").addEventListener("click", clic);
+  $("scan-fermer").onclick = fermerScan; $("scan-ok").onclick = () => { const c = $("scan-code").value.trim(); if (!/^\d{4}$/.test(c)) { $("scan-msg").innerText = "Tapez les 4 chiffres affichés chez le partenaire."; return; } validerRam({ code: c }); };
   $("contenu").addEventListener("change", changement);
   $("motifs").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; S.pbMotif = b.dataset.m; document.querySelectorAll("#motifs .motif").forEach(x => x.classList.toggle("on", x === b)); });
   $("pb-annuler").onclick = () => $("modal-pb").classList.remove("on"); $("pb-envoyer").onclick = envoyerProbleme;
@@ -180,7 +188,7 @@ async function connecter() {
 function deconnecter() {
   if (ls.get(K.file, []).length && !confirm("Des livraisons n'ont pas encore été envoyées. Quitter quand même ?")) return;
   localStorage.removeItem(K.nom); localStorage.removeItem(K.pin); localStorage.removeItem(K.cache);
-  clearInterval(minuteur); if (gpsId !== null) { navigator.geolocation.clearWatch(gpsId); gpsId = null; } S.pos = null; S.nom = S.pin = ""; S.data = null;
+  clearInterval(minuteur); if (gpsId !== null) { navigator.geolocation.clearWatch(gpsId); gpsId = null; } S.pos = null; S.nom = S.pin = ""; S.data = null; S.ram = null;
   $("ecran-livreur").style.display = "none"; $("menu").style.display = "none"; $("ecran-connexion").style.display = "flex"; $("input-pin").value = ""; chargerListeLivreurs();
 }
 function ouvrir(dejaCharge) {
@@ -198,8 +206,76 @@ async function charger(manuel) {
     await vider();
     const r = await api({ action: "livreurFiche", nom: S.nom, pin: S.pin });
     if (!r || !r.success) { if (r && r.bloque) alert(r.message); else if (r && /PIN/.test(r.message || "")) { alert("Votre code PIN n'est plus valide. Reconnectez-vous."); deconnecter(); } else if (manuel) alert((r && r.message) || "Erreur de chargement."); return; }
-    S.data = r; S.hors = false; ls.set(K.cache, r); dessiner(); envoyerPos(false);
+    S.data = r; S.hors = false; ls.set(K.cache, r); dessiner(); envoyerPos(false); chargerRam();
   } catch (e) { S.hors = true; bandeau(); }
+}
+/* ---------- Ramassage chez les partenaires (QR / code) ---------- */
+async function chargerRam() {
+  if (!S.nom || !navigator.onLine) return;
+  try {
+    const r = await api({ action: "ramassage", operation: "liste", nom: S.nom, pin: S.pin });
+    if (r && r.success) { S.ram = r.partenaires; ls.set("saferun_livreur_ram", { nom: S.nom, p: r.partenaires }); majBadgeRam(); if (S.onglet === "ram" && !$("modal-scan").classList.contains("on")) dessiner(); }
+  } catch (e) {}
+}
+function majBadgeRam() { const n = (S.ram || []).filter(p => p.restant > 0).length, b = $("n-ram"); if (!b) return; b.innerText = n || ""; b.style.display = n ? "" : "none"; }
+function ecranRamassage() {
+  if (S.ram === null) { const c = ls.get("saferun_livreur_ram", null); if (c && c.nom === S.nom) S.ram = c.p; }
+  const L = S.ram;
+  if (L === null) return '<div class="vide"><i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><p style="margin-top:10px">Chargement...</p></div>';
+  if (!L.length) return '<div class="carte"><h3>🏪 Ramassage chez les partenaires</h3><div class="vide">Aucun produit de partenaire dans vos commandes.<br><small>Vos produits SafeRun se prennent au dépôt (voir Déstockage).</small></div></div>';
+  return L.map(p => {
+    const fini = p.restant === 0, parCmd = {}; p.lignes.forEach(l => { (parCmd[l.commande] = parCmd[l.commande] || []).push(l); });
+    return `<div class="carte" style="border-top:0"><div class="part-tete" style="background:${esc(p.couleur)}"><b>🏪 ${esc(p.nom)}</b>${p.tel ? `<a href="tel:${esc(p.tel)}" style="color:#fff;text-decoration:none"><i class="fas fa-phone"></i> ${esc(p.tel)}</a>` : ""}</div>
+      ${Object.keys(parCmd).map(id => `<div style="font-size:.74rem;color:#64748b;margin-top:6px">Commande ${esc(id)}</div>` + parCmd[id].map(l => `<div class="ligne-ram ${l.ramasse ? "fait" : ""}"><span>${l.ramasse ? "✅" : "▫️"} ${esc(l.produit)}</span><b>× ${l.qte}</b></div>`).join("")).join("")}
+      ${fini ? '<div class="prochaine" style="margin:10px 0 0">✅ Tout est ramassé chez ce partenaire</div>' : `<div class="actions" style="margin-top:10px"><button class="btn btn-prim" data-scan="${esc(p.pid)}" type="button"><i class="fas fa-qrcode"></i> Scanner le QR</button></div><div style="font-size:.74rem;color:#64748b;margin-top:6px">Le partenaire affiche un QR (ou un code à 4 chiffres) sur sa page : c'est la preuve que vous avez bien reçu les produits.</div>`}</div>`;
+  }).join("");
+}
+let scanFlux = null, scanBoucle = 0, scanDetecteur = null, scanEnCours = false;
+function chargerJsQR() { return new Promise(res => { if (window.jsQR) return res(true); const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"; s.onload = () => res(!!window.jsQR); s.onerror = () => res(false); document.head.appendChild(s); }); }
+async function ouvrirScan(pid) {
+  if (!navigator.onLine) { alert("Connexion requise pour valider un ramassage."); return; }
+  const p = (S.ram || []).find(x => x.pid === pid); S.scanPid = pid; scanEnCours = false;
+  $("scan-titre").innerText = "📷 QR de " + (p ? p.nom : "partenaire"); $("scan-code").value = ""; $("scan-msg").innerText = "Ouverture de la caméra…"; $("modal-scan").classList.add("on");
+  try {
+    scanFlux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    const v = $("scan-video"); v.srcObject = scanFlux; await v.play(); $("scan-msg").innerText = "Placez le QR du partenaire dans le cadre.";
+    if ("BarcodeDetector" in window) { try { scanDetecteur = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e) { scanDetecteur = null; } }
+    if (!scanDetecteur) await chargerJsQR();
+    boucleScan();
+  } catch (e) { $("scan-msg").innerText = "Caméra indisponible : tapez le code à 4 chiffres ci-dessous."; $("scan-video").style.display = "none"; }
+}
+function boucleScan() {
+  const v = $("scan-video"); if (!scanFlux) return;
+  const cv = boucleScan.cv || (boucleScan.cv = document.createElement("canvas"));
+  const tour = async () => {
+    if (!scanFlux) return;
+    try {
+      if (v.readyState >= 2 && !scanEnCours) {
+        let txt = "";
+        if (scanDetecteur) { const r = await scanDetecteur.detect(v); if (r && r[0]) txt = r[0].rawValue; }
+        else if (window.jsQR) { cv.width = v.videoWidth; cv.height = v.videoHeight; const c = cv.getContext("2d"); c.drawImage(v, 0, 0); const im = c.getImageData(0, 0, cv.width, cv.height), q = jsQR(im.data, im.width, im.height); if (q) txt = q.data; }
+        if (txt) { await traiterQR(txt); }
+      }
+    } catch (e) {}
+    scanBoucle = setTimeout(tour, 250);
+  };
+  tour();
+}
+function arreterScan() { clearTimeout(scanBoucle); if (scanFlux) { scanFlux.getTracks().forEach(t => t.stop()); scanFlux = null; } $("scan-video").srcObject = null; $("scan-video").style.display = ""; scanEnCours = false; }
+function fermerScan() { arreterScan(); $("modal-scan").classList.remove("on"); }
+async function traiterQR(texte) {                           // contenu du QR : SRP|<identifiant partenaire>|<jeton>
+  const m = String(texte).trim().match(/^SRP\|([^|]+)\|([A-Za-z0-9]+)$/);
+  if (!m) { if (!scanEnCours) $("scan-msg").innerText = "Ce QR n'est pas un QR de partenaire SafeRun."; return; }
+  if (m[1] !== S.scanPid) { $("scan-msg").innerText = "⚠️ QR d'un autre partenaire. Scannez celui de " + ((S.ram || []).find(x => x.pid === S.scanPid) || {}).nom + "."; return; }
+  await validerRam({ token: m[2] });
+}
+async function validerRam(preuve) {
+  if (scanEnCours) return; scanEnCours = true; $("scan-msg").innerText = "Validation…";
+  try {
+    const r = await api(Object.assign({ action: "ramassage", operation: "valider", nom: S.nom, pin: S.pin, pid: S.scanPid }, preuve));
+    if (r && r.success) { fermerScan(); alert("✅ Ramassage confirmé chez " + r.partenaire + "\n" + r.resume.join("\n")); await chargerRam(); dessiner(); return; }
+    $("scan-msg").innerText = "❌ " + ((r && r.message) || "Validation impossible"); scanEnCours = false; setTimeout(() => { if (!r || !/déjà|Tout/.test(r.message || "")) return; fermerScan(); chargerRam(); }, 1200);
+  } catch (e) { if (e.message !== "acces") { $("scan-msg").innerText = "❌ Réseau indisponible. Réessayez."; } scanEnCours = false; }
 }
 function attentes() { return ls.get(K.file, []); }
 function enAttenteIds() { return attentes().filter(p => p.action === "livreurLivre").map(p => String(p.id)); }
@@ -261,7 +337,7 @@ function dessiner() {
   $("maj").innerText = S.data ? "Données du " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
   const n = S.data ? commandes().filter(c => !c.enAttente).length : 0; $("n-liv").innerText = n || ""; $("n-liv").style.display = n ? "" : "none";
   if (!S.data) { $("contenu").innerHTML = '<div class="vide"><i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><p style="margin-top:10px">Chargement...</p></div>'; return; }
-  $("contenu").innerHTML = ({ liv: ecranLivraisons, stock: ecranStock, etiq: ecranEtiquettes, fiche: ecranFiche }[S.onglet] || ecranLivraisons)();
+  $("contenu").innerHTML = ({ liv: ecranLivraisons, ram: ecranRamassage, stock: ecranStock, etiq: ecranEtiquettes, fiche: ecranFiche }[S.onglet] || ecranLivraisons)();
   if (S.onglet === "liv" && S.carte) dessinerCarte();
 }
 function resume() {
@@ -361,6 +437,7 @@ function changement(e) {
   const t = e.target; if (t.dataset && t.dataset.pick) { const c = ls.get(cleCoches(), {}); if (t.checked) c[t.dataset.pick] = 1; else delete c[t.dataset.pick]; ls.set(cleCoches(), c); dessiner(); }
 }
 function clic(e) {
+  const sc = e.target.closest("[data-scan]"); if (sc) { ouvrirScan(sc.dataset.scan); return; }
   const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
   if (d.fj) { S.jour = d.fj; dessiner(); } else if (d.fv) { S.vague = d.fv; dessiner(); }
   else if (d.raz) { ls.set(cleCoches(), {}); dessiner(); }
