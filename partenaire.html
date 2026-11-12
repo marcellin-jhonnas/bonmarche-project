@@ -143,7 +143,17 @@ function vueReleve() {
 }
 function vueProd() {
   const P = S.d.produits || [];
-  return `<div class="carte"><h2>🏷️ Vos produits sur SafeRun</h2><div class="mut">Prix de vente affiché sur le site. Pour changer un prix ou ajouter un produit, contactez SafeRun : le changement est validé avant d'apparaître.</div>${P.length ? P.map(p => `<div class="lig"><span style="text-transform:capitalize">${esc(p.produit)}</span><b>${p.prix ? ar(p.prix) : "—"}</b></div>`).join("") : '<div class="mut" style="margin-top:8px">Aucun produit lié pour le moment.</div>'}</div>`;
+  return `<div class="carte"><h2>🏷️ Vos produits sur SafeRun</h2><div class="mut">Prix de vente affiché sur le site. Tout changement est validé par SafeRun avant d'apparaître.</div>${P.length ? P.map(p => `<div class="lig"><span style="text-transform:capitalize">${esc(p.produit)}</span><b>${p.prix ? ar(p.prix) : "—"}</b></div>`).join("") : '<div class="mut" style="margin-top:8px">Aucun produit lié pour le moment.</div>'}</div>` + blocDemandes();
+}
+const TYPES_DEM = { RUPTURE: "Rupture de stock", PRIX: "Changement de prix", NOUVEAU: "Nouveau produit", AUTRE: "Autre demande" };
+function blocDemandes() {
+  const D = S.d.demandes || [], P = S.d.produits || [];
+  return `<div class="carte"><h2>📨 Une demande pour SafeRun</h2><div class="mut">Produit épuisé, nouveau prix, nouveau produit : envoyez-le ici, SafeRun répond dans l'application.</div>
+    <select id="dm-type" style="width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:12px;margin:10px 0;font:inherit">${Object.keys(TYPES_DEM).map(k => `<option value="${k}">${TYPES_DEM[k]}</option>`).join("")}</select>
+    <input id="dm-prod" list="dm-liste" placeholder="Produit concerné"><datalist id="dm-liste">${P.map(p => `<option value="${esc(p.produit)}">`).join("")}</datalist>
+    <input id="dm-val" placeholder="Nouveau prix (Ar) ou détail du produit — si besoin"><input id="dm-note" placeholder="Précision (facultatif)">
+    <button id="btn-dem" style="width:100%">Envoyer la demande</button></div>
+  ${D.length ? `<div class="carte"><h2>Mes demandes</h2>${D.map(d => `<div class="lig"><span>${esc(TYPES_DEM[d.type] || d.type)} · ${esc(d.produit)}${d.valeur ? " → " + esc(d.valeur) : ""}<div class="mut">${esc(d.date)}${d.decision ? " · " + esc(d.decision) : ""}</div></span><span class="tag ${d.statut === "ACCEPTEE" ? "v" : d.statut === "REFUSEE" ? "o" : ""}">${d.statut === "ACCEPTEE" ? "Acceptée" : d.statut === "REFUSEE" ? "Refusée" : "En attente"}</span></div>`).join("")}</div>` : ""}`;
 }
 function vueContrat() {
   const d = S.d;
@@ -205,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("vue").addEventListener("click", async e => {
     const t = e.target.closest("button"); if (!t) return;
     if (t.dataset.fact) voirFacture(t.dataset.fact);
+    else if (t.id === "btn-dem") { const prod = $("dm-prod").value.trim(); t.disabled = true; try { const r = await api({ operation: "demandeCreer", type: $("dm-type").value, produit: prod, valeur: $("dm-val").value, note: $("dm-note").value }); if (r.success) { toast("Demande envoyée"); await charger(); } else toast(r.message || "Erreur"); } catch (e) { if (e.message !== "acces") toast("Réseau indisponible"); } t.disabled = false; }
     else if (t.id === "btn-jeton") demanderJeton(t);
     else if (t.id === "btn-annule-jeton") { arreterRemise(); dessiner(); }
     else if (t.id === "btn-ok-remise") { S.confirme = null; dessiner(); }
