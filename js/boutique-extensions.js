@@ -31,6 +31,8 @@
         return ["PPN", "PRODUITSDEPREMIERENECESSITE", "ALIMENTAIRE", "CONSERVES", "FRAIS", "HYGIENE", "ENERGIE", "BOULANGERIE"].indexOf(k) !== -1;
     }
 
+    window.srEstRayonAccueil = estRayonAccueil;   // partagé avec le module Commande (autre bloc)
+
     function echapper(texte) {
         return String(texte).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -64,9 +66,26 @@
         const dropdown = document.getElementById("liste-dropdown-boutiques");
         if (!dropdown) return;
         dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
-        
-        const produits = window.tousLesProduits || [];
-        window.genererMenuDropdownBoutiques(produits);
+        if (dropdown.style.display === "none") return;
+
+        // tousLesProduits (main.js) n'est pas une propriété window : on lit listeLocaleSafeRun
+        const lire = () => (window.tousLesProduits && window.tousLesProduits.length ? window.tousLesProduits : window.listeLocaleSafeRun) || [];
+        window.genererMenuDropdownBoutiques(lire());
+
+        // Si la Sheet n'est pas encore chargée, on réactualise le menu dès qu'elle arrive (max 10 s)
+        if (!lire().length && !window.__srMenuBoutiquesAttente) {
+            let essais = 0;
+            window.__srMenuBoutiquesAttente = setInterval(() => {
+                essais++;
+                const d = document.getElementById("liste-dropdown-boutiques");
+                if (lire().length) {
+                    clearInterval(window.__srMenuBoutiquesAttente); window.__srMenuBoutiquesAttente = null;
+                    if (d && d.style.display !== "none") window.genererMenuDropdownBoutiques(lire());
+                } else if (essais >= 20 || !d || d.style.display === "none") {
+                    clearInterval(window.__srMenuBoutiquesAttente); window.__srMenuBoutiquesAttente = null;
+                }
+            }, 500);
+        }
     };
 
     // [MODIFIÉ] Le menu est construit à partir des catégories réellement présentes dans la Sheet
@@ -75,6 +94,7 @@
         if (!dropdown) return;
 
         let source = Array.isArray(tousLesProduits) ? tousLesProduits : [];
+        if (!source.length && Array.isArray(window.listeLocaleSafeRun)) source = window.listeLocaleSafeRun;
         if (!source.length) {
             try { source = JSON.parse(localStorage.getItem("saferun_cache_produits") || "[]"); } catch (e) { source = []; }
         }
@@ -93,8 +113,8 @@
             if (!b.image && !epuise && /^https?:\/\//i.test(url)) b.image = url;
         });
 
-        // Secours si la Sheet n'a pas encore été chargée
-        if (!boutiques.size) {
+        // Secours seulement si AUCUNE donnée n'est encore chargée (pas quand tout est rayon d'accueil)
+        if (!boutiques.size && !source.length) {
             ["VETEMENTS", "CHAUSSURES"].forEach(n => boutiques.set(n, { cle: n, nom: n, image: "" }));
         }
 
@@ -703,7 +723,7 @@
     }
     function estProduitAccueil(p) {
         if (!p) return false;
-        try { return typeof estRayonAccueil === "function" ? !!estRayonAccueil(p.Categorie) : false; } catch (e) { return false; }
+        try { return typeof window.srEstRayonAccueil === "function" ? !!window.srEstRayonAccueil(p.Categorie) : false; } catch (e) { return false; }
     }
 
     // « 10h-14h », « 10h00 - 14h30 », « 10:00-14:00 », « 10h à 14h »
