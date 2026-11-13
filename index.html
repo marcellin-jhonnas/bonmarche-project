@@ -576,6 +576,13 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
        2) Collez ce fichier entier à la place. Le reste de la page (modal-avis, scripts, chat) ne change pas.
      Prérequis déjà présents : Font Awesome + police Poppins. -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ============ FOOTER SAFERUN MARKET — VERSION UNIFIÉE (index.html + boutique.html) ============
+     MODE D'EMPLOI :
+       1) Dans la page, supprimez l'ancien footer (de la balise ouvrante footer jusqu'à la balise fermante)
+          ET le bloc de style qui le suit (et, dans boutique.html, le script « statut ouvert/fermé » juste après).
+       2) Collez ce fichier entier à la place. Le reste de la page (modal-avis, scripts, chat) ne change pas.
+     Prérequis déjà présents : Font Awesome + police Poppins. -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
     .footer-premium {
         --fp-bg: #0d151e;
@@ -780,6 +787,36 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
     .footer-premium .footer-contact i { margin-right: 0; }
     .footer-premium .social-icons a:hover { color: #fff; }
     .footer-premium .footer-links li a:hover, .footer-premium .fp-infos a:hover { padding-left: 0; }
+    /* ===== Carte « Votre livraison » ===== */
+    .footer-premium .fp-liv {
+        position: relative; margin: 0 0 16px; padding: 14px 14px 12px; border-radius: 16px; overflow: hidden;
+        background: linear-gradient(145deg, rgba(39,174,96,.16), rgba(255,255,255,.035));
+        border: 1px solid rgba(39,174,96,.38); box-shadow: 0 8px 22px rgba(0,0,0,.22);
+    }
+    .footer-premium .fp-liv::before { content: ""; position: absolute; right: -30px; top: -30px; width: 90px; height: 90px; border-radius: 50%; background: rgba(46,204,113,.12); }
+    .footer-premium .fp-liv > * { position: relative; }
+    .footer-premium .fp-liv-lieu { display: flex; align-items: center; gap: 10px; }
+    .footer-premium .fp-liv-pin { flex: 0 0 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(231,76,60,.18); color: #ff7b6b; }
+    .footer-premium .fp-liv-lieu small { display: block; font-size: .68rem; letter-spacing: .8px; text-transform: uppercase; color: var(--fp-text); }
+    .footer-premium .fp-liv-lieu b { display: block; font-size: .9rem; color: #fff; line-height: 1.25; word-break: break-word; }
+    .footer-premium .fp-liv-prix { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 12px 0 8px; }
+    .footer-premium .fp-liv-prix span { font-size: .78rem; color: var(--fp-text); }
+    .footer-premium .fp-liv-prix b { font-size: 1.45rem; font-weight: 800; color: var(--fp-green-light); letter-spacing: -.3px; white-space: nowrap; }
+    .footer-premium .fp-liv-cadeau {
+        display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 12px; font-size: .8rem; line-height: 1.35; color: #fff3cf;
+        background: linear-gradient(135deg, rgba(241,196,15,.22), rgba(230,126,34,.16)); border: 1px dashed rgba(241,196,15,.55);
+    }
+    .footer-premium .fp-liv-cadeau i { color: #f5c542; font-size: 1.05rem; animation: fpGift 2.4s ease-in-out infinite; transform-origin: 50% 80%; }
+    .footer-premium .fp-liv-cadeau b { color: #ffd966; }
+    @keyframes fpGift { 0%,100% { transform: rotate(0); } 10% { transform: rotate(-12deg); } 20% { transform: rotate(10deg); } 30% { transform: rotate(0); } }
+    .footer-premium .fp-liv-note { margin: 9px 0 0; font-size: .7rem; line-height: 1.45; color: var(--fp-text); }
+    .footer-premium .fp-liv-vide p { margin: 0 0 10px; font-size: .82rem; line-height: 1.5; color: #dfe6ec; }
+    .footer-premium .fp-liv-btn {
+        width: 100%; padding: 10px 14px; border: 0; border-radius: 11px; cursor: pointer; font: inherit; font-size: .82rem; font-weight: 700;
+        color: #fff; background: var(--fp-green); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .25s ease, background .25s ease;
+    }
+    .footer-premium .fp-liv-btn:hover { background: #219653; transform: translateY(-2px); }
+
     /* ===== Ajouts footer unifié (index + boutique) ===== */
     .footer-premium .social-btn[hidden] { display: none; }
     .footer-premium .fp-about { margin: -6px 0 18px; font-size: .8rem; line-height: 1.6; color: var(--fp-text); }
@@ -852,9 +889,8 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
                 <i class="fab fa-cc-visa" aria-label="Visa"></i>
                 <i class="fab fa-cc-mastercard" aria-label="Mastercard"></i>
             </div>
+            <div id="fp-livraison" class="fp-liv" aria-live="polite"></div>
             <ul class="fp-infos">
-                <li><i class="fas fa-truck"></i><span>Frais : <span id="fp-frais">15 % du panier (minimum 6 000 Ar)</span></span></li>
-                <li><i class="fas fa-gift"></i><span>Livraison offerte dès <span id="fp-gratuit">120 000 Ar</span></span></li>
                 <li><i class="fas fa-money-bill-wave"></i><span>Paiement possible à la livraison</span></li>
                 <li><i class="fab fa-whatsapp"></i><a href="https://wa.me/261382453610?text=Bonjour%20SafeRun%20Market%2C%20j%27ai%20une%20question." target="_blank" rel="noopener">Une question ? Écrivez-nous</a></li>
                 <li><i class="fas fa-briefcase"></i><a href="recrutement.html">Recrutement</a></li>
@@ -876,6 +912,131 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <p>© 2026 SafeRun Market. Tous droits réservés. Développé avec <span class="fp-heart">❤</span> par <span class="fp-author">MJ-R</span>.</p>
     </div>
 </footer>
+
+<script>
+/* Script du footer unifié. Isolé : n'écrase aucune fonction existante (main.js garde ses avis sur index.html). */
+(function () {
+    /* 1) Statut ouvert/fermé (Madagascar, Lun-Sam 08h-17h) */
+    try {
+        var box = document.getElementById('fp-status'), txt = document.getElementById('fp-status-text');
+        if (box && txt) {
+            var parts = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Indian/Antananarivo', weekday: 'short', hour: 'numeric', hour12: false }).formatToParts(new Date());
+            var day = parts.find(function (p) { return p.type === 'weekday'; }).value.toLowerCase();
+            var hour = parseInt(parts.find(function (p) { return p.type === 'hour'; }).value, 10) % 24;
+            var open = day.indexOf('dim') !== 0 && hour >= 8 && hour < 17;
+            box.classList.toggle('is-closed', !open);
+            txt.textContent = open ? 'Ouvert actuellement' : 'Fermé actuellement';
+        }
+    } catch (e) {}
+
+    /* 2) Carte « Votre livraison » : quartier et tarifs réellement enregistrés dans ce navigateur
+          (mêmes clés que le panier : saferun_quartier, saferun_tarif_minimal, saferun_seuil_gratuite) */
+    var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); };
+    var lire = function (k) { try { return (localStorage.getItem(k) || '').replace(/"/g, '').trim(); } catch (e) { return ''; } };
+    var nb = function (v, d) { var x = parseInt(String(v).replace(/[^0-9]/g, ''), 10); return isNaN(x) ? d : x; };
+    var ar = function (x) { return x.toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' Ar'; };
+    var derniere = '';
+    function rendreLivraison() {
+        var box = document.getElementById('fp-livraison'); if (!box) return;
+        var quartier = lire('saferun_quartier'), valide = lire('saferun_secteur_valide') === 'true';
+        var tarif = lire('saferun_tarif_minimal'), seuil = lire('saferun_seuil_gratuite');
+        var sig = [quartier, valide, tarif, seuil].join('|'); if (sig === derniere) return; derniere = sig;
+        if (!quartier || !valide) {
+            box.innerHTML = '<div class="fp-liv-vide"><p><b style="color:#fff">Connaissez votre prix avant de commander.</b><br>Indiquez votre quartier : nous affichons le tarif exact de votre livraison.</p>' +
+                '<button type="button" class="fp-liv-btn" id="fp-liv-choisir"><i class="fas fa-map-marker-alt"></i> Choisir mon quartier</button></div>';
+            var c = document.getElementById('fp-liv-choisir');
+            if (c) c.addEventListener('click', function () { if (typeof window.focusSearch === 'function') window.focusSearch(); else window.location.href = 'index.html'; });
+            return;
+        }
+        var t = nb(tarif, 6000), g = nb(seuil, 120000);
+        box.innerHTML =
+            '<div class="fp-liv-lieu"><div class="fp-liv-pin"><i class="fas fa-map-marker-alt"></i></div><div><small>Votre livraison à</small><b>' + esc(quartier) + '</b></div></div>' +
+            '<div class="fp-liv-prix"><span>Frais de livraison dès</span><b>' + ar(t) + '</b></div>' +
+            '<div class="fp-liv-cadeau"><i class="fas fa-gift"></i><span>Cadeau : la livraison est <b>offerte</b> dès <b>' + ar(g) + '</b> d\'achats.</span></div>' +
+            '<p class="fp-liv-note">Le montant exact s\'affiche dans votre panier avant de payer, sans surprise. Supplément possible pour les colis très lourds.</p>';
+    }
+    rendreLivraison();
+    document.addEventListener('DOMContentLoaded', rendreLivraison);
+    window.addEventListener('storage', rendreLivraison);
+    window.addEventListener('focus', rendreLivraison);
+    setInterval(rendreLivraison, 1500);   /* le quartier peut changer sans recharger la page */
+
+    /* 3) Avis : sur index.html tout est géré par main.js (modal + liste). Ailleurs (boutique) : liste en lecture seule
+          et le bouton renvoie vers index.html#avis. */
+    var btn = document.getElementById('fp-btn-avis');
+    if (btn) btn.addEventListener('click', function () {
+        if (typeof window.ouvrirModalAvis === 'function') window.ouvrirModalAvis(); else window.location.href = 'index.html#avis';
+    });
+    window.addEventListener('load', function () {   /* après le chargement de tous les scripts de la page */
+        if (typeof window.ouvrirModalAvis === 'function') {
+            if (location.hash === '#avis') setTimeout(function () { try { window.ouvrirModalAvis(); } catch (e) {} }, 500);
+            return;                                   /* index.html : main.js gère la liste et la fenêtre d'avis */
+        }
+        /* ---- Pages sans main.js (boutique) : même fenêtre d'avis que l'accueil, sans quitter la page ---- */
+        var URL_AVIS = "https://script.google.com/macros/s/AKfycbzVMmVo9wnzWiCQowYZF775QE0nXAkE74pVlmaeP6pkYeGUdfd2tWyvI1hXe_55z7_G/exec";
+        var CLE_RECAPTCHA = "6Le_sp4tAAAAANYKex_BBhz7KP8TFc5f_g9H_1Nn";
+        var CLE_IMGBB = "75ed3024736a6c38bb523b6226d2e933";
+        var c = document.getElementById('display-avis-footer');
+        var carte = function (d) {
+            return '<div class="avis-card-footer" style="display:flex;gap:10px;background:rgba(255,255,255,0.05);padding:8px;border-radius:10px;margin-bottom:8px;border-left:3px solid #ffcc00;">' +
+                '<img src="' + esc(d.photo) + '" alt="user" style="width:35px;height:35px;border-radius:50%;object-fit:cover;border:1px solid #ffcc00;">' +
+                '<div style="text-align:left;"><b style="font-size:0.75rem;color:#ffcc00;display:block;">' + esc(d.nom) + '</b>' +
+                '<p style="font-size:0.7rem;margin:0;color:#fff;line-height:1.2;">' + esc(d.message) + '</p></div></div>';
+        };
+        if (!document.getElementById('modal-avis')) {
+            var m = document.createElement('div'); m.id = 'modal-avis'; m.className = 'sr-modal-avis';
+            m.innerHTML = '<div class="sr-modal-content"><h3 style="margin:0 0 6px">Votre expérience</h3>' +
+                '<p style="font-size:0.8rem;color:#666;margin:0 0 6px">Une photo est requise pour valider l\'avis.</p>' +
+                '<textarea id="comm-client" placeholder="Votre message..." rows="4" style="font-family:inherit;box-sizing:border-box"></textarea>' +
+                '<div class="upload-section"><input type="file" id="photo-client" accept="image/*" hidden>' +
+                '<label for="photo-client" class="btn-upload"><i class="fas fa-camera"></i> Choisir une photo</label>' +
+                '<div id="preview-container" style="margin-bottom:12px"></div></div>' +
+                '<div class="modal-actions" style="display:flex;gap:10px;justify-content:center">' +
+                '<button type="button" id="btn-publier" style="flex:1;padding:12px;border:0;border-radius:12px;background:#27ae60;color:#fff;font-weight:700;cursor:pointer">Publier</button>' +
+                '<button type="button" id="btn-fermer-avis" style="flex:1;padding:12px;border:0;border-radius:12px;background:#eee;color:#333;font-weight:700;cursor:pointer">Annuler</button></div></div>';
+            document.body.appendChild(m);
+            m.addEventListener('click', function (e) { if (e.target === m) window.fermerModalAvis(); });
+            document.getElementById('btn-fermer-avis').addEventListener('click', function () { window.fermerModalAvis(); });
+            document.getElementById('btn-publier').addEventListener('click', function () { window.publierAvis(); });
+            document.getElementById('photo-client').addEventListener('change', function () {
+                var f = this.files && this.files[0], p = document.getElementById('preview-container'); p.innerHTML = '';
+                if (f) { var im = document.createElement('img'); im.src = URL.createObjectURL(f); im.alt = 'Aperçu'; im.style.cssText = 'max-width:100%;max-height:140px;border-radius:12px;object-fit:cover'; p.appendChild(im); }
+            });
+        }
+        window.ouvrirModalAvis = function () { document.getElementById('modal-avis').style.display = 'flex'; };
+        window.fermerModalAvis = function () { document.getElementById('modal-avis').style.display = 'none'; };
+        window.publierAvis = async function () {
+            var texte = document.getElementById('comm-client').value.trim(), photoInput = document.getElementById('photo-client'), photo = photoInput.files[0];
+            var nom = lire('saferun_nom') || 'Client SafeRun', b = document.getElementById('btn-publier');
+            if (!texte || !photo) { alert("N'oubliez pas le commentaire et la photo !"); return; }
+            b.disabled = true; b.innerText = ' Publication...';
+            try {
+                var token = await new Promise(function (resolve, reject) {
+                    if (!window.grecaptcha) return reject(new Error('recaptcha'));
+                    grecaptcha.ready(function () { grecaptcha.execute(CLE_RECAPTCHA, { action: 'publier_avis' }).then(resolve, reject); });
+                });
+                var fd = new FormData(); fd.append('image', photo);
+                var ri = await fetch('https://api.imgbb.com/1/upload?key=' + CLE_IMGBB, { method: 'POST', body: fd });
+                if (!ri.ok) throw new Error('imgbb');
+                var url = (await ri.json()).data.url;
+                var rs = await fetch(URL_AVIS, { method: 'POST', body: JSON.stringify({ action: 'publierAvis', nom: nom, message: texte, photo: url, recaptchaToken: token }) });
+                if (!rs.ok) throw new Error('sheet');
+                alert('Merci ' + nom + ' ! Votre avis est bien enregistré.');
+                window.fermerModalAvis();
+                if (c) { if (/^\s*<p/.test(c.innerHTML) && !c.querySelector('.avis-card-footer')) c.innerHTML = ''; c.insertAdjacentHTML('afterbegin', carte({ nom: nom, message: texte, photo: url })); }
+                document.getElementById('comm-client').value = ''; photoInput.value = ''; document.getElementById('preview-container').innerHTML = '';
+            } catch (e) {
+                alert('Erreur de connexion. Vérifiez votre connexion internet.');
+            } finally { b.disabled = false; b.innerText = 'Publier'; }
+        };
+        /* liste des avis (lecture) */
+        if (c) fetch(URL_AVIS + '?action=getAvis').then(function (r) { return r.json(); }).then(function (avis) {
+            if (!avis || !avis.length) { c.innerHTML = "<p style='font-size:0.7rem; color:#888;'>Soyez le premier à donner votre avis !</p>"; return; }
+            c.innerHTML = avis.slice(0, 5).map(carte).join('');
+        }).catch(function () { c.innerHTML = ''; });
+    });
+})();
+</script>
 
 <script>
 /* Script du footer unifié. Isolé : n'écrase aucune fonction existante (main.js garde ses avis sur index.html). */
