@@ -414,24 +414,26 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         </main>
     </div>
 
-    <aside style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
-    
+<aside style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
+
+    <!-- 1) Cadre blanc d'origine (inchangé) -->
     <div class="pub-card-style" style="background: #ffffff; padding: 0; border-radius: 15px; text-align: center; position: relative; overflow: hidden; border: 2px solid #e1e1e1; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    
+
     <div style="display: flex; height: 40px; border-bottom: 1px solid #eee;">
-        <div style="flex: 1; background: #ffffff;"></div> <div style="flex: 1; background: #e6192e;"></div> <div style="flex: 1; background: #007e3a;"></div> </div>
+        <div style="flex: 1; background: #ffffff;"></div> <div style="flex: 1; background: #e6192e;"></div> <div style="flex: 1; background: #007e3a;"></div>
+    </div>
 
     <div style="padding: 20px;">
         <div style="position: relative; margin-bottom: 10px;">
-            <img src="https://i.imgur.com/YHqYPE8.png" alt="Coursier SafeRun" 
+            <img src="https://i.imgur.com/YHqYPE8.png" alt="Coursier SafeRun"
                  style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.2); object-fit: cover;">
-            <img src="https://i.imgur.com/FEke8Cf.png" style="position: absolute; bottom: 0; right: 35%; width: 25px; background: white; border-radius: 50%; padding: 2px; border: 1px solid #eee;">
+            <img src="https://i.imgur.com/FEke8Cf.png" alt="" style="position: absolute; bottom: 0; right: 35%; width: 25px; background: white; border-radius: 50%; padding: 2px; border: 1px solid #eee;">
         </div>
 
         <h3 style="color: #1e3a8a; margin: 10px 0 5px 0; font-size: 1.1rem; font-weight: 800;">
             VOTRE SHOPPING, SIMPLIFIÉ
         </h3>
-        
+
         <div style="background: #ffcc00; color: #000; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">
             Tsotra • Mora • Azo Antoka
         </div>
@@ -446,83 +448,210 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
     </div>
 </div>
 
-    <div class="pub-card-style card-saferun" style="position: sticky; top: 10px; padding: 0; min-height: 380px; overflow: hidden; background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%);">
-        
-        <div class="slide active">
-            <div class="slide-content" style="padding: 25px;">
-                <i class="fas fa-map-marker-alt" style="font-size: 2rem; color: #ffcc00;"></i>
-                <h2 style="margin-top:15px;">LIVRAISON PARTOUT</h2>
-                <p style="font-size: 1rem; font-weight: bold;">Ambatobe • Ivandry • Ambohibao • Ivato ...</p>
-                <p style="margin-top:10px; font-size: 0.9rem;">Tarif à partir de <b>3 500 Ar</b></p>
-                <img src="https://i.imgur.com/YHqYPE8.png" style="width: 80px; margin-top: 15px; border-radius: 50%; border: 2px solid white;" alt="Coursier">
-            </div>
-        </div>
-        <div class="slide promo-slide">
-    <img src="https://i.imgur.com/blyeDGp.png"
-         style="width:100%; height:100%; object-fit:cover;">
-</div>
-        <div class="slide" style="background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);">
-    <div class="slide-content" style="padding: 25px;">
-        <!-- Icône de localisation animée -->
-        <div style="font-size: 2.5rem; margin-bottom: 10px; animation: bounce 2s infinite;">📍</div>
-        
-        <h2 style="color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">LIVRAISON SUR MESURE</h2>
-        
-        <p style="color: #fff; font-weight: 500; line-height: 1.4;">
-            Le tarif de livraison s'adapte précisément à votre quartier pour vous garantir le prix le plus juste.
-        </p>
+    <!-- 2) Carrousel SafeRun (nouveau) -->
+    <style>
+        .sr-promo { position: sticky; top: 10px; height: clamp(400px, 44vw, 440px); border-radius: 18px; overflow: hidden; isolation: isolate;
+            background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%); color: #fff; box-shadow: 0 8px 26px rgba(30,58,138,.22);
+            font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+        .sr-promo * { box-sizing: border-box; }
+        .sr-promo .sr-sl { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .7s ease, visibility .7s; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .sr-promo .sr-sl.on { opacity: 1; visibility: visible; z-index: 2; }
+        .sr-promo .sr-sl-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .sr-promo .sr-sl-txt { padding: 46px 48px 78px; flex-direction: column; }
+        .sr-promo .sr-sl-txt h2 { margin: 12px 0 8px !important; width: auto !important; font-size: clamp(1.15rem, 3.4vw, 1.45rem); font-weight: 800; letter-spacing: .5px; line-height: 1.15; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.25); }
+        .sr-promo .sr-sl-txt p { margin: 6px 0; font-size: .92rem; line-height: 1.45; color: rgba(255,255,255,.95); }
+        .sr-promo .sr-sl.on.sr-sl-txt > * { animation: srPromoIn .7s ease both; }
+        @keyframes srPromoIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .sr-promo .sr-ico { font-size: 2rem; color: #ffcc00; }
+        .sr-promo .sr-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 4px; }
+        .sr-promo .sr-chips span { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); padding: 4px 11px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+        .sr-promo .sr-tarif { display: inline-block; margin-top: 8px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.45); padding: 9px 14px; border-radius: 12px; font-weight: 700; font-size: .9rem; backdrop-filter: blur(4px); }
+        .sr-promo .sr-tarif small { display: block; font-weight: 400; font-size: .72rem; opacity: .9; margin-top: 2px; }
+        .sr-promo .sr-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 11px 20px; border-radius: 999px; background: #fff; color: #1e3a8a !important; font-weight: 800; font-size: .85rem; text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,.25); transition: transform .2s, box-shadow .2s; }
+        .sr-promo .sr-btn:hover, .sr-promo .sr-btn:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.3); outline: none; }
+        .sr-promo .sr-btn small { display: block; font-weight: 500; font-size: .68rem; opacity: .8; }
+        .sr-promo .sr-btn-or { background: #ffcc00; color: #1a1a1a !important; }
+        .sr-promo .sr-sl-maps { background: radial-gradient(circle at 70% 30%, rgba(255,255,255,.18), transparent 45%),
+            repeating-linear-gradient(0deg, rgba(255,255,255,.07) 0 1px, transparent 1px 34px), repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 34px), linear-gradient(160deg, #1e3a8a, #0f2557); }
+        .sr-promo .sr-pin { font-size: 2.4rem; animation: srPromoPin 2s ease-in-out infinite; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+        @keyframes srPromoPin { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+        .sr-promo .sr-sl-open { background: linear-gradient(145deg, #1e3a8a, #2b4fb5); }
+        .sr-promo .sr-sl-local { background: linear-gradient(145deg, #f36f21, #c2410c); }
+        .sr-promo .sr-sl-liv { background: linear-gradient(160deg, #f36f21 0%, #1e3a8a 100%); }
+        .sr-promo .sr-quote { font-style: italic; opacity: .92; margin-top: 12px !important; }
+        .sr-promo .sr-mg { font-weight: 800; color: #ffcc00 !important; margin-top: 14px !important; letter-spacing: .3px; }
+        .sr-promo .sr-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,.22); z-index: 100; }
+        .sr-promo .sr-bar i { display: block; height: 100%; width: 0; background: #ffcc00; }
+        .sr-promo .sr-bar i.run { animation: srPromoBar var(--sr-dur, 5s) linear forwards; }
+        .sr-promo:hover .sr-bar i, .sr-promo.pause .sr-bar i { animation-play-state: paused; }
+        @keyframes srPromoBar { from { width: 0; } to { width: 100%; } }
+        .sr-promo .sr-count { position: absolute; top: 12px; left: 12px; z-index: 100; font-size: .72rem; font-weight: 800; background: rgba(0,0,0,.38); padding: 3px 9px; border-radius: 999px; backdrop-filter: blur(4px); }
+        .sr-promo .sr-nav { position: absolute; top: 50%; z-index: 100; width: 34px; height: 34px; margin-top: -17px; border: 0; border-radius: 50%; background: rgba(0,0,0,.38); color: #fff; font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .2s, background .2s; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .sr-promo .sr-prev { left: 8px; } .sr-promo .sr-next { right: 8px; }
+        .sr-promo:hover .sr-nav, .sr-promo:focus-within .sr-nav { opacity: 1; }
+        .sr-promo .sr-nav:hover { background: rgba(0,0,0,.6); }
+        @media (hover: none) { .sr-promo .sr-nav { opacity: .75; width: 30px; height: 30px; margin-top: -15px; } }
+        @media (prefers-reduced-motion: reduce) { .sr-promo .sr-sl, .sr-promo .sr-pin { transition: none; animation: none; } .sr-promo .sr-sl.on.sr-sl-txt > * { animation: none; } }
+        @media (max-width: 480px) { .sr-promo { border-radius: 16px; } .sr-promo .sr-sl-txt { padding: 44px 42px 74px; } }
+    </style>
 
-        <!-- Bouton d'action informatif -->
-        <div style="margin-top: 25px; background: rgba(255,255,255,0.2); border: 1px solid #fff; color: #ffffff; padding: 12px; border-radius: 10px; font-weight: bold; backdrop-filter: blur(5px);">
-            TARIFICATION PAR ZONE
-            <p style="font-size: 0.7rem; margin-top: 5px; font-weight: normal; opacity: 0.9;">
-                Calcul automatique lors de votre commande
-            </p>
-        </div>
-    </div>
-</div>
-<div class="slide promo-slide">
-    <img src="https://i.imgur.com/ow7lpvK.jpeg" alt="Promotion SafeRun">
-</div>
-        <div class="slide">
-            <div class="slide-content" style="padding: 25px;">
-                <i class="fas fa-clock" style="font-size: 2rem;"></i>
-                <h2>OUVERTURE</h2>
-                <p>Lundi au Samedi</p>
-                <hr style="border: 0.5px solid rgba(255,255,255,0.3); margin: 15px 0;">
-                <p style="font-style: italic;">"Faciliter et satisfaire nos clients est notre priorité"</p>
-                <p style="margin-top:20px; font-weight: bold; color: #ffcc00;">MORA, AINGANA ARY AZO ANTOKA</p>
-            </div>
+    <div class="sr-promo" id="sr-promo" role="region" aria-roledescription="carrousel" aria-label="Annonces SafeRun Market" tabindex="0">
+        <div class="sr-bar"><i></i></div>
+        <div class="sr-count" aria-live="off"></div>
+        <button type="button" class="sr-nav sr-prev" aria-label="Précédent">&#8249;</button>
+        <button type="button" class="sr-nav sr-next" aria-label="Suivant">&#8250;</button>
+
+        <!-- 1 · Livraison (tarif lu depuis le quartier enregistré) -->
+        <div class="sr-sl sr-sl-txt sr-sl-liv on">
+            <i class="fas fa-map-marker-alt sr-ico"></i>
+            <h2>LIVRAISON PARTOUT</h2>
+            <div class="sr-chips"><span>Ambatobe</span><span>Ivandry</span><span>Ambohibao</span><span>Ivato</span><span>et plus…</span></div>
+            <div class="sr-tarif"><span class="sr-tarif-txt">Tarif adapté à votre quartier</span><small>Calculé automatiquement à la commande</small></div>
+            <a class="sr-btn sr-btn-or" href="#boutique"><i class="fas fa-shopping-basket"></i> Voir les produits</a>
         </div>
 
-<div class="slide promo-slide">
-    <img src="https://i.imgur.com/DawUp1r.png"
-         style="width:100%; height:100%; object-fit:cover;">
-</div>
-        <div class="slide">
-            <div class="slide-content" style="padding: 25px;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">🇲🇬</div>
-                <h2 style="color: #ffffff;">JIFAO NY VITA GASY</h2>
-                <p>Soutenons nos produits locaux</p>
-                <div style="margin-top: 30px; background: #fff; color: #1e3a8a; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    COMMANDER MAINTENANT
-                    <p style="font-size: 0.7rem; margin-top: 5px; font-weight: normal;">On s'occupe du reste !</p>
-                </div>
-            </div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/blyeDGp.png" alt="Promotion SafeRun Market"></div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/SZbGjoC.jpeg" alt="Promotion SafeRun Market"></div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/ow7lpvK.jpeg" alt="Promotion SafeRun Market"></div>
+
+        <!-- 5 · Google Maps -->
+        <div class="sr-sl sr-sl-txt sr-sl-maps">
+            <div class="sr-pin">📍</div>
+            <h2>SAFERUN SUR GOOGLE MAPS</h2>
+            <p>Retrouvez-nous, consultez les avis et notre zone de livraison.</p>
+            <a class="sr-btn" href="https://maps.app.goo.gl/51X4ZjYjdWXzhzfb8" target="_blank" rel="noopener noreferrer"><i class="fas fa-location-arrow"></i> Ouvrir dans Google Maps</a>
         </div>
-        <div class="slide promo-slide">
-    <img src="https://i.imgur.com/k2LNClV.jpeg" alt="Promotion SafeRun">
-</div>
-        <div class="slide promo-slide">
-    <img src="https://i.imgur.com/dSN8WDJ.png"
-         style="width:100%; height:100%; object-fit:cover;">
-</div>
-<div class="slide promo-slide">
-    <img src="https://i.imgur.com/Fs1N75D.jpeg"
-         style="width:100%; height:100%; object-fit:cover;">
-</div>
-        <img src="https://i.imgur.com/lkXvX18.png" class="floating-sticker" alt="Promo">
+
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/A3ZS8NY.jpeg" alt="Promotion SafeRun Market"></div>
+
+        <!-- 7 · Ouverture -->
+        <div class="sr-sl sr-sl-txt sr-sl-open">
+            <i class="fas fa-clock sr-ico" style="color:#fff"></i>
+            <h2>OUVERTURE</h2>
+            <p><b>Lundi au Samedi</b></p>
+            <p style="opacity:.8;font-size:.82rem">Dimanche : fermé</p>
+            <p class="sr-quote">« Faciliter et satisfaire nos clients est notre priorité »</p>
+            <p class="sr-mg">MORA, AINGANA ARY AZO ANTOKA</p>
+        </div>
+
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/DawUp1r.png" alt="Promotion SafeRun Market"></div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/qomFsGx.jpeg" alt="Promotion SafeRun Market"></div>
+
+        <!-- 10 · Produits locaux -->
+        <div class="sr-sl sr-sl-txt sr-sl-local">
+            <div style="font-size:2.4rem">🇲🇬</div>
+            <h2>JIFAO NY VITA GASY</h2>
+            <p>Soutenons nos produits locaux</p>
+            <a class="sr-btn" href="#boutique"><span>COMMANDER MAINTENANT<small>On s'occupe du reste !</small></span></a>
+        </div>
+
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/k2LNClV.jpeg" alt="Promotion SafeRun Market"></div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/dSN8WDJ.png" alt="Promotion SafeRun Market"></div>
+        <div class="sr-sl sr-sl-img"><img data-src="https://i.imgur.com/Fs1N75D.jpeg" alt="Promotion SafeRun Market"></div>
+
+        <img src="https://i.imgur.com/lkXvX18.png" class="floating-sticker" alt="" aria-hidden="true">
     </div>
+
+    <script>
+    (function () {
+        var root = document.getElementById("sr-promo");
+        if (!root || root.__srInit) return;
+        root.__srInit = true;
+
+        var DUREE = 5000;
+        var bar = root.querySelector(".sr-bar i"), compteur = root.querySelector(".sr-count");
+        var slides = Array.prototype.slice.call(root.querySelectorAll(".sr-sl"));
+        var cur = 0, timer = null, pause = false;
+        var reduit = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        function lire(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+        // Tarif réel du quartier enregistré (jamais de prix écrit en dur)
+        function majTarif() {
+            var el = root.querySelector(".sr-tarif-txt"); if (!el) return;
+            var t = parseInt(String(lire("saferun_tarif_minimal") || "").replace(/[^\d]/g, ""), 10);
+            var q = String(lire("saferun_quartier") || "").trim();
+            el.textContent = (t > 0 && q && lire("saferun_secteur_valide") === "true")
+                ? "Vers " + q + " : dès " + t.toLocaleString("fr-FR") + " Ar"
+                : "Tarif adapté à votre quartier";
+        }
+
+        // Chargement différé : on ne charge que la slide courante et la suivante
+        function charger(s) {
+            if (!s) return;
+            var im = s.querySelector("img[data-src]");
+            if (im) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); }
+        }
+        // Image impossible à charger : on retire la slide au lieu d'afficher un cadre vide
+        slides.forEach(function (s) {
+            var im = s.querySelector("img");
+            if (im) im.addEventListener("error", function () { retirer(s); });
+        });
+        function retirer(s) {
+            var i = slides.indexOf(s); if (i < 0) return;
+            var etaitCourante = (i === cur);
+            slides.splice(i, 1); s.parentNode && s.parentNode.removeChild(s);
+            if (!slides.length) return;
+            if (i < cur) cur--;
+            if (etaitCourante) { cur = cur % slides.length; aller(cur, true); } else maj();
+        }
+
+        function maj() {
+            compteur.textContent = (cur + 1) + " / " + slides.length;
+        }
+        function aller(n, sans) {
+            if (!slides.length) return;
+            cur = (n + slides.length) % slides.length;
+            slides.forEach(function (s, i) {
+                var on = i === cur;
+                s.classList.toggle("on", on);
+                s.setAttribute("aria-hidden", on ? "false" : "true");
+                // les liens des slides masquées ne doivent pas être atteignables au clavier
+                Array.prototype.forEach.call(s.querySelectorAll("a"), function (a) { a.tabIndex = on ? 0 : -1; });
+            });
+            charger(slides[cur]); charger(slides[(cur + 1) % slides.length]);
+            maj(); majTarif(); redemarrer();
+        }
+        function redemarrer() {
+            clearTimeout(timer);
+            bar.className = ""; void bar.offsetWidth;          // relance l'animation de la barre
+            if (reduit || document.hidden || slides.length < 2) return;
+            root.style.setProperty("--sr-dur", DUREE + "ms");
+            bar.className = "run";
+            timer = setTimeout(boucle, DUREE);
+        }
+        function boucle() {
+            if (pause) { timer = setTimeout(boucle, 400); return; }   // en pause : on revérifie sans avancer
+            aller(cur + 1);
+        }
+
+        root.querySelector(".sr-prev").addEventListener("click", function () { aller(cur - 1); });
+        root.querySelector(".sr-next").addEventListener("click", function () { aller(cur + 1); });
+        root.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowLeft") aller(cur - 1); else if (e.key === "ArrowRight") aller(cur + 1);
+        });
+        root.addEventListener("mouseenter", function () { pause = true; });
+        root.addEventListener("mouseleave", function () { pause = false; });
+        root.addEventListener("focusin", function (e) { try { if (e.target.matches(":focus-visible")) pause = true; } catch (x) {} });
+        root.addEventListener("focusout", function () { pause = false; });
+
+        // Glissement du doigt
+        var x0 = null, y0 = null;
+        root.addEventListener("touchstart", function (e) { var t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; pause = true; }, { passive: true });
+        root.addEventListener("touchend", function (e) {
+            pause = false;
+            if (x0 === null) return;
+            var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) aller(cur + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+
+        document.addEventListener("visibilitychange", function () { if (document.hidden) clearTimeout(timer); else redemarrer(); });
+        window.addEventListener("storage", majTarif);
+        window.addEventListener("focus", majTarif);
+
+        aller(0);
+    })();
+    </script>
 </aside>
 </div>
 <div id="pagination" style="display: flex; justify-content: center; width: 100%; margin-top: 10px; padding-bottom: 5px;">
