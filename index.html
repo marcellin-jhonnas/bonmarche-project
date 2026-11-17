@@ -273,7 +273,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
     </div>
 
-  <!-- =====================================================================
+<!-- =====================================================================
   BANDEAU SAFERUN « PUB » — remplace UNIQUEMENT le bloc <section class="sr-banner-premium" id="srBanner"> … </section>
   dans index.html (de <section …> jusqu'à </section> incluse, points compris). Ne touchez ni à main.js ni à style.css.
   Les id/classes utilisés par main.js sont conservés (srBanner, sr-slide-item + data-bg, sr-tag#sr-promo-tag,
@@ -442,6 +442,47 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
             }).observe(s, { attributes: true, attributeFilter: ["class"] });
         });
         barre();
+
+        /* ---------- Publicités de la feuille « Remises » : la slide 1 change de promo à chaque tour ---------- */
+        var liste = [];
+        function lireDate(v) {
+            if (!v) return null;
+            var m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            var d = m ? new Date(+m[3], +m[2] - 1, +m[1]) : new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        function afficher(p) {
+            var s = slides[0], im = s.querySelector("img"), t = s.querySelector(".sr-main-mg"), d = s.querySelector(".sr-sub-fr"), g = s.querySelector(".sr-tag");
+            var fin = lireDate(p.dateFin), f = fin ? fin.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+            if (t) t.textContent = String(p.titre);
+            if (d) d.textContent = p.desc ? (f ? p.desc + " — Jusqu'au " + f : String(p.desc)) : (f ? "Jusqu'au " + f : "");
+            if (g) { g.textContent = "PROMO"; g.style.background = "#e74c3c"; }
+            if (im && p.image && /^https?:\/\//i.test(String(p.image).trim())) { im.src = String(p.image).trim(); }
+        }
+        function promoSuivante() {                                        // appelée quand la slide 1 revient à l'écran
+            if (!liste.length) return;
+            var t = slides[0].querySelector(".sr-main-mg"), cur = t ? t.textContent : "";
+            var i = liste.map(function (p) { return String(p.titre); }).indexOf(cur);
+            if (i === -1) afficher(liste[0]);                             // promo affichée terminée/inconnue → on prend la 1re valide
+            else if (liste.length > 1) afficher(liste[(i + 1) % liste.length]);
+        }
+        slides[0] && new MutationObserver(function () {
+            if (slides[0].classList.contains("active") && !slides[0].__srOn) { slides[0].__srOn = true; promoSuivante(); }
+            else if (!slides[0].classList.contains("active")) slides[0].__srOn = false;
+        }).observe(slides[0], { attributes: true, attributeFilter: ["class"] });
+        window.addEventListener("load", function () {
+            try {
+                if (typeof API_URL === "undefined") return;
+                window.__srPubsP = window.__srPubsP || fetch(API_URL + "?action=getRemises").then(function (r) { return r.json(); }).catch(function () { return []; });
+                window.__srPubsP.then(function (pubs) {
+                    var auj = new Date(); auj.setHours(0, 0, 0, 0);
+                    liste = (Array.isArray(pubs) ? pubs : []).filter(function (p) {
+                        var fin = lireDate(p && p.dateFin);
+                        return p && p.titre && !(fin && fin < auj);       // promo terminée : ignorée
+                    });
+                });
+            } catch (e) {}
+        });
     })();
     </script>
 </section>
@@ -541,6 +582,17 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         </main>
     </div>
 
+<!-- =====================================================================
+  ASIDE PROMO SAFERUN — à coller dans index.html À LA PLACE de tout le bloc
+  <aside style="flex: 1; min-width: 280px; ..."> ... </aside>
+  (de la balise <aside ...> jusqu'à </aside> incluse). Rien d'autre à modifier.
+
+  - Les anciens sliders (main.js ×2 + index.html) cherchent des éléments « .slide » :
+    ce bloc n'en contient plus, donc ils deviennent inactifs sans rien supprimer.
+  - Le 1er cadre (blanc, tricolore GIZ) est conservé tel quel.
+  - Pour retirer une image : supprimer son <div class="sr-sl sr-sl-img"> … </div>.
+  - Tout est préfixé « sr-promo / sr-sl » : aucun conflit avec style.css.
+====================================================================== -->
 <aside style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
 
     <!-- 1) Cadre blanc d'origine (inchangé) -->
@@ -618,6 +670,13 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         .sr-promo:hover .sr-nav, .sr-promo:focus-within .sr-nav { opacity: 1; }
         .sr-promo .sr-nav:hover { background: rgba(0,0,0,.6); }
         @media (hover: none) { .sr-promo .sr-nav { opacity: .75; width: 30px; height: 30px; margin-top: -15px; } }
+        /* Publicités de la Sheet « Remises » : légende en bas de l'image */
+        .sr-promo .sr-pub-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 46px 88px 18px 16px; text-align: left; background: linear-gradient(0deg, rgba(10,22,60,.92) 0%, rgba(10,22,60,.62) 55%, transparent 100%); }
+        .sr-promo .sr-pub-cap b { display: block; font-size: 1.05rem; font-weight: 800; line-height: 1.2; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.4); }
+        .sr-promo .sr-pub-cap span { display: block; margin-top: 3px; font-size: .8rem; line-height: 1.35; color: rgba(255,255,255,.92); }
+        .sr-promo .sr-pub-cap em { display: inline-block; margin-top: 7px; font-style: normal; font-size: .7rem; font-weight: 800; background: #ffcc00; color: #1a1a1a; padding: 3px 10px; border-radius: 999px; }
+        .sr-promo .sr-pub-tag { position: absolute; top: 44px; right: 12px; z-index: 3; background: #e74c3c; color: #fff; font-size: .68rem; font-weight: 800; letter-spacing: 1px; padding: 4px 11px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+        .sr-promo .sr-pub-link { position: absolute; inset: 0; z-index: 2; }
         @media (prefers-reduced-motion: reduce) { .sr-promo .sr-sl, .sr-promo .sr-pin { transition: none; animation: none; } .sr-promo .sr-sl.on.sr-sl-txt > * { animation: none; } }
         @media (max-width: 480px) { .sr-promo { border-radius: 16px; } .sr-promo .sr-sl-txt { padding: 44px 42px 74px; } }
     </style>
@@ -775,6 +834,54 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         document.addEventListener("visibilitychange", function () { if (document.hidden) clearTimeout(timer); else redemarrer(); });
         window.addEventListener("storage", majTarif);
         window.addEventListener("focus", majTarif);
+
+        // ---------- Publicités dynamiques (feuille « Remises », même source que le bandeau) ----------
+        function lireDate(v) {
+            if (!v) return null;
+            var m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            var d = m ? new Date(+m[3], +m[2] - 1, +m[1]) : new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        function ajouterPubs(pubs) {
+            if (!Array.isArray(pubs) || !pubs.length) return;
+            var auj = new Date(); auj.setHours(0, 0, 0, 0);
+            var deja = slides.map(function (s) { var i = s.querySelector("img"); return i ? (i.getAttribute("data-src") || i.src) : ""; });
+            var neufs = [];
+            pubs.forEach(function (p) {
+                var img = String(p && p.image || "").trim();
+                if (!/^https?:\/\//i.test(img) || deja.indexOf(img) > -1) return;
+                var fin = lireDate(p.dateFin);
+                if (fin && fin < auj) return;                         // promo terminée : on ne l'affiche pas
+                deja.push(img);
+                var s = document.createElement("div"); s.className = "sr-sl sr-sl-img sr-sl-pub";
+                var im = document.createElement("img"); im.setAttribute("data-src", img); im.alt = String(p.titre || "Promotion SafeRun Market");
+                s.appendChild(im);
+                var lien = document.createElement("a"); lien.className = "sr-pub-link"; lien.href = "#boutique"; lien.setAttribute("aria-label", "Voir les produits"); s.appendChild(lien);
+                var tag = document.createElement("div"); tag.className = "sr-pub-tag"; tag.textContent = "PROMO"; s.appendChild(tag);
+                if (p.titre) {
+                    var cap = document.createElement("div"); cap.className = "sr-pub-cap";
+                    var b = document.createElement("b"); b.textContent = String(p.titre); cap.appendChild(b);
+                    if (p.desc) { var sp = document.createElement("span"); sp.textContent = String(p.desc); cap.appendChild(sp); }
+                    if (fin) { var em = document.createElement("em"); em.textContent = "Jusqu'au " + fin.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }); cap.appendChild(em); }
+                    s.appendChild(cap);
+                }
+                im.addEventListener("error", function () { retirer(s); });
+                neufs.push(s);
+            });
+            if (!neufs.length) return;
+            var ref = slides[0].nextSibling, courante = slides[cur];     // juste après la slide « Livraison »
+            neufs.forEach(function (s) { root.insertBefore(s, ref); });
+            slides.splice.apply(slides, [1, 0].concat(neufs));
+            cur = slides.indexOf(courante); maj();
+            slides.forEach(function (s, i) { Array.prototype.forEach.call(s.querySelectorAll("a"), function (a) { a.tabIndex = i === cur ? 0 : -1; }); });
+        }
+        window.addEventListener("load", function () {
+            try {
+                if (typeof API_URL === "undefined") return;
+                window.__srPubsP = window.__srPubsP || fetch(API_URL + "?action=getRemises").then(function (r) { return r.json(); }).catch(function () { return []; });
+                window.__srPubsP.then(ajouterPubs);
+            } catch (e) {}
+        });
 
         aller(0);
     })();
