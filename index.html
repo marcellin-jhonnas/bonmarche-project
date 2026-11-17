@@ -273,77 +273,177 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
     </div>
 
-  <style>
-    /* 1) Hauteur stable : les 3 slides sont superposées, le bandeau prend la hauteur de la plus haute
-          → plus de saut de page toutes les 5 s, même quand « Livraison : pause » est affiché */
-    #srBanner.sr-banner-premium { height: auto !important; min-height: 100px !important; }
-    #srBanner .sr-container-inner { display: grid; }
+  <!-- =====================================================================
+  BANDEAU SAFERUN « PUB » — remplace UNIQUEMENT le bloc <section class="sr-banner-premium" id="srBanner"> … </section>
+  dans index.html (de <section …> jusqu'à </section> incluse, points compris). Ne touchez ni à main.js ni à style.css.
+  Les id/classes utilisés par main.js sont conservés (srBanner, sr-slide-item + data-bg, sr-tag#sr-promo-tag,
+  sr-main-mg, sr-sub-fr, sr-date-mg, sr-date-fr, srDotsContainer). Le <style> ne cible que #srBanner.
+  Style : mêmes couleurs que le carrousel du côté (orange → bleu), slides qui défilent de droite à gauche.
+====================================================================== -->
+<style>
+    /* ---------- Cadre : dégradé de la marque + hauteur stable (slides superposées) ---------- */
+    #srBanner.sr-banner-premium { height: auto !important; min-height: 118px !important; color: #fff; border-bottom: 0;
+        box-shadow: 0 6px 22px rgba(30,58,138,.22); isolation: isolate; overflow: hidden !important; }
+    #srBanner::before, #srBanner::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; }
+    #srBanner::before { width: 260px; height: 260px; right: -60px; top: -120px; background: radial-gradient(circle, rgba(255,204,0,.35), transparent 65%); }
+    #srBanner::after  { width: 300px; height: 300px; left: -90px; bottom: -170px; background: radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); }
+    #srBanner .sr-container-inner { display: grid; overflow: hidden; position: relative; z-index: 1; }
+
+    /* ---------- Slides : entrée par la droite, sortie par la gauche ---------- */
     #srBanner .sr-slide-item {
         grid-area: 1 / 1; position: relative !important; inset: auto; width: 100%;
-        padding: 10px 0 18px;               /* place pour les points */
-        pointer-events: none;
+        padding: 10px 0 20px; pointer-events: none;
+        opacity: 0; visibility: hidden; transform: translateX(110%);
+        transition: transform .85s cubic-bezier(.22, 1, .36, 1), opacity .6s ease, visibility .85s;
     }
-    #srBanner .sr-slide-item.active { pointer-events: auto; }
-    #srBanner .sr-text-group { min-width: 0; }
-    #srBanner .sr-main-mg, #srBanner .sr-sub-fr { overflow-wrap: anywhere; }
-    #srBanner .sr-img-wrapper { flex-shrink: 0; }
+    #srBanner .sr-slide-item.active { opacity: 1; visibility: visible; transform: translateX(0); pointer-events: auto; }
+    #srBanner .sr-slide-item.sr-out { opacity: 0; visibility: visible; transform: translateX(-110%); }
+    #srBanner .sr-slide-item.sr-snap { transition: none !important; }
 
-    /* 2) Mobile : plus de hauteur forcée à 95 px (le message « pause » ne déborde plus sur les catégories) */
+    #srBanner .sr-flex-content { max-width: 1100px !important; margin: 0 auto; padding: 12px 22px; gap: 24px; justify-content: center; }
+    #srBanner .sr-text-group { min-width: 0; align-items: flex-start; text-align: left; }
+
+    /* ---------- Image ---------- */
+    #srBanner .sr-img-wrapper { flex-shrink: 0; padding: 3px; border-radius: 22px; background: linear-gradient(135deg, #ffcc00, #fff 55%, #ffcc00);
+        box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+    #srBanner .sr-img-wrapper img { width: 84px !important; height: 84px !important; border-radius: 19px !important; border: 0 !important; box-shadow: none; object-fit: cover; display: block; }
+    #srBanner .sr-slide-item.active .sr-img-wrapper { animation: srAdFloat 3.2s ease-in-out 1s infinite; }
+    @keyframes srAdFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+    /* ---------- Textes ---------- */
+    #srBanner .sr-tag { background: #ffcc00 !important; color: #1a1a1a !important; font-size: .68rem !important; padding: 4px 12px; margin-bottom: 6px; letter-spacing: 1px; box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+    #srBanner .sr-tag[style*="e74c3c"] { background: #e74c3c !important; color: #fff !important; }   /* PROMO (posé par main.js) */
+    #srBanner .sr-main-mg { color: #fff !important; font-size: 1.45rem !important; font-weight: 800 !important; line-height: 1.15; text-shadow: 0 2px 8px rgba(0,0,0,.28); }
+    #srBanner .sr-sub-fr  { color: rgba(255,255,255,.92) !important; font-size: .95rem !important; margin-top: 4px; }
+    /* Message « livraison : pause » injecté par main.js (couleurs sombres d'origine → lisibles sur le dégradé) */
+    #srBanner #sr-date-mg *, #srBanner #sr-date-fr * { color: #fff !important; }
+    #srBanner #sr-date-mg b, #srBanner #sr-date-fr b { font-weight: 800; }
+    #srBanner #sr-date-mg > div, #srBanner #sr-date-fr > div { font-size: .9rem !important; line-height: 1.35 !important; text-shadow: none; }
+
+    /* ---------- Bouton d'action ---------- */
+    #srBanner .sr-cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 9px; padding: 12px 20px; border-radius: 999px;
+        background: #fff; color: #1e3a8a !important; font-weight: 800; font-size: .85rem; text-decoration: none; white-space: nowrap;
+        box-shadow: 0 8px 20px rgba(0,0,0,.28); transition: transform .2s, box-shadow .2s; }
+    #srBanner .sr-cta:hover, #srBanner .sr-cta:focus-visible { transform: translateY(-2px) scale(1.03); box-shadow: 0 12px 26px rgba(0,0,0,.32); outline: none; }
+    #srBanner .sr-cta i { font-size: .8rem; }
+
+    /* ---------- Apparition échelonnée du contenu (effet « pub ») ---------- */
+    #srBanner .sr-slide-item.active .sr-img-wrapper,
+    #srBanner .sr-slide-item.active .sr-tag,
+    #srBanner .sr-slide-item.active .sr-main-mg,
+    #srBanner .sr-slide-item.active .sr-sub-fr,
+    #srBanner .sr-slide-item.active .sr-cta { animation-fill-mode: both; }
+    #srBanner .sr-slide-item.active .sr-tag     { animation: srAdIn .7s cubic-bezier(.22,1,.36,1) .25s both; }
+    #srBanner .sr-slide-item.active .sr-main-mg { animation: srAdIn .7s cubic-bezier(.22,1,.36,1) .38s both; }
+    #srBanner .sr-slide-item.active .sr-sub-fr  { animation: srAdIn .7s cubic-bezier(.22,1,.36,1) .5s both; }
+    #srBanner .sr-slide-item.active .sr-cta     { animation: srAdIn .7s cubic-bezier(.22,1,.36,1) .62s both; }
+    @keyframes srAdIn { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Points + barre de progression ---------- */
+    #srBanner .sr-dots-container { bottom: 8px; z-index: 3; }
+    #srBanner .sr-dot { background: rgba(255,255,255,.45); }
+    #srBanner .sr-dot.active { background: #ffcc00; }
+    #srBanner .sr-prog { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: rgba(255,255,255,.18); z-index: 3; }
+    #srBanner .sr-prog i { display: block; height: 100%; width: 0; background: #ffcc00; }
+    #srBanner .sr-prog i.run { animation: srAdProg 5s linear forwards; }
+    @keyframes srAdProg { from { width: 0; } to { width: 100%; } }
+
+    /* ---------- Mobile : compact, bouton réduit à une flèche ---------- */
     @media (max-width: 600px) {
-        #srBanner.sr-banner-premium { height: auto !important; min-height: 95px !important; }
-        #srBanner .sr-flex-content { padding: 10px 14px; gap: 12px; }
-        #srBanner .sr-slide-item { padding: 6px 0 16px; }
+        #srBanner.sr-banner-premium { min-height: 100px !important; height: auto !important; }
+        #srBanner .sr-slide-item { padding: 8px 0 18px; }
+        #srBanner .sr-flex-content { padding: 8px 14px; gap: 12px; }
+        #srBanner .sr-img-wrapper img { width: 58px !important; height: 58px !important; border-radius: 15px !important; }
+        #srBanner .sr-img-wrapper { border-radius: 18px; }
         #srBanner .sr-text-group { flex: 1; }
+        #srBanner .sr-main-mg { font-size: .92rem !important; }
+        #srBanner .sr-sub-fr { font-size: .72rem !important; margin-top: 2px; }
+        #srBanner #sr-date-mg > div, #srBanner #sr-date-fr > div { font-size: .7rem !important; }
+        #srBanner .sr-tag { font-size: .6rem !important; padding: 3px 9px; }
+        #srBanner .sr-cta { width: 38px; height: 38px; padding: 0; justify-content: center; }
+        #srBanner .sr-cta span { display: none; }
+        #srBanner::before { width: 180px; height: 180px; }
     }
     @media (prefers-reduced-motion: reduce) {
         #srBanner .sr-slide-item, #srBanner .sr-slide-item * { transition: none !important; animation: none !important; }
+        #srBanner .sr-slide-item { transform: none; }
     }
 </style>
 
-<section class="sr-banner-premium" id="srBanner" role="region" aria-roledescription="carrousel" aria-label="Annonces SafeRun Market">
+<section class="sr-banner-premium" id="srBanner" role="region" aria-roledescription="carrousel" aria-label="Annonces SafeRun Market"
+         style="background: linear-gradient(135deg, #f36f21 0%, #1e3a8a 100%);">
     <div class="sr-container-inner">
 
-        <div class="sr-slide-item active" data-bg="linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)">
+        <div class="sr-slide-item active" data-bg="linear-gradient(135deg, #f36f21 0%, #1e3a8a 100%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/c4hDsZe.jpeg" alt="SafeRun Expert" width="70" height="70" fetchpriority="high" decoding="async">
+                    <img src="https://i.imgur.com/c4hDsZe.jpeg" alt="SafeRun Expert" width="84" height="84" fetchpriority="high" decoding="async">
                 </div>
                 <div class="sr-text-group">
                     <span class="sr-tag" id="sr-promo-tag">EXPERTISE</span>
                     <span class="sr-main-mg">Matoky sy zadraharaha ho anao</span>
                     <span class="sr-sub-fr">Confiez vos besoins à des experts confirmés.</span>
                 </div>
+                <a class="sr-cta" href="#boutique" aria-label="Découvrir les produits"><span>Découvrir</span><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
 
-        <div class="sr-slide-item" data-bg="linear-gradient(135deg, #ffffff 0%, #f2fff4 100%)">
+        <div class="sr-slide-item" data-bg="linear-gradient(135deg, #1e3a8a 0%, #2b4fb5 55%, #f36f21 140%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/cchFl0y.jpeg" alt="SafeRun Facilité" width="70" height="70" loading="lazy" decoding="async">
+                    <img src="https://i.imgur.com/cchFl0y.jpeg" alt="SafeRun Facilité" width="84" height="84" loading="lazy" decoding="async">
                 </div>
                 <div class="sr-text-group">
-                    <span class="sr-tag" style="background: #28a745;">FACILITÉ</span>
+                    <span class="sr-tag">FACILITÉ</span>
                     <span class="sr-main-mg">Manamora ny fiainanao isan'andro</span>
                     <span class="sr-sub-fr">Nous simplifions chaque instant de votre journée.</span>
                 </div>
+                <a class="sr-cta" href="#boutique" aria-label="Commander maintenant"><span>Commander</span><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
 
-        <div class="sr-slide-item" data-bg="linear-gradient(135deg, #ffffff 0%, #fff9f0 100%)">
+        <div class="sr-slide-item" data-bg="linear-gradient(135deg, #1e3a8a 0%, #f36f21 100%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/YHqYPE8.png" alt="Livreur SafeRun" width="70" height="70" loading="lazy" decoding="async">
+                    <img src="https://i.imgur.com/YHqYPE8.png" alt="Livreur SafeRun" width="84" height="84" loading="lazy" decoding="async">
                 </div>
                 <div class="sr-text-group">
-                    <span class="sr-tag" style="background: #ff9800;">LIVRAISON</span>
+                    <span class="sr-tag">LIVRAISON</span>
                     <span class="sr-main-mg" id="sr-date-mg">Livraison manaraka...</span>
                     <span class="sr-sub-fr" id="sr-date-fr">Calcul du prochain créneau...</span>
                 </div>
+                <a class="sr-cta" href="#boutique" aria-label="Commander"><span>Commander</span><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
 
     </div>
     <div class="sr-dots-container" id="srDotsContainer"></div>
+    <div class="sr-prog"><i></i></div>
+
+    <script>
+    /* Animation « de droite à gauche » : main.js ne fait que retirer/poser la classe « active ».
+       Ici on observe ce changement pour faire sortir l'ancienne slide par la gauche et relancer la barre. */
+    (function () {
+        var b = document.getElementById("srBanner"); if (!b || b.__srAd) return; b.__srAd = true;
+        var slides = b.querySelectorAll(".sr-slide-item"), bar = b.querySelector(".sr-prog i");
+        function barre() { if (!bar) return; bar.className = ""; void bar.offsetWidth; bar.className = "run"; }
+        slides.forEach(function (s) {
+            var etait = s.classList.contains("active");
+            new MutationObserver(function () {
+                var est = s.classList.contains("active");
+                if (est === etait) return;
+                etait = est;
+                if (est) { s.classList.remove("sr-out", "sr-snap"); barre(); return; }
+                s.classList.add("sr-out");                                   // sortie vers la gauche
+                setTimeout(function () {                                     // puis retour invisible à droite
+                    s.classList.add("sr-snap"); s.classList.remove("sr-out");
+                    void s.offsetWidth; s.classList.remove("sr-snap");
+                }, 900);
+            }).observe(s, { attributes: true, attributeFilter: ["class"] });
+        });
+        barre();
+    })();
+    </script>
 </section>
 </div>
 
