@@ -273,13 +273,40 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
     </div>
 
-  <section class="sr-banner-premium" id="srBanner">
+  <style>
+    /* 1) Hauteur stable : les 3 slides sont superposées, le bandeau prend la hauteur de la plus haute
+          → plus de saut de page toutes les 5 s, même quand « Livraison : pause » est affiché */
+    #srBanner.sr-banner-premium { height: auto !important; min-height: 100px !important; }
+    #srBanner .sr-container-inner { display: grid; }
+    #srBanner .sr-slide-item {
+        grid-area: 1 / 1; position: relative !important; inset: auto; width: 100%;
+        padding: 10px 0 18px;               /* place pour les points */
+        pointer-events: none;
+    }
+    #srBanner .sr-slide-item.active { pointer-events: auto; }
+    #srBanner .sr-text-group { min-width: 0; }
+    #srBanner .sr-main-mg, #srBanner .sr-sub-fr { overflow-wrap: anywhere; }
+    #srBanner .sr-img-wrapper { flex-shrink: 0; }
+
+    /* 2) Mobile : plus de hauteur forcée à 95 px (le message « pause » ne déborde plus sur les catégories) */
+    @media (max-width: 600px) {
+        #srBanner.sr-banner-premium { height: auto !important; min-height: 95px !important; }
+        #srBanner .sr-flex-content { padding: 10px 14px; gap: 12px; }
+        #srBanner .sr-slide-item { padding: 6px 0 16px; }
+        #srBanner .sr-text-group { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        #srBanner .sr-slide-item, #srBanner .sr-slide-item * { transition: none !important; animation: none !important; }
+    }
+</style>
+
+<section class="sr-banner-premium" id="srBanner" role="region" aria-roledescription="carrousel" aria-label="Annonces SafeRun Market">
     <div class="sr-container-inner">
-        
+
         <div class="sr-slide-item active" data-bg="linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/c4hDsZe.jpeg" alt="SafeRun Expert">
+                    <img src="https://i.imgur.com/c4hDsZe.jpeg" alt="SafeRun Expert" width="70" height="70" fetchpriority="high" decoding="async">
                 </div>
                 <div class="sr-text-group">
                     <span class="sr-tag" id="sr-promo-tag">EXPERTISE</span>
@@ -292,7 +319,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <div class="sr-slide-item" data-bg="linear-gradient(135deg, #ffffff 0%, #f2fff4 100%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/cchFl0y.jpeg" alt="SafeRun Facilité">
+                    <img src="https://i.imgur.com/cchFl0y.jpeg" alt="SafeRun Facilité" width="70" height="70" loading="lazy" decoding="async">
                 </div>
                 <div class="sr-text-group">
                     <span class="sr-tag" style="background: #28a745;">FACILITÉ</span>
@@ -305,7 +332,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <div class="sr-slide-item" data-bg="linear-gradient(135deg, #ffffff 0%, #fff9f0 100%)">
             <div class="sr-flex-content">
                 <div class="sr-img-wrapper">
-                    <img src="https://i.imgur.com/cchFl0y.jpeg" alt="SafeRun Livraison">
+                    <img src="https://i.imgur.com/YHqYPE8.png" alt="Livreur SafeRun" width="70" height="70" loading="lazy" decoding="async">
                 </div>
                 <div class="sr-text-group">
                     <span class="sr-tag" style="background: #ff9800;">LIVRAISON</span>
