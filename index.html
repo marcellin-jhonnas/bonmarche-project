@@ -715,7 +715,12 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         .sr-promo * { box-sizing: border-box; }
         .sr-promo .sr-sl { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .7s ease, visibility .7s; display: flex; align-items: center; justify-content: center; text-align: center; }
         .sr-promo .sr-sl.on { opacity: 1; visibility: visible; z-index: 2; }
-        .sr-promo .sr-sl-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* Affiche l'image ENTIÈRE (jamais coupée) ; un fond flou de la même image remplit les bords */
+        .sr-promo .sr-sl-img { background: #0f2557; overflow: hidden; }
+        .sr-promo .sr-sl-img img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain !important; display: block; }
+        .sr-promo .sr-sl-img img.sr-bgblur { position: absolute; z-index: 0; top: -20px; left: -20px; width: calc(100% + 40px) !important; height: calc(100% + 40px) !important; object-fit: cover !important; filter: blur(22px) brightness(.7); }
+        .sr-promo .sr-sl-pub { flex-direction: column; align-items: stretch; justify-content: flex-start; }
+        .sr-promo .sr-sl-pub img:not(.sr-bgblur) { flex: 1 1 0; min-height: 0; height: auto; }
         .sr-promo .sr-sl-txt { padding: 46px 48px 78px; flex-direction: column; }
         .sr-promo .sr-sl-txt h2 { margin: 12px 0 8px !important; width: auto !important; font-size: clamp(1.15rem, 3.4vw, 1.45rem); font-weight: 800; letter-spacing: .5px; line-height: 1.15; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.25); }
         .sr-promo .sr-sl-txt p { margin: 6px 0; font-size: .92rem; line-height: 1.45; color: rgba(255,255,255,.95); }
@@ -751,7 +756,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         .sr-promo .sr-nav:hover { background: rgba(0,0,0,.6); }
         @media (hover: none) { .sr-promo .sr-nav { opacity: .75; width: 30px; height: 30px; margin-top: -15px; } }
         /* Publicités de la Sheet « Remises » : légende en bas de l'image */
-        .sr-promo .sr-pub-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 46px 88px 18px 16px; text-align: left; background: linear-gradient(0deg, rgba(10,22,60,.92) 0%, rgba(10,22,60,.62) 55%, transparent 100%); }
+        .sr-promo .sr-pub-cap { position: relative; z-index: 2; flex-shrink: 0; padding: 12px 88px 16px 16px; text-align: left; background: rgba(10,22,60,.94); }
         .sr-promo .sr-pub-cap b { display: block; font-size: 1.05rem; font-weight: 800; line-height: 1.2; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.4); }
         .sr-promo .sr-pub-cap span { display: block; margin-top: 3px; font-size: .8rem; line-height: 1.35; color: rgba(255,255,255,.92); }
         .sr-promo .sr-pub-cap em { display: inline-block; margin-top: 7px; font-style: normal; font-size: .7rem; font-weight: 800; background: #ffcc00; color: #1a1a1a; padding: 3px 10px; border-radius: 999px; }
@@ -846,7 +851,11 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         function charger(s) {
             if (!s) return;
             var im = s.querySelector("img[data-src]");
-            if (im) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); }
+            if (im) {
+                var u = im.getAttribute("data-src"); im.src = u; im.removeAttribute("data-src");
+                var f = document.createElement("img"); f.className = "sr-bgblur"; f.alt = ""; f.setAttribute("aria-hidden", "true"); f.src = u;
+                s.insertBefore(f, im);                                   // fond flou (même fichier, déjà en cache)
+            }
         }
         // Image impossible à charger : on retire la slide au lieu d'afficher un cadre vide
         slides.forEach(function (s) {
@@ -925,7 +934,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         function ajouterPubs(pubs) {
             if (!Array.isArray(pubs) || !pubs.length) return;
             var auj = new Date(); auj.setHours(0, 0, 0, 0);
-            var deja = slides.map(function (s) { var i = s.querySelector("img"); return i ? (i.getAttribute("data-src") || i.src) : ""; });
+            var deja = slides.map(function (s) { var i = s.querySelector("img:not(.sr-bgblur)"); return i ? (i.getAttribute("data-src") || i.src) : ""; });
             var neufs = [];
             pubs.forEach(function (p) {
                 var img = String(p && p.image || "").trim();
