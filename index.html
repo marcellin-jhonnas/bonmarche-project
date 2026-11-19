@@ -716,7 +716,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         /* Affiche l'image ENTIÈRE (jamais coupée) ; un fond flou de la même image remplit les bords */
         .sr-promo .sr-sl-img { background: #0f2557; overflow: hidden; }
         .sr-promo .sr-sl-img img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain !important; display: block; }
-        .sr-promo .sr-sl-img img.sr-bgblur { position: absolute; z-index: 0; top: -20px; left: -20px; width: calc(100% + 40px) !important; height: calc(100% + 40px) !important; object-fit: cover !important; filter: blur(20px) brightness(.85) saturate(1.35); }
+        .sr-promo .sr-sl-img img.sr-bgblur { position: absolute; z-index: 0; top: -20px; left: -20px; width: calc(100% + 40px) !important; height: calc(100% + 40px) !important; object-fit: cover !important; filter: blur(22px) brightness(.7); }
         .sr-promo .sr-sl-pub { flex-direction: column; align-items: stretch; justify-content: flex-start; }
         .sr-promo .sr-sl-pub img:not(.sr-bgblur) { flex: 1 1 0; min-height: 0; height: auto; }
         .sr-promo .sr-sl-txt { padding: 46px 48px 78px; flex-direction: column; }
@@ -871,9 +871,17 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
             if (etaitCourante) { cur = cur % slides.length; aller(cur, true); } else maj();
         }
 
-        // Hauteur FIXE pour toutes les slides (format 4:5, comme une affiche) : le cadre ne bouge plus d'une slide à l'autre
+        // Le cadre prend la forme de l'image affichée : plus de grands vides en haut/bas ou sur les côtés
+        function hauteurTexte() { return Math.round(Math.max(400, Math.min(440, window.innerWidth * 0.44))); }
         function ajuster() {
-            root.style.height = Math.round(Math.max(400, Math.min(500, root.clientWidth * 1.25))) + "px";
+            var s = slides[cur], h = hauteurTexte();
+            var im = s && s.querySelector("img:not(.sr-bgblur)");
+            if (im && im.naturalWidth > 0) {
+                var cap = s.querySelector(".sr-pub-cap"), ch = cap ? cap.offsetHeight : 0;
+                var voulu = Math.round(root.clientWidth * im.naturalHeight / im.naturalWidth) + ch;
+                h = Math.max(140, Math.min(voulu, 720, Math.round(window.innerHeight * 0.9)));
+            }
+            root.style.height = h + "px";
         }
         window.addEventListener("resize", ajuster);
         function maj() {
