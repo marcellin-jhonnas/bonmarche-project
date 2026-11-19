@@ -272,7 +272,6 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         <i class="fas fa-calendar-check"></i> Livraison prévue le : <span id="date-affichage"></span>
         <button onclick="annulerPlanif()" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px; text-decoration:underline;">[Annuler]</button>
     </div>
-
 <!-- =====================================================================
   BANDEAU SAFERUN « PUB » — remplace UNIQUEMENT le bloc <section class="sr-banner-premium" id="srBanner"> … </section>
   dans index.html (de <section …> jusqu'à </section> incluse, points compris). Ne touchez ni à main.js ni à style.css.
@@ -320,6 +319,11 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
     #srBanner #sr-date-mg b, #srBanner #sr-date-fr b { font-weight: 800; }
     #srBanner #sr-date-mg > div, #srBanner #sr-date-fr > div { font-size: .9rem !important; line-height: 1.35 !important; text-shadow: none; }
 
+    /* ---------- Slide Cadeau : pastille 🎁 à la place de l'image ---------- */
+    #srBanner .sr-gift { display: flex; align-items: center; justify-content: center; width: 90px; height: 90px; font-size: 2.7rem; line-height: 1; }
+    #srBanner .sr-gift span { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 19px; background: rgba(15,37,87,.55); }
+    #srBanner .sr-slide-item.active .sr-gift span { animation: srAdFloat 2.6s ease-in-out 1s infinite; }
+
     /* ---------- Bouton d'action ---------- */
     #srBanner .sr-cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 9px; padding: 12px 20px; border-radius: 999px;
         background: #fff; color: #1e3a8a !important; font-weight: 800; font-size: .85rem; text-decoration: none; white-space: nowrap;
@@ -355,6 +359,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
         #srBanner .sr-flex-content { padding: 8px 14px; gap: 12px; }
         #srBanner .sr-img-wrapper img { width: 58px !important; height: 58px !important; border-radius: 15px !important; }
         #srBanner .sr-img-wrapper { border-radius: 18px; }
+        #srBanner .sr-gift { width: 64px; height: 64px; font-size: 1.9rem; }
         #srBanner .sr-text-group { flex: 1; }
         #srBanner .sr-main-mg { font-size: .92rem !important; }
         #srBanner .sr-sub-fr { font-size: .72rem !important; margin-top: 2px; }
@@ -413,6 +418,18 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
                     <span class="sr-sub-fr" id="sr-date-fr">Calcul du prochain créneau...</span>
                 </div>
                 <a class="sr-cta" href="#boutique" aria-label="Commander"><span>Commander</span><i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+
+        <div class="sr-slide-item" id="sr-slide-cadeau" data-bg="linear-gradient(135deg, #f36f21 0%, #c2410c 55%, #1e3a8a 140%)">
+            <div class="sr-flex-content">
+                <div class="sr-img-wrapper sr-gift"><span>🎁</span></div>
+                <div class="sr-text-group">
+                    <span class="sr-tag" id="sr-cad-tag">CADEAU</span>
+                    <span class="sr-main-mg" id="sr-cad-titre">Vos courses livrées chez vous</span>
+                    <span class="sr-sub-fr" id="sr-cad-sous">Commandez en quelques clics, nous nous occupons du reste.</span>
+                </div>
+                <a class="sr-cta" id="sr-cad-cta" href="#boutique" aria-label="Commander"><span>Commander</span><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
 
@@ -483,6 +500,69 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
                 });
             } catch (e) {}
         });
+
+        /* ---------- Slide « Cadeau » : annonce ce que le client peut vraiment obtenir (mêmes règles que cadeaux.js) ---------- */
+        var sCad = document.getElementById("sr-slide-cadeau"), actionCad = "commander", donCad = null;
+        function ar(n) { return (Math.round(Number(n) || 0)).toLocaleString("fr-FR") + " Ar"; }
+        function lireLS(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+        function decrire(r) {
+            if (r.type === "LIVRAISON_OFFERTE") return "livraison offerte" + (r.plafond ? " (jusqu'à " + ar(r.plafond) + ")" : "");
+            if (r.type === "REMISE_PCT") return "remise de " + r.valeur + " %" + (r.plafond ? " (maximum " + ar(r.plafond) + ")" : "");
+            if (r.type === "REMISE_AR") return "remise de " + ar(r.valeur);
+            return r.nom || "cadeau surprise";
+        }
+        function regles(d, decl) { return (d.regles || []).filter(function (r) { return r.declencheur === decl; }); }
+        function messageCadeau() {
+            var d = donCad, defaut = { tag: "SAFERUN", t: "Vos courses livrées chez vous", s: "Commandez en quelques clics, nous nous occupons du reste.", a: "commander", b: "Commander" };
+            var seuil = parseInt(lireLS("saferun_seuil_gratuite").replace(/[^0-9]/g, ""), 10);
+            if (seuil > 0) { defaut.tag = "LIVRAISON OFFERTE"; defaut.t = "Livraison offerte dès " + ar(seuil); defaut.s = "Le frais de livraison est offert à partir de ce montant d'achats."; }
+            if (!d || !d.actif) return defaut;
+            var hs = d.historique;
+            if (!hs) return { tag: "CADEAUX", t: "Débloquez vos cadeaux", s: "Complétez votre profil (nom et téléphone) pour recevoir vos cadeaux et profiter du parrainage.", a: "profil", b: "Mon profil" };
+            if (d.promesse) return { tag: "UN CADEAU VOUS ATTEND", t: d.promesse.nom || "Un cadeau vous attend", s: "Il sera appliqué automatiquement à votre prochaine commande" + (d.promesse.expire ? " (jusqu'au " + d.promesse.expire + ")." : "."), a: "cadeaux", b: "Mes cadeaux" };
+            if (hs.recompensesParrain > 0) return { tag: "RÉCOMPENSE", t: "Votre récompense de parrainage est prête", s: "Elle sera appliquée automatiquement à votre prochaine commande.", a: "cadeaux", b: "Mes cadeaux" };
+            var bien = regles(d, "BIENVENUE")[0];
+            if (bien && hs.actives === 0) return { tag: "BIENVENUE", t: "Bienvenue : " + decrire(bien), s: "Pour votre 1ʳᵉ commande" + (bien.seuilMin ? " (dès " + ar(bien.seuilMin) + ")." : "."), a: "commander", b: "Commander" };
+            var fid = regles(d, "FIDELITE").filter(function (r) { return r.seuilMin > hs.livrees; }).sort(function (a, b) { return a.seuilMin - b.seuilMin; })[0];
+            if (fid) {
+                var reste = fid.seuilMin - 1 - hs.livrees;
+                return { tag: "FIDÉLITÉ", t: reste <= 0 ? "Votre prochaine commande est une commande cadeau !" : "Encore " + reste + " commande" + (reste > 1 ? "s" : "") + " avant votre cadeau", s: "Cadeau fidélité : " + decrire(fid) + ".", a: "cadeaux", b: "Mes cadeaux" };
+            }
+            var pal = regles(d, "PANIER").sort(function (a, b) { return a.seuilMin - b.seuilMin; })[0];
+            if (pal) return { tag: "CADEAU", t: "Dès " + ar(pal.seuilMin) + " d'achats : " + decrire(pal), s: "Appliqué automatiquement dans votre panier.", a: "commander", b: "Commander" };
+            var par = regles(d, "PARRAINAGE_AMI")[0];
+            if (par && d.code) return { tag: "PARRAINAGE", t: "Parrainez un ami : il reçoit " + decrire(par), s: "Votre code personnel : " + d.code, a: "cadeaux", b: "Mon code" };
+            return defaut;
+        }
+        function rendreCadeau() {
+            if (!sCad) return;
+            var m = messageCadeau();
+            document.getElementById("sr-cad-tag").textContent = m.tag;
+            document.getElementById("sr-cad-titre").textContent = m.t;
+            document.getElementById("sr-cad-sous").textContent = m.s;
+            var cta = document.getElementById("sr-cad-cta"); actionCad = m.a;
+            cta.querySelector("span").textContent = m.b; cta.setAttribute("aria-label", m.b);
+        }
+        var ctaCad = document.getElementById("sr-cad-cta");
+        ctaCad && ctaCad.addEventListener("click", function (e) {
+            try {
+                if (actionCad === "cadeaux") { var mn = document.getElementById("sr-cad-menu"); if (mn) { e.preventDefault(); mn.click(); } }
+                else if (actionCad === "profil" && typeof ouvrirInscription === "function") { e.preventDefault(); ouvrirInscription(); }
+            } catch (x) {}
+        });
+        sCad && new MutationObserver(function () { if (sCad.classList.contains("active")) rendreCadeau(); }).observe(sCad, { attributes: true, attributeFilter: ["class"] });
+        function chargerCadeaux() {
+            try {
+                if (typeof API_URL === "undefined") return;
+                var tel = lireLS("saferun_tel").replace(/\D/g, ""), url = API_URL + "?action=getCadeauxClient&t=" + Date.now();
+                if (tel.length >= 9) url += "&tel=" + encodeURIComponent(tel) + "&nom=" + encodeURIComponent(lireLS("saferun_nom"));
+                fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+                    if (d && typeof d === "object" && !Array.isArray(d)) { donCad = d; rendreCadeau(); }
+                }).catch(function () {});
+            } catch (e) {}
+        }
+        window.addEventListener("load", function () { rendreCadeau(); chargerCadeaux(); });
+        window.addEventListener("storage", function () { chargerCadeaux(); });
     })();
     </script>
 </section>
