@@ -707,7 +707,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
 
     <!-- 2) Carrousel SafeRun (nouveau) -->
     <style>
-        .sr-promo { position: sticky; top: 10px; aspect-ratio: 4 / 5; height: auto; width: 100%; max-width: 440px; margin-left: auto; margin-right: auto; border-radius: 18px; overflow: hidden; isolation: isolate;
+        .sr-promo { position: sticky; top: 10px; aspect-ratio: 3 / 4; height: auto; width: 100%; max-width: 440px; margin-left: auto; margin-right: auto; border-radius: 18px; overflow: hidden; isolation: isolate;
             background: linear-gradient(180deg, #f36f21 0%, #1e3a8a 100%); color: #fff; box-shadow: 0 8px 26px rgba(30,58,138,.22);
             font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
         .sr-promo * { box-sizing: border-box; }
@@ -866,7 +866,7 @@ src="https://www.facebook.com/tr?id=1603120927814312&ev=PageView&noscript=1"
             if (etaitCourante) { cur = cur % slides.length; aller(cur, true); } else maj();
         }
 
-        function ajuster() { /* hauteur gérée par le CSS (format 4:5 fixe) */ }
+        function ajuster() { /* hauteur gérée par le CSS (format 3:4 fixe) */ }
         window.addEventListener("resize", ajuster);
         function maj() {
             compteur.textContent = (cur + 1) + " / " + slides.length;
